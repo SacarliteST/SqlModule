@@ -1,0 +1,25 @@
+<Project>
+  <PropertyGroup>
+    <CommonPrefix>TemplateApi</CommonPrefix>
+    <AssemblyName>$(CommonPrefix).$(MSBuildProjectName)</AssemblyName>
+    <RootNamespace>$(CommonPrefix).$(MSBuildProjectName)</RootNamespace>
+
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>CS0612;CS0618</NoWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(IsTestProject)' != 'true'">
+    <InternalsVisibleTo Include="$(CommonPrefix).IntegrationTests" />
+    <InternalsVisibleTo Include="$(CommonPrefix).TestsCommon" />
+    <InternalsVisibleTo Include="$(CommonPrefix).UnitTests" />
+  </ItemGroup>
+</Project>
