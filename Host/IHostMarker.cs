@@ -1,4 +1,4 @@
-﻿namespace TemplateApi.Host;
+﻿namespace SQLModule.Host;
 
 /// <summary>
 /// Маркер на сборку Host

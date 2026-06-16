@@ -1,6 +1,6 @@
 ﻿using Contracts.Template;
 
-namespace TemplateApi.Client.Template;
+namespace SQLModule.Client.Template;
 
 /// <summary>
 /// Интерфейс клиента палет

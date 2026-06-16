@@ -1,9 +1,9 @@
-using Domain;
+﻿using Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using TemplateApi.Data.Core.Configurations;
+using SQLModule.Data.Core.Configurations;
 
-namespace TemplateApi.Data.Core;
+namespace SQLModule.Data.Core;
 
 /// <summary>
 /// Шаблон контекста базы данных

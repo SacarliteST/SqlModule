@@ -1,4 +1,4 @@
-﻿namespace TemplateApi.Client;
+﻿namespace SQLModule.Client;
 
 /// <summary>
 /// Ошибка при получении данных от сервера, не соответствующих ожидаемому формату

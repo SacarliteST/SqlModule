@@ -3,10 +3,10 @@ using Domain;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using TemplateApi.Data.Core;
-using TemplateApi.Host.Common;
+using SQLModule.Data.Core;
+using SQLModule.Host.Common;
 
-namespace TemplateApi.Host.Features.Templates.UpdateTemplate;
+namespace SQLModule.Host.Features.Templates.UpdateTemplate;
 
 public sealed class UpdateTemplateEndpoint : IEndpoint
 {

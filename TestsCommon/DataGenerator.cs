@@ -1,8 +1,8 @@
-using AutoFixture;
+﻿using AutoFixture;
 using Contracts.Template;
 using Domain;
 
-namespace TemplateApi.TestsCommon;
+namespace SQLModule.TestsCommon;
 
 public static class DataGenerator
 {

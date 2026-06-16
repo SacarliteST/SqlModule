@@ -1,4 +1,4 @@
-﻿namespace TemplateApi.IntegrationsTest.infrastructure;
+﻿namespace SQLModule.IntegrationsTest.infrastructure;
 
 internal static class DockerImages
 {

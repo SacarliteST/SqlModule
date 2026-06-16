@@ -2,10 +2,10 @@ using Contracts;
 using Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using TemplateApi.Data.Core;
-using TemplateApi.Host.Common;
+using SQLModule.Data.Core;
+using SQLModule.Host.Common;
 
-namespace TemplateApi.Host.Features.Templates.DeleteTemplate;
+namespace SQLModule.Host.Features.Templates.DeleteTemplate;
 
 public sealed class DeleteTemplateEndpoint : IEndpoint
 {

@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using TemplateApi.Data.Core.Configurations;
+using SQLModule.Data.Core.Configurations;
 
-namespace TemplateApi.Data.Core.Migrations.SqlLite;
+namespace SQLModule.Data.Core.Migrations.SqlLite;
 
 internal sealed class SqliteDbContext : TemplateDbContext
 {

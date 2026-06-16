@@ -1,4 +1,4 @@
-﻿namespace TemplateApi.Data.Core.Configurations;
+﻿namespace SQLModule.Data.Core.Configurations;
 
 /// <summary>
 /// Провайдеры данных

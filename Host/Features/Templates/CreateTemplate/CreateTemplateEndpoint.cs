@@ -2,10 +2,10 @@ using Contracts;
 using Domain;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
-using TemplateApi.Data.Core;
-using TemplateApi.Host.Common;
+using SQLModule.Data.Core;
+using SQLModule.Host.Common;
 
-namespace TemplateApi.Host.Features.Templates.CreateTemplate;
+namespace SQLModule.Host.Features.Templates.CreateTemplate;
 
 public sealed class CreateTemplateEndpoint : IEndpoint
 {

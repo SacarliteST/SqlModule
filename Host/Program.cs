@@ -1,7 +1,7 @@
 ﻿
-using TemplateApi.Data.Core.Migrations;
+using SQLModule.Data.Core.Migrations;
 
-namespace TemplateApi.Host;
+namespace SQLModule.Host;
 internal sealed class Program
 {
     public static async Task Main(string[] args)

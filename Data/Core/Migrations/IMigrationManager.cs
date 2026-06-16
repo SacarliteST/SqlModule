@@ -1,4 +1,4 @@
-﻿namespace TemplateApi.Data.Core.Migrations;
+﻿namespace SQLModule.Data.Core.Migrations;
 
 /// <summary>
 /// Менеджер миграций БД

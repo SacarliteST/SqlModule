@@ -1,9 +1,9 @@
 ﻿using Contracts;
 using Contracts.Template;
 using Microsoft.Extensions.Options;
-using TemplateApi.Client.Configurations;
+using SQLModule.Client.Configurations;
 
-namespace TemplateApi.Client.Template;
+namespace SQLModule.Client.Template;
 
 internal sealed class TemplateClient :
     TemplateClientBase<TemplateResponse, TemplateResponse, CreateOrUpdateTemplateRequest, Guid>,

@@ -1,6 +1,6 @@
 using Contracts;
 
-namespace TemplateApi.Host.Common;
+namespace SQLModule.Host.Common;
 
 public static class EndpointExtensions
 {

@@ -1,13 +1,13 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using TemplateApi.Data.Core;
-using TemplateApi.Data.Core.Configurations;
-using TemplateApi.Data.Core.Migrations;
+using SQLModule.Data.Core;
+using SQLModule.Data.Core.Configurations;
+using SQLModule.Data.Core.Migrations;
 
-namespace TemplateApi.Data;
+namespace SQLModule.Data;
 
 /// <summary>
 /// Добавляет методы расширения для регистрации сущностей слоя Data

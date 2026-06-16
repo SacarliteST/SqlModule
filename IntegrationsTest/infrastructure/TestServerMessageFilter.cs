@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Http;
 using Shouldly;
 
-namespace TemplateApi.IntegrationsTest.infrastructure;
+namespace SQLModule.IntegrationsTest.infrastructure;
 
 internal class TestServerMessageFilter : IHttpMessageHandlerBuilderFilter
 {

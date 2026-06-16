@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using TemplateApi.Data.Core.Migrations.PostgreSql;
+using SQLModule.Data.Core.Migrations.PostgreSql;
 
 #nullable disable
 
-namespace TemplateApi.Data.Core.Migrations.PostgreSql
+namespace SQLModule.Data.Core.Migrations.PostgreSql
 {
     [DbContext(typeof(PostgreSqlDbContext))]
     partial class PostgreSqlDbContextModelSnapshot : ModelSnapshot

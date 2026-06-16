@@ -1,4 +1,4 @@
-﻿namespace TemplateApi.Data;
+﻿namespace SQLModule.Data;
 
 /// <summary>
 ///  Маркерный интерфейс на сборку

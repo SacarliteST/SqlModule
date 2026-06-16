@@ -1,6 +1,6 @@
 ﻿using Contracts;
 
-namespace TemplateApi.Client;
+namespace SQLModule.Client;
 
 /// <summary>
 /// Предоставляет методы запросов для взаимодействия с элементами склада

@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <CommonPrefix>TemplateApi</CommonPrefix>
+    <CommonPrefix>SQLModule</CommonPrefix>
     <AssemblyName>$(CommonPrefix).$(MSBuildProjectName)</AssemblyName>
     <RootNamespace>$(CommonPrefix).$(MSBuildProjectName)</RootNamespace>
 
