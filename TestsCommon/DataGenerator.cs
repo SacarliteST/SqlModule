@@ -1,6 +1,6 @@
 ﻿using AutoFixture;
-using Contracts.Template;
-using Domain;
+using SQLModule.Contracts.Template;
+using SQLModule.Domain;
 
 namespace SQLModule.TestsCommon;
 

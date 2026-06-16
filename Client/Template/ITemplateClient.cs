@@ -1,4 +1,4 @@
-﻿using Contracts.Template;
+﻿using SQLModule.Contracts.Template;
 
 namespace SQLModule.Client.Template;
 

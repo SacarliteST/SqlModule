@@ -1,7 +1,7 @@
-﻿using Contracts;
-using Contracts.Template;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using SQLModule.Client.Configurations;
+using SQLModule.Contracts;
+using SQLModule.Contracts.Template;
 
 namespace SQLModule.Client.Template;
 

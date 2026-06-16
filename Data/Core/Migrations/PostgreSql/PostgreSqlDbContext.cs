@@ -15,11 +15,6 @@ internal sealed class PostgreSqlDbContext : TemplateDbContext
             throw new InvalidOperationException("Не задана строка подключения к базе данных");
         }
 
-        if (Options.DbProvider is not DbProvider.PostgreSql)
-        {
-            throw new InvalidOperationException("Ожидается провайдер БД PostgreSQL");
-        }
-
         optionsBuilder.UseNpgsql(Options.ConnectionString);
     }
 }

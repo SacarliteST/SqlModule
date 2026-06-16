@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using SQLModule.Data;
+using SQLModule.Domain;
 using SQLModule.Host.Common;
 
 namespace SQLModule.Host;
@@ -12,6 +13,8 @@ internal static class Startup
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddData(builder.Configuration);
         services.AddEndpoints();
         services.AddValidatorsFromAssemblyContaining<IHostMarker>();

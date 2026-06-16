@@ -1,4 +1,4 @@
-namespace Contracts;
+﻿namespace SQLModule.Contracts;
 
 /// <summary>
 /// Пути к API

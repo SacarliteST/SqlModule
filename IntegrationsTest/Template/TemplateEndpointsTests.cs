@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
-using Contracts.Template;
 using Shouldly;
+using SQLModule.Contracts.Template;
 using SQLModule.IntegrationsTest.infrastructure;
 using SQLModule.TestsCommon;
 

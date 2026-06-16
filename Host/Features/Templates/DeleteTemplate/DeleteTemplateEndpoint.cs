@@ -1,8 +1,8 @@
-using Contracts;
-using Domain;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using SQLModule.Contracts;
 using SQLModule.Data.Core;
+using SQLModule.Domain;
 using SQLModule.Host.Common;
 
 namespace SQLModule.Host.Features.Templates.DeleteTemplate;
