@@ -1,0 +1,9 @@
+namespace SQLModule.Domain;
+
+public interface IAuditable
+{
+    Guid CreatedById { get; }
+    DateTimeOffset CreatedAt { get; }
+    Guid UpdatedById { get; }
+    DateTimeOffset UpdatedAt { get; }
+}

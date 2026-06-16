@@ -22,6 +22,9 @@ public static class ServiceCollectionExtensions
         services.AddOptions<ConnectionOptions>()
             .BindConfiguration(ConnectionOptions.OptionsKey);
 
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<AuditInterceptor>();
+
         services.AddDbContext<TemplateDbContext>((sp, options) =>
         {
             var connOpts = sp.GetRequiredService<IOptions<ConnectionOptions>>().Value;
@@ -42,6 +45,8 @@ public static class ServiceCollectionExtensions
                 default:
                     throw new InvalidOperationException("Неизвестный тип провайдера базы данных");
             }
+
+            options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
 
 #if DEBUG
             options.LogTo(Console.WriteLine, LogLevel.Information);

@@ -1,4 +1,4 @@
-﻿namespace Contracts.Template;
+﻿namespace SQLModule.Contracts.Template;
 
 /// <summary>
 /// Модель ответа с информацией о шаблонном объекте

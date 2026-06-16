@@ -1,4 +1,4 @@
-namespace Domain;
+namespace SQLModule.Domain;
 
 /// <summary>
 /// Выбрасывается, когда запрошенная сущность не найдена в хранилище

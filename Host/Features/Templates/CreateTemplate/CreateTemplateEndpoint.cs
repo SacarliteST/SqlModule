@@ -1,8 +1,8 @@
-using Contracts;
-using Domain;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
+using SQLModule.Contracts;
 using SQLModule.Data.Core;
+using SQLModule.Domain;
 using SQLModule.Host.Common;
 
 namespace SQLModule.Host.Features.Templates.CreateTemplate;

@@ -1,6 +1,6 @@
-using Domain;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using SQLModule.Domain;
 
 namespace SQLModule.Host.Common;
 

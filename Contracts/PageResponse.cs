@@ -1,4 +1,4 @@
-﻿namespace Contracts;
+﻿namespace SQLModule.Contracts;
 
 /// <summary>
 /// Ответ в виде страницы с информацией о элементах и их кол-ве
