@@ -3,10 +3,10 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TemplateApi.Data.Core;
-using TemplateApi.Host.Common;
+using SQLModule.Data.Core;
+using SQLModule.Host.Common;
 
-namespace TemplateApi.Host.Features.Templates.GetAllTemplates;
+namespace SQLModule.Host.Features.Templates.GetAllTemplates;
 
 public sealed class GetAllTemplatesEndpoint : IEndpoint
 {

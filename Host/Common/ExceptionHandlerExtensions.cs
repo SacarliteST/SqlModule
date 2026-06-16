@@ -2,7 +2,7 @@ using Domain;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace TemplateApi.Host.Common;
+namespace SQLModule.Host.Common;
 
 internal static class ExceptionHandlerExtensions
 {

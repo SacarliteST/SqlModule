@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace TemplateApi.Data.Core.Migrations.PostgreSql
+namespace SQLModule.Data.Core.Migrations.PostgreSql
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

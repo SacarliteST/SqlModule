@@ -2,7 +2,7 @@
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 
-namespace TemplateApi.Client;
+namespace SQLModule.Client;
 
 internal sealed class ErrorDelegatingHandler : DelegatingHandler
 {

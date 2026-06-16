@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace TemplateApi.Common.Extensions;
+namespace SQLModule.Common.Extensions;
 
 /// <summary>
 /// Расширения для работы с объектами

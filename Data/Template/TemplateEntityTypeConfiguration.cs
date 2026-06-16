@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace TemplateApi.Data.Template;
+namespace SQLModule.Data.Template;
 
 internal sealed class TemplateEntityTypeConfiguration : IEntityTypeConfiguration<TemplateObject>
 {

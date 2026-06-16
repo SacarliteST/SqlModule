@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using TemplateApi.Data.Core.Configurations;
+using SQLModule.Data.Core.Configurations;
 
-namespace TemplateApi.Data.Core.Migrations.PostgreSql;
+namespace SQLModule.Data.Core.Migrations.PostgreSql;
 
 internal sealed class PostgreSqlDbContext : TemplateDbContext
 {

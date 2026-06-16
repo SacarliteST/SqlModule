@@ -2,7 +2,7 @@
 using System.Net.Http.Json;
 using Contracts;
 
-namespace TemplateApi.Client;
+namespace SQLModule.Client;
 
 internal abstract class TemplateClientBase<TResponse, TDetailedResponse, TRequest, TKey> :
     ITemplateClientBase<TResponse, TDetailedResponse, TRequest, TKey>

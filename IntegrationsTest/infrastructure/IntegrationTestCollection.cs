@@ -1,4 +1,4 @@
-﻿namespace TemplateApi.IntegrationsTest.infrastructure;
+﻿namespace SQLModule.IntegrationsTest.infrastructure;
 
 [CollectionDefinition(Name)]
 public sealed class IntegrationTestCollection : ICollectionFixture<TestApplication>

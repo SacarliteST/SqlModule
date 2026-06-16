@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace TemplateApi.Host.Common;
+namespace SQLModule.Host.Common;
 
 internal sealed class ValidationFilter<TRequest>(IServiceProvider sp) : IEndpointFilter
     where TRequest : class

@@ -2,11 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using TemplateApi.Data.Core.Configurations;
-using TemplateApi.Data.Core.Migrations.PostgreSql;
-using TemplateApi.Data.Core.Migrations.SqlLite;
+using SQLModule.Data.Core.Configurations;
+using SQLModule.Data.Core.Migrations.PostgreSql;
+using SQLModule.Data.Core.Migrations.SqlLite;
 
-namespace TemplateApi.Data.Core.Migrations;
+namespace SQLModule.Data.Core.Migrations;
 
 internal sealed class DatabaseMigrationManager : IMigrationManager
 {

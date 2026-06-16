@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using TemplateApi.Client.Configurations;
-using TemplateApi.Client.Template;
+using SQLModule.Client.Configurations;
+using SQLModule.Client.Template;
 
-namespace TemplateApi.Client;
+namespace SQLModule.Client;
 
 /// <summary>
 /// Добавляет методы расширения для регистрации клиентов

@@ -1,8 +1,8 @@
-using FluentValidation;
-using TemplateApi.Data;
-using TemplateApi.Host.Common;
+﻿using FluentValidation;
+using SQLModule.Data;
+using SQLModule.Host.Common;
 
-namespace TemplateApi.Host;
+namespace SQLModule.Host;
 
 internal static class Startup
 {

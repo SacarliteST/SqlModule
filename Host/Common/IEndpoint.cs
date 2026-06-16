@@ -1,4 +1,4 @@
-namespace TemplateApi.Host.Common;
+namespace SQLModule.Host.Common;
 
 public interface IEndpoint
 {

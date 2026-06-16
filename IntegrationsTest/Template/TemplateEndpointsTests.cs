@@ -2,10 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using Contracts.Template;
 using Shouldly;
-using TemplateApi.IntegrationsTest.infrastructure;
-using TemplateApi.TestsCommon;
+using SQLModule.IntegrationsTest.infrastructure;
+using SQLModule.TestsCommon;
 
-namespace TemplateApi.IntegrationsTest.Template;
+namespace SQLModule.IntegrationsTest.Template;
 
 /// <summary>
 /// Интеграционные тесты эндпоинтов шаблонов

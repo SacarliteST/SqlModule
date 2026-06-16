@@ -1,6 +1,6 @@
-using TemplateApi.Client.Template;
+﻿using SQLModule.Client.Template;
 
-namespace TemplateApi.IntegrationsTest.infrastructure;
+namespace SQLModule.IntegrationsTest.infrastructure;
 
 /// <summary>
 /// Базовый класс тестирования контроллеров

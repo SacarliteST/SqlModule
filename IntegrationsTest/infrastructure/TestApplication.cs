@@ -4,13 +4,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
-using TemplateApi.Client;
-using TemplateApi.Client.Template;
-using TemplateApi.Data.Core.Configurations;
-using TemplateApi.Host;
+using SQLModule.Data.Core.Configurations;
+using SQLModule.Host;
+using SQLModule.Client;
+using SQLModule.Client.Template;
 using Testcontainers.PostgreSql;
 
-namespace TemplateApi.IntegrationsTest.infrastructure;
+namespace SQLModule.IntegrationsTest.infrastructure;
 
 public sealed class TestApplication :
     WebApplicationFactory<IHostMarker>,

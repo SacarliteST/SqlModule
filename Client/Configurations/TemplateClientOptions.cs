@@ -1,4 +1,4 @@
-﻿namespace TemplateApi.Client.Configurations;
+﻿namespace SQLModule.Client.Configurations;
 
 /// <summary>
 /// Опции хранения url серверной части
