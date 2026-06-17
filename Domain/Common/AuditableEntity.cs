@@ -1,6 +1,6 @@
-namespace SQLModule.Domain;
+namespace SQLModule.Domain.Common;
 
-public abstract class AuditableEntity : Entity, IAuditable
+public abstract class AuditableEntity : BaseEntity, IAuditable
 {
     public Guid CreatedById { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }

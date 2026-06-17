@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using SQLModule.Domain;
+using SQLModule.Domain.Common;
 
 namespace SQLModule.Data.Core;
 

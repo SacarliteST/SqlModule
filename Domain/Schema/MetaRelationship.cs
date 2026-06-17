@@ -1,4 +1,6 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+
+namespace SQLModule.Domain.Schema;
 
 /// <summary>Описание связи (Foreign Key) между двумя мета-атрибутами.</summary>
 public sealed class MetaRelationship : AuditableEntity

@@ -1,4 +1,6 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+
+namespace SQLModule.Domain.Training;
 
 /// <summary>Эталонный SQL-запрос для проверки решения пользователя.</summary>
 public sealed class SqlQuery : AuditableEntity

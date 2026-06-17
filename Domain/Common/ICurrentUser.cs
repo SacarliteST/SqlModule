@@ -1,4 +1,4 @@
-namespace SQLModule.Domain;
+namespace SQLModule.Domain.Common;
 
 public interface ICurrentUser
 {

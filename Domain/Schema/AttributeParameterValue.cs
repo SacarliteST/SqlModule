@@ -1,4 +1,7 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+using SQLModule.Domain.DbmsCatalog;
+
+namespace SQLModule.Domain.Schema;
 
 /// <summary>Значение параметра, применённое к конкретному мета-атрибуту.</summary>
 public sealed class AttributeParameterValue : AuditableEntity
@@ -21,7 +24,7 @@ public sealed class AttributeParameterValue : AuditableEntity
     public static AttributeParameterValue Create(Guid metaAttributeId, Guid parameterDefinitionId, string parameterValue, Guid? id = null)
         => new(id ?? Guid.NewGuid(), metaAttributeId, parameterDefinitionId, parameterValue);
 
-    /// <summary>Создаёт значение параметра без привязки к атрибуту (Id и MetaAttributeId заполнит EF Core).</summary>
+    /// <summary>Создаёт значение без привязки к атрибуту (Id и MetaAttributeId заполнит EF Core).</summary>
     public static AttributeParameterValue CreateInternal(string parameterValue, Guid parameterDefinitionId)
         => new(Guid.Empty, Guid.Empty, parameterDefinitionId, parameterValue);
 

@@ -1,4 +1,7 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+using SQLModule.Domain.DbmsCatalog;
+
+namespace SQLModule.Domain.Schema;
 
 /// <summary>Целевая база данных (песочница) для выполнения запросов.</summary>
 public sealed class TargetDb : AuditableEntity

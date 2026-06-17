@@ -1,4 +1,6 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+
+namespace SQLModule.Domain.DbmsCatalog;
 
 /// <summary>Справочник СУБД с Docker-конфигурацией.</summary>
 public sealed class DbmsDictionary : AuditableEntity

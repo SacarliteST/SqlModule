@@ -1,4 +1,7 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+using SQLModule.Domain.DbmsCatalog;
+
+namespace SQLModule.Domain.Schema;
 
 /// <summary>Описание мета-колонки (атрибута) в мета-таблице.</summary>
 public sealed class MetaAttribute : AuditableEntity

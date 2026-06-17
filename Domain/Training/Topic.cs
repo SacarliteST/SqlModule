@@ -1,4 +1,6 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+
+namespace SQLModule.Domain.Training;
 
 /// <summary>Тематический раздел для группировки заданий.</summary>
 public sealed class Topic : AuditableEntity
