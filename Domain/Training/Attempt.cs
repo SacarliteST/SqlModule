@@ -1,9 +1,11 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+
+namespace SQLModule.Domain.Training;
 
 /// <summary>Попытка пользователя выполнить SQL-задание.</summary>
 public sealed class Attempt : AuditableEntity
 {
-    /// <summary>Идентификатор пользователя, совершившего попытку (мягкая ссылка на Identity-сервис).</summary>
+    /// <summary>Идентификатор пользователя (мягкая ссылка на Identity-сервис).</summary>
     public Guid UserId { get; private set; }
     public bool IsSuccess { get; private set; }
     public DateTimeOffset StartAttempt { get; private set; }

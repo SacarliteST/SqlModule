@@ -2,6 +2,9 @@
 using Microsoft.Extensions.Options;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Domain;
+using SQLModule.Domain.DbmsCatalog;
+using SQLModule.Domain.Schema;
+using SQLModule.Domain.Training;
 
 namespace SQLModule.Data.Core;
 

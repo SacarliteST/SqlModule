@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts;
 using SQLModule.Data.Core;
 using SQLModule.Domain;
+using SQLModule.Domain.Exceptions;
 using SQLModule.Host.Common;
 
 namespace SQLModule.Host.Features.Templates.DeleteTemplate;

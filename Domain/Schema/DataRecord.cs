@@ -1,4 +1,6 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+
+namespace SQLModule.Domain.Schema;
 
 /// <summary>Якорь строки данных в модели EAV.</summary>
 public sealed class DataRecord : AuditableEntity

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SQLModule.Domain;
+using SQLModule.Domain.DbmsCatalog;
 
 namespace SQLModule.Data.Configurations;
 

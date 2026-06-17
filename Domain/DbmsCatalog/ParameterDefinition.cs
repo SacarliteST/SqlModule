@@ -1,4 +1,7 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+using SQLModule.Domain.Schema;
+
+namespace SQLModule.Domain.DbmsCatalog;
 
 /// <summary>Определение параметра конфигурации физического типа данных.</summary>
 public sealed class ParameterDefinition : AuditableEntity

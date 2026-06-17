@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using SQLModule.Data;
 using SQLModule.Domain;
+using SQLModule.Domain.Common;
 using SQLModule.Host.Common;
 
 namespace SQLModule.Host;

@@ -1,4 +1,7 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+using SQLModule.Domain.Schema;
+
+namespace SQLModule.Domain.Training;
 
 /// <summary>Задание SQL-тренажёра.</summary>
 public sealed class SqlTask : AuditableEntity

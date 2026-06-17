@@ -1,4 +1,6 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+
+namespace SQLModule.Domain.Schema;
 
 /// <summary>Значение конкретной ячейки в EAV-модели.</summary>
 public sealed class CellValue : AuditableEntity

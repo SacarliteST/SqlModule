@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using SQLModule.Domain;
+using SQLModule.Domain.Common;
 
 namespace SQLModule.Host.Common;
 

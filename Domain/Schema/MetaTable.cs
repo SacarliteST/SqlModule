@@ -1,4 +1,6 @@
-namespace SQLModule.Domain;
+using SQLModule.Domain.Common;
+
+namespace SQLModule.Domain.Schema;
 
 /// <summary>Описание структуры мета-таблицы в целевой БД.</summary>
 public sealed class MetaTable : AuditableEntity

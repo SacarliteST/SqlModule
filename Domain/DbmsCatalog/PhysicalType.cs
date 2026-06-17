@@ -1,6 +1,8 @@
 using System.Text;
+using SQLModule.Domain.Common;
+using SQLModule.Domain.Schema;
 
-namespace SQLModule.Domain;
+namespace SQLModule.Domain.DbmsCatalog;
 
 /// <summary>Физический тип данных для конкретной СУБД.</summary>
 public sealed class PhysicalType : AuditableEntity
