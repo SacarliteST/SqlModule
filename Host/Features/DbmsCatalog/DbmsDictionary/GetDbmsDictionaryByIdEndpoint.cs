@@ -21,7 +21,7 @@ public sealed class GetDbmsDictionaryByIdEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateDbmsDictionaryEndpoint.Response>> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.DbmsDictionaries
             .AsNoTracking()

@@ -6,25 +6,6 @@ public static class ApiRoutes
     /// <summary>Общий префикс Api v1.</summary>
     public const string PrefixV1 = "api/v1";
 
-    // ─── Template (demo) ─────────────────────────────────────────────────────
-
-    /// <summary>Маршруты демо-ресурса Template.</summary>
-    public static class Template
-    {
-        /// <summary>Коллекция (абсолютный путь).</summary>
-        public const string TemplateObjects = PrefixV1 + "/templates";
-
-        /// <summary>Элемент по Id (абсолютный путь).</summary>
-        public const string TemplateObject = TemplateObjects + "/{id}";
-
-        /// <inheritdoc cref="ForTemplateObject"/>
-        public static string ForTemplateObject(Guid id) => $"{TemplateObjects}/{id}";
-
-        /// <inheritdoc cref="ForTemplateObjectPagination"/>
-        public static string ForTemplateObjectPagination(int offset, int limit)
-            => $"{TemplateObjects}?offset={offset}&limit={limit}";
-    }
-
     // ─── DbmsCatalog ─────────────────────────────────────────────────────────
 
     /// <summary>Маршруты контекста СУБД-справочника.</summary>

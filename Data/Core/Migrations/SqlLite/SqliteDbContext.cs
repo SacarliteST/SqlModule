@@ -1,10 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SQLModule.Data.Core.Configurations;
 
 namespace SQLModule.Data.Core.Migrations.SqlLite;
 
-internal sealed class SqliteDbContext : TemplateDbContext
+internal sealed class SqliteDbContext : AppDbContext
 {
     public SqliteDbContext(IOptions<ConnectionOptions> options) : base(options) { }
 

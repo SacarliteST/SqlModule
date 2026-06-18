@@ -5,8 +5,22 @@ using SQLModule.Domain.Exceptions;
 
 namespace SQLModule.Host.Common;
 
+/// <summary>
+/// Метод подключения глобального обработчика необработанных исключений.
+/// </summary>
 internal static class ExceptionHandlerExtensions
 {
+    /// <summary>
+    /// Подключает <see cref="IApplicationBuilder.UseExceptionHandler"/> с маппингом
+    /// доменных исключений на HTTP-статусы и записью в лог.
+    /// <list type="bullet">
+    ///   <item><see cref="NotFoundException"/> → 404</item>
+    ///   <item><see cref="ArgumentException"/> → 400</item>
+    ///   <item>Всё остальное → 500</item>
+    /// </list>
+    /// Ответ всегда в формате <see cref="ProblemDetails"/> (<c>application/problem+json</c>).
+    /// </summary>
+    /// <param name="app">Экземпляр <see cref="WebApplication"/>.</param>
     public static WebApplication UseApiExceptionHandler(this WebApplication app)
     {
         app.UseExceptionHandler(exceptionApp =>

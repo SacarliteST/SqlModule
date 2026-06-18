@@ -33,7 +33,7 @@ public sealed class GetAllSqlQueriesEndpoint : IEndpoint
     }
 
     private static async Task<Ok<PageResponse<CreateSqlQueryEndpoint.Response>>> Handle(
-        [AsParameters] Request request, TemplateDbContext db, CancellationToken ct)
+        [AsParameters] Request request, AppDbContext db, CancellationToken ct)
     {
         var total = await db.SqlQueries.CountAsync(ct);
 

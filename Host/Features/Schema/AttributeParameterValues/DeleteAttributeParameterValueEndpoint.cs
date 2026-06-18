@@ -21,7 +21,7 @@ public sealed class DeleteAttributeParameterValueEndpoint : IEndpoint
     }
 
     private static async Task<NoContent> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.AttributeParameterValues
             .FirstOrDefaultAsync(x => x.Id == id, ct)

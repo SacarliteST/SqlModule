@@ -45,7 +45,7 @@ public sealed class CreateCellValueEndpoint : IEndpoint
     }
 
     private static async Task<Created<Response>> Handle(
-        Request request, TemplateDbContext db, CancellationToken ct)
+        Request request, AppDbContext db, CancellationToken ct)
     {
         if (!await db.DataRecords.AnyAsync(x => x.Id == request.DataRecordId, ct))
         {

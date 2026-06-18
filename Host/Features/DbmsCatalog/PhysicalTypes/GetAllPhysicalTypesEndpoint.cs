@@ -33,7 +33,7 @@ public sealed class GetAllPhysicalTypesEndpoint : IEndpoint
     }
 
     private static async Task<Ok<PageResponse<CreatePhysicalTypeEndpoint.Response>>> Handle(
-        [AsParameters] Request request, TemplateDbContext db, CancellationToken ct)
+        [AsParameters] Request request, AppDbContext db, CancellationToken ct)
     {
         var total = await db.PhysicalTypes.CountAsync(ct);
 

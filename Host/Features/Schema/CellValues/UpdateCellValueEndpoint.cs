@@ -23,7 +23,7 @@ public sealed class UpdateCellValueEndpoint : IEndpoint
     public record Request(string? TextValue);
 
     private static async Task<Ok<CreateCellValueEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.CellValues
             .FirstOrDefaultAsync(x => x.Id == id, ct)

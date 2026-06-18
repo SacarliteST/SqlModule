@@ -33,7 +33,7 @@ public sealed class GetAllParameterDefinitionsEndpoint : IEndpoint
     }
 
     private static async Task<Ok<PageResponse<CreateParameterDefinitionEndpoint.Response>>> Handle(
-        [AsParameters] Request request, TemplateDbContext db, CancellationToken ct)
+        [AsParameters] Request request, AppDbContext db, CancellationToken ct)
     {
         var total = await db.ParameterDefinitions.CountAsync(ct);
 

@@ -55,7 +55,7 @@ public sealed class UpdateDbmsDictionaryEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateDbmsDictionaryEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.DbmsDictionaries
             .FirstOrDefaultAsync(x => x.Id == id, ct)

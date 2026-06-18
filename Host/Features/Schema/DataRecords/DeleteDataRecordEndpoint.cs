@@ -21,7 +21,7 @@ public sealed class DeleteDataRecordEndpoint : IEndpoint
     }
 
     private static async Task<NoContent> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.DataRecords
             .FirstOrDefaultAsync(x => x.Id == id, ct)

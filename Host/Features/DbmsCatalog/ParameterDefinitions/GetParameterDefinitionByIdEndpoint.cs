@@ -21,7 +21,7 @@ public sealed class GetParameterDefinitionByIdEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateParameterDefinitionEndpoint.Response>> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.ParameterDefinitions
             .AsNoTracking()

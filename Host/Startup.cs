@@ -3,7 +3,6 @@ using SQLModule.Data;
 using SQLModule.Domain;
 using SQLModule.Domain.Common;
 using SQLModule.Host.Common;
-
 namespace SQLModule.Host;
 
 internal static class Startup
@@ -19,6 +18,8 @@ internal static class Startup
         services.AddData(builder.Configuration);
         services.AddEndpoints();
         services.AddValidatorsFromAssemblyContaining<IHostMarker>();
+        services.AddCqrs();
+        services.AddFeatures();
     }
 
     public static ILogger CreateLogger()

@@ -21,7 +21,7 @@ public sealed class GetMetaRelationshipByIdEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateMetaRelationshipEndpoint.Response>> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.MetaRelationships
             .AsNoTracking()

@@ -1,10 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SQLModule.Data.Core.Configurations;
 
 namespace SQLModule.Data.Core.Migrations.PostgreSql;
 
-internal sealed class PostgreSqlDbContext : TemplateDbContext
+internal sealed class PostgreSqlDbContext : AppDbContext
 {
     public PostgreSqlDbContext(IOptions<ConnectionOptions> connectionOptions) : base(connectionOptions) { }
 

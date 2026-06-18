@@ -21,7 +21,7 @@ public sealed class GetAttemptByIdEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateAttemptEndpoint.Response>> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.Attempts
             .AsNoTracking()

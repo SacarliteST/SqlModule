@@ -21,7 +21,7 @@ public sealed class GetTopicByIdEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateTopicEndpoint.Response>> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.Topics
             .AsNoTracking()

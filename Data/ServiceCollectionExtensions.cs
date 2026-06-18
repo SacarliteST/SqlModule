@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -25,7 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<AuditInterceptor>();
 
-        services.AddDbContext<TemplateDbContext>((sp, options) =>
+        services.AddDbContext<AppDbContext>((sp, options) =>
         {
             var connOpts = sp.GetRequiredService<IOptions<ConnectionOptions>>().Value;
 

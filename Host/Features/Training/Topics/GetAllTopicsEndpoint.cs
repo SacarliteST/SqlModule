@@ -33,7 +33,7 @@ public sealed class GetAllTopicsEndpoint : IEndpoint
     }
 
     private static async Task<Ok<PageResponse<CreateTopicEndpoint.Response>>> Handle(
-        [AsParameters] Request request, TemplateDbContext db, CancellationToken ct)
+        [AsParameters] Request request, AppDbContext db, CancellationToken ct)
     {
         var total = await db.Topics.CountAsync(ct);
 

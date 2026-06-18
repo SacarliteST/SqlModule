@@ -33,7 +33,7 @@ public sealed class GetAllDbmsDictionariesEndpoint : IEndpoint
     }
 
     private static async Task<Ok<PageResponse<CreateDbmsDictionaryEndpoint.Response>>> Handle(
-        [AsParameters] Request request, TemplateDbContext db, CancellationToken ct)
+        [AsParameters] Request request, AppDbContext db, CancellationToken ct)
     {
         var total = await db.DbmsDictionaries.CountAsync(ct);
 

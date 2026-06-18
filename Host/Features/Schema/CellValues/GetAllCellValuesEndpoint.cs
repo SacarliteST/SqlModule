@@ -33,7 +33,7 @@ public sealed class GetAllCellValuesEndpoint : IEndpoint
     }
 
     private static async Task<Ok<PageResponse<CreateCellValueEndpoint.Response>>> Handle(
-        [AsParameters] Request request, TemplateDbContext db, CancellationToken ct)
+        [AsParameters] Request request, AppDbContext db, CancellationToken ct)
     {
         var total = await db.CellValues.CountAsync(ct);
 

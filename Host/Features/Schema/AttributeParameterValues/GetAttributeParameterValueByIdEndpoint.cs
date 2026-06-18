@@ -21,7 +21,7 @@ public sealed class GetAttributeParameterValueByIdEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateAttributeParameterValueEndpoint.Response>> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.AttributeParameterValues
             .AsNoTracking()

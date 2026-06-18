@@ -1,0 +1,18 @@
+using SQLModule.Host.Features.Schema.TargetDbs;
+
+namespace SQLModule.Host.Common;
+
+/// <summary>
+/// Единый агрегатор регистрации всех фич приложения.
+/// Тест-сканер HandlerScannerTests использует этот метод, поэтому пропуск регистрации
+/// в AddFeatures() автоматически делает тест красным.
+/// </summary>
+/// <remarks>
+/// Правило: каждый новый <c>XxxModule.AddXxx()</c> добавляется ТОЛЬКО сюда, одной строкой.
+/// </remarks>
+internal static class FeaturesExtensions
+{
+    /// <summary>Регистрирует хендлеры всех фич.</summary>
+    internal static IServiceCollection AddFeatures(this IServiceCollection s)
+        => s.AddTargetDbs();
+}

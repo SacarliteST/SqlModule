@@ -41,7 +41,7 @@ public sealed class CreateSqlQueryEndpoint : IEndpoint
     }
 
     private static async Task<Created<Response>> Handle(
-        Request request, TemplateDbContext db, CancellationToken ct)
+        Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = SqlQuery.Create(request.QueryText, request.StrictColumnOrder, request.StrictRowOrder);
         db.SqlQueries.Add(entity);
