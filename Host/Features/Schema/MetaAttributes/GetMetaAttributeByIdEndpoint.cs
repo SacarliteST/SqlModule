@@ -21,7 +21,7 @@ public sealed class GetMetaAttributeByIdEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateMetaAttributeEndpoint.Response>> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.MetaAttributes
             .AsNoTracking()

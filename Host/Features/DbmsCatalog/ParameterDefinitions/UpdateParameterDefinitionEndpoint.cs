@@ -52,7 +52,7 @@ public sealed class UpdateParameterDefinitionEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateParameterDefinitionEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.ParameterDefinitions
             .FirstOrDefaultAsync(x => x.Id == id, ct)

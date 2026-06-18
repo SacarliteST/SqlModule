@@ -33,7 +33,7 @@ public sealed class GetAllDataRecordsEndpoint : IEndpoint
     }
 
     private static async Task<Ok<PageResponse<CreateDataRecordEndpoint.Response>>> Handle(
-        [AsParameters] Request request, TemplateDbContext db, CancellationToken ct)
+        [AsParameters] Request request, AppDbContext db, CancellationToken ct)
     {
         var total = await db.DataRecords.CountAsync(ct);
 

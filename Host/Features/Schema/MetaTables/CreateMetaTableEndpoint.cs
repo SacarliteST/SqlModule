@@ -45,7 +45,7 @@ public sealed class CreateMetaTableEndpoint : IEndpoint
     }
 
     private static async Task<Created<Response>> Handle(
-        Request request, TemplateDbContext db, CancellationToken ct)
+        Request request, AppDbContext db, CancellationToken ct)
     {
         if (!await db.TargetDbs.AnyAsync(x => x.Id == request.TargetDbId, ct))
         {

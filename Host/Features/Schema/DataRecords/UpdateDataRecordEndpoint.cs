@@ -23,7 +23,7 @@ public sealed class UpdateDataRecordEndpoint : IEndpoint
     public record Request(int? SortOrder);
 
     private static async Task<Ok<CreateDataRecordEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.DataRecords
             .FirstOrDefaultAsync(x => x.Id == id, ct)

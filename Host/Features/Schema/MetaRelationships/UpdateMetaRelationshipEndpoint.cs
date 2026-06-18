@@ -36,7 +36,7 @@ public sealed class UpdateMetaRelationshipEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateMetaRelationshipEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.MetaRelationships
             .FirstOrDefaultAsync(x => x.Id == id, ct)

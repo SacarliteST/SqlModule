@@ -35,7 +35,7 @@ public sealed class UpdateMetaAttributeEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateMetaAttributeEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.MetaAttributes
             .FirstOrDefaultAsync(x => x.Id == id, ct)

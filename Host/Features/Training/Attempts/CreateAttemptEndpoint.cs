@@ -54,7 +54,7 @@ public sealed class CreateAttemptEndpoint : IEndpoint
     }
 
     private static async Task<Created<Response>> Handle(
-        Request request, TemplateDbContext db, ICurrentUser currentUser, CancellationToken ct)
+        Request request, AppDbContext db, ICurrentUser currentUser, CancellationToken ct)
     {
         if (!await db.SqlTasks.AnyAsync(x => x.Id == request.TaskId, ct))
         {

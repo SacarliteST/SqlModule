@@ -2,8 +2,15 @@ using SQLModule.Contracts;
 
 namespace SQLModule.Host.Common;
 
+/// <summary>
+/// Методы регистрации и маппинга эндпоинтов через рефлексию по сборке Host.
+/// </summary>
 public static class EndpointExtensions
 {
+    /// <summary>
+    /// Сканирует сборку и регистрирует все конкретные реализации <see cref="IEndpoint"/> как Transient.
+    /// </summary>
+    /// <param name="services">Коллекция сервисов.</param>
     public static IServiceCollection AddEndpoints(this IServiceCollection services)
     {
         var endpointTypes = typeof(EndpointExtensions).Assembly
@@ -18,6 +25,11 @@ public static class EndpointExtensions
         return services;
     }
 
+    /// <summary>
+    /// Создаёт временный DI-scope, резолвит все <see cref="IEndpoint"/> и вызывает
+    /// <see cref="IEndpoint.MapEndpoints"/> для каждого.
+    /// </summary>
+    /// <param name="app">Экземпляр <see cref="WebApplication"/>.</param>
     public static WebApplication MapEndpoints(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();

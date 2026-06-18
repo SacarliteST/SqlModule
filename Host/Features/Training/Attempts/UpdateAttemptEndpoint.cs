@@ -34,7 +34,7 @@ public sealed class UpdateAttemptEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateAttemptEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.Attempts
             .FirstOrDefaultAsync(x => x.Id == id, ct)

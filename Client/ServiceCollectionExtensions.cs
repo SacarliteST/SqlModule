@@ -1,33 +1,19 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using SQLModule.Client.Configurations;
-using SQLModule.Client.Template;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SQLModule.Client;
 
 /// <summary>
-/// Добавляет методы расширения для регистрации клиентов
+/// Методы регистрации клиентской инфраструктуры в DI.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Регистрация компонентов
+    /// Регистрирует базовую HTTP-инфраструктуру клиента (<see cref="ErrorDelegatingHandler"/>).
+    /// Конкретные typed-clients (IXxxClient) регистрируются в отдельных методах расширения.
     /// </summary>
-    public static IServiceCollection AddClient(
-        this IServiceCollection services,
-        Action<TemplateClientOptions>? configureOptions = null
-    )
+    public static IServiceCollection AddClient(this IServiceCollection services)
     {
-        services
-            .AddOptions<TemplateClientOptions>()
-            .BindConfiguration(TemplateClientOptions.OptionsKey)
-            .Configure(configureOptions ?? (_ => { }));
-
         services.AddTransient<ErrorDelegatingHandler>();
-
-        services
-            .AddHttpClient<ITemplateClient, TemplateClient>()
-            .AddHttpMessageHandler<ErrorDelegatingHandler>();
-
         return services;
     }
 }

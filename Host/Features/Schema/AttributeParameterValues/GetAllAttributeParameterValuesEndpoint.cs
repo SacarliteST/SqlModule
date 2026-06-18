@@ -33,7 +33,7 @@ public sealed class GetAllAttributeParameterValuesEndpoint : IEndpoint
     }
 
     private static async Task<Ok<PageResponse<CreateAttributeParameterValueEndpoint.Response>>> Handle(
-        [AsParameters] Request request, TemplateDbContext db, CancellationToken ct)
+        [AsParameters] Request request, AppDbContext db, CancellationToken ct)
     {
         var total = await db.AttributeParameterValues.CountAsync(ct);
 

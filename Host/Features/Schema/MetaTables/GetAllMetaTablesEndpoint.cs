@@ -33,7 +33,7 @@ public sealed class GetAllMetaTablesEndpoint : IEndpoint
     }
 
     private static async Task<Ok<PageResponse<CreateMetaTableEndpoint.Response>>> Handle(
-        [AsParameters] Request request, TemplateDbContext db, CancellationToken ct)
+        [AsParameters] Request request, AppDbContext db, CancellationToken ct)
     {
         var total = await db.MetaTables.CountAsync(ct);
 

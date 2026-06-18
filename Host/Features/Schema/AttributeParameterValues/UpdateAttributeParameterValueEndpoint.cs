@@ -34,7 +34,7 @@ public sealed class UpdateAttributeParameterValueEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateAttributeParameterValueEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.AttributeParameterValues
             .FirstOrDefaultAsync(x => x.Id == id, ct)

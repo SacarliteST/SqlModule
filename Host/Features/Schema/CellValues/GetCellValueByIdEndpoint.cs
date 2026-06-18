@@ -21,7 +21,7 @@ public sealed class GetCellValueByIdEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateCellValueEndpoint.Response>> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.CellValues
             .AsNoTracking()

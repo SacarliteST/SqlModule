@@ -23,7 +23,7 @@ public sealed class MoveTopicEndpoint : IEndpoint
     public record Request(Guid? ParentTopicId);
 
     private static async Task<Ok<CreateTopicEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.Topics
             .FirstOrDefaultAsync(x => x.Id == id, ct)

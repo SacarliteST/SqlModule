@@ -71,7 +71,7 @@ public sealed class CreateDbmsDictionaryEndpoint : IEndpoint
 
     private static async Task<Created<Response>> Handle(
         Request request,
-        TemplateDbContext db,
+        AppDbContext db,
         CancellationToken ct)
     {
         var entity = global::SQLModule.Domain.DbmsCatalog.DbmsDictionary.Create(

@@ -21,7 +21,7 @@ public sealed class GetSqlQueryByIdEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateSqlQueryEndpoint.Response>> Handle(
-        Guid id, TemplateDbContext db, CancellationToken ct)
+        Guid id, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.SqlQueries
             .AsNoTracking()

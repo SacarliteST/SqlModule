@@ -54,7 +54,7 @@ public sealed class CreateMetaRelationshipEndpoint : IEndpoint
     }
 
     private static async Task<Created<Response>> Handle(
-        Request request, TemplateDbContext db, CancellationToken ct)
+        Request request, AppDbContext db, CancellationToken ct)
     {
         if (!await db.MetaAttributes.AnyAsync(x => x.Id == request.SourceAttributeId, ct))
         {

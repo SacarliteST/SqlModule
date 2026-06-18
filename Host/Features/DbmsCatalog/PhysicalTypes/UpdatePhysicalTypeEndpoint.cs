@@ -34,7 +34,7 @@ public sealed class UpdatePhysicalTypeEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreatePhysicalTypeEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.PhysicalTypes
             .FirstOrDefaultAsync(x => x.Id == id, ct)

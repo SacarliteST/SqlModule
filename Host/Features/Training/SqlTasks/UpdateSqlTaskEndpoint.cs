@@ -36,7 +36,7 @@ public sealed class UpdateSqlTaskEndpoint : IEndpoint
     }
 
     private static async Task<Ok<CreateSqlTaskEndpoint.Response>> Handle(
-        Guid id, Request request, TemplateDbContext db, CancellationToken ct)
+        Guid id, Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = await db.SqlTasks
             .FirstOrDefaultAsync(x => x.Id == id, ct)

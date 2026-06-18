@@ -40,7 +40,7 @@ public sealed class CreateTopicEndpoint : IEndpoint
     }
 
     private static async Task<Created<Response>> Handle(
-        Request request, TemplateDbContext db, CancellationToken ct)
+        Request request, AppDbContext db, CancellationToken ct)
     {
         var entity = Topic.Create(request.TopicName, request.ParentTopicId);
         db.Topics.Add(entity);
