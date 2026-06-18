@@ -11,8 +11,9 @@ public sealed class CreateTemplateEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
-        app.MapPost(ApiRoutes.Template.CollectionRoute, Handle)
+        app.MapPost(ApiRoutes.Template.TemplateObjects, Handle)
             .WithName("CreateTemplate")
+            .WithTags("Templates")
             .Produces<Response>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .AddEndpointFilter<ValidationFilter<Request>>();

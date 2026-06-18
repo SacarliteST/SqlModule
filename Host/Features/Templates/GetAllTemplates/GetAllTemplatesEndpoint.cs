@@ -12,8 +12,9 @@ public sealed class GetAllTemplatesEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
-        app.MapGet(ApiRoutes.Template.CollectionRoute, Handle)
+        app.MapGet(ApiRoutes.Template.TemplateObjects, Handle)
             .WithName("GetAllTemplates")
+            .WithTags("Templates")
             .Produces<PageResponse<TemplateItem>>()
             .ProducesValidationProblem()
             .AddEndpointFilter<ValidationFilter<Request>>();
