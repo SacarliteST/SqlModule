@@ -1,25 +1,41 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc;
 
 namespace SQLModule.Client;
 
+/// <summary>
+/// HTTP-обработчик, преобразующий ошибочные ответы API в типизированные исключения.
+/// Пропускает насквозь 2xx и 404 — решение о 404 принимает вызывающий метод.
+/// </summary>
 internal sealed class ErrorDelegatingHandler : DelegatingHandler
 {
-    /// <summary>
-    /// Осуществляет проверку запроса на ошибку
-    /// </summary>
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var response = await base.SendAsync(request, cancellationToken);
 
-        if (response.IsSuccessStatusCode || response.StatusCode is HttpStatusCode.NotFound)
+        if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound)
         {
             return response;
         }
 
-        var problemInstance = await response.Content.ReadFromJsonAsync<ProblemDetails>(cancellationToken)
-                              ?? throw new InvalidOperationException("Получен неизвестный формат ответа");
-        throw new WebException(problemInstance.Detail);
+        ApiProblem? problem = null;
+        try
+        {
+            problem = await response.Content
+                .ReadFromJsonAsync<ApiProblem>(ClientJson.Options, cancellationToken);
+        }
+        catch (Exception)
+        {
+            // тело не распарсилось — problem остаётся null
+        }
+
+        throw (int)response.StatusCode switch
+        {
+            400 => new ValidationException((int)response.StatusCode, problem),
+            409 => new ConflictException((int)response.StatusCode, problem),
+            _   => new ApiException((int)response.StatusCode, problem)
+        };
     }
 }

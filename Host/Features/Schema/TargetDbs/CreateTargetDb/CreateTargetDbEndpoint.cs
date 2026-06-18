@@ -15,7 +15,7 @@ public sealed class CreateTargetDbEndpoint : IEndpoint
             .WithTags("Schema")
             .Produces<TargetDbResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateTargetDbRequest>>();
     }
 

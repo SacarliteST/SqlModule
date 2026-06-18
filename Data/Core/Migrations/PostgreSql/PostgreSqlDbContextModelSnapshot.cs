@@ -17,163 +17,12 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.6")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Domain.Attempt", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("EndAttempt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsSuccess")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("QueryId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("StartAttempt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("TaskId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QueryId");
-
-                    b.HasIndex("TaskId");
-
-                    b.ToTable("Attempts");
-                });
-
-            modelBuilder.Entity("Domain.AttributeParameterValue", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("MetaAttributeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ParameterDefinitionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ParameterValue")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MetaAttributeId");
-
-                    b.HasIndex("ParameterDefinitionId");
-
-                    b.ToTable("AttributeParameterValues");
-                });
-
-            modelBuilder.Entity("Domain.CellValue", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("DataRecordId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("MetaAttributeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("TextValue")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DataRecordId");
-
-                    b.HasIndex("MetaAttributeId");
-
-                    b.ToTable("CellValues");
-                });
-
-            modelBuilder.Entity("Domain.DataRecord", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("MetaTableId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("SortOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MetaTableId");
-
-                    b.ToTable("DataRecords");
-                });
-
-            modelBuilder.Entity("Domain.DbmsDictionary", b =>
+            modelBuilder.Entity("SQLModule.Domain.DbmsCatalog.DbmsDictionary", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -248,137 +97,7 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.ToTable("DbmsDictionaries");
                 });
 
-            modelBuilder.Entity("Domain.MetaAttribute", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AttributeName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsPrimaryKey")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsRequired")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("MetaTableId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("PhysicalTypeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<short>("SortOrder")
-                        .HasColumnType("smallint");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MetaTableId");
-
-                    b.HasIndex("PhysicalTypeId");
-
-                    b.ToTable("MetaAttributes");
-                });
-
-            modelBuilder.Entity("Domain.MetaRelationship", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("DeleteRule")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("RelationshipName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("SourceAttributeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TargetAttributeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UpdateRule")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SourceAttributeId");
-
-                    b.HasIndex("TargetAttributeId");
-
-                    b.ToTable("MetaRelationships");
-                });
-
-            modelBuilder.Entity("Domain.MetaTable", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("TableName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("TargetDbId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TargetDbId");
-
-                    b.ToTable("MetaTables");
-                });
-
-            modelBuilder.Entity("Domain.ParameterDefinition", b =>
+            modelBuilder.Entity("SQLModule.Domain.DbmsCatalog.ParameterDefinition", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -448,7 +167,7 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.ToTable("ParameterDefinitions");
                 });
 
-            modelBuilder.Entity("Domain.PhysicalType", b =>
+            modelBuilder.Entity("SQLModule.Domain.DbmsCatalog.PhysicalType", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -481,7 +200,328 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.ToTable("PhysicalTypes");
                 });
 
-            modelBuilder.Entity("Domain.SqlQuery", b =>
+            modelBuilder.Entity("SQLModule.Domain.Schema.AttributeParameterValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MetaAttributeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ParameterDefinitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ParameterValue")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MetaAttributeId");
+
+                    b.HasIndex("ParameterDefinitionId");
+
+                    b.ToTable("AttributeParameterValues");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.CellValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DataRecordId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MetaAttributeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TextValue")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataRecordId");
+
+                    b.HasIndex("MetaAttributeId");
+
+                    b.ToTable("CellValues");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.DataRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MetaTableId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MetaTableId");
+
+                    b.ToTable("DataRecords");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.MetaAttribute", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AttributeName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsPrimaryKey")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("MetaTableId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PhysicalTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<short>("SortOrder")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MetaTableId");
+
+                    b.HasIndex("PhysicalTypeId");
+
+                    b.ToTable("MetaAttributes");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.MetaRelationship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeleteRule")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RelationshipName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("SourceAttributeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TargetAttributeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UpdateRule")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceAttributeId");
+
+                    b.HasIndex("TargetAttributeId");
+
+                    b.ToTable("MetaRelationships");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.MetaTable", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("TableName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TargetDbId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TargetDbId");
+
+                    b.ToTable("MetaTables");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.TargetDb", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DbName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("DbmsId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsReadOnly")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DbmsId");
+
+                    b.ToTable("TargetDbs");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.Attempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("EndAttempt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("QueryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("StartAttempt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QueryId");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("Attempts");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -514,7 +554,7 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.ToTable("SqlQueries");
                 });
 
-            modelBuilder.Entity("Domain.SqlTask", b =>
+            modelBuilder.Entity("SQLModule.Domain.Training.SqlTask", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -564,61 +604,7 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.ToTable("SqlTasks");
                 });
 
-            modelBuilder.Entity("Domain.TargetDb", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("DbName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("DbmsId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<bool>("IsReadOnly")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DbmsId");
-
-                    b.ToTable("TargetDbs");
-                });
-
-            modelBuilder.Entity("Domain.TemplateObject", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("TemplateName")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TemplateObjects");
-                });
-
-            modelBuilder.Entity("Domain.Topic", b =>
+            modelBuilder.Entity("SQLModule.Domain.Training.Topic", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -651,30 +637,37 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.ToTable("Topics");
                 });
 
-            modelBuilder.Entity("Domain.Attempt", b =>
+            modelBuilder.Entity("SQLModule.Domain.DbmsCatalog.ParameterDefinition", b =>
                 {
-                    b.HasOne("Domain.SqlQuery", null)
-                        .WithMany()
-                        .HasForeignKey("QueryId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("SQLModule.Domain.DbmsCatalog.PhysicalType", "PhysicalType")
+                        .WithMany("ParameterDefinitions")
+                        .HasForeignKey("PhysicalTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.SqlTask", null)
-                        .WithMany()
-                        .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Navigation("PhysicalType");
                 });
 
-            modelBuilder.Entity("Domain.AttributeParameterValue", b =>
+            modelBuilder.Entity("SQLModule.Domain.DbmsCatalog.PhysicalType", b =>
                 {
-                    b.HasOne("Domain.MetaAttribute", "MetaAttribute")
+                    b.HasOne("SQLModule.Domain.DbmsCatalog.DbmsDictionary", "Dbms")
+                        .WithMany("PhysicalTypes")
+                        .HasForeignKey("DbmsId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Dbms");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.AttributeParameterValue", b =>
+                {
+                    b.HasOne("SQLModule.Domain.Schema.MetaAttribute", "MetaAttribute")
                         .WithMany()
                         .HasForeignKey("MetaAttributeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.ParameterDefinition", "ParameterDefinition")
+                    b.HasOne("SQLModule.Domain.DbmsCatalog.ParameterDefinition", "ParameterDefinition")
                         .WithMany("AttributeParameterValues")
                         .HasForeignKey("ParameterDefinitionId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -685,15 +678,15 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("ParameterDefinition");
                 });
 
-            modelBuilder.Entity("Domain.CellValue", b =>
+            modelBuilder.Entity("SQLModule.Domain.Schema.CellValue", b =>
                 {
-                    b.HasOne("Domain.DataRecord", "DataRecord")
+                    b.HasOne("SQLModule.Domain.Schema.DataRecord", "DataRecord")
                         .WithMany("CellValues")
                         .HasForeignKey("DataRecordId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.MetaAttribute", "MetaAttribute")
+                    b.HasOne("SQLModule.Domain.Schema.MetaAttribute", "MetaAttribute")
                         .WithMany("CellValues")
                         .HasForeignKey("MetaAttributeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -704,9 +697,9 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("MetaAttribute");
                 });
 
-            modelBuilder.Entity("Domain.DataRecord", b =>
+            modelBuilder.Entity("SQLModule.Domain.Schema.DataRecord", b =>
                 {
-                    b.HasOne("Domain.MetaTable", "MetaTable")
+                    b.HasOne("SQLModule.Domain.Schema.MetaTable", "MetaTable")
                         .WithMany("DataRecords")
                         .HasForeignKey("MetaTableId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -715,15 +708,15 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("MetaTable");
                 });
 
-            modelBuilder.Entity("Domain.MetaAttribute", b =>
+            modelBuilder.Entity("SQLModule.Domain.Schema.MetaAttribute", b =>
                 {
-                    b.HasOne("Domain.MetaTable", "MetaTable")
+                    b.HasOne("SQLModule.Domain.Schema.MetaTable", "MetaTable")
                         .WithMany("Attributes")
                         .HasForeignKey("MetaTableId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.PhysicalType", "PhysicalType")
+                    b.HasOne("SQLModule.Domain.DbmsCatalog.PhysicalType", "PhysicalType")
                         .WithMany()
                         .HasForeignKey("PhysicalTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -734,15 +727,15 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("PhysicalType");
                 });
 
-            modelBuilder.Entity("Domain.MetaRelationship", b =>
+            modelBuilder.Entity("SQLModule.Domain.Schema.MetaRelationship", b =>
                 {
-                    b.HasOne("Domain.MetaAttribute", "SourceAttribute")
+                    b.HasOne("SQLModule.Domain.Schema.MetaAttribute", "SourceAttribute")
                         .WithMany()
                         .HasForeignKey("SourceAttributeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.MetaAttribute", "TargetAttribute")
+                    b.HasOne("SQLModule.Domain.Schema.MetaAttribute", "TargetAttribute")
                         .WithMany()
                         .HasForeignKey("TargetAttributeId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -753,9 +746,9 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("TargetAttribute");
                 });
 
-            modelBuilder.Entity("Domain.MetaTable", b =>
+            modelBuilder.Entity("SQLModule.Domain.Schema.MetaTable", b =>
                 {
-                    b.HasOne("Domain.TargetDb", "TargetDb")
+                    b.HasOne("SQLModule.Domain.Schema.TargetDb", "TargetDb")
                         .WithMany("MetaTables")
                         .HasForeignKey("TargetDbId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -764,43 +757,47 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("TargetDb");
                 });
 
-            modelBuilder.Entity("Domain.ParameterDefinition", b =>
+            modelBuilder.Entity("SQLModule.Domain.Schema.TargetDb", b =>
                 {
-                    b.HasOne("Domain.PhysicalType", "PhysicalType")
-                        .WithMany("ParameterDefinitions")
-                        .HasForeignKey("PhysicalTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PhysicalType");
-                });
-
-            modelBuilder.Entity("Domain.PhysicalType", b =>
-                {
-                    b.HasOne("Domain.DbmsDictionary", "Dbms")
-                        .WithMany("PhysicalTypes")
+                    b.HasOne("SQLModule.Domain.DbmsCatalog.DbmsDictionary", "Dbms")
+                        .WithMany()
                         .HasForeignKey("DbmsId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Dbms");
                 });
 
-            modelBuilder.Entity("Domain.SqlTask", b =>
+            modelBuilder.Entity("SQLModule.Domain.Training.Attempt", b =>
                 {
-                    b.HasOne("Domain.SqlQuery", "SqlQuery")
+                    b.HasOne("SQLModule.Domain.Training.SqlQuery", null)
+                        .WithMany()
+                        .HasForeignKey("QueryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SQLModule.Domain.Training.SqlTask", null)
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.SqlTask", b =>
+                {
+                    b.HasOne("SQLModule.Domain.Training.SqlQuery", "SqlQuery")
                         .WithMany()
                         .HasForeignKey("SqlQueryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.TargetDb", "TargetDb")
+                    b.HasOne("SQLModule.Domain.Schema.TargetDb", "TargetDb")
                         .WithMany()
                         .HasForeignKey("TargetDbId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Topic", "Topic")
+                    b.HasOne("SQLModule.Domain.Training.Topic", "Topic")
                         .WithMany("Tasks")
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -813,20 +810,9 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("Topic");
                 });
 
-            modelBuilder.Entity("Domain.TargetDb", b =>
+            modelBuilder.Entity("SQLModule.Domain.Training.Topic", b =>
                 {
-                    b.HasOne("Domain.DbmsDictionary", "Dbms")
-                        .WithMany()
-                        .HasForeignKey("DbmsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Dbms");
-                });
-
-            modelBuilder.Entity("Domain.Topic", b =>
-                {
-                    b.HasOne("Domain.Topic", "ParentTopic")
+                    b.HasOne("SQLModule.Domain.Training.Topic", "ParentTopic")
                         .WithMany("SubTopics")
                         .HasForeignKey("ParentTopicId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -834,44 +820,44 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("ParentTopic");
                 });
 
-            modelBuilder.Entity("Domain.DataRecord", b =>
-                {
-                    b.Navigation("CellValues");
-                });
-
-            modelBuilder.Entity("Domain.DbmsDictionary", b =>
+            modelBuilder.Entity("SQLModule.Domain.DbmsCatalog.DbmsDictionary", b =>
                 {
                     b.Navigation("PhysicalTypes");
                 });
 
-            modelBuilder.Entity("Domain.MetaAttribute", b =>
+            modelBuilder.Entity("SQLModule.Domain.DbmsCatalog.ParameterDefinition", b =>
+                {
+                    b.Navigation("AttributeParameterValues");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.DbmsCatalog.PhysicalType", b =>
+                {
+                    b.Navigation("ParameterDefinitions");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.DataRecord", b =>
                 {
                     b.Navigation("CellValues");
                 });
 
-            modelBuilder.Entity("Domain.MetaTable", b =>
+            modelBuilder.Entity("SQLModule.Domain.Schema.MetaAttribute", b =>
+                {
+                    b.Navigation("CellValues");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.MetaTable", b =>
                 {
                     b.Navigation("Attributes");
 
                     b.Navigation("DataRecords");
                 });
 
-            modelBuilder.Entity("Domain.ParameterDefinition", b =>
-                {
-                    b.Navigation("AttributeParameterValues");
-                });
-
-            modelBuilder.Entity("Domain.PhysicalType", b =>
-                {
-                    b.Navigation("ParameterDefinitions");
-                });
-
-            modelBuilder.Entity("Domain.TargetDb", b =>
+            modelBuilder.Entity("SQLModule.Domain.Schema.TargetDb", b =>
                 {
                     b.Navigation("MetaTables");
                 });
 
-            modelBuilder.Entity("Domain.Topic", b =>
+            modelBuilder.Entity("SQLModule.Domain.Training.Topic", b =>
                 {
                     b.Navigation("SubTopics");
 

@@ -18,7 +18,9 @@ internal sealed class CreateTargetDbHandler(AppDbContext db)
     {
         if (!await db.DbmsDictionaries.AnyAsync(x => x.Id == command.DbmsId, ct))
         {
-            return Result<TargetDbResponse>.Fail(Error.NotFound(nameof(DbmsDictionary), command.DbmsId));
+            return Result<TargetDbResponse>.Fail(Error.Conflict(
+                "TargetDb.DbmsNotFound",
+                $"СУБД с id '{command.DbmsId}' не найдена."));
         }
 
         var entity = TargetDb.Create(command.DbmsId, command.DbName, command.Description, command.IsReadOnly);

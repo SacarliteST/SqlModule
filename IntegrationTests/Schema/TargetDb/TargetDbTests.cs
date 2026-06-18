@@ -1,7 +1,7 @@
-using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Shouldly;
+using SQLModule.Client;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.IntegrationTests.infrastructure;
 
@@ -12,7 +12,7 @@ public sealed class TargetDbTests : ApiTestBase
 {
     public TargetDbTests(TestApplication testApplication) : base(testApplication) { }
 
-    // ─── helpers ───────────────────────────────────────────────────────────────
+    // ─── helpers ──────────────────────────────────────────────────────────────
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
@@ -36,71 +36,97 @@ public sealed class TargetDbTests : ApiTestBase
         return json.GetProperty("id").GetGuid();
     }
 
-    // ─── happy path ────────────────────────────────────────────────────────────
+    // ─── happy path ───────────────────────────────────────────────────────────
 
-    [Fact(DisplayName = "Create→GetById→Update→Delete — happy path")]
+    [Fact(DisplayName = "Create→GetById→GetAll→Update→Delete — happy path")]
     public async Task CrudHappyPath()
     {
         var dbmsId = await CreateDbmsDictionaryAsync();
 
         // Create
-        var createReq = new CreateTargetDbRequest(dbmsId, "HappyDB", "desc", false);
-        var createResp = await HttpClient.PostAsJsonAsync("api/v1/target-dbs", createReq);
-        createResp.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var created = await createResp.Content.ReadFromJsonAsync<TargetDbResponse>(
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        var id = created!.Id;
+        var created = await TargetDbClient.CreateAsync(
+            new CreateTargetDbRequest(dbmsId, "HappyDB", "desc", false));
+        created.DbName.ShouldBe("HappyDB");
+        created.IsReadOnly.ShouldBeFalse();
 
         // GetById
-        var getResp = await HttpClient.GetAsync($"api/v1/target-dbs/{id}");
-        getResp.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var dto = await getResp.Content.ReadFromJsonAsync<TargetDbResponse>(
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        dto!.DbName.ShouldBe("HappyDB");
-        dto.IsReadOnly.ShouldBeFalse();
+        var found = await TargetDbClient.GetByIdAsync(created.Id);
+        found.ShouldNotBeNull();
+        found!.DbName.ShouldBe("HappyDB");
+
+        // GetAll
+        var page = await TargetDbClient.GetAllAsync(0, 50);
+        page.Items.ShouldContain(x => x.Id == created.Id);
 
         // Update
-        var updateReq = new UpdateTargetDbRequest("UpdatedDB", null, true);
-        var updateResp = await HttpClient.PutAsJsonAsync($"api/v1/target-dbs/{id}", updateReq);
-        updateResp.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        await TargetDbClient.UpdateAsync(
+            created.Id, new UpdateTargetDbRequest("UpdatedDB", null, true));
 
-        var getAfterUpdate = await HttpClient.GetAsync($"api/v1/target-dbs/{id}");
-        var updated = await getAfterUpdate.Content.ReadFromJsonAsync<TargetDbResponse>(
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        updated!.DbName.ShouldBe("UpdatedDB");
-        updated.IsReadOnly.ShouldBeTrue();
+        var afterUpdate = await TargetDbClient.GetByIdAsync(created.Id);
+        afterUpdate!.DbName.ShouldBe("UpdatedDB");
+        afterUpdate.IsReadOnly.ShouldBeTrue();
 
         // Delete
-        var deleteResp = await HttpClient.DeleteAsync($"api/v1/target-dbs/{id}");
-        deleteResp.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        await TargetDbClient.DeleteAsync(created.Id);
 
-        // GetById after delete → 404
-        var afterDelete = await HttpClient.GetAsync($"api/v1/target-dbs/{id}");
-        afterDelete.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var afterDelete = await TargetDbClient.GetByIdAsync(created.Id);
+        afterDelete.ShouldBeNull();
     }
 
-    // ─── negative ──────────────────────────────────────────────────────────────
+    // ─── 404 cases ────────────────────────────────────────────────────────────
 
-    [Fact(DisplayName = "Create с несуществующим DbmsId → 404 (Result.NotFound)")]
-    public async Task Create_NonExistentDbmsId_Returns404()
+    [Fact(DisplayName = "GetById несуществующего → null")]
+    public async Task GetById_UnknownId_ReturnsNull()
     {
-        var req = new CreateTargetDbRequest(Guid.NewGuid(), "SomeDB", null, false);
-        var resp = await HttpClient.PostAsJsonAsync("api/v1/target-dbs", req);
-        resp.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var result = await TargetDbClient.GetByIdAsync(Guid.NewGuid());
+        result.ShouldBeNull();
     }
 
-    [Fact(DisplayName = "Create с пустым DbName → 400 (ValidationProblem)")]
-    public async Task Create_EmptyDbName_Returns400()
+    [Fact(DisplayName = "Delete несуществующего → без исключения (no-op)")]
+    public async Task Delete_UnknownId_NoException()
     {
-        var req = new CreateTargetDbRequest(Guid.NewGuid(), "", null, false);
-        var resp = await HttpClient.PostAsJsonAsync("api/v1/target-dbs", req);
-        resp.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        await Should.NotThrowAsync(() => TargetDbClient.DeleteAsync(Guid.NewGuid()));
     }
 
-    [Fact(DisplayName = "GetById по несуществующему Id → 404")]
-    public async Task GetById_UnknownId_Returns404()
+    [Fact(DisplayName = "Update несуществующего → NotFoundException")]
+    public async Task Update_UnknownId_ThrowsNotFoundException()
     {
-        var resp = await HttpClient.GetAsync($"api/v1/target-dbs/{Guid.NewGuid()}");
-        resp.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        await Should.ThrowAsync<NotFoundException>(
+            () => TargetDbClient.UpdateAsync(
+                Guid.NewGuid(), new UpdateTargetDbRequest("DB", null, false)));
+    }
+
+    // ─── conflict / validation ────────────────────────────────────────────────
+
+    [Fact(DisplayName = "Create с несуществующим DbmsId → ConflictException (409)")]
+    public async Task Create_NonExistentDbmsId_ThrowsConflictException()
+    {
+        await Should.ThrowAsync<ConflictException>(
+            () => TargetDbClient.CreateAsync(
+                new CreateTargetDbRequest(Guid.NewGuid(), "SomeDB", null, false)));
+    }
+
+    [Fact(DisplayName = "Create с пустым DbName → ValidationException (с Errors)")]
+    public async Task Create_EmptyDbName_ThrowsValidationException()
+    {
+        var ex = await Should.ThrowAsync<ValidationException>(
+            () => TargetDbClient.CreateAsync(
+                new CreateTargetDbRequest(Guid.NewGuid(), "", null, false)));
+        ex.Errors.ShouldNotBeEmpty();
+        ex.Errors.ShouldContainKey("DbName");
+    }
+
+    [Fact(DisplayName = "Update с пустым DbName → ValidationException (с Errors)")]
+    public async Task Update_EmptyDbName_ThrowsValidationException()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var created = await TargetDbClient.CreateAsync(
+            new CreateTargetDbRequest(dbmsId, "TestDB", null, false));
+
+        var ex = await Should.ThrowAsync<ValidationException>(
+            () => TargetDbClient.UpdateAsync(
+                created.Id, new UpdateTargetDbRequest("", null, false)));
+        ex.Errors.ShouldNotBeEmpty();
+        ex.Errors.ShouldContainKey("DbName");
     }
 }
