@@ -12,8 +12,9 @@ public sealed class GetTemplateByIdEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
-        app.MapGet(ApiRoutes.Template.ByIdRoute, Handle)
+        app.MapGet(ApiRoutes.Template.TemplateObject, Handle)
             .WithName("GetTemplateById")
+            .WithTags("Templates")
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status404NotFound);
     }

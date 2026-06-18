@@ -13,8 +13,9 @@ public sealed class UpdateTemplateEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
-        app.MapPut(ApiRoutes.Template.ByIdRoute, Handle)
+        app.MapPut(ApiRoutes.Template.TemplateObject, Handle)
             .WithName("UpdateTemplate")
+            .WithTags("Templates")
             .Produces<Response>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)

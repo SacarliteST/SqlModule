@@ -1,62 +1,275 @@
-﻿namespace SQLModule.Contracts;
+namespace SQLModule.Contracts;
 
-/// <summary>
-/// Пути к API
-/// </summary>
+/// <summary>Пути к API.</summary>
 public static class ApiRoutes
 {
-    /// <summary>
-    /// Общий префикс Api v1
-    /// </summary>
+    /// <summary>Общий префикс Api v1.</summary>
     public const string PrefixV1 = "api/v1";
 
-    /// <summary>
-    /// Маршруты ресурса Template
-    /// </summary>
+    // ─── Template (demo) ─────────────────────────────────────────────────────
+
+    /// <summary>Маршруты демо-ресурса Template.</summary>
     public static class Template
     {
-        /// <summary>
-        /// Коллекция шаблонов (абсолютный путь, используется клиентом и сервером как база группы)
-        /// </summary>
+        /// <summary>Коллекция (абсолютный путь).</summary>
         public const string TemplateObjects = PrefixV1 + "/templates";
 
-        /// <summary>
-        /// Шаблон по идентификатору (абсолютный путь)
-        /// </summary>
+        /// <summary>Элемент по Id (абсолютный путь).</summary>
         public const string TemplateObject = TemplateObjects + "/{id}";
 
-        /// <summary>
-        /// Относительный маршрут коллекции внутри группы
-        /// </summary>
-        public const string CollectionRoute = "";
+        /// <inheritdoc cref="ForTemplateObject"/>
+        public static string ForTemplateObject(Guid id) => $"{TemplateObjects}/{id}";
 
-        /// <summary>
-        /// Относительный маршрут единичного ресурса внутри группы
-        /// </summary>
-        public const string ByIdRoute = "{id}";
-
-        /// <summary>
-        /// Формирует абсолютный URL для конкретного шаблона
-        /// </summary>
-        public static string ForTemplateObject(Guid id)
-            => ReplaceUrlSegment(TemplateObject, "id", id.ToString());
-
-        /// <summary>
-        /// Формирует абсолютный URL с параметрами пагинации
-        /// </summary>
+        /// <inheritdoc cref="ForTemplateObjectPagination"/>
         public static string ForTemplateObjectPagination(int offset, int limit)
-            => ReplaceUrlSegments(
-                TemplateObjects + "?offset={offset}&limit={limit}",
-                ("offset", offset.ToString()),
-                ("limit", limit.ToString()));
+            => $"{TemplateObjects}?offset={offset}&limit={limit}";
+    }
 
-        private static string ReplaceUrlSegment(string template, string name, string value)
+    // ─── DbmsCatalog ─────────────────────────────────────────────────────────
+
+    /// <summary>Маршруты контекста СУБД-справочника.</summary>
+    public static class DbmsCatalog
+    {
+        /// <summary>Справочник СУБД.</summary>
+        public static class DbmsDictionaries
         {
-            var escapedUri = Uri.EscapeDataString(value);
-            return template.Replace('{' + name + '}', escapedUri);
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/dbms-dictionaries";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
         }
 
-        private static string ReplaceUrlSegments(string template, params (string Name, string Value)[] segments)
-            => segments.Aggregate(template, (current, segment) => ReplaceUrlSegment(current, segment.Name, segment.Value));
+        /// <summary>Физические типы данных.</summary>
+        public static class PhysicalTypes
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/physical-types";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>Определения параметров физических типов.</summary>
+        public static class ParameterDefinitions
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/parameter-definitions";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+    }
+
+    // ─── Schema ──────────────────────────────────────────────────────────────
+
+    /// <summary>Маршруты контекста схемы данных.</summary>
+    public static class Schema
+    {
+        /// <summary>Целевые БД.</summary>
+        public static class TargetDbs
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/target-dbs";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>Мета-таблицы.</summary>
+        public static class MetaTables
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/meta-tables";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>Мета-атрибуты.</summary>
+        public static class MetaAttributes
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/meta-attributes";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>Связи между атрибутами.</summary>
+        public static class MetaRelationships
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/meta-relationships";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>Значения параметров атрибутов.</summary>
+        public static class AttributeParameterValues
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/attribute-parameter-values";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>Строки данных (EAV).</summary>
+        public static class DataRecords
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/data-records";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>Значения ячеек (EAV).</summary>
+        public static class CellValues
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/cell-values";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+    }
+
+    // ─── Training ─────────────────────────────────────────────────────────────
+
+    /// <summary>Маршруты контекста тренажёра.</summary>
+    public static class Training
+    {
+        /// <summary>Темы.</summary>
+        public static class Topics
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/topics";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <summary>Смена родительской темы.</summary>
+            public const string Parent = ById + "/parent";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForParent"/>
+            public static string ForParent(Guid id) => $"{Collection}/{id}/parent";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>SQL-запросы.</summary>
+        public static class SqlQueries
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/sql-queries";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>SQL-задания.</summary>
+        public static class SqlTasks
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/sql-tasks";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
+
+        /// <summary>Попытки выполнения заданий.</summary>
+        public static class Attempts
+        {
+            /// <summary>Коллекция.</summary>
+            public const string Collection = PrefixV1 + "/attempts";
+
+            /// <summary>Элемент по Id.</summary>
+            public const string ById = Collection + "/{id}";
+
+            /// <inheritdoc cref="ForId"/>
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPagination"/>
+            public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
+        }
     }
 }

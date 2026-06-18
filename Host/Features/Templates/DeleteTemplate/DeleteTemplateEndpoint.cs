@@ -12,8 +12,9 @@ public sealed class DeleteTemplateEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
-        app.MapDelete(ApiRoutes.Template.ByIdRoute, Handle)
+        app.MapDelete(ApiRoutes.Template.TemplateObject, Handle)
             .WithName("DeleteTemplate")
+            .WithTags("Templates")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
