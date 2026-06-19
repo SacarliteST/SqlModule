@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SQLModule.Client.TargetDb;
+using SQLModule.Client.Topic;
 
 namespace SQLModule.Client;
 
@@ -9,7 +10,7 @@ namespace SQLModule.Client;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Регистрирует <see cref="ITargetDbClient"/> и базовую HTTP-инфраструктуру клиента.
+    /// Регистрирует типизированных клиентов модуля и базовую HTTP-инфраструктуру.
     /// <see cref="SqlModuleClientOptions"/> привязываются из секции
     /// <see cref="SqlModuleClientOptions.SectionKey"/> переданной конфигурации.
     /// </summary>
@@ -25,6 +26,11 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ErrorDelegatingHandler>();
 
         services.AddHttpClient<ITargetDbClient, TargetDbClient>((sp, http) =>
+                http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
+                    .Value.BaseAddress)
+            .AddHttpMessageHandler<ErrorDelegatingHandler>();
+
+        services.AddHttpClient<ITopicClient, TopicClient>((sp, http) =>
                 http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
                     .Value.BaseAddress)
             .AddHttpMessageHandler<ErrorDelegatingHandler>();

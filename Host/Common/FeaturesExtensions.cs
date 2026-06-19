@@ -1,4 +1,5 @@
 using SQLModule.Host.Features.Schema.TargetDbs;
+using SQLModule.Host.Features.Training.Topics;
 
 namespace SQLModule.Host.Common;
 
@@ -14,5 +15,6 @@ internal static class FeaturesExtensions
 {
     /// <summary>Регистрирует хендлеры всех фич.</summary>
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
-        => s.AddTargetDbs();
+        => s.AddTargetDbs()
+            .AddTopics();
 }

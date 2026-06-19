@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using SQLModule.Client;
 using SQLModule.Client.TargetDb;
+using SQLModule.Client.Topic;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Host;
 using Testcontainers.PostgreSql;
@@ -14,7 +15,7 @@ namespace SQLModule.IntegrationTests.infrastructure;
 
 /// <summary>
 /// Фабрика тест-приложения: поднимает in-process ASP.NET Core хост с PostgreSQL-контейнером
-/// и предоставляет готовый <see cref="ITargetDbClient"/> для интеграционных тестов.
+/// и предоставляет готовые типизированные клиенты для интеграционных тестов.
 /// </summary>
 public sealed class TestApplication :
     WebApplicationFactory<IHostMarker>,
@@ -24,8 +25,11 @@ public sealed class TestApplication :
     private const string TestUser = "postgresTestUser";
     private const string TestPassword = "postgresTestPassword";
 
-    /// <summary>Типизированный клиент, сконфигурированный через <see cref="BuildClientServiceProvider"/>.</summary>
+    /// <summary>Типизированный клиент для работы с целевыми БД.</summary>
     public ITargetDbClient TargetDbClient { get; private set; } = null!;
+
+    /// <summary>Типизированный клиент для работы с темами тренажёра.</summary>
+    public ITopicClient TopicClient { get; private set; } = null!;
 
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
@@ -42,6 +46,7 @@ public sealed class TestApplication :
         await postgreContainer.StartAsync();
         var sp = BuildClientServiceProvider();
         TargetDbClient = sp.GetRequiredService<ITargetDbClient>();
+        TopicClient = sp.GetRequiredService<ITopicClient>();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -57,8 +62,8 @@ public sealed class TestApplication :
     }
 
     /// <summary>
-    /// Строит изолированный DI-контейнер для клиента: регистрирует <see cref="TestServerMessageFilter"/>,
-    /// чтобы HTTP-запросы клиента шли через in-process тест-сервер, а не в реальную сеть.
+    /// Строит изолированный DI-контейнер для клиентов: регистрирует <see cref="TestServerMessageFilter"/>,
+    /// чтобы HTTP-запросы клиентов шли через in-process тест-сервер, а не в реальную сеть.
     /// </summary>
     private IServiceProvider BuildClientServiceProvider()
     {
