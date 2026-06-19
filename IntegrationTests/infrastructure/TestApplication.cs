@@ -12,6 +12,10 @@ using Testcontainers.PostgreSql;
 
 namespace SQLModule.IntegrationTests.infrastructure;
 
+/// <summary>
+/// Фабрика тест-приложения: поднимает in-process ASP.NET Core хост с PostgreSQL-контейнером
+/// и предоставляет готовый <see cref="ITargetDbClient"/> для интеграционных тестов.
+/// </summary>
 public sealed class TestApplication :
     WebApplicationFactory<IHostMarker>,
     IAsyncLifetime
@@ -20,6 +24,7 @@ public sealed class TestApplication :
     private const string TestUser = "postgresTestUser";
     private const string TestPassword = "postgresTestPassword";
 
+    /// <summary>Типизированный клиент, сконфигурированный через <see cref="BuildClientServiceProvider"/>.</summary>
     public ITargetDbClient TargetDbClient { get; private set; } = null!;
 
     private readonly PostgreSqlContainer postgreContainer
@@ -51,6 +56,10 @@ public sealed class TestApplication :
         base.ConfigureWebHost(builder);
     }
 
+    /// <summary>
+    /// Строит изолированный DI-контейнер для клиента: регистрирует <see cref="TestServerMessageFilter"/>,
+    /// чтобы HTTP-запросы клиента шли через in-process тест-сервер, а не в реальную сеть.
+    /// </summary>
     private IServiceProvider BuildClientServiceProvider()
     {
         var config = new ConfigurationBuilder()

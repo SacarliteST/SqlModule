@@ -4,7 +4,12 @@ using Shouldly;
 
 namespace SQLModule.IntegrationTests.infrastructure;
 
-internal class TestServerMessageFilter : IHttpMessageHandlerBuilderFilter
+/// <summary>
+/// Перехватчик HTTP-запросов типизированного клиента: запросы, адресованные тест-серверу,
+/// направляются напрямую через <see cref="Microsoft.AspNetCore.TestHost.TestServer.CreateHandler"/>,
+/// минуя реальную сеть.
+/// </summary>
+internal sealed class TestServerMessageFilter : IHttpMessageHandlerBuilderFilter
 {
     private readonly TestServer server;
 

@@ -6,7 +6,10 @@ namespace SQLModule.IntegrationTests.infrastructure;
 [Collection(IntegrationTestCollection.Name)]
 public abstract class ApiTestBase
 {
+    /// <summary>HTTP-клиент без типизации — для вызовов эндпоинтов без клиентского SDK.</summary>
     protected readonly HttpClient HttpClient;
+
+    /// <summary>Типизированный клиент модуля — основной способ взаимодействия с API в тестах.</summary>
     protected readonly ITargetDbClient TargetDbClient;
 
     protected ApiTestBase(TestApplication testApplication)
