@@ -5,6 +5,7 @@ using Shouldly;
 using SQLModule.Client;
 using SQLModule.Client.SqlTask;
 using SQLModule.Contracts.Schema.TargetDb;
+using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
@@ -66,17 +67,11 @@ public sealed class SqlTaskTests : ApiTestBase
         return result.Id;
     }
 
-    /// <summary>
-    /// Создаёт SQL-запрос напрямую через AppDbContext (HTTP-API для SqlQuery ещё не реализовано).
-    /// </summary>
+    /// <summary>Создаёт SQL-запрос через API и возвращает его Id.</summary>
     private async Task<Guid> CreateSqlQueryAsync()
     {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var entity = SqlQuery.Create("SELECT 1", false, false);
-        db.SqlQueries.Add(entity);
-        await db.SaveChangesAsync();
-        return entity.Id;
+        var result = await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest("SELECT 1", false, false));
+        return result.Id;
     }
 
     /// <summary>Создаёт SQL-задание с готовыми FK и возвращает ответ сервера.</summary>
