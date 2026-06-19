@@ -33,7 +33,7 @@ internal sealed class ErrorDelegatingHandler : DelegatingHandler
 
         throw (int)response.StatusCode switch
         {
-            400 => new ValidationException((int)response.StatusCode, problem),
+            400 or 422 => new ValidationException((int)response.StatusCode, problem),
             409 => new ConflictException((int)response.StatusCode, problem),
             _ => new ApiException((int)response.StatusCode, problem)
         };

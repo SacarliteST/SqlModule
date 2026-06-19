@@ -20,16 +20,12 @@ internal sealed class CreateAttemptHandler(AppDbContext db)
     {
         if (!await db.SqlTasks.AnyAsync(t => t.Id == command.TaskId, ct))
         {
-            return Result<AttemptResponse>.Fail(Error.Conflict(
-                "Attempt.TaskNotFound",
-                $"Задание с id '{command.TaskId}' не найдено."));
+            return Result<AttemptResponse>.Fail(AttemptErrors.TaskNotFound(command.TaskId));
         }
 
         if (!await db.SqlQueries.AnyAsync(q => q.Id == command.QueryId, ct))
         {
-            return Result<AttemptResponse>.Fail(Error.Conflict(
-                "Attempt.QueryNotFound",
-                $"SQL-запрос с id '{command.QueryId}' не найден."));
+            return Result<AttemptResponse>.Fail(AttemptErrors.QueryNotFound(command.QueryId));
         }
 
         var entity = Attempt.Create(

@@ -15,7 +15,7 @@ internal sealed class UpdateTopicHandler(AppDbContext db)
         var entity = await db.Topics.FirstOrDefaultAsync(t => t.Id == command.Id, ct);
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound("Topic", command.Id));
+            return Result.Fail(TopicErrors.NotFound(command.Id));
         }
 
         entity.Update(command.TopicName);

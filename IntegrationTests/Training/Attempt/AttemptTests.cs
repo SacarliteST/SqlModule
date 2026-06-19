@@ -8,6 +8,7 @@ using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Common;
+using SQLModule.Host.Features.Training.Attempts;
 using SQLModule.IntegrationTests.infrastructure;
 using DomainAttempt = SQLModule.Domain.Training.Attempt;
 using DomainSqlTask = SQLModule.Domain.Training.SqlTask;
@@ -268,8 +269,8 @@ public sealed class AttemptTests : ApiTestBase
         ex.Errors.ShouldContainKey("EndAttempt");
     }
 
-    [Fact(DisplayName = "Update с EndAttempt < entity.StartAttempt → ConflictException")]
-    public async Task Update_EndBeforeEntityStart_ThrowsConflictException()
+    [Fact(DisplayName = "Update с EndAttempt < entity.StartAttempt → ValidationException (422)")]
+    public async Task Update_EndBeforeEntityStart_ThrowsValidationException()
     {
         // Arrange
         var (taskId, queryId) = await CreatePrerequisitesAsync();
@@ -279,8 +280,11 @@ public sealed class AttemptTests : ApiTestBase
         var endBeforeStart = created.StartAttempt.AddSeconds(-1);
         var request = new UpdateAttemptRequest(true, endBeforeStart);
 
-        // Act + Assert
-        await Should.ThrowAsync<ConflictException>(
+        // Act
+        var ex = await Should.ThrowAsync<ValidationException>(
             () => AttemptClient.UpdateAsync(created.Id, request));
+
+        // Assert
+        ex.Problem!.Title.ShouldBe(AttemptErrors.InvalidTimeRange.Code);
     }
 }

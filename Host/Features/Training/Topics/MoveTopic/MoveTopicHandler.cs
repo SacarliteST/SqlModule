@@ -15,23 +15,19 @@ internal sealed class MoveTopicHandler(AppDbContext db)
         var entity = await db.Topics.FirstOrDefaultAsync(t => t.Id == command.Id, ct);
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound("Topic", command.Id));
+            return Result.Fail(TopicErrors.NotFound(command.Id));
         }
 
         if (command.NewParentTopicId.HasValue)
         {
             if (!await db.Topics.AnyAsync(t => t.Id == command.NewParentTopicId.Value, ct))
             {
-                return Result.Fail(Error.Conflict(
-                    "Topic.ParentNotFound",
-                    $"Родительская тема с id '{command.NewParentTopicId}' не найдена."));
+                return Result.Fail(TopicErrors.ParentNotFound(command.NewParentTopicId.Value));
             }
 
             if (await WouldCreateCycleAsync(command.Id, command.NewParentTopicId.Value, ct))
             {
-                return Result.Fail(Error.Conflict(
-                    "Topic.CycleDetected",
-                    "Перемещение создаст цикл в иерархии тем."));
+                return Result.Fail(TopicErrors.Cycle);
             }
         }
 

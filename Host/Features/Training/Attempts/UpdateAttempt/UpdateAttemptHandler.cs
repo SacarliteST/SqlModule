@@ -16,14 +16,12 @@ internal sealed class UpdateAttemptHandler(AppDbContext db)
         var entity = await db.Attempts.FirstOrDefaultAsync(x => x.Id == command.Id, ct);
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound("Attempt", command.Id));
+            return Result.Fail(AttemptErrors.NotFound(command.Id));
         }
 
         if (command.EndAttempt < entity.StartAttempt)
         {
-            return Result.Fail(Error.Conflict(
-                "Attempt.InvalidTimeRange",
-                "Время завершения раньше начала."));
+            return Result.Fail(AttemptErrors.InvalidTimeRange);
         }
 
         entity.Update(command.IsSuccess, command.EndAttempt);

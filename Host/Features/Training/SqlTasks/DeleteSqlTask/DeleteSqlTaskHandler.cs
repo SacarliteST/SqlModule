@@ -15,14 +15,12 @@ internal sealed class DeleteSqlTaskHandler(AppDbContext db)
         var entity = await db.SqlTasks.FirstOrDefaultAsync(x => x.Id == command.Id, ct);
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound("SqlTask", command.Id));
+            return Result.Fail(SqlTaskErrors.NotFound(command.Id));
         }
 
         if (await db.Attempts.AnyAsync(a => a.TaskId == command.Id, ct))
         {
-            return Result.Fail(Error.Conflict(
-                "SqlTask.HasAttempts",
-                $"Задание '{command.Id}' имеет попытки выполнения и не может быть удалено."));
+            return Result.Fail(SqlTaskErrors.HasAttempts(command.Id));
         }
 
         db.SqlTasks.Remove(entity);

@@ -38,6 +38,7 @@ public static class ResultExtensions
     {
         var statusCode = error.Type switch
         {
+            ErrorType.Validation => StatusCodes.Status422UnprocessableEntity,
             ErrorType.NotFound => StatusCodes.Status404NotFound,
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError

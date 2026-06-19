@@ -18,7 +18,7 @@ internal sealed class GetTopicByIdHandler(AppDbContext db)
 
         if (entity is null)
         {
-            return Result<TopicResponse>.Fail(Error.NotFound("Topic", query.Id));
+            return Result<TopicResponse>.Fail(TopicErrors.NotFound(query.Id));
         }
 
         return TopicMappings.ToResponse(entity);

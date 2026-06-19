@@ -18,7 +18,7 @@ internal sealed class GetSqlTaskByIdHandler(AppDbContext db)
 
         if (entity is null)
         {
-            return Result<SqlTaskResponse>.Fail(Error.NotFound("SqlTask", query.Id));
+            return Result<SqlTaskResponse>.Fail(SqlTaskErrors.NotFound(query.Id));
         }
 
         return SqlTaskMappings.ToResponse(entity);

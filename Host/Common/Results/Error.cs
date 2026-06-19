@@ -5,14 +5,17 @@
 /// </summary>
 public enum ErrorType
 {
-    /// <summary>Внутренняя ошибка (500).</summary>
-    Failure,
+    /// <summary>Нарушение бизнес-правила ввода (422).</summary>
+    Validation,
 
     /// <summary>Сущность не найдена (404).</summary>
     NotFound,
 
     /// <summary>Конфликт состояния (409).</summary>
-    Conflict
+    Conflict,
+
+    /// <summary>Внутренняя ошибка (500).</summary>
+    Failure
 }
 
 /// <summary>
