@@ -15,21 +15,17 @@ internal sealed class DeleteTopicHandler(AppDbContext db)
         var entity = await db.Topics.FirstOrDefaultAsync(t => t.Id == command.Id, ct);
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound("Topic", command.Id));
+            return Result.Fail(TopicErrors.NotFound(command.Id));
         }
 
         if (await db.Topics.AnyAsync(t => t.ParentTopicId == command.Id, ct))
         {
-            return Result.Fail(Error.Conflict(
-                "Topic.HasChildren",
-                $"Тема '{command.Id}' содержит подтемы и не может быть удалена."));
+            return Result.Fail(TopicErrors.HasSubtopics);
         }
 
         if (await db.SqlTasks.AnyAsync(t => t.TopicId == command.Id, ct))
         {
-            return Result.Fail(Error.Conflict(
-                "Topic.HasChildren",
-                $"Тема '{command.Id}' содержит задания и не может быть удалена."));
+            return Result.Fail(TopicErrors.HasTasks);
         }
 
         db.Topics.Remove(entity);

@@ -16,7 +16,7 @@ internal sealed class UpdateSqlQueryHandler(AppDbContext db)
         var entity = await db.SqlQueries.FirstOrDefaultAsync(x => x.Id == command.Id, ct);
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound("SqlQuery", command.Id));
+            return Result.Fail(SqlQueryErrors.NotFound(command.Id));
         }
 
         entity.Update(command.QueryText, command.StrictColumnOrder, command.StrictRowOrder);

@@ -18,7 +18,7 @@ internal sealed class GetSqlQueryByIdHandler(AppDbContext db)
 
         if (entity is null)
         {
-            return Result<SqlQueryResponse>.Fail(Error.NotFound("SqlQuery", query.Id));
+            return Result<SqlQueryResponse>.Fail(SqlQueryErrors.NotFound(query.Id));
         }
 
         return SqlQueryMappings.ToResponse(entity);

@@ -18,9 +18,7 @@ internal sealed class CreateTopicHandler(AppDbContext db)
         if (command.ParentTopicId.HasValue &&
             !await db.Topics.AnyAsync(t => t.Id == command.ParentTopicId.Value, ct))
         {
-            return Result<TopicResponse>.Fail(Error.Conflict(
-                "Topic.ParentNotFound",
-                $"Родительская тема с id '{command.ParentTopicId}' не найдена."));
+            return Result<TopicResponse>.Fail(TopicErrors.ParentNotFound(command.ParentTopicId.Value));
         }
 
         var entity = Topic.Create(command.TopicName, command.ParentTopicId);

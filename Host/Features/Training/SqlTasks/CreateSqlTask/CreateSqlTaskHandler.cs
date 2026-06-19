@@ -19,23 +19,17 @@ internal sealed class CreateSqlTaskHandler(AppDbContext db)
     {
         if (!await db.TargetDbs.AnyAsync(x => x.Id == command.TargetDbId, ct))
         {
-            return Result<SqlTaskResponse>.Fail(Error.Conflict(
-                "SqlTask.TargetDbNotFound",
-                $"Целевая БД с id '{command.TargetDbId}' не найдена."));
+            return Result<SqlTaskResponse>.Fail(SqlTaskErrors.TargetDbNotFound(command.TargetDbId));
         }
 
         if (!await db.Topics.AnyAsync(x => x.Id == command.TopicId, ct))
         {
-            return Result<SqlTaskResponse>.Fail(Error.Conflict(
-                "SqlTask.TopicNotFound",
-                $"Тема с id '{command.TopicId}' не найдена."));
+            return Result<SqlTaskResponse>.Fail(SqlTaskErrors.TopicNotFound(command.TopicId));
         }
 
         if (!await db.SqlQueries.AnyAsync(x => x.Id == command.SqlQueryId, ct))
         {
-            return Result<SqlTaskResponse>.Fail(Error.Conflict(
-                "SqlTask.QueryNotFound",
-                $"SQL-запрос с id '{command.SqlQueryId}' не найден."));
+            return Result<SqlTaskResponse>.Fail(SqlTaskErrors.QueryNotFound(command.SqlQueryId));
         }
 
         var entity = SqlTask.Create(

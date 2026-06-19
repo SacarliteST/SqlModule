@@ -18,7 +18,7 @@ internal sealed class GetAttemptByIdHandler(AppDbContext db)
 
         if (entity is null)
         {
-            return Result<AttemptResponse>.Fail(Error.NotFound("Attempt", query.Id));
+            return Result<AttemptResponse>.Fail(AttemptErrors.NotFound(query.Id));
         }
 
         return AttemptMappings.ToResponse(entity);

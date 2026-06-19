@@ -15,7 +15,7 @@ internal sealed class DeleteAttemptHandler(AppDbContext db)
         var entity = await db.Attempts.FirstOrDefaultAsync(x => x.Id == command.Id, ct);
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound("Attempt", command.Id));
+            return Result.Fail(AttemptErrors.NotFound(command.Id));
         }
 
         db.Attempts.Remove(entity);

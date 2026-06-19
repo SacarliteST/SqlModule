@@ -15,7 +15,7 @@ internal sealed class DeleteSqlQueryHandler(AppDbContext db)
         var entity = await db.SqlQueries.FirstOrDefaultAsync(x => x.Id == command.Id, ct);
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound("SqlQuery", command.Id));
+            return Result.Fail(SqlQueryErrors.NotFound(command.Id));
         }
 
         var inUse = await db.SqlTasks.AnyAsync(t => t.SqlQueryId == command.Id, ct)
@@ -23,9 +23,7 @@ internal sealed class DeleteSqlQueryHandler(AppDbContext db)
 
         if (inUse)
         {
-            return Result.Fail(Error.Conflict(
-                "SqlQuery.InUse",
-                "Запрос используется заданиями или попытками."));
+            return Result.Fail(SqlQueryErrors.InUse);
         }
 
         db.SqlQueries.Remove(entity);

@@ -16,7 +16,7 @@ internal sealed class UpdateSqlTaskHandler(AppDbContext db)
         var entity = await db.SqlTasks.FirstOrDefaultAsync(x => x.Id == command.Id, ct);
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound("SqlTask", command.Id));
+            return Result.Fail(SqlTaskErrors.NotFound(command.Id));
         }
 
         entity.Update(command.TaskName, command.TaskText, command.DifficultyLevel);
