@@ -8,6 +8,7 @@ using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.infrastructure;
+using DomainAttempt = SQLModule.Domain.Training.Attempt;
 using DomainSqlTask = SQLModule.Domain.Training.SqlTask;
 
 namespace SQLModule.IntegrationTests.Training.SqlQuery;
@@ -66,7 +67,7 @@ public sealed class SqlQueryTests : ApiTestBase
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var attempt = Attempt.Create(
+        var attempt = DomainAttempt.Create(
             Guid.NewGuid(), true,
             DateTimeOffset.UtcNow.AddSeconds(-5), DateTimeOffset.UtcNow,
             taskId, queryId);
