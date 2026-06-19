@@ -1,4 +1,5 @@
 ﻿using SQLModule.Host.Features.Schema.TargetDbs;
+using SQLModule.Host.Features.Training.SqlQueries;
 using SQLModule.Host.Features.Training.SqlTasks;
 using SQLModule.Host.Features.Training.Topics;
 
@@ -18,5 +19,6 @@ internal static class FeaturesExtensions
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
         => s.AddTargetDbs()
             .AddTopics()
-            .AddSqlTasks();
+            .AddSqlTasks()
+            .AddSqlQueries();
 }

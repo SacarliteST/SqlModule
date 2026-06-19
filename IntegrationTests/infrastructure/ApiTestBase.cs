@@ -1,4 +1,5 @@
-﻿using SQLModule.Client.SqlTask;
+﻿using SQLModule.Client.SqlQuery;
+using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
 using SQLModule.Client.Topic;
 
@@ -20,11 +21,15 @@ public abstract class ApiTestBase
     /// <summary>Типизированный клиент для работы с SQL-заданиями тренажёра.</summary>
     protected readonly ISqlTaskClient SqlTaskClient;
 
+    /// <summary>Типизированный клиент для работы с эталонными SQL-запросами.</summary>
+    protected readonly ISqlQueryClient SqlQueryClient;
+
     protected ApiTestBase(TestApplication testApplication)
     {
         HttpClient = testApplication.CreateClient();
         TargetDbClient = testApplication.TargetDbClient;
         TopicClient = testApplication.TopicClient;
         SqlTaskClient = testApplication.SqlTaskClient;
+        SqlQueryClient = testApplication.SqlQueryClient;
     }
 }

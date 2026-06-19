@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using SQLModule.Client;
+using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
 using SQLModule.Client.Topic;
@@ -35,6 +36,9 @@ public sealed class TestApplication :
     /// <summary>Типизированный клиент для работы с SQL-заданиями тренажёра.</summary>
     public ISqlTaskClient SqlTaskClient { get; private set; } = null!;
 
+    /// <summary>Типизированный клиент для работы с эталонными SQL-запросами.</summary>
+    public ISqlQueryClient SqlQueryClient { get; private set; } = null!;
+
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
                     .WithImage(DockerImages.PostgreSql)
@@ -52,6 +56,7 @@ public sealed class TestApplication :
         TargetDbClient = sp.GetRequiredService<ITargetDbClient>();
         TopicClient = sp.GetRequiredService<ITopicClient>();
         SqlTaskClient = sp.GetRequiredService<ISqlTaskClient>();
+        SqlQueryClient = sp.GetRequiredService<ISqlQueryClient>();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
