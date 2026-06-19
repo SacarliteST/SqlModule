@@ -13,6 +13,12 @@ public sealed class UpdateTargetDbEndpoint : IEndpoint
         app.MapPut(ApiRoutes.Schema.TargetDbs.ById, Handle)
             .WithName("UpdateTargetDb")
             .WithTags("Schema")
+            .WithSummary("Обновить целевую БД")
+            .WithDescription(
+                "Обновляет поля существующей БД-песочницы. " +
+                "Возвращает 204 No Content. " +
+                "400 — не прошла валидация входных данных. " +
+                "404 — запись с указанным id не найдена.")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)

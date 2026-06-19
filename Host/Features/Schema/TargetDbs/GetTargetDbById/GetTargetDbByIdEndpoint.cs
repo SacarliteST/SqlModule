@@ -13,6 +13,10 @@ public sealed class GetTargetDbByIdEndpoint : IEndpoint
         app.MapGet(ApiRoutes.Schema.TargetDbs.ById, Handle)
             .WithName("GetTargetDbById")
             .WithTags("Schema")
+            .WithSummary("Получить целевую БД по Id")
+            .WithDescription(
+                "Возвращает 200 OK с данными БД. " +
+                "404 — запись с указанным id не найдена.")
             .Produces<TargetDbResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
     }

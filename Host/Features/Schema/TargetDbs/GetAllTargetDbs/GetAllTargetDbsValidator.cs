@@ -1,11 +1,7 @@
 using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
+using SQLModule.Contracts.Schema.TargetDb;
 
 namespace SQLModule.Host.Features.Schema.TargetDbs;
-
-internal record GetAllTargetDbsRequest(
-    [FromQuery] int Offset = 0,
-    [FromQuery] int Limit = 20);
 
 internal sealed class GetAllTargetDbsValidator : AbstractValidator<GetAllTargetDbsRequest>
 {
