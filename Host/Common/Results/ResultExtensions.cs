@@ -6,14 +6,7 @@ namespace SQLModule.Host.Common.Results;
 /// </summary>
 public static class ResultExtensions
 {
-    /// <summary>
-    /// Преобразует результат в 200 OK с телом или в ProblemDetails при ошибке.
-    /// </summary>
-    /// <typeparam name="T">Тип значения.</typeparam>
-    /// <param name="result">Результат операции.</param>
-    /// <summary>
-    /// Преобразует результат без значения в 200 OK или в ProblemDetails при ошибке.
-    /// </summary>
+    /// <summary>Преобразует результат без значения в 200 OK или в ProblemDetails при ошибке.</summary>
     /// <param name="result">Результат операции.</param>
     public static IResult ToOk(this Result result) =>
         result.IsSuccess ? TypedResults.Ok() : ToProblem(result.Error!);

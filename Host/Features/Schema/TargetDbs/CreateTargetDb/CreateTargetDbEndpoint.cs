@@ -13,6 +13,12 @@ public sealed class CreateTargetDbEndpoint : IEndpoint
         app.MapPost(ApiRoutes.Schema.TargetDbs.Collection, Handle)
             .WithName("CreateTargetDb")
             .WithTags("Schema")
+            .WithSummary("Создать целевую БД")
+            .WithDescription(
+                "Создаёт новую БД-песочницу для указанной СУБД. " +
+                "Возвращает 201 Created с телом ответа. " +
+                "400 — не прошла валидация входных данных. " +
+                "409 — СУБД с указанным dbmsId не найдена в справочнике.")
             .Produces<TargetDbResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status409Conflict)

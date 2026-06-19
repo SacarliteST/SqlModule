@@ -1,5 +1,15 @@
 namespace SQLModule.Contracts.Schema.TargetDb;
 
+/// <summary>Данные целевой БД-песочницы.</summary>
+/// <param name="Id">Уникальный идентификатор записи.</param>
+/// <param name="DbmsId">Идентификатор СУБД из справочника.</param>
+/// <param name="DbName">Имя БД-песочницы.</param>
+/// <param name="Description">Описание назначения БД (может быть <c>null</c>).</param>
+/// <param name="IsReadOnly">Признак доступа только на чтение.</param>
+/// <param name="CreatedById">Идентификатор пользователя, создавшего запись.</param>
+/// <param name="CreatedAt">Дата и время создания записи (UTC).</param>
+/// <param name="UpdatedById">Идентификатор пользователя, последним изменившего запись.</param>
+/// <param name="UpdatedAt">Дата и время последнего изменения записи (UTC).</param>
 public record TargetDbResponse(
     Guid Id,
     Guid DbmsId,

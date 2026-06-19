@@ -13,6 +13,12 @@ public sealed class GetAllTargetDbsEndpoint : IEndpoint
         app.MapGet(ApiRoutes.Schema.TargetDbs.Collection, Handle)
             .WithName("GetAllTargetDbs")
             .WithTags("Schema")
+            .WithSummary("Список целевых БД с пагинацией")
+            .WithDescription(
+                "Возвращает 200 OK со страницей целевых БД, отсортированных по имени. " +
+                "offset — количество пропускаемых записей (≥ 0, по умолчанию 0). " +
+                "limit — размер страницы (1–100, по умолчанию 20). " +
+                "400 — невалидные параметры пагинации.")
             .Produces<PageResponse<TargetDbResponse>>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .AddEndpointFilter<ValidationFilter<GetAllTargetDbsRequest>>();

@@ -12,6 +12,11 @@ public sealed class DeleteTargetDbEndpoint : IEndpoint
         app.MapDelete(ApiRoutes.Schema.TargetDbs.ById, Handle)
             .WithName("DeleteTargetDb")
             .WithTags("Schema")
+            .WithSummary("Удалить целевую БД")
+            .WithDescription(
+                "Удаляет БД-песочницу по Id. " +
+                "Возвращает 204 No Content. " +
+                "404 — запись с указанным id не найдена.")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound);
     }

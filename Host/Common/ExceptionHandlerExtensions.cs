@@ -11,7 +11,7 @@ namespace SQLModule.Host.Common;
 internal static class ExceptionHandlerExtensions
 {
     /// <summary>
-    /// Подключает <see cref="IApplicationBuilder.UseExceptionHandler"/> с маппингом
+    /// Подключает <c>UseExceptionHandler</c> с маппингом
     /// доменных исключений на HTTP-статусы и записью в лог.
     /// <list type="bullet">
     ///   <item><see cref="NotFoundException"/> → 404</item>
