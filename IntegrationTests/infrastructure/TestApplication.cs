@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using SQLModule.Client;
+using SQLModule.Client.Attempt;
 using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
@@ -39,6 +40,9 @@ public sealed class TestApplication :
     /// <summary>Типизированный клиент для работы с эталонными SQL-запросами.</summary>
     public ISqlQueryClient SqlQueryClient { get; private set; } = null!;
 
+    /// <summary>Типизированный клиент для работы с попытками выполнения заданий.</summary>
+    public IAttemptClient AttemptClient { get; private set; } = null!;
+
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
                     .WithImage(DockerImages.PostgreSql)
@@ -57,6 +61,7 @@ public sealed class TestApplication :
         TopicClient = sp.GetRequiredService<ITopicClient>();
         SqlTaskClient = sp.GetRequiredService<ISqlTaskClient>();
         SqlQueryClient = sp.GetRequiredService<ISqlQueryClient>();
+        AttemptClient = sp.GetRequiredService<IAttemptClient>();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

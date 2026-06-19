@@ -1,4 +1,5 @@
-﻿using SQLModule.Client.SqlQuery;
+﻿using SQLModule.Client.Attempt;
+using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
 using SQLModule.Client.Topic;
@@ -24,6 +25,9 @@ public abstract class ApiTestBase
     /// <summary>Типизированный клиент для работы с эталонными SQL-запросами.</summary>
     protected readonly ISqlQueryClient SqlQueryClient;
 
+    /// <summary>Типизированный клиент для работы с попытками выполнения заданий.</summary>
+    protected readonly IAttemptClient AttemptClient;
+
     protected ApiTestBase(TestApplication testApplication)
     {
         HttpClient = testApplication.CreateClient();
@@ -31,5 +35,6 @@ public abstract class ApiTestBase
         TopicClient = testApplication.TopicClient;
         SqlTaskClient = testApplication.SqlTaskClient;
         SqlQueryClient = testApplication.SqlQueryClient;
+        AttemptClient = testApplication.AttemptClient;
     }
 }
