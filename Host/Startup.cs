@@ -1,6 +1,4 @@
 using FluentValidation;
-using Microsoft.OpenApi;
-using SQLModule.Contracts;
 using SQLModule.Data;
 using SQLModule.Domain;
 using SQLModule.Domain.Common;
@@ -15,27 +13,7 @@ internal static class Startup
         var services = builder.Services;
 
         services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen(c =>
-        {
-            c.SwaggerDoc("v1", new OpenApiInfo
-            {
-                Title = "SQLModule API",
-                Version = "v1",
-                Description = "API SQL-тренажёра (модуль Scoodle)."
-            });
-
-            c.SupportNonNullableReferenceTypes();
-            c.UseAllOfToExtendReferenceSchemas();
-
-            foreach (var assembly in new[] { typeof(IHostMarker).Assembly, typeof(ApiRoutes).Assembly })
-            {
-                var xml = Path.Combine(AppContext.BaseDirectory, $"{assembly.GetName().Name}.xml");
-                if (File.Exists(xml))
-                {
-                    c.IncludeXmlComments(xml, includeControllerXmlComments: false);
-                }
-            }
-        });
+        services.AddOpenApiDocumentation();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
