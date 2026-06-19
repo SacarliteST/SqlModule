@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Schema.TargetDb;
+﻿namespace SQLModule.Contracts.Schema.TargetDb;
 
 /// <summary>Запрос на создание целевой БД-песочницы.</summary>
 /// <param name="DbmsId">Идентификатор СУБД из справочника (<c>DbmsDictionary.Id</c>).</param>

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Host;
 using SQLModule.Host.Common;
@@ -47,6 +47,6 @@ public sealed class HandlerScannerTests
         // Assert
         unregistered.ShouldBeEmpty(
             $"Незарегистрированные хендлеры:{Environment.NewLine}" +
-            string.Join(Environment.NewLine, unregistered));
+            String.Join(Environment.NewLine, unregistered));
     }
 }

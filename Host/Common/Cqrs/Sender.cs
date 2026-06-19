@@ -1,4 +1,4 @@
-namespace SQLModule.Host.Common.Cqrs;
+﻿namespace SQLModule.Host.Common.Cqrs;
 
 /// <summary>
 /// Реализация <see cref="ISender"/>. Резолвит хендлер и behaviors из DI,

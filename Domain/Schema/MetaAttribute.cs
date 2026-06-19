@@ -1,4 +1,4 @@
-using SQLModule.Domain.Common;
+﻿using SQLModule.Domain.Common;
 using SQLModule.Domain.DbmsCatalog;
 
 namespace SQLModule.Domain.Schema;

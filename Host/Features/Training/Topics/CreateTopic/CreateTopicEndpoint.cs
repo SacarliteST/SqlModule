@@ -1,4 +1,4 @@
-using SQLModule.Contracts;
+﻿using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Host.Common;
 using SQLModule.Host.Common.Cqrs;

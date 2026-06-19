@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Topic;
+﻿namespace SQLModule.Contracts.Training.Topic;
 
 /// <summary>Запрос на создание темы тренажёра.</summary>
 /// <param name="TopicName">Название темы (не пустое, не более 300 символов).</param>

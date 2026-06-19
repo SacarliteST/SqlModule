@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Topic;
+﻿namespace SQLModule.Contracts.Training.Topic;
 
 /// <summary>Параметры запроса списка тем с пагинацией.</summary>
 /// <param name="Offset">Количество пропускаемых записей. Минимум: 0. По умолчанию: 0.</param>

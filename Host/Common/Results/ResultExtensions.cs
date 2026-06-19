@@ -1,4 +1,4 @@
-namespace SQLModule.Host.Common.Results;
+﻿namespace SQLModule.Host.Common.Results;
 
 /// <summary>
 /// Методы-расширения для конвертации <see cref="Result"/> и <see cref="Result{T}"/> в <see cref="IResult"/>.

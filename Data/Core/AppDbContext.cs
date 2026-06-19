@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Domain.DbmsCatalog;

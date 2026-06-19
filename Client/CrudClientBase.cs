@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using SQLModule.Contracts;
 
@@ -16,7 +16,10 @@ internal abstract class CrudClientBase<TCreateRequest, TUpdateRequest, TResponse
 {
     protected readonly HttpClient HttpClient;
 
-    protected CrudClientBase(HttpClient httpClient) => this.HttpClient = httpClient;
+    protected CrudClientBase(HttpClient httpClient)
+    {
+        HttpClient = httpClient;
+    }
 
     /// <summary>Относительный URL коллекции (без ведущего '/').</summary>
     protected abstract string Collection { get; }

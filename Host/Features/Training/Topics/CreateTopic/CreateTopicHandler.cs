@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Training;

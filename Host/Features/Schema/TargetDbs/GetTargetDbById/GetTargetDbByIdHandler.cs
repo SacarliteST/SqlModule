@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Schema;

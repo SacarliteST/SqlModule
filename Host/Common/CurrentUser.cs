@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using SQLModule.Domain;
 using SQLModule.Domain.Common;
 

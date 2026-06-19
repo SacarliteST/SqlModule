@@ -1,4 +1,4 @@
-namespace SQLModule.Host.Common.Cqrs;
+﻿namespace SQLModule.Host.Common.Cqrs;
 
 /// <summary>
 /// Делегат следующего шага в цепочке pipeline-behaviors.

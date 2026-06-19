@@ -1,4 +1,4 @@
-namespace SQLModule.Client;
+﻿namespace SQLModule.Client;
 
 /// <summary>Опции подключения к SQLModule API.</summary>
 public sealed class SqlModuleClientOptions

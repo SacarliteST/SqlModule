@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Topic;
+﻿namespace SQLModule.Contracts.Training.Topic;
 
 /// <summary>Данные темы тренажёра.</summary>
 /// <param name="Id">Уникальный идентификатор темы.</param>

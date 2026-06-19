@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
 using Shouldly;
 using SQLModule.Client;
@@ -15,8 +15,6 @@ namespace SQLModule.IntegrationTests.Schema.TargetDb;
 public sealed class TargetDbTests : ApiTestBase
 {
     public TargetDbTests(TestApplication testApplication) : base(testApplication) { }
-
-    // ─── helpers ──────────────────────────────────────────────────────────────
 
     /// <summary>Создаёт запись СУБД-справочника и возвращает её <c>Id</c>.</summary>
     private async Task<Guid> CreateDbmsDictionaryAsync()
@@ -45,8 +43,6 @@ public sealed class TargetDbTests : ApiTestBase
     private async Task<TargetDbResponse> CreateTargetDbAsync(Guid dbmsId, string dbName = "TestDB")
         => await TargetDbClient.CreateAsync(
             new CreateTargetDbRequest(dbmsId, dbName, null, false));
-
-    // ─── create ───────────────────────────────────────────────────────────────
 
     [Fact(DisplayName = "Create → возвращает TargetDbResponse с корректными полями")]
     public async Task Create_ValidRequest_ReturnsResponse()

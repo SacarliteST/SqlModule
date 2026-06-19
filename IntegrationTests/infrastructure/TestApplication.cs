@@ -1,10 +1,11 @@
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using SQLModule.Client;
+using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
 using SQLModule.Client.Topic;
 using SQLModule.Data.Core.Configurations;
@@ -31,6 +32,9 @@ public sealed class TestApplication :
     /// <summary>Типизированный клиент для работы с темами тренажёра.</summary>
     public ITopicClient TopicClient { get; private set; } = null!;
 
+    /// <summary>Типизированный клиент для работы с SQL-заданиями тренажёра.</summary>
+    public ISqlTaskClient SqlTaskClient { get; private set; } = null!;
+
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
                     .WithImage(DockerImages.PostgreSql)
@@ -47,6 +51,7 @@ public sealed class TestApplication :
         var sp = BuildClientServiceProvider();
         TargetDbClient = sp.GetRequiredService<ITargetDbClient>();
         TopicClient = sp.GetRequiredService<ITopicClient>();
+        SqlTaskClient = sp.GetRequiredService<ISqlTaskClient>();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

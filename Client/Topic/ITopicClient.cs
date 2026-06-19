@@ -1,4 +1,4 @@
-using SQLModule.Contracts.Training.Topic;
+﻿using SQLModule.Contracts.Training.Topic;
 
 namespace SQLModule.Client.Topic;
 

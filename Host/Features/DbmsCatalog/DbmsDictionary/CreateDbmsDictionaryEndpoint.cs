@@ -1,9 +1,9 @@
-using SQLModule.Domain.DbmsCatalog;
-using FluentValidation;
+﻿using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using SQLModule.Contracts;
 using SQLModule.Data.Core;
 using SQLModule.Domain;
+using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Host.Common;
 
 namespace SQLModule.Host.Features.DbmsCatalog.DbmsDictionary;

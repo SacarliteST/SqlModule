@@ -1,10 +1,10 @@
-using SQLModule.Domain.Schema;
-using SQLModule.Domain.Exceptions;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts;
 using SQLModule.Data.Core;
 using SQLModule.Domain;
+using SQLModule.Domain.Exceptions;
+using SQLModule.Domain.Schema;
 using SQLModule.Host.Common;
 
 namespace SQLModule.Host.Features.Schema.CellValues;

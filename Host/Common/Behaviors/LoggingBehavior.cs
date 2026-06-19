@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using SQLModule.Host.Common.Cqrs;
 using SQLModule.Host.Common.Results;
 

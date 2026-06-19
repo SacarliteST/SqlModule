@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Exceptions;
+﻿namespace SQLModule.Domain.Exceptions;
 
 /// <summary>Выбрасывается, когда запрошенная сущность не найдена в хранилище.</summary>
 public sealed class NotFoundException : Exception

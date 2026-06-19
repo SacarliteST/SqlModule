@@ -1,4 +1,4 @@
-using Microsoft.OpenApi;
+﻿using Microsoft.OpenApi;
 using SQLModule.Contracts;
 
 namespace SQLModule.Host.Common;

@@ -1,4 +1,4 @@
-namespace SQLModule.Client;
+﻿namespace SQLModule.Client;
 
 /// <summary>Базовое исключение при получении ошибочного HTTP-ответа от API.</summary>
 public class ApiException : Exception

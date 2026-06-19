@@ -1,4 +1,4 @@
-using Shouldly;
+﻿using Shouldly;
 using SQLModule.Client;
 using SQLModule.Client.Topic;
 using SQLModule.Contracts.Training.Topic;
@@ -15,13 +15,9 @@ public sealed class TopicTests : ApiTestBase
 {
     public TopicTests(TestApplication testApplication) : base(testApplication) { }
 
-    // ─── helpers ─────────────────────────────────────────────────────────────
-
     /// <summary>Создаёт тему и возвращает ответ сервера.</summary>
     private async Task<TopicResponse> CreateTopicAsync(string topicName, Guid? parentTopicId = null)
         => await TopicClient.CreateAsync(new CreateTopicRequest(topicName, parentTopicId));
-
-    // ─── create ──────────────────────────────────────────────────────────────
 
     [Fact(DisplayName = "Create (корневая) → возвращает TopicResponse с корректными полями")]
     public async Task Create_RootTopic_ReturnsResponse()
@@ -77,8 +73,6 @@ public sealed class TopicTests : ApiTestBase
         ex.Errors.ShouldContainKey("TopicName");
     }
 
-    // ─── get by id ───────────────────────────────────────────────────────────
-
     [Fact(DisplayName = "GetById → возвращает ранее созданную тему")]
     public async Task GetById_ExistingId_ReturnsTopic()
     {
@@ -107,8 +101,6 @@ public sealed class TopicTests : ApiTestBase
         result.ShouldBeNull();
     }
 
-    // ─── get all ─────────────────────────────────────────────────────────────
-
     [Fact(DisplayName = "GetAll → страница содержит созданную тему")]
     public async Task GetAll_ContainsCreatedTopic()
     {
@@ -121,8 +113,6 @@ public sealed class TopicTests : ApiTestBase
         // Assert
         page.Items.ShouldContain(t => t.Id == created.Id);
     }
-
-    // ─── update ──────────────────────────────────────────────────────────────
 
     [Fact(DisplayName = "Update → изменения сохранены в БД")]
     public async Task Update_ExistingId_PersistsChanges()
@@ -165,8 +155,6 @@ public sealed class TopicTests : ApiTestBase
         ex.Errors.ShouldContainKey("TopicName");
     }
 
-    // ─── delete ──────────────────────────────────────────────────────────────
-
     [Fact(DisplayName = "Delete → тема больше не возвращается GetById")]
     public async Task Delete_ExistingId_EntityRemoved()
     {
@@ -202,8 +190,6 @@ public sealed class TopicTests : ApiTestBase
         await Should.ThrowAsync<ConflictException>(
             () => TopicClient.DeleteAsync(parent.Id));
     }
-
-    // ─── move ────────────────────────────────────────────────────────────────
 
     [Fact(DisplayName = "Move → ParentTopicId изменён в БД")]
     public async Task Move_ExistingTopic_ChangesParent()

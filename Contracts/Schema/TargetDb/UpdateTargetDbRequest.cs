@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Schema.TargetDb;
+﻿namespace SQLModule.Contracts.Schema.TargetDb;
 
 /// <summary>Запрос на обновление целевой БД-песочницы.</summary>
 /// <param name="DbName">Новое имя БД-песочницы.</param>
