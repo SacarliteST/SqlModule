@@ -1,4 +1,4 @@
-using SQLModule.Contracts;
+﻿using SQLModule.Contracts;
 
 namespace SQLModule.Host.Common;
 

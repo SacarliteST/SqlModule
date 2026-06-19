@@ -1,4 +1,4 @@
-namespace SQLModule.IntegrationTests.infrastructure;
+﻿namespace SQLModule.IntegrationTests.infrastructure;
 
 /// <summary>
 /// xUnit-коллекция, гарантирующая один экземпляр <see cref="TestApplication"/> на все тесты.

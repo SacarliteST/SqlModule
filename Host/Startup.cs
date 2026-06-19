@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using SQLModule.Data;
 using SQLModule.Domain;
 using SQLModule.Domain.Common;

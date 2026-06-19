@@ -1,4 +1,4 @@
-using SQLModule.Host.Common.Behaviors;
+﻿using SQLModule.Host.Common.Behaviors;
 using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Common;

@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using SQLModule.Contracts.Training.Topic;
 
 namespace SQLModule.Host.Features.Training.Topics;

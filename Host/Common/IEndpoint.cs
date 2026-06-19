@@ -1,4 +1,4 @@
-namespace SQLModule.Host.Common;
+﻿namespace SQLModule.Host.Common;
 
 /// <summary>
 /// Контракт вертикального слайса. Каждый класс-эндпоинт реализует этот интерфейс

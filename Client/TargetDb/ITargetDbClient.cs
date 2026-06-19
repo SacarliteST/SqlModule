@@ -1,4 +1,4 @@
-using SQLModule.Contracts.Schema.TargetDb;
+﻿using SQLModule.Contracts.Schema.TargetDb;
 
 namespace SQLModule.Client.TargetDb;
 

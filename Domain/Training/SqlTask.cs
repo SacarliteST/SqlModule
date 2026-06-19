@@ -1,4 +1,4 @@
-using SQLModule.Domain.Common;
+﻿using SQLModule.Domain.Common;
 using SQLModule.Domain.Schema;
 
 namespace SQLModule.Domain.Training;

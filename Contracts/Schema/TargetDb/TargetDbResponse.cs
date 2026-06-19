@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Schema.TargetDb;
+﻿namespace SQLModule.Contracts.Schema.TargetDb;
 
 /// <summary>Данные целевой БД-песочницы.</summary>
 /// <param name="Id">Уникальный идентификатор записи.</param>

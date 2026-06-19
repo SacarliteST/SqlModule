@@ -1,4 +1,4 @@
-namespace SQLModule.IntegrationTests.infrastructure;
+﻿namespace SQLModule.IntegrationTests.infrastructure;
 
 /// <summary>Ключи конфигурации, используемые при подмене настроек тест-сервера.</summary>
 internal static class ConfigConstants

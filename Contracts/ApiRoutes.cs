@@ -1,12 +1,10 @@
-namespace SQLModule.Contracts;
+﻿namespace SQLModule.Contracts;
 
 /// <summary>Пути к API.</summary>
 public static class ApiRoutes
 {
     /// <summary>Общий префикс Api v1.</summary>
     public const string PrefixV1 = "api/v1";
-
-    // ─── DbmsCatalog ─────────────────────────────────────────────────────────
 
     /// <summary>Маршруты контекста СУБД-справочника.</summary>
     public static class DbmsCatalog
@@ -59,8 +57,6 @@ public static class ApiRoutes
             public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
         }
     }
-
-    // ─── Schema ──────────────────────────────────────────────────────────────
 
     /// <summary>Маршруты контекста схемы данных.</summary>
     public static class Schema
@@ -177,8 +173,6 @@ public static class ApiRoutes
             public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
         }
     }
-
-    // ─── Training ─────────────────────────────────────────────────────────────
 
     /// <summary>Маршруты контекста тренажёра.</summary>
     public static class Training

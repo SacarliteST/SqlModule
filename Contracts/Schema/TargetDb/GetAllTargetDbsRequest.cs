@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Schema.TargetDb;
+﻿namespace SQLModule.Contracts.Schema.TargetDb;
 
 /// <summary>Параметры запроса списка целевых БД с пагинацией.</summary>
 /// <param name="Offset">Количество пропускаемых записей. Минимум: 0. По умолчанию: 0.</param>

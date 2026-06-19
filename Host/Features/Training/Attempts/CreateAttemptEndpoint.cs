@@ -1,12 +1,12 @@
-using SQLModule.Domain.Common;
-using SQLModule.Domain.Training;
-using SQLModule.Domain.Exceptions;
-using FluentValidation;
+﻿using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts;
 using SQLModule.Data.Core;
 using SQLModule.Domain;
+using SQLModule.Domain.Common;
+using SQLModule.Domain.Exceptions;
+using SQLModule.Domain.Training;
 using SQLModule.Host.Common;
 
 namespace SQLModule.Host.Features.Training.Attempts;

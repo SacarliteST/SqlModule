@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.TestHost;
+﻿using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Http;
 using Shouldly;
 

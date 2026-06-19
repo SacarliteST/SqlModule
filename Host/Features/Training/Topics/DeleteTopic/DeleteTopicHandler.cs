@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Data.Core;
 using SQLModule.Host.Common.Cqrs;
 using SQLModule.Host.Common.Results;

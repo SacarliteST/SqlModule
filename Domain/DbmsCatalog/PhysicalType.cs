@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using SQLModule.Domain.Common;
 using SQLModule.Domain.Schema;
 
@@ -37,12 +37,12 @@ public sealed class PhysicalType : AuditableEntity
             valuesDict.TryGetValue(def.Id, out var userValue);
             var finalValue = userValue ?? def.DefaultValue;
 
-            if (def.IsRequired && string.IsNullOrWhiteSpace(finalValue))
+            if (def.IsRequired && String.IsNullOrWhiteSpace(finalValue))
             {
                 throw new InvalidOperationException($"Параметр '{def.DisplayName}' обязателен для типа '{TypeName}'.");
             }
 
-            if (!string.IsNullOrWhiteSpace(finalValue))
+            if (!String.IsNullOrWhiteSpace(finalValue))
             {
                 var sql = def.SqlFragment.Replace("{value}", $"{def.ValuePrefix}{finalValue}{def.ValueSuffix}");
                 sb.Append(sql);

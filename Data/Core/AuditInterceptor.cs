@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using SQLModule.Domain;
 using SQLModule.Domain.Common;
@@ -24,7 +24,8 @@ internal sealed class AuditInterceptor(ICurrentUser currentUser, TimeProvider ti
 
     private void ApplyAudit(DbContext? context)
     {
-        if (context is null) { return; }
+        if (context is null)
+        { return; }
 
         var userId = currentUser.UserId ?? SystemUser.Id;
         var now = timeProvider.GetUtcNow();

@@ -1,4 +1,4 @@
-namespace SQLModule.Host.Common.Results;
+﻿namespace SQLModule.Host.Common.Results;
 
 /// <summary>
 /// Базовый результат операции без возвращаемого значения.

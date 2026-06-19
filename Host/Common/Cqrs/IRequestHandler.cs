@@ -1,4 +1,4 @@
-namespace SQLModule.Host.Common.Cqrs;
+﻿namespace SQLModule.Host.Common.Cqrs;
 
 /// <summary>
 /// Хендлер запроса. Содержит бизнес-логику обработки одной команды или запроса.

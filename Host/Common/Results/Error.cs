@@ -1,4 +1,4 @@
-namespace SQLModule.Host.Common.Results;
+﻿namespace SQLModule.Host.Common.Results;
 
 /// <summary>
 /// Категория ошибки. Используется для маппинга на HTTP-статус в <see cref="ResultExtensions"/>.

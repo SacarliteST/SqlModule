@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 
 namespace SQLModule.Client;
@@ -35,7 +35,7 @@ internal sealed class ErrorDelegatingHandler : DelegatingHandler
         {
             400 => new ValidationException((int)response.StatusCode, problem),
             409 => new ConflictException((int)response.StatusCode, problem),
-            _   => new ApiException((int)response.StatusCode, problem)
+            _ => new ApiException((int)response.StatusCode, problem)
         };
     }
 }

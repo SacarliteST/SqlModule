@@ -2,6 +2,7 @@
 using SQLModule.Data.Core.Migrations;
 
 namespace SQLModule.Host;
+
 internal sealed class Program
 {
     public static async Task Main(string[] args)

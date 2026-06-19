@@ -1,4 +1,4 @@
-namespace SQLModule.Client;
+﻿namespace SQLModule.Client;
 
 /// <summary>DTO описания ошибки RFC 7807 (ProblemDetails), без зависимости на ASP.NET MVC.</summary>
 public sealed record ApiProblem(
