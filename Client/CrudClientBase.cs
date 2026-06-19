@@ -14,9 +14,9 @@ internal abstract class CrudClientBase<TCreateRequest, TUpdateRequest, TResponse
     where TUpdateRequest : class
     where TResponse : class
 {
-    private readonly HttpClient httpClient;
+    protected readonly HttpClient HttpClient;
 
-    protected CrudClientBase(HttpClient httpClient) => this.httpClient = httpClient;
+    protected CrudClientBase(HttpClient httpClient) => this.HttpClient = httpClient;
 
     /// <summary>Относительный URL коллекции (без ведущего '/').</summary>
     protected abstract string Collection { get; }
@@ -30,14 +30,14 @@ internal abstract class CrudClientBase<TCreateRequest, TUpdateRequest, TResponse
     /// <inheritdoc/>
     public async Task<TResponse> CreateAsync(TCreateRequest request, CancellationToken ct = default)
     {
-        var response = await httpClient.PostAsJsonAsync(Collection, request, ct);
+        var response = await HttpClient.PostAsJsonAsync(Collection, request, ct);
         return await ReadRequiredAsync<TResponse>(response, ct);
     }
 
     /// <inheritdoc/>
     public async Task<TResponse?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        var response = await httpClient.GetAsync(ForId(id), ct);
+        var response = await HttpClient.GetAsync(ForId(id), ct);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
@@ -49,14 +49,14 @@ internal abstract class CrudClientBase<TCreateRequest, TUpdateRequest, TResponse
     /// <inheritdoc/>
     public async Task<PageResponse<TResponse>> GetAllAsync(int offset, int limit, CancellationToken ct = default)
     {
-        var response = await httpClient.GetAsync(ForPagination(offset, limit), ct);
+        var response = await HttpClient.GetAsync(ForPagination(offset, limit), ct);
         return await ReadRequiredAsync<PageResponse<TResponse>>(response, ct);
     }
 
     /// <inheritdoc/>
     public async Task UpdateAsync(Guid id, TUpdateRequest request, CancellationToken ct = default)
     {
-        var response = await httpClient.PutAsJsonAsync(ForId(id), request, ct);
+        var response = await HttpClient.PutAsJsonAsync(ForId(id), request, ct);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             throw new NotFoundException((int)response.StatusCode, await TryReadProblemAsync(response, ct));
@@ -67,7 +67,7 @@ internal abstract class CrudClientBase<TCreateRequest, TUpdateRequest, TResponse
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
         // 404 → идемпотентный no-op; 204 → успех; ошибки уже брошены ErrorDelegatingHandler
-        await httpClient.DeleteAsync(ForId(id), ct);
+        await HttpClient.DeleteAsync(ForId(id), ct);
     }
 
     private static async Task<T> ReadRequiredAsync<T>(HttpResponseMessage response, CancellationToken ct)
@@ -76,7 +76,7 @@ internal abstract class CrudClientBase<TCreateRequest, TUpdateRequest, TResponse
                ?? throw new InvalidResponseFormatException();
     }
 
-    private static async Task<ApiProblem?> TryReadProblemAsync(HttpResponseMessage response, CancellationToken ct)
+    protected static async Task<ApiProblem?> TryReadProblemAsync(HttpResponseMessage response, CancellationToken ct)
     {
         try
         {
