@@ -1,22 +1,16 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
-using SQLModule.Client.SqlQuery;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
-using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.infrastructure;
 using DomainAttempt = SQLModule.Domain.Training.Attempt;
 using DomainSqlTask = SQLModule.Domain.Training.SqlTask;
 
 namespace SQLModule.IntegrationTests.Training.SqlQuery;
 
-/// <summary>
-/// Интеграционные тесты CRUD-операций для <see cref="ISqlQueryClient"/>.
-/// Каждый тест независим: создаёт собственные данные через вспомогательные методы.
-/// </summary>
 [Collection(IntegrationTestCollection.Name)]
 public sealed class SqlQueryTests : ApiTestBase
 {
@@ -27,11 +21,9 @@ public sealed class SqlQueryTests : ApiTestBase
         app = testApplication;
     }
 
-    /// <summary>Создаёт SQL-запрос через API и возвращает ответ сервера.</summary>
     private async Task<SqlQueryResponse> CreateSqlQueryAsync(string queryText = "SELECT 1")
         => await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest(queryText, false, false));
 
-    /// <summary>Создаёт DbmsDictionary напрямую через AppDbContext и возвращает Id.</summary>
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
         using var scope = app.Services.CreateScope();
@@ -45,10 +37,6 @@ public sealed class SqlQueryTests : ApiTestBase
         return dbms.Id;
     }
 
-    /// <summary>
-    /// Создаёт SqlTask напрямую через AppDbContext и возвращает Id.
-    /// Параметры должны ссылаться на уже существующие в БД записи.
-    /// </summary>
     private async Task<Guid> SeedSqlTaskAsync(Guid targetDbId, Guid topicId, Guid sqlQueryId)
     {
         using var scope = app.Services.CreateScope();
@@ -59,10 +47,6 @@ public sealed class SqlQueryTests : ApiTestBase
         return task.Id;
     }
 
-    /// <summary>
-    /// Создаёт Attempt напрямую через AppDbContext.
-    /// taskId и queryId должны ссылаться на уже существующие в БД записи.
-    /// </summary>
     private async Task SeedAttemptAsync(Guid taskId, Guid queryId)
     {
         using var scope = app.Services.CreateScope();
@@ -74,8 +58,6 @@ public sealed class SqlQueryTests : ApiTestBase
         db.Attempts.Add(attempt);
         await db.SaveChangesAsync();
     }
-
-    // happy-path
 
     [Fact(DisplayName = "Create → возвращает SqlQueryResponse с корректными полями")]
     public async Task Create_ValidRequest_ReturnsResponse()
@@ -151,16 +133,11 @@ public sealed class SqlQueryTests : ApiTestBase
         found.ShouldBeNull();
     }
 
-    // негатив
-
     [Fact(DisplayName = "GetById несуществующего → null")]
     public async Task GetById_UnknownId_ReturnsNull()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-
         // Act
-        var result = await SqlQueryClient.GetByIdAsync(unknownId);
+        var result = await SqlQueryClient.GetByIdAsync(Guid.NewGuid());
 
         // Assert
         result.ShouldBeNull();
@@ -169,34 +146,24 @@ public sealed class SqlQueryTests : ApiTestBase
     [Fact(DisplayName = "Delete несуществующего → без исключения (no-op)")]
     public async Task Delete_UnknownId_NoException()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-
         // Act + Assert
-        await Should.NotThrowAsync(() => SqlQueryClient.DeleteAsync(unknownId));
+        await Should.NotThrowAsync(() => SqlQueryClient.DeleteAsync(Guid.NewGuid()));
     }
 
     [Fact(DisplayName = "Update несуществующего → NotFoundException")]
     public async Task Update_UnknownId_ThrowsNotFoundException()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-        var request = new UpdateSqlQueryRequest("SELECT 1", false, false);
-
         // Act + Assert
         await Should.ThrowAsync<NotFoundException>(
-            () => SqlQueryClient.UpdateAsync(unknownId, request));
+            () => SqlQueryClient.UpdateAsync(Guid.NewGuid(), new UpdateSqlQueryRequest("SELECT 1", false, false)));
     }
 
     [Fact(DisplayName = "Create с пустым QueryText → ValidationException")]
     public async Task Create_EmptyQueryText_ThrowsValidationException()
     {
-        // Arrange
-        var request = new CreateSqlQueryRequest("", false, false);
-
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
-            () => SqlQueryClient.CreateAsync(request));
+            () => SqlQueryClient.CreateAsync(new CreateSqlQueryRequest("", false, false)));
 
         // Assert
         ex.Errors.ShouldContainKey("QueryText");
@@ -207,11 +174,10 @@ public sealed class SqlQueryTests : ApiTestBase
     {
         // Arrange
         var created = await CreateSqlQueryAsync();
-        var request = new UpdateSqlQueryRequest("", false, false);
 
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
-            () => SqlQueryClient.UpdateAsync(created.Id, request));
+            () => SqlQueryClient.UpdateAsync(created.Id, new UpdateSqlQueryRequest("", false, false)));
 
         // Assert
         ex.Errors.ShouldContainKey("QueryText");
@@ -220,14 +186,13 @@ public sealed class SqlQueryTests : ApiTestBase
     [Fact(DisplayName = "Delete запроса, используемого заданием → ConflictException")]
     public async Task Delete_QueryUsedBySqlTask_ThrowsConflictException()
     {
-        // Arrange — создаём SqlQuery, затем SqlTask, ссылающийся на него
+        // Arrange
         var sqlQuery = await CreateSqlQueryAsync("SELECT * FROM tasks");
 
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDb = await TargetDbClient.CreateAsync(
             new CreateTargetDbRequest(dbmsId, "DB_" + Guid.NewGuid(), null, false));
-        var topic = await TopicClient.CreateAsync(
-            new CreateTopicRequest("Topic_" + Guid.NewGuid(), null));
+        var topic = await TopicClient.CreateAsync(new CreateTopicRequest("Topic_" + Guid.NewGuid(), null));
 
         await SeedSqlTaskAsync(targetDb.Id, topic.Id, sqlQuery.Id);
 
@@ -239,17 +204,14 @@ public sealed class SqlQueryTests : ApiTestBase
     [Fact(DisplayName = "Delete запроса, используемого попыткой (но не заданием) → ConflictException")]
     public async Task Delete_QueryUsedByAttempt_ThrowsConflictException()
     {
-        // Arrange:
-        //   sqlQueryToDelete — используется в Attempt.QueryId, НЕ используется в SqlTask.SqlQueryId
-        //   sqlQueryForTask  — используется в SqlTask.SqlQueryId (другой запрос)
+        // Arrange
         var sqlQueryToDelete = await CreateSqlQueryAsync("SELECT * FROM attempt_query");
         var sqlQueryForTask = await CreateSqlQueryAsync("SELECT * FROM task_etalon");
 
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDb = await TargetDbClient.CreateAsync(
             new CreateTargetDbRequest(dbmsId, "DB_" + Guid.NewGuid(), null, false));
-        var topic = await TopicClient.CreateAsync(
-            new CreateTopicRequest("Topic_" + Guid.NewGuid(), null));
+        var topic = await TopicClient.CreateAsync(new CreateTopicRequest("Topic_" + Guid.NewGuid(), null));
 
         var taskId = await SeedSqlTaskAsync(targetDb.Id, topic.Id, sqlQueryForTask.Id);
         await SeedAttemptAsync(taskId, sqlQueryToDelete.Id);

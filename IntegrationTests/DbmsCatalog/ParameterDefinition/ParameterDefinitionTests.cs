@@ -21,8 +21,6 @@ public sealed class ParameterDefinitionTests : ApiTestBase
         app = testApplication;
     }
 
-    // ── helpers ────────────────────────────────────────────────────
-
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
         using var scope = app.Services.CreateScope();
@@ -56,8 +54,6 @@ public sealed class ParameterDefinitionTests : ApiTestBase
             null,
             null,
             null);
-
-    // ── happy-path ─────────────────────────────────────────────────
 
     [Fact(DisplayName = "Create → возвращает ParameterDefinitionResponse с корректными полями")]
     public async Task Create_ValidRequest_ReturnsResponse()
@@ -151,8 +147,6 @@ public sealed class ParameterDefinitionTests : ApiTestBase
         var found = await ParameterDefinitionClient.GetByIdAsync(created.Id);
         found.ShouldBeNull();
     }
-
-    // ── негатив ────────────────────────────────────────────────────
 
     [Fact(DisplayName = "GetById несуществующего → null")]
     public async Task GetById_UnknownId_ReturnsNull()

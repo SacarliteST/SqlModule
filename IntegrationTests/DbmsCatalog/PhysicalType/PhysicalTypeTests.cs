@@ -24,8 +24,6 @@ public sealed class PhysicalTypeTests : ApiTestBase
         app = testApplication;
     }
 
-    // ── helpers ────────────────────────────────────────────────────
-
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
         using var scope = app.Services.CreateScope();
@@ -55,6 +53,7 @@ public sealed class PhysicalTypeTests : ApiTestBase
             "dbms_" + Guid.NewGuid(), "test", "postgres:latest", 5432,
             "PU", "PP", "PD", null, "testdb", "user", "pass");
         db.DbmsDictionaries.Add(dbms);
+        await db.SaveChangesAsync();
 
         var targetDb = await TargetDbClient.CreateAsync(
             new CreateTargetDbRequest(dbms.Id, "db_" + Guid.NewGuid().ToString("N")[..8], null, false));
@@ -68,8 +67,6 @@ public sealed class PhysicalTypeTests : ApiTestBase
 
         return metaAttr.Id;
     }
-
-    // ── happy-path ─────────────────────────────────────────────────
 
     [Fact(DisplayName = "Create → возвращает PhysicalTypeResponse с корректными полями")]
     public async Task Create_ValidRequest_ReturnsResponse()
@@ -155,8 +152,6 @@ public sealed class PhysicalTypeTests : ApiTestBase
         var found = await PhysicalTypeClient.GetByIdAsync(created.Id);
         found.ShouldBeNull();
     }
-
-    // ── негатив ────────────────────────────────────────────────────
 
     [Fact(DisplayName = "GetById несуществующего → null")]
     public async Task GetById_UnknownId_ReturnsNull()

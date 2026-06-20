@@ -1,24 +1,17 @@
-﻿using System.Net.Http.Json;
-using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
-using SQLModule.Client.SqlTask;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
-using SQLModule.Domain.Training;
+using SQLModule.Domain.DbmsCatalog;
 using SQLModule.IntegrationTests.infrastructure;
 using DomainAttempt = SQLModule.Domain.Training.Attempt;
 
 namespace SQLModule.IntegrationTests.Training.SqlTask;
 
-/// <summary>
-/// Интеграционные тесты CRUD-операций для <see cref="ISqlTaskClient"/>.
-/// Каждый тест независим: создаёт собственные данные через вспомогательные методы.
-/// </summary>
 [Collection(IntegrationTestCollection.Name)]
 public sealed class SqlTaskTests : ApiTestBase
 {
@@ -29,59 +22,34 @@ public sealed class SqlTaskTests : ApiTestBase
         app = testApplication;
     }
 
-    /// <summary>Создаёт запись СУБД-справочника и возвращает её Id.</summary>
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
-        var response = await HttpClient.PostAsJsonAsync("api/v1/dbms-dictionaries", new
-        {
-            DbmsName = "Test_" + Guid.NewGuid(),
-            DbmsSystemName = "test",
-            DockerImage = "postgres:latest",
-            DefaultPort = 5432,
-            EnvUserKey = "POSTGRES_USER",
-            EnvPasswordKey = "POSTGRES_PASSWORD",
-            EnvDatabaseKey = "POSTGRES_DB",
-            ExtraEnvConfig = (string?)null,
-            DefaultDatabase = "testdb",
-            DefaultUsername = "user",
-            DefaultPassword = "pass"
-        });
-        response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>(
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        return json.GetProperty("id").GetGuid();
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var dbms = DbmsDictionary.Create(
+            "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,
+            "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", null,
+            "testdb", "user", "pass");
+        db.DbmsDictionaries.Add(dbms);
+        await db.SaveChangesAsync();
+        return dbms.Id;
     }
 
-    /// <summary>Создаёт TargetDb и возвращает её Id.</summary>
     private async Task<Guid> CreateTargetDbAsync(Guid dbmsId)
-    {
-        var result = await TargetDbClient.CreateAsync(
-            new CreateTargetDbRequest(dbmsId, "DB_" + Guid.NewGuid(), null, false));
-        return result.Id;
-    }
+        => (await TargetDbClient.CreateAsync(
+            new CreateTargetDbRequest(dbmsId, "DB_" + Guid.NewGuid(), null, false))).Id;
 
-    /// <summary>Создаёт тему и возвращает её Id.</summary>
     private async Task<Guid> CreateTopicAsync()
-    {
-        var result = await TopicClient.CreateAsync(
-            new CreateTopicRequest("Topic_" + Guid.NewGuid(), null));
-        return result.Id;
-    }
+        => (await TopicClient.CreateAsync(new CreateTopicRequest("Topic_" + Guid.NewGuid(), null))).Id;
 
-    /// <summary>Создаёт SQL-запрос через API и возвращает его Id.</summary>
     private async Task<Guid> CreateSqlQueryAsync()
-    {
-        var result = await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest("SELECT 1", false, false));
-        return result.Id;
-    }
+        => (await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest("SELECT 1", false, false))).Id;
 
-    /// <summary>Создаёт SQL-задание с готовыми FK и возвращает ответ сервера.</summary>
     private async Task<SqlTaskResponse> CreateSqlTaskAsync(
         Guid targetDbId, Guid topicId, Guid sqlQueryId, string taskName = "Task")
         => await SqlTaskClient.CreateAsync(
             new CreateSqlTaskRequest(targetDbId, topicId, sqlQueryId, taskName, "Текст задания", 1));
 
-    /// <summary>Создаёт попытку выполнения задания напрямую через AppDbContext.</summary>
     private async Task SeedAttemptAsync(Guid taskId, Guid sqlQueryId)
     {
         using var scope = app.Services.CreateScope();
@@ -93,7 +61,6 @@ public sealed class SqlTaskTests : ApiTestBase
         db.Attempts.Add(attempt);
         await db.SaveChangesAsync();
     }
-
 
     [Fact(DisplayName = "Create → возвращает SqlTaskResponse с корректными полями")]
     public async Task Create_ValidRequest_ReturnsResponse()
@@ -115,75 +82,6 @@ public sealed class SqlTaskTests : ApiTestBase
         response.SqlQueryId.ShouldBe(sqlQueryId);
         response.TaskName.ShouldBe("My Task");
         response.DifficultyLevel.ShouldBe((short)3);
-    }
-
-    [Fact(DisplayName = "Create с несуществующим TargetDbId → ConflictException")]
-    public async Task Create_NonExistentTargetDbId_ThrowsConflictException()
-    {
-        // Arrange
-        var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync();
-        var request = new CreateSqlTaskRequest(Guid.NewGuid(), topicId, sqlQueryId, "Task", "Text", 1);
-
-        // Act + Assert
-        await Should.ThrowAsync<ConflictException>(
-            () => SqlTaskClient.CreateAsync(request));
-    }
-
-    [Fact(DisplayName = "Create с несуществующим TopicId → ConflictException")]
-    public async Task Create_NonExistentTopicId_ThrowsConflictException()
-    {
-        // Arrange
-        var dbmsId = await CreateDbmsDictionaryAsync();
-        var targetDbId = await CreateTargetDbAsync(dbmsId);
-        var sqlQueryId = await CreateSqlQueryAsync();
-        var request = new CreateSqlTaskRequest(targetDbId, Guid.NewGuid(), sqlQueryId, "Task", "Text", 1);
-
-        // Act + Assert
-        await Should.ThrowAsync<ConflictException>(
-            () => SqlTaskClient.CreateAsync(request));
-    }
-
-    [Fact(DisplayName = "Create с несуществующим SqlQueryId → ConflictException")]
-    public async Task Create_NonExistentSqlQueryId_ThrowsConflictException()
-    {
-        // Arrange
-        var dbmsId = await CreateDbmsDictionaryAsync();
-        var targetDbId = await CreateTargetDbAsync(dbmsId);
-        var topicId = await CreateTopicAsync();
-        var request = new CreateSqlTaskRequest(targetDbId, topicId, Guid.NewGuid(), "Task", "Text", 1);
-
-        // Act + Assert
-        await Should.ThrowAsync<ConflictException>(
-            () => SqlTaskClient.CreateAsync(request));
-    }
-
-    [Fact(DisplayName = "Create с пустым TaskName → ValidationException")]
-    public async Task Create_EmptyTaskName_ThrowsValidationException()
-    {
-        // Arrange
-        var request = new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "", "Text", 1);
-
-        // Act
-        var ex = await Should.ThrowAsync<ValidationException>(
-            () => SqlTaskClient.CreateAsync(request));
-
-        // Assert
-        ex.Errors.ShouldContainKey("TaskName");
-    }
-
-    [Fact(DisplayName = "Create с DifficultyLevel вне диапазона → ValidationException")]
-    public async Task Create_DifficultyLevelOutOfRange_ThrowsValidationException()
-    {
-        // Arrange
-        var request = new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Task", "Text", 6);
-
-        // Act
-        var ex = await Should.ThrowAsync<ValidationException>(
-            () => SqlTaskClient.CreateAsync(request));
-
-        // Assert
-        ex.Errors.ShouldContainKey("DifficultyLevel");
     }
 
     [Fact(DisplayName = "GetById → возвращает ранее созданное задание")]
@@ -208,11 +106,8 @@ public sealed class SqlTaskTests : ApiTestBase
     [Fact(DisplayName = "GetById несуществующего → null")]
     public async Task GetById_UnknownId_ReturnsNull()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-
         // Act
-        var result = await SqlTaskClient.GetByIdAsync(unknownId);
+        var result = await SqlTaskClient.GetByIdAsync(Guid.NewGuid());
 
         // Assert
         result.ShouldBeNull();
@@ -257,27 +152,9 @@ public sealed class SqlTaskTests : ApiTestBase
     [Fact(DisplayName = "Update несуществующего → NotFoundException")]
     public async Task Update_UnknownId_ThrowsNotFoundException()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-        var request = new UpdateSqlTaskRequest("Name", "Text", 1);
-
         // Act + Assert
         await Should.ThrowAsync<NotFoundException>(
-            () => SqlTaskClient.UpdateAsync(unknownId, request));
-    }
-
-    [Fact(DisplayName = "Update с пустым TaskName → ValidationException")]
-    public async Task Update_EmptyTaskName_ThrowsValidationException()
-    {
-        // Arrange
-        var request = new UpdateSqlTaskRequest("", "Text", 1);
-
-        // Act
-        var ex = await Should.ThrowAsync<ValidationException>(
-            () => SqlTaskClient.UpdateAsync(Guid.NewGuid(), request));
-
-        // Assert
-        ex.Errors.ShouldContainKey("TaskName");
+            () => SqlTaskClient.UpdateAsync(Guid.NewGuid(), new UpdateSqlTaskRequest("Name", "Text", 1)));
     }
 
     [Fact(DisplayName = "Delete → задание больше не возвращается GetById")]
@@ -301,11 +178,84 @@ public sealed class SqlTaskTests : ApiTestBase
     [Fact(DisplayName = "Delete несуществующего → без исключения (no-op)")]
     public async Task Delete_UnknownId_NoException()
     {
+        // Act + Assert
+        await Should.NotThrowAsync(() => SqlTaskClient.DeleteAsync(Guid.NewGuid()));
+    }
+
+    [Fact(DisplayName = "Create с несуществующим TargetDbId → ConflictException")]
+    public async Task Create_NonExistentTargetDbId_ThrowsConflictException()
+    {
         // Arrange
-        var unknownId = Guid.NewGuid();
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync();
 
         // Act + Assert
-        await Should.NotThrowAsync(() => SqlTaskClient.DeleteAsync(unknownId));
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.CreateAsync(
+                new CreateSqlTaskRequest(Guid.NewGuid(), topicId, sqlQueryId, "Task", "Text", 1)));
+    }
+
+    [Fact(DisplayName = "Create с несуществующим TopicId → ConflictException")]
+    public async Task Create_NonExistentTopicId_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var sqlQueryId = await CreateSqlQueryAsync();
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.CreateAsync(
+                new CreateSqlTaskRequest(targetDbId, Guid.NewGuid(), sqlQueryId, "Task", "Text", 1)));
+    }
+
+    [Fact(DisplayName = "Create с несуществующим SqlQueryId → ConflictException")]
+    public async Task Create_NonExistentSqlQueryId_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.CreateAsync(
+                new CreateSqlTaskRequest(targetDbId, topicId, Guid.NewGuid(), "Task", "Text", 1)));
+    }
+
+    [Fact(DisplayName = "Create с пустым TaskName → ValidationException")]
+    public async Task Create_EmptyTaskName_ThrowsValidationException()
+    {
+        // Act
+        var ex = await Should.ThrowAsync<ValidationException>(
+            () => SqlTaskClient.CreateAsync(
+                new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "", "Text", 1)));
+
+        // Assert
+        ex.Errors.ShouldContainKey("TaskName");
+    }
+
+    [Fact(DisplayName = "Create с DifficultyLevel вне диапазона → ValidationException")]
+    public async Task Create_DifficultyLevelOutOfRange_ThrowsValidationException()
+    {
+        // Act
+        var ex = await Should.ThrowAsync<ValidationException>(
+            () => SqlTaskClient.CreateAsync(
+                new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Task", "Text", 6)));
+
+        // Assert
+        ex.Errors.ShouldContainKey("DifficultyLevel");
+    }
+
+    [Fact(DisplayName = "Update с пустым TaskName → ValidationException")]
+    public async Task Update_EmptyTaskName_ThrowsValidationException()
+    {
+        // Act
+        var ex = await Should.ThrowAsync<ValidationException>(
+            () => SqlTaskClient.UpdateAsync(Guid.NewGuid(), new UpdateSqlTaskRequest("", "Text", 1)));
+
+        // Assert
+        ex.Errors.ShouldContainKey("TaskName");
     }
 
     [Fact(DisplayName = "Delete задания с попытками → ConflictException")]
