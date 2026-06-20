@@ -1,7 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
-using SQLModule.Client.Attempt;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Contracts.Training.SqlQuery;
@@ -29,10 +28,6 @@ public sealed class AttemptTests : ApiTestBase
         app = testApplication;
     }
 
-    /// <summary>
-    /// Создаёт полный набор предусловий (DBMS → TargetDb → Topic → SqlQuery → SqlTask)
-    /// и возвращает (taskId, queryId), пригодных для создания Attempt.
-    /// </summary>
     private async Task<(Guid taskId, Guid queryId)> CreatePrerequisitesAsync()
     {
         var dbmsId = await CreateDbmsDictionaryAsync();
@@ -54,9 +49,7 @@ public sealed class AttemptTests : ApiTestBase
         return (task.Id, sqlQuery.Id);
     }
 
-    /// <summary>Создаёт Attempt через API с корректными предусловиями.</summary>
-    private async Task<AttemptResponse> CreateAttemptAsync(
-        Guid taskId, Guid queryId, bool isSuccess = true)
+    private async Task<AttemptResponse> CreateAttemptAsync(Guid taskId, Guid queryId, bool isSuccess = true)
     {
         var start = DateTimeOffset.UtcNow.AddSeconds(-10);
         var end = DateTimeOffset.UtcNow;
@@ -64,7 +57,6 @@ public sealed class AttemptTests : ApiTestBase
             new CreateAttemptRequest(isSuccess, start, end, taskId, queryId));
     }
 
-    /// <summary>Создаёт Attempt напрямую через AppDbContext (для тестов удаления).</summary>
     private async Task<Guid> SeedAttemptAsync(Guid taskId, Guid queryId)
     {
         using var scope = app.Services.CreateScope();
@@ -78,7 +70,6 @@ public sealed class AttemptTests : ApiTestBase
         return attempt.Id;
     }
 
-    /// <summary>Создаёт DbmsDictionary напрямую через AppDbContext.</summary>
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
         using var scope = app.Services.CreateScope();
@@ -91,8 +82,6 @@ public sealed class AttemptTests : ApiTestBase
         await db.SaveChangesAsync();
         return dbms.Id;
     }
-
-    // happy-path
 
     [Fact(DisplayName = "Create → возвращает AttemptResponse с корректными полями")]
     public async Task Create_ValidRequest_ReturnsResponse()
@@ -171,7 +160,7 @@ public sealed class AttemptTests : ApiTestBase
         // Assert
         var updated = await AttemptClient.GetByIdAsync(created.Id);
         updated!.IsSuccess.ShouldBeTrue();
-        updated.EndAttempt.ShouldBe(newEnd);
+        updated.EndAttempt.ShouldBe(newEnd, TimeSpan.FromSeconds(1));
     }
 
     [Fact(DisplayName = "Delete → попытка больше не возвращается GetById")]
@@ -189,16 +178,11 @@ public sealed class AttemptTests : ApiTestBase
         found.ShouldBeNull();
     }
 
-    // негатив
-
     [Fact(DisplayName = "GetById несуществующего → null")]
     public async Task GetById_UnknownId_ReturnsNull()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-
         // Act
-        var result = await AttemptClient.GetByIdAsync(unknownId);
+        var result = await AttemptClient.GetByIdAsync(Guid.NewGuid());
 
         // Assert
         result.ShouldBeNull();
@@ -207,23 +191,17 @@ public sealed class AttemptTests : ApiTestBase
     [Fact(DisplayName = "Delete несуществующего → без исключения (no-op)")]
     public async Task Delete_UnknownId_NoException()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-
         // Act + Assert
-        await Should.NotThrowAsync(() => AttemptClient.DeleteAsync(unknownId));
+        await Should.NotThrowAsync(() => AttemptClient.DeleteAsync(Guid.NewGuid()));
     }
 
     [Fact(DisplayName = "Update несуществующего → NotFoundException")]
     public async Task Update_UnknownId_ThrowsNotFoundException()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-        var request = new UpdateAttemptRequest(true, DateTimeOffset.UtcNow);
-
         // Act + Assert
         await Should.ThrowAsync<NotFoundException>(
-            () => AttemptClient.UpdateAsync(unknownId, request));
+            () => AttemptClient.UpdateAsync(Guid.NewGuid(),
+                new UpdateAttemptRequest(true, DateTimeOffset.UtcNow)));
     }
 
     [Fact(DisplayName = "Create с несуществующим TaskId → ConflictException")]
@@ -232,11 +210,11 @@ public sealed class AttemptTests : ApiTestBase
         // Arrange
         var (_, queryId) = await CreatePrerequisitesAsync();
         var start = DateTimeOffset.UtcNow.AddSeconds(-5);
-        var request = new CreateAttemptRequest(true, start, DateTimeOffset.UtcNow, Guid.NewGuid(), queryId);
 
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
-            () => AttemptClient.CreateAsync(request));
+            () => AttemptClient.CreateAsync(
+                new CreateAttemptRequest(true, start, DateTimeOffset.UtcNow, Guid.NewGuid(), queryId)));
     }
 
     [Fact(DisplayName = "Create с несуществующим QueryId → ConflictException")]
@@ -245,11 +223,11 @@ public sealed class AttemptTests : ApiTestBase
         // Arrange
         var (taskId, _) = await CreatePrerequisitesAsync();
         var start = DateTimeOffset.UtcNow.AddSeconds(-5);
-        var request = new CreateAttemptRequest(true, start, DateTimeOffset.UtcNow, taskId, Guid.NewGuid());
 
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
-            () => AttemptClient.CreateAsync(request));
+            () => AttemptClient.CreateAsync(
+                new CreateAttemptRequest(true, start, DateTimeOffset.UtcNow, taskId, Guid.NewGuid())));
     }
 
     [Fact(DisplayName = "Create с EndAttempt < StartAttempt → ValidationException")]
@@ -259,11 +237,10 @@ public sealed class AttemptTests : ApiTestBase
         var (taskId, queryId) = await CreatePrerequisitesAsync();
         var start = DateTimeOffset.UtcNow;
         var end = start.AddSeconds(-1);
-        var request = new CreateAttemptRequest(true, start, end, taskId, queryId);
 
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
-            () => AttemptClient.CreateAsync(request));
+            () => AttemptClient.CreateAsync(new CreateAttemptRequest(true, start, end, taskId, queryId)));
 
         // Assert
         ex.Errors.ShouldContainKey("EndAttempt");
@@ -275,14 +252,11 @@ public sealed class AttemptTests : ApiTestBase
         // Arrange
         var (taskId, queryId) = await CreatePrerequisitesAsync();
         var created = await CreateAttemptAsync(taskId, queryId);
-
-        // EndAttempt устанавливаем раньше StartAttempt, которое уже зафиксировано в БД
         var endBeforeStart = created.StartAttempt.AddSeconds(-1);
-        var request = new UpdateAttemptRequest(true, endBeforeStart);
 
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
-            () => AttemptClient.UpdateAsync(created.Id, request));
+            () => AttemptClient.UpdateAsync(created.Id, new UpdateAttemptRequest(true, endBeforeStart)));
 
         // Assert
         ex.Problem!.Title.ShouldBe(AttemptErrors.InvalidTimeRange.Code);

@@ -1,21 +1,15 @@
-﻿using Shouldly;
+using Shouldly;
 using SQLModule.Client;
-using SQLModule.Client.Topic;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.IntegrationTests.infrastructure;
 
 namespace SQLModule.IntegrationTests.Training.Topic;
 
-/// <summary>
-/// Интеграционные тесты CRUD-операций и перемещения тем через <see cref="ITopicClient"/>.
-/// Каждый тест независим: создаёт собственные данные через вспомогательные методы.
-/// </summary>
 [Collection(IntegrationTestCollection.Name)]
 public sealed class TopicTests : ApiTestBase
 {
     public TopicTests(TestApplication testApplication) : base(testApplication) { }
 
-    /// <summary>Создаёт тему и возвращает ответ сервера.</summary>
     private async Task<TopicResponse> CreateTopicAsync(string topicName, Guid? parentTopicId = null)
         => await TopicClient.CreateAsync(new CreateTopicRequest(topicName, parentTopicId));
 
@@ -76,13 +70,10 @@ public sealed class TopicTests : ApiTestBase
     [Fact(DisplayName = "GetById → возвращает ранее созданную тему")]
     public async Task GetById_ExistingId_ReturnsTopic()
     {
-        // Arrange
         var created = await CreateTopicAsync("GetMe_" + Guid.NewGuid());
 
-        // Act
         var found = await TopicClient.GetByIdAsync(created.Id);
 
-        // Assert
         found.ShouldNotBeNull();
         found!.Id.ShouldBe(created.Id);
         found.TopicName.ShouldBe(created.TopicName);
@@ -145,11 +136,10 @@ public sealed class TopicTests : ApiTestBase
     {
         // Arrange
         var created = await CreateTopicAsync("SomeName_" + Guid.NewGuid());
-        var request = new UpdateTopicRequest("");
 
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
-            () => TopicClient.UpdateAsync(created.Id, request));
+            () => TopicClient.UpdateAsync(created.Id, new UpdateTopicRequest("")));
 
         // Assert
         ex.Errors.ShouldContainKey("TopicName");
@@ -172,11 +162,8 @@ public sealed class TopicTests : ApiTestBase
     [Fact(DisplayName = "Delete несуществующего → без исключения (no-op)")]
     public async Task Delete_UnknownId_NoException()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-
         // Act + Assert
-        await Should.NotThrowAsync(() => TopicClient.DeleteAsync(unknownId));
+        await Should.NotThrowAsync(() => TopicClient.DeleteAsync(Guid.NewGuid()));
     }
 
     [Fact(DisplayName = "Delete темы с подтемами → ConflictException")]
@@ -257,7 +244,7 @@ public sealed class TopicTests : ApiTestBase
     [Fact(DisplayName = "Move под потомка → ConflictException (цикл)")]
     public async Task Move_UnderDescendant_ThrowsConflictException()
     {
-        // Arrange — A → B → C, перемещаем A под C
+        // Arrange
         var topicA = await CreateTopicAsync("A_" + Guid.NewGuid());
         var topicB = await CreateTopicAsync("B", topicA.Id);
         var topicC = await CreateTopicAsync("C", topicB.Id);

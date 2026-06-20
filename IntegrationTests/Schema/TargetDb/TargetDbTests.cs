@@ -1,58 +1,47 @@
-﻿using System.Net.Http.Json;
-using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
 using SQLModule.Contracts.Schema.TargetDb;
+using SQLModule.Data.Core;
+using SQLModule.Domain.DbmsCatalog;
 using SQLModule.IntegrationTests.infrastructure;
 
 namespace SQLModule.IntegrationTests.Schema.TargetDb;
 
-/// <summary>
-/// Интеграционные тесты CRUD-операций для <see cref="ITargetDbClient"/>.
-/// Каждый тест независим: создаёт собственные данные через вспомогательные методы.
-/// </summary>
 [Collection(IntegrationTestCollection.Name)]
 public sealed class TargetDbTests : ApiTestBase
 {
-    public TargetDbTests(TestApplication testApplication) : base(testApplication) { }
+    private readonly TestApplication app;
 
-    /// <summary>Создаёт запись СУБД-справочника и возвращает её <c>Id</c>.</summary>
-    private async Task<Guid> CreateDbmsDictionaryAsync()
+    public TargetDbTests(TestApplication testApplication) : base(testApplication)
     {
-        var response = await HttpClient.PostAsJsonAsync("api/v1/dbms-dictionaries", new
-        {
-            DbmsName = "Scanner_" + Guid.NewGuid(),
-            DbmsSystemName = "scanner",
-            DockerImage = "postgres:latest",
-            DefaultPort = 5432,
-            EnvUserKey = "POSTGRES_USER",
-            EnvPasswordKey = "POSTGRES_PASSWORD",
-            EnvDatabaseKey = "POSTGRES_DB",
-            ExtraEnvConfig = (string?)null,
-            DefaultDatabase = "testdb",
-            DefaultUsername = "user",
-            DefaultPassword = "pass"
-        });
-        response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>(
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        return json.GetProperty("id").GetGuid();
+        app = testApplication;
     }
 
-    /// <summary>Создаёт запись TargetDb для указанной СУБД и возвращает ответ сервера.</summary>
+    private async Task<Guid> CreateDbmsDictionaryAsync()
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var dbms = DbmsDictionary.Create(
+            "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,
+            "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", null,
+            "testdb", "user", "pass");
+        db.DbmsDictionaries.Add(dbms);
+        await db.SaveChangesAsync();
+        return dbms.Id;
+    }
+
     private async Task<TargetDbResponse> CreateTargetDbAsync(Guid dbmsId, string dbName = "TestDB")
-        => await TargetDbClient.CreateAsync(
-            new CreateTargetDbRequest(dbmsId, dbName, null, false));
+        => await TargetDbClient.CreateAsync(new CreateTargetDbRequest(dbmsId, dbName, null, false));
 
     [Fact(DisplayName = "Create → возвращает TargetDbResponse с корректными полями")]
     public async Task Create_ValidRequest_ReturnsResponse()
     {
         // Arrange
         var dbmsId = await CreateDbmsDictionaryAsync();
-        var request = new CreateTargetDbRequest(dbmsId, "HappyDB", "desc", false);
 
         // Act
-        var response = await TargetDbClient.CreateAsync(request);
+        var response = await TargetDbClient.CreateAsync(new CreateTargetDbRequest(dbmsId, "HappyDB", "desc", false));
 
         // Assert
         response.DbName.ShouldBe("HappyDB");
@@ -63,23 +52,17 @@ public sealed class TargetDbTests : ApiTestBase
     [Fact(DisplayName = "Create с несуществующим DbmsId → ConflictException (409)")]
     public async Task Create_NonExistentDbmsId_ThrowsConflictException()
     {
-        // Arrange
-        var request = new CreateTargetDbRequest(Guid.NewGuid(), "SomeDB", null, false);
-
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
-            () => TargetDbClient.CreateAsync(request));
+            () => TargetDbClient.CreateAsync(new CreateTargetDbRequest(Guid.NewGuid(), "SomeDB", null, false)));
     }
 
-    [Fact(DisplayName = "Create с пустым DbName → ValidationException (с Errors)")]
+    [Fact(DisplayName = "Create с пустым DbName → ValidationException")]
     public async Task Create_EmptyDbName_ThrowsValidationException()
     {
-        // Arrange
-        var request = new CreateTargetDbRequest(Guid.NewGuid(), "", null, false);
-
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
-            () => TargetDbClient.CreateAsync(request));
+            () => TargetDbClient.CreateAsync(new CreateTargetDbRequest(Guid.NewGuid(), "", null, false)));
 
         // Assert
         ex.Errors.ShouldNotBeEmpty();
@@ -105,11 +88,8 @@ public sealed class TargetDbTests : ApiTestBase
     [Fact(DisplayName = "GetById несуществующего → null")]
     public async Task GetById_UnknownId_ReturnsNull()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-
         // Act
-        var result = await TargetDbClient.GetByIdAsync(unknownId);
+        var result = await TargetDbClient.GetByIdAsync(Guid.NewGuid());
 
         // Assert
         result.ShouldBeNull();
@@ -137,8 +117,7 @@ public sealed class TargetDbTests : ApiTestBase
         var created = await CreateTargetDbAsync(dbmsId);
 
         // Act
-        await TargetDbClient.UpdateAsync(
-            created.Id, new UpdateTargetDbRequest("UpdatedDB", null, true));
+        await TargetDbClient.UpdateAsync(created.Id, new UpdateTargetDbRequest("UpdatedDB", null, true));
 
         // Assert
         var updated = await TargetDbClient.GetByIdAsync(created.Id);
@@ -149,26 +128,21 @@ public sealed class TargetDbTests : ApiTestBase
     [Fact(DisplayName = "Update несуществующего → NotFoundException")]
     public async Task Update_UnknownId_ThrowsNotFoundException()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-        var request = new UpdateTargetDbRequest("DB", null, false);
-
         // Act + Assert
         await Should.ThrowAsync<NotFoundException>(
-            () => TargetDbClient.UpdateAsync(unknownId, request));
+            () => TargetDbClient.UpdateAsync(Guid.NewGuid(), new UpdateTargetDbRequest("DB", null, false)));
     }
 
-    [Fact(DisplayName = "Update с пустым DbName → ValidationException (с Errors)")]
+    [Fact(DisplayName = "Update с пустым DbName → ValidationException")]
     public async Task Update_EmptyDbName_ThrowsValidationException()
     {
         // Arrange
         var dbmsId = await CreateDbmsDictionaryAsync();
         var created = await CreateTargetDbAsync(dbmsId);
-        var request = new UpdateTargetDbRequest("", null, false);
 
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
-            () => TargetDbClient.UpdateAsync(created.Id, request));
+            () => TargetDbClient.UpdateAsync(created.Id, new UpdateTargetDbRequest("", null, false)));
 
         // Assert
         ex.Errors.ShouldNotBeEmpty();
@@ -193,10 +167,7 @@ public sealed class TargetDbTests : ApiTestBase
     [Fact(DisplayName = "Delete несуществующего → без исключения (no-op)")]
     public async Task Delete_UnknownId_NoException()
     {
-        // Arrange
-        var unknownId = Guid.NewGuid();
-
         // Act + Assert
-        await Should.NotThrowAsync(() => TargetDbClient.DeleteAsync(unknownId));
+        await Should.NotThrowAsync(() => TargetDbClient.DeleteAsync(Guid.NewGuid()));
     }
 }
