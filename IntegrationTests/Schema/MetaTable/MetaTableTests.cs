@@ -11,6 +11,7 @@ using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Host.Features.Schema.MetaTables;
 using SQLModule.IntegrationTests.infrastructure;
+using DomainMetaRelationship = SQLModule.Domain.Schema.MetaRelationship;
 
 namespace SQLModule.IntegrationTests.Schema.MetaTable;
 
@@ -80,7 +81,7 @@ public sealed class MetaTableTests : ApiTestBase
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var rel = MetaRelationship.Create(
+        var rel = DomainMetaRelationship.Create(
             "rel_" + Guid.NewGuid(), sourceAttrId, targetAttrId,
             deleteRule: null, updateRule: null);
         db.MetaRelationships.Add(rel);
