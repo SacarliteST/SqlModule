@@ -1,4 +1,5 @@
 ﻿using SQLModule.Client.Attempt;
+using SQLModule.Client.MetaAttribute;
 using SQLModule.Client.MetaRelationship;
 using SQLModule.Client.MetaTable;
 using SQLModule.Client.SqlQuery;
@@ -36,6 +37,9 @@ public abstract class ApiTestBase
     /// <summary>Типизированный клиент для работы с FK-связями между мета-атрибутами.</summary>
     protected readonly IMetaRelationshipClient MetaRelationshipClient;
 
+    /// <summary>Типизированный клиент для работы с мета-атрибутами (колонками).</summary>
+    protected readonly IMetaAttributeClient MetaAttributeClient;
+
     protected ApiTestBase(TestApplication testApplication)
     {
         HttpClient = testApplication.CreateClient();
@@ -46,5 +50,6 @@ public abstract class ApiTestBase
         AttemptClient = testApplication.AttemptClient;
         MetaTableClient = testApplication.MetaTableClient;
         MetaRelationshipClient = testApplication.MetaRelationshipClient;
+        MetaAttributeClient = testApplication.MetaAttributeClient;
     }
 }

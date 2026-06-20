@@ -11,6 +11,7 @@ using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Host.Features.Schema.MetaTables;
 using SQLModule.IntegrationTests.infrastructure;
+using DomainMetaAttribute = SQLModule.Domain.Schema.MetaAttribute;
 using DomainMetaRelationship = SQLModule.Domain.Schema.MetaRelationship;
 
 namespace SQLModule.IntegrationTests.Schema.MetaTable;
@@ -69,7 +70,7 @@ public sealed class MetaTableTests : ApiTestBase
         var physicalType = PhysicalType.Create(dbmsId, "integer_" + Guid.NewGuid());
         db.PhysicalTypes.Add(physicalType);
 
-        var attr = MetaAttribute.Create(
+        var attr = DomainMetaAttribute.Create(
             metaTableId, physicalType.Id, "col_" + Guid.NewGuid(),
             isPrimaryKey: false, isRequired: false, sortOrder: 1);
         db.MetaAttributes.Add(attr);
