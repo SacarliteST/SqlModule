@@ -1,0 +1,32 @@
+﻿using SQLModule.Contracts;
+using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
+using SQLModule.Host.Common;
+using SQLModule.Host.Common.Cqrs;
+using SQLModule.Host.Common.Results;
+
+namespace SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.CreateDbmsDictionary;
+
+internal sealed class CreateDbmsDictionaryEndpoint : IEndpoint
+{
+    public void MapEndpoints(IEndpointRouteBuilder app)
+    {
+        app.MapPost(ApiRoutes.DbmsCatalog.DbmsDictionaries.Collection, Handle)
+            .WithName("CreateDbmsDictionary")
+            .WithTags("DbmsCatalog")
+            .Produces<DbmsDictionaryResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .AddEndpointFilter<ValidationFilter<CreateDbmsDictionaryRequest>>();
+    }
+
+    private static async Task<IResult> Handle(
+        CreateDbmsDictionaryRequest request, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send<CreateDbmsDictionaryCommand, Result<DbmsDictionaryResponse>>(
+            new CreateDbmsDictionaryCommand(
+                request.DbmsName, request.DbmsSystemName, request.DockerImage, request.DefaultPort,
+                request.EnvUserKey, request.EnvPasswordKey, request.EnvDatabaseKey, request.ExtraEnvConfig,
+                request.DefaultDatabase, request.DefaultUsername, request.DefaultPassword), ct);
+        return result.ToCreated(r => ApiRoutes.DbmsCatalog.DbmsDictionaries.ForId(r.Id));
+    }
+}

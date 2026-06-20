@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using SQLModule.Client.Attempt;
 using SQLModule.Client.AttributeParameterValue;
 using SQLModule.Client.DataRecord;
+using SQLModule.Client.DbmsDictionary;
 using SQLModule.Client.MetaAttribute;
 using SQLModule.Client.MetaRelationship;
 using SQLModule.Client.MetaTable;
@@ -34,6 +35,11 @@ public static class ServiceCollectionExtensions
             .BindConfiguration(SqlModuleClientOptions.SectionKey);
 
         services.AddTransient<ErrorDelegatingHandler>();
+
+        services.AddHttpClient<IDbmsDictionaryClient, DbmsDictionaryClient>((sp, http) =>
+                http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
+                    .Value.BaseAddress)
+            .AddHttpMessageHandler<ErrorDelegatingHandler>();
 
         services.AddHttpClient<ITargetDbClient, TargetDbClient>((sp, http) =>
                 http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()

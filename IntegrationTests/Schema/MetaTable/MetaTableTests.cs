@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;

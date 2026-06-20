@@ -1,6 +1,7 @@
 ﻿using SQLModule.Client.Attempt;
 using SQLModule.Client.AttributeParameterValue;
 using SQLModule.Client.DataRecord;
+using SQLModule.Client.DbmsDictionary;
 using SQLModule.Client.MetaAttribute;
 using SQLModule.Client.MetaRelationship;
 using SQLModule.Client.MetaTable;
@@ -19,6 +20,9 @@ public abstract class ApiTestBase
 {
     /// <summary>HTTP-клиент без типизации — для вызовов эндпоинтов без клиентского SDK.</summary>
     protected readonly HttpClient HttpClient;
+
+    /// <summary>Типизированный клиент для работы со справочником СУБД.</summary>
+    protected readonly IDbmsDictionaryClient DbmsDictionaryClient;
 
     /// <summary>Типизированный клиент модуля — основной способ взаимодействия с API в тестах.</summary>
     protected readonly ITargetDbClient TargetDbClient;
@@ -59,6 +63,7 @@ public abstract class ApiTestBase
     protected ApiTestBase(TestApplication testApplication)
     {
         HttpClient = testApplication.CreateClient();
+        DbmsDictionaryClient = testApplication.DbmsDictionaryClient;
         TargetDbClient = testApplication.TargetDbClient;
         TopicClient = testApplication.TopicClient;
         SqlTaskClient = testApplication.SqlTaskClient;
