@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using SQLModule.Client;
 using SQLModule.Client.Attempt;
+using SQLModule.Client.AttributeParameterValue;
 using SQLModule.Client.DataRecord;
 using SQLModule.Client.MetaAttribute;
 using SQLModule.Client.MetaRelationship;
@@ -59,6 +60,9 @@ public sealed class TestApplication :
     /// <summary>Типизированный клиент для работы со строками данных (EAV-якоря).</summary>
     public IDataRecordClient DataRecordClient { get; private set; } = null!;
 
+    /// <summary>Типизированный клиент для работы со значениями параметров атрибутов.</summary>
+    public IAttributeParameterValueClient AttributeParameterValueClient { get; private set; } = null!;
+
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
                     .WithImage(DockerImages.PostgreSql)
@@ -82,6 +86,7 @@ public sealed class TestApplication :
         MetaRelationshipClient = sp.GetRequiredService<IMetaRelationshipClient>();
         MetaAttributeClient = sp.GetRequiredService<IMetaAttributeClient>();
         DataRecordClient = sp.GetRequiredService<IDataRecordClient>();
+        AttributeParameterValueClient = sp.GetRequiredService<IAttributeParameterValueClient>();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
