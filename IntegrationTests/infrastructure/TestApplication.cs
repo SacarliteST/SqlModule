@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using SQLModule.Client;
 using SQLModule.Client.Attempt;
+using SQLModule.Client.MetaTable;
 using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
@@ -43,6 +44,9 @@ public sealed class TestApplication :
     /// <summary>Типизированный клиент для работы с попытками выполнения заданий.</summary>
     public IAttemptClient AttemptClient { get; private set; } = null!;
 
+    /// <summary>Типизированный клиент для работы с мета-таблицами.</summary>
+    public IMetaTableClient MetaTableClient { get; private set; } = null!;
+
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
                     .WithImage(DockerImages.PostgreSql)
@@ -62,6 +66,7 @@ public sealed class TestApplication :
         SqlTaskClient = sp.GetRequiredService<ISqlTaskClient>();
         SqlQueryClient = sp.GetRequiredService<ISqlQueryClient>();
         AttemptClient = sp.GetRequiredService<IAttemptClient>();
+        MetaTableClient = sp.GetRequiredService<IMetaTableClient>();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

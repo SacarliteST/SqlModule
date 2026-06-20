@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SQLModule.Client.Attempt;
+using SQLModule.Client.MetaTable;
 using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
@@ -49,6 +50,11 @@ public static class ServiceCollectionExtensions
             .AddHttpMessageHandler<ErrorDelegatingHandler>();
 
         services.AddHttpClient<IAttemptClient, AttemptClient>((sp, http) =>
+                http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
+                    .Value.BaseAddress)
+            .AddHttpMessageHandler<ErrorDelegatingHandler>();
+
+        services.AddHttpClient<IMetaTableClient, MetaTableClient>((sp, http) =>
                 http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
                     .Value.BaseAddress)
             .AddHttpMessageHandler<ErrorDelegatingHandler>();
