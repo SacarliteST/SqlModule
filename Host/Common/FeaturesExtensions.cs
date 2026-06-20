@@ -1,4 +1,5 @@
-﻿using SQLModule.Host.Features.Schema.DataRecords;
+﻿using SQLModule.Host.Features.Schema.AttributeParameterValues;
+using SQLModule.Host.Features.Schema.DataRecords;
 using SQLModule.Host.Features.Schema.MetaAttributes;
 using SQLModule.Host.Features.Schema.MetaRelationships;
 using SQLModule.Host.Features.Schema.MetaTables;
@@ -27,6 +28,7 @@ internal static class FeaturesExtensions
             .AddMetaAttributes()
             .AddMetaRelationships()
             .AddDataRecords()
+            .AddAttributeParameterValues()
             .AddTopics()
             .AddSqlTasks()
             .AddSqlQueries()

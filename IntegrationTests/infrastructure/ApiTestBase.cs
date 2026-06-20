@@ -1,4 +1,5 @@
 ﻿using SQLModule.Client.Attempt;
+using SQLModule.Client.AttributeParameterValue;
 using SQLModule.Client.DataRecord;
 using SQLModule.Client.MetaAttribute;
 using SQLModule.Client.MetaRelationship;
@@ -44,6 +45,9 @@ public abstract class ApiTestBase
     /// <summary>Типизированный клиент для работы со строками данных (EAV-якоря).</summary>
     protected readonly IDataRecordClient DataRecordClient;
 
+    /// <summary>Типизированный клиент для работы со значениями параметров атрибутов.</summary>
+    protected readonly IAttributeParameterValueClient AttributeParameterValueClient;
+
     protected ApiTestBase(TestApplication testApplication)
     {
         HttpClient = testApplication.CreateClient();
@@ -56,5 +60,6 @@ public abstract class ApiTestBase
         MetaRelationshipClient = testApplication.MetaRelationshipClient;
         MetaAttributeClient = testApplication.MetaAttributeClient;
         DataRecordClient = testApplication.DataRecordClient;
+        AttributeParameterValueClient = testApplication.AttributeParameterValueClient;
     }
 }
