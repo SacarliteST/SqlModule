@@ -18,6 +18,9 @@ public static class ApiRoutes
             /// <summary>Элемент по Id.</summary>
             public const string ById = Collection + "/{id}";
 
+            /// <summary>Проверка Docker-конфигурации без сохранения.</summary>
+            public const string Validate = Collection + "/validate";
+
             /// <inheritdoc cref="ForId"/>
             public static string ForId(Guid id) => $"{Collection}/{id}";
 

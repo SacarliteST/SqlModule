@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
 using SQLModule.Contracts.Schema.TargetDb;
@@ -127,7 +127,7 @@ public sealed class AttemptTests : ApiTestBase
 
         // Assert
         found.ShouldNotBeNull();
-        found!.Id.ShouldBe(created.Id);
+        found.Id.ShouldBe(created.Id);
         found.TaskId.ShouldBe(taskId);
         found.QueryId.ShouldBe(queryId);
     }

@@ -8,6 +8,7 @@ using SQLModule.Client;
 using SQLModule.Client.Attempt;
 using SQLModule.Client.AttributeParameterValue;
 using SQLModule.Client.DataRecord;
+using SQLModule.Client.DbmsDictionary;
 using SQLModule.Client.MetaAttribute;
 using SQLModule.Client.MetaRelationship;
 using SQLModule.Client.MetaTable;
@@ -19,6 +20,7 @@ using SQLModule.Client.TargetDb;
 using SQLModule.Client.Topic;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Host;
+using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 using Testcontainers.PostgreSql;
 
 namespace SQLModule.IntegrationTests.infrastructure;
@@ -34,6 +36,9 @@ public sealed class TestApplication :
     private const string TestDbName = "storage_test";
     private const string TestUser = "postgresTestUser";
     private const string TestPassword = "postgresTestPassword";
+
+    /// <summary>Типизированный клиент для работы со справочником СУБД.</summary>
+    public IDbmsDictionaryClient DbmsDictionaryClient { get; private set; } = null!;
 
     /// <summary>Типизированный клиент для работы с целевыми БД.</summary>
     public ITargetDbClient TargetDbClient { get; private set; } = null!;
@@ -85,6 +90,7 @@ public sealed class TestApplication :
     {
         await postgreContainer.StartAsync();
         var sp = BuildClientServiceProvider();
+        DbmsDictionaryClient = sp.GetRequiredService<IDbmsDictionaryClient>();
         TargetDbClient = sp.GetRequiredService<ITargetDbClient>();
         TopicClient = sp.GetRequiredService<ITopicClient>();
         SqlTaskClient = sp.GetRequiredService<ISqlTaskClient>();
@@ -108,6 +114,10 @@ public sealed class TestApplication :
         };
 
         builder.ConfigureAppConfiguration(config => config.AddInMemoryCollection(configurationValues));
+        builder.ConfigureServices(services =>
+        {
+            services.AddSingleton<IDbmsProbe, AlwaysOkProbe>();
+        });
         base.ConfigureWebHost(builder);
     }
 
