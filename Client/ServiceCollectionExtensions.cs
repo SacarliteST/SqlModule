@@ -7,6 +7,7 @@ using SQLModule.Client.DataRecord;
 using SQLModule.Client.MetaAttribute;
 using SQLModule.Client.MetaRelationship;
 using SQLModule.Client.MetaTable;
+using SQLModule.Client.PhysicalType;
 using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
@@ -79,6 +80,11 @@ public static class ServiceCollectionExtensions
             .AddHttpMessageHandler<ErrorDelegatingHandler>();
 
         services.AddHttpClient<IAttributeParameterValueClient, AttributeParameterValueClient>((sp, http) =>
+                http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
+                    .Value.BaseAddress)
+            .AddHttpMessageHandler<ErrorDelegatingHandler>();
+
+        services.AddHttpClient<IPhysicalTypeClient, PhysicalTypeClient>((sp, http) =>
                 http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
                     .Value.BaseAddress)
             .AddHttpMessageHandler<ErrorDelegatingHandler>();
