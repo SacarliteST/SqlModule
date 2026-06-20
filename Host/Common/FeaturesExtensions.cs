@@ -1,4 +1,5 @@
-﻿using SQLModule.Host.Features.DbmsCatalog.PhysicalTypes;
+﻿using SQLModule.Host.Features.DbmsCatalog.ParameterDefinitions;
+using SQLModule.Host.Features.DbmsCatalog.PhysicalTypes;
 using SQLModule.Host.Features.Schema.AttributeParameterValues;
 using SQLModule.Host.Features.Schema.DataRecords;
 using SQLModule.Host.Features.Schema.MetaAttributes;
@@ -25,6 +26,7 @@ internal static class FeaturesExtensions
     /// <summary>Регистрирует хендлеры всех фич.</summary>
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
         => s.AddPhysicalTypes()
+            .AddParameterDefinitions()
             .AddTargetDbs()
             .AddMetaTables()
             .AddMetaAttributes()

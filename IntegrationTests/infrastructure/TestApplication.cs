@@ -11,6 +11,7 @@ using SQLModule.Client.DataRecord;
 using SQLModule.Client.MetaAttribute;
 using SQLModule.Client.MetaRelationship;
 using SQLModule.Client.MetaTable;
+using SQLModule.Client.ParameterDefinition;
 using SQLModule.Client.PhysicalType;
 using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
@@ -67,6 +68,9 @@ public sealed class TestApplication :
     /// <summary>Типизированный клиент для работы с физическими типами данных.</summary>
     public IPhysicalTypeClient PhysicalTypeClient { get; private set; } = null!;
 
+    /// <summary>Типизированный клиент для работы с определениями параметров физических типов.</summary>
+    public IParameterDefinitionClient ParameterDefinitionClient { get; private set; } = null!;
+
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
                     .WithImage(DockerImages.PostgreSql)
@@ -92,6 +96,7 @@ public sealed class TestApplication :
         DataRecordClient = sp.GetRequiredService<IDataRecordClient>();
         AttributeParameterValueClient = sp.GetRequiredService<IAttributeParameterValueClient>();
         PhysicalTypeClient = sp.GetRequiredService<IPhysicalTypeClient>();
+        ParameterDefinitionClient = sp.GetRequiredService<IParameterDefinitionClient>();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
