@@ -1,4 +1,5 @@
 ﻿using SQLModule.Client.Attempt;
+using SQLModule.Client.MetaTable;
 using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
@@ -28,6 +29,9 @@ public abstract class ApiTestBase
     /// <summary>Типизированный клиент для работы с попытками выполнения заданий.</summary>
     protected readonly IAttemptClient AttemptClient;
 
+    /// <summary>Типизированный клиент для работы с мета-таблицами.</summary>
+    protected readonly IMetaTableClient MetaTableClient;
+
     protected ApiTestBase(TestApplication testApplication)
     {
         HttpClient = testApplication.CreateClient();
@@ -36,5 +40,6 @@ public abstract class ApiTestBase
         SqlTaskClient = testApplication.SqlTaskClient;
         SqlQueryClient = testApplication.SqlQueryClient;
         AttemptClient = testApplication.AttemptClient;
+        MetaTableClient = testApplication.MetaTableClient;
     }
 }

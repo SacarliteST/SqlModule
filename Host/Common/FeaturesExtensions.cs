@@ -1,4 +1,5 @@
-﻿using SQLModule.Host.Features.Schema.TargetDbs;
+﻿using SQLModule.Host.Features.Schema.MetaTables;
+using SQLModule.Host.Features.Schema.TargetDbs;
 using SQLModule.Host.Features.Training.Attempts;
 using SQLModule.Host.Features.Training.SqlQueries;
 using SQLModule.Host.Features.Training.SqlTasks;
@@ -19,6 +20,7 @@ internal static class FeaturesExtensions
     /// <summary>Регистрирует хендлеры всех фич.</summary>
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
         => s.AddTargetDbs()
+            .AddMetaTables()
             .AddTopics()
             .AddSqlTasks()
             .AddSqlQueries()

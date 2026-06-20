@@ -19,7 +19,7 @@ internal static class Startup
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddData(builder.Configuration);
         services.AddEndpoints();
-        services.AddValidatorsFromAssemblyContaining<IHostMarker>();
+        services.AddValidatorsFromAssemblyContaining<IHostMarker>(includeInternalTypes: true);
         services.AddCqrs();
         services.AddFeatures();
     }
