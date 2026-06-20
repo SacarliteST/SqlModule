@@ -13,6 +13,7 @@ using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Host.Features.Schema.MetaRelationships;
 using SQLModule.IntegrationTests.infrastructure;
+using DomainMetaAttribute = SQLModule.Domain.Schema.MetaAttribute;
 
 namespace SQLModule.IntegrationTests.Schema.MetaRelationship;
 
@@ -72,7 +73,7 @@ public sealed class MetaRelationshipTests : ApiTestBase
         var physicalType = PhysicalType.Create(dbmsId, "int_" + Guid.NewGuid().ToString("N")[..8]);
         db.PhysicalTypes.Add(physicalType);
 
-        var attr = MetaAttribute.Create(
+        var attr = DomainMetaAttribute.Create(
             metaTableId, physicalType.Id, "col_" + Guid.NewGuid().ToString("N")[..8],
             isPrimaryKey: false, isRequired: false, sortOrder: (short)1);
         db.MetaAttributes.Add(attr);

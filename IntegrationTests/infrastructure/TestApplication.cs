@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using SQLModule.Client;
 using SQLModule.Client.Attempt;
+using SQLModule.Client.MetaAttribute;
 using SQLModule.Client.MetaRelationship;
 using SQLModule.Client.MetaTable;
 using SQLModule.Client.SqlQuery;
@@ -51,6 +52,9 @@ public sealed class TestApplication :
     /// <summary>Типизированный клиент для работы с FK-связями между мета-атрибутами.</summary>
     public IMetaRelationshipClient MetaRelationshipClient { get; private set; } = null!;
 
+    /// <summary>Типизированный клиент для работы с мета-атрибутами (колонками).</summary>
+    public IMetaAttributeClient MetaAttributeClient { get; private set; } = null!;
+
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
                     .WithImage(DockerImages.PostgreSql)
@@ -72,6 +76,7 @@ public sealed class TestApplication :
         AttemptClient = sp.GetRequiredService<IAttemptClient>();
         MetaTableClient = sp.GetRequiredService<IMetaTableClient>();
         MetaRelationshipClient = sp.GetRequiredService<IMetaRelationshipClient>();
+        MetaAttributeClient = sp.GetRequiredService<IMetaAttributeClient>();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
