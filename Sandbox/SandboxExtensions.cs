@@ -11,8 +11,11 @@ public static class SandboxExtensions
         services.AddOptions<SandboxOptions>().BindConfiguration(SandboxOptions.SectionKey);
         services.AddSingleton<ISqlDialect, PostgresDialect>();
         services.AddSingleton<ISqlDialect, MySqlDialect>();
-        services.AddSingleton<ISqlDialectFactory, SqlDialectFactory>();
+        services.AddSingleton<SqlDialectFactory>();
+        services.AddSingleton<ISqlDialectFactory>(sp => sp.GetRequiredService<SqlDialectFactory>());
+        services.AddSingleton<ISqlSyntaxFactory>(sp => sp.GetRequiredService<SqlDialectFactory>());
         services.AddSingleton<ISandboxExecutor, TestcontainersSandboxExecutor>();
+        services.AddSingleton<ISchemaSqlGenerator, SchemaSqlGenerator>();
         return services;
     }
 }

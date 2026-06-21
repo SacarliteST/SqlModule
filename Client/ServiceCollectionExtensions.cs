@@ -10,6 +10,7 @@ using SQLModule.Client.MetaRelationship;
 using SQLModule.Client.MetaTable;
 using SQLModule.Client.ParameterDefinition;
 using SQLModule.Client.PhysicalType;
+using SQLModule.Client.SchemaBuilder;
 using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
@@ -97,6 +98,11 @@ public static class ServiceCollectionExtensions
             .AddHttpMessageHandler<ErrorDelegatingHandler>();
 
         services.AddHttpClient<IParameterDefinitionClient, ParameterDefinitionClient>((sp, http) =>
+                http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
+                    .Value.BaseAddress)
+            .AddHttpMessageHandler<ErrorDelegatingHandler>();
+
+        services.AddHttpClient<ISchemaBuilderClient, SchemaBuilderClient>((sp, http) =>
                 http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
                     .Value.BaseAddress)
             .AddHttpMessageHandler<ErrorDelegatingHandler>();

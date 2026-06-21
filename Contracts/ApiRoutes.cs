@@ -64,6 +64,13 @@ public static class ApiRoutes
     /// <summary>Маршруты контекста схемы данных.</summary>
     public static class Schema
     {
+        /// <summary>Построитель схемы (черновик с TempId).</summary>
+        public static class SchemaBuilder
+        {
+            /// <summary>Валидация черновика схемы в песочнице без сохранения.</summary>
+            public const string Validate = PrefixV1 + "/schemas/validate";
+        }
+
         /// <summary>Целевые БД.</summary>
         public static class TargetDbs
         {

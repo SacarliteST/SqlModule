@@ -1,0 +1,20 @@
+﻿using SQLModule.Common.Results;
+using DomainDbms = SQLModule.Domain.DbmsCatalog.DbmsDictionary;
+using DomainPhysicalType = SQLModule.Domain.DbmsCatalog.PhysicalType;
+
+namespace SQLModule.Host.Features.Schema.SchemaBuilder;
+
+internal static class SchemaErrors
+{
+    internal static Error DbmsNotFound(Guid id) =>
+        DomainErrors<DomainDbms>.Conflict($"СУБД с id '{id}' не найдена.");
+
+    internal static Error PhysicalTypeNotFound(Guid id) =>
+        DomainErrors<DomainPhysicalType>.Conflict($"Физический тип с id '{id}' не найден.");
+
+    internal static Error PhysicalTypeMismatch(Guid typeId, string dbmsName) =>
+        DomainErrors<DomainPhysicalType>.Conflict($"Физический тип '{typeId}' принадлежит другой СУБД (ожидалась '{dbmsName}').");
+
+    internal static Error UnsupportedDbms(string name) =>
+        Error.Conflict("Schema.UnsupportedDbms", $"Диалект SQL для СУБД '{name}' не поддерживается.");
+}

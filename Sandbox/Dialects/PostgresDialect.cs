@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using System.Globalization;
 using Npgsql;
 
 namespace SQLModule.Sandbox.Dialects;
@@ -6,6 +7,23 @@ namespace SQLModule.Sandbox.Dialects;
 internal sealed class PostgresDialect : ISqlDialect
 {
     public string SystemName => "postgres";
+
+    public string QuoteIdentifier(string name) => $"\"{name.Replace("\"", "\"\"")}\"";
+
+    public string FormatValue(string? value)
+    {
+        if (value is null)
+        {
+            return "NULL";
+        }
+
+        if (Decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out _))
+        {
+            return value;
+        }
+
+        return $"'{value.Replace("'", "''")}'";
+    }
 
     public DbConnection CreateConnection(string connectionString) => new NpgsqlConnection(connectionString);
 
