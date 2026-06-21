@@ -6,6 +6,7 @@ using SQLModule.Host.Features.Schema.DataRecords;
 using SQLModule.Host.Features.Schema.MetaAttributes;
 using SQLModule.Host.Features.Schema.MetaRelationships;
 using SQLModule.Host.Features.Schema.MetaTables;
+using SQLModule.Host.Features.Schema.SchemaBuilder;
 using SQLModule.Host.Features.Schema.TargetDbs;
 using SQLModule.Host.Features.Training.Attempts;
 using SQLModule.Host.Features.Training.SqlQueries;
@@ -40,5 +41,6 @@ internal static class FeaturesExtensions
             .AddTopics()
             .AddSqlTasks()
             .AddSqlQueries()
-            .AddAttempts();
+            .AddAttempts()
+            .AddSchemaBuilder();
 }

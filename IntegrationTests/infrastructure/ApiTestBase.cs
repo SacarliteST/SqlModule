@@ -7,6 +7,7 @@ using SQLModule.Client.MetaRelationship;
 using SQLModule.Client.MetaTable;
 using SQLModule.Client.ParameterDefinition;
 using SQLModule.Client.PhysicalType;
+using SQLModule.Client.SchemaBuilder;
 using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
@@ -60,6 +61,9 @@ public abstract class ApiTestBase
     /// <summary>Типизированный клиент для работы с определениями параметров физических типов.</summary>
     protected readonly IParameterDefinitionClient ParameterDefinitionClient;
 
+    /// <summary>Типизированный клиент для построителя схемы.</summary>
+    protected readonly ISchemaBuilderClient SchemaBuilderClient;
+
     protected ApiTestBase(TestApplication testApplication)
     {
         HttpClient = testApplication.CreateClient();
@@ -76,5 +80,6 @@ public abstract class ApiTestBase
         AttributeParameterValueClient = testApplication.AttributeParameterValueClient;
         PhysicalTypeClient = testApplication.PhysicalTypeClient;
         ParameterDefinitionClient = testApplication.ParameterDefinitionClient;
+        SchemaBuilderClient = testApplication.SchemaBuilderClient;
     }
 }
