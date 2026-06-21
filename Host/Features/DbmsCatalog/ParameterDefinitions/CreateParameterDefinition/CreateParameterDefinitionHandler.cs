@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.ParameterDefinition;
 using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Host.Common.Cqrs;
-using SQLModule.Host.Common.Results;
 
 namespace SQLModule.Host.Features.DbmsCatalog.ParameterDefinitions;
 

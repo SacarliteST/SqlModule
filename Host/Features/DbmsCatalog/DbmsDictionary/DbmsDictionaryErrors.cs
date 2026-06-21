@@ -1,4 +1,4 @@
-﻿using SQLModule.Host.Common.Results;
+﻿using SQLModule.Common.Results;
 using DomainDbms = SQLModule.Domain.DbmsCatalog.DbmsDictionary;
 
 namespace SQLModule.Host.Features.DbmsCatalog.DbmsDictionary;

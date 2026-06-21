@@ -1,4 +1,4 @@
-﻿namespace SQLModule.Host.Common.Results;
+﻿namespace SQLModule.Common.Results;
 
 /// <summary>
 /// Категория ошибки. Используется для маппинга на HTTP-статус в <see cref="ResultExtensions"/>.
@@ -26,21 +26,19 @@ public enum ErrorType
 /// <param name="Type">Категория ошибки.</param>
 public record Error(string Code, string Message, ErrorType Type)
 {
+    /// <summary>Создаёт ошибку нарушения бизнес-правила (422).</summary>
+    public static Error Validation(string code, string message) =>
+        new(code, message, ErrorType.Validation);
+
     /// <summary>Создаёт ошибку 404 для сущности с указанным идентификатором.</summary>
-    /// <param name="entity">Имя сущности (например, <c>TargetDb</c>).</param>
-    /// <param name="id">Идентификатор сущности.</param>
     public static Error NotFound(string entity, object id) =>
-        new($"{entity}.NotFound", $"{entity} with id '{id}' was not found.", ErrorType.NotFound);
+        new($"{entity}.NotFound", $"{entity} с id '{id}' не найден(а).", ErrorType.NotFound);
 
     /// <summary>Создаёт ошибку конфликта состояния (409).</summary>
-    /// <param name="code">Код ошибки.</param>
-    /// <param name="message">Сообщение.</param>
     public static Error Conflict(string code, string message) =>
         new(code, message, ErrorType.Conflict);
 
     /// <summary>Создаёт внутреннюю ошибку (500).</summary>
-    /// <param name="code">Код ошибки.</param>
-    /// <param name="message">Сообщение.</param>
     public static Error Failure(string code, string message) =>
         new(code, message, ErrorType.Failure);
 }

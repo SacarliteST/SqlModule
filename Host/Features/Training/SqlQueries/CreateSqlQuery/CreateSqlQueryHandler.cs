@@ -1,7 +1,7 @@
-﻿using SQLModule.Contracts.Training.SqlQuery;
+﻿using SQLModule.Common.Results;
+using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Data.Core;
 using SQLModule.Host.Common.Cqrs;
-using SQLModule.Host.Common.Results;
 
 namespace SQLModule.Host.Features.Training.SqlQueries;
 

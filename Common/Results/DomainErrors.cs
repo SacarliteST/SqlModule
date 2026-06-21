@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace SQLModule.Host.Common.Results;
+namespace SQLModule.Common.Results;
 
 /// <summary>
 /// Генерик-фабрика ошибок с автоматическим кодом вида <c>{Entity}.{Reason}</c>.
