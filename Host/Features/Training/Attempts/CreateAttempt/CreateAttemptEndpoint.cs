@@ -1,9 +1,9 @@
-﻿using SQLModule.Contracts;
+﻿using SQLModule.Common.Results;
+using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Domain.Common;
 using SQLModule.Host.Common;
 using SQLModule.Host.Common.Cqrs;
-using SQLModule.Host.Common.Results;
 
 namespace SQLModule.Host.Features.Training.Attempts;
 

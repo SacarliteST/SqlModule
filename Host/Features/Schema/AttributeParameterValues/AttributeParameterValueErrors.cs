@@ -1,5 +1,5 @@
-﻿using SQLModule.Domain.Schema;
-using SQLModule.Host.Common.Results;
+﻿using SQLModule.Common.Results;
+using SQLModule.Domain.Schema;
 
 namespace SQLModule.Host.Features.Schema.AttributeParameterValues;
 

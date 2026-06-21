@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Host.Common.Cqrs;
-using SQLModule.Host.Common.Results;
 using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.CreateDbmsDictionary;
 using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.DeleteDbmsDictionary;
 using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionaries;

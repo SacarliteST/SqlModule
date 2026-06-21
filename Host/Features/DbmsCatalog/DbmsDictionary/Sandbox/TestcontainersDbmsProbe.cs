@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using SQLModule.Host.Common.Results;
+using SQLModule.Common.Results;
 
 namespace SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 

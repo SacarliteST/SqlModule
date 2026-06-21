@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Common.Results;
 using SQLModule.Data.Core;
 using SQLModule.Host.Common.Cqrs;
-using SQLModule.Host.Common.Results;
 
 namespace SQLModule.Host.Features.Training.Attempts;
 

@@ -1,7 +1,7 @@
-﻿using SQLModule.Contracts;
+﻿using SQLModule.Common.Results;
+using SQLModule.Contracts;
 using SQLModule.Contracts.Schema.MetaRelationship;
 using SQLModule.Host.Common.Cqrs;
-using SQLModule.Host.Common.Results;
 
 namespace SQLModule.Host.Features.Schema.MetaRelationships;
 

@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
+using SQLModule.Common.Results;
 using SQLModule.Host.Common.Cqrs;
-using SQLModule.Host.Common.Results;
 
 namespace SQLModule.Host.Common.Behaviors;
 

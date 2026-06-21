@@ -21,6 +21,7 @@ using SQLModule.Client.Topic;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Host;
 using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Sandbox;
 using Testcontainers.PostgreSql;
 
 namespace SQLModule.IntegrationTests.infrastructure;
@@ -117,6 +118,7 @@ public sealed class TestApplication :
         builder.ConfigureServices(services =>
         {
             services.AddSingleton<IDbmsProbe, AlwaysOkProbe>();
+            services.AddSingleton<ISandboxExecutor, FakeSandboxExecutor>();
         });
         base.ConfigureWebHost(builder);
     }

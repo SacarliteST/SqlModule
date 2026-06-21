@@ -1,5 +1,5 @@
-﻿using SQLModule.Domain.Training;
-using SQLModule.Host.Common.Results;
+﻿using SQLModule.Common.Results;
+using SQLModule.Domain.Training;
 
 namespace SQLModule.Host.Features.Training.Attempts;
 

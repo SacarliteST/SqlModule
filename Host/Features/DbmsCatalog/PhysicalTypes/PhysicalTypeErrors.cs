@@ -1,5 +1,5 @@
-﻿using SQLModule.Domain.DbmsCatalog;
-using SQLModule.Host.Common.Results;
+﻿using SQLModule.Common.Results;
+using SQLModule.Domain.DbmsCatalog;
 
 namespace SQLModule.Host.Features.DbmsCatalog.PhysicalTypes;
 

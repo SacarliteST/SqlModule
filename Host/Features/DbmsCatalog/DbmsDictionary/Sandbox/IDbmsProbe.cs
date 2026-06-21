@@ -1,4 +1,4 @@
-﻿using SQLModule.Host.Common.Results;
+﻿using SQLModule.Common.Results;
 
 namespace SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 

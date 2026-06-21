@@ -11,6 +11,7 @@ using SQLModule.Host.Features.Training.Attempts;
 using SQLModule.Host.Features.Training.SqlQueries;
 using SQLModule.Host.Features.Training.SqlTasks;
 using SQLModule.Host.Features.Training.Topics;
+using SQLModule.Sandbox;
 
 namespace SQLModule.Host.Common;
 
@@ -26,7 +27,8 @@ internal static class FeaturesExtensions
 {
     /// <summary>Регистрирует хендлеры всех фич.</summary>
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
-        => s.AddDbmsDictionaries()
+        => s.AddSandbox()
+            .AddDbmsDictionaries()
             .AddPhysicalTypes()
             .AddParameterDefinitions()
             .AddTargetDbs()

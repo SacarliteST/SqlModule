@@ -1,4 +1,4 @@
-﻿namespace SQLModule.Host.Common.Results;
+﻿namespace SQLModule.Common.Results;
 
 /// <summary>
 /// Базовый результат операции без возвращаемого значения.
@@ -24,7 +24,6 @@ public class Result
     public static Result Success() => new(true, null);
 
     /// <summary>Создаёт результат с ошибкой.</summary>
-    /// <param name="error">Описание ошибки.</param>
     public static Result Fail(Error error) => new(false, error);
 }
 
@@ -43,11 +42,9 @@ public sealed class Result<T> : Result
     }
 
     /// <summary>Создаёт успешный результат со значением.</summary>
-    /// <param name="value">Возвращаемое значение.</param>
     public static Result<T> Success(T value) => new(true, value, null);
 
     /// <summary>Создаёт результат с ошибкой. Скрывает <see cref="Result.Fail"/> базового класса.</summary>
-    /// <param name="error">Описание ошибки.</param>
     public new static Result<T> Fail(Error error) => new(false, default, error);
 
     /// <summary>
