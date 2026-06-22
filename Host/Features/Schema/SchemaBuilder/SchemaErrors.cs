@@ -1,6 +1,7 @@
 ﻿using SQLModule.Common.Results;
 using DomainDbms = SQLModule.Domain.DbmsCatalog.DbmsDictionary;
 using DomainPhysicalType = SQLModule.Domain.DbmsCatalog.PhysicalType;
+using DomainTargetDb = SQLModule.Domain.Schema.TargetDb;
 
 namespace SQLModule.Host.Features.Schema.SchemaBuilder;
 
@@ -17,4 +18,7 @@ internal static class SchemaErrors
 
     internal static Error UnsupportedDbms(string name) =>
         Error.Conflict("Schema.UnsupportedDbms", $"Диалект SQL для СУБД '{name}' не поддерживается.");
+
+    internal static Error AlreadyExists(string name) =>
+        DomainErrors<DomainTargetDb>.Conflict($"Схема с именем '{name}' уже существует для этой СУБД.");
 }
