@@ -67,6 +67,9 @@ public static class ApiRoutes
         /// <summary>Построитель схемы (черновик с TempId).</summary>
         public static class SchemaBuilder
         {
+            /// <summary>Коллекция схем.</summary>
+            public const string Collection = PrefixV1 + "/schemas";
+
             /// <summary>Валидация черновика схемы в песочнице без сохранения.</summary>
             public const string Validate = PrefixV1 + "/schemas/validate";
         }
