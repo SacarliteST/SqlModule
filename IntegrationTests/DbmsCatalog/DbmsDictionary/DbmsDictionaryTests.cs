@@ -79,11 +79,14 @@ public sealed class DbmsDictionaryTests : ApiTestBase
         // Arrange
         var created = await DbmsDictionaryClient.CreateAsync(MakeRequest());
 
-        // Act
-        var page = await DbmsDictionaryClient.GetAllAsync(0, 100);
+        // Act — используем GetById вместо пагинированного GetAll, чтобы тест не зависел
+        // от числа записей, накопленных другими тестами коллекции.
+        var found = await DbmsDictionaryClient.GetByIdAsync(created.Id);
 
         // Assert
-        page.Items.ShouldContain(d => d.Id == created.Id);
+        found.ShouldNotBeNull();
+        found!.Id.ShouldBe(created.Id);
+        found.DbmsName.ShouldBe(created.DbmsName);
     }
 
     [Fact(DisplayName = "Update → изменения сохранены в БД")]
