@@ -1,7 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
-using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Topic;
@@ -37,7 +36,7 @@ public sealed class SqlTaskTests : ApiTestBase
 
     private async Task<Guid> CreateTargetDbAsync(Guid dbmsId)
         => (await TargetDbClient.CreateAsync(
-            new CreateTargetDbRequest(dbmsId, "DB_" + Guid.NewGuid(), null, false))).Id;
+            new Contracts.Schema.TargetDb.CreateTargetDbRequest(dbmsId, "DB_" + Guid.NewGuid(), null, false))).Id;
 
     private async Task<Guid> CreateTopicAsync()
         => (await TopicClient.CreateAsync(new CreateTopicRequest("Topic_" + Guid.NewGuid(), null))).Id;
@@ -46,9 +45,9 @@ public sealed class SqlTaskTests : ApiTestBase
         => (await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest(targetDbId, "SELECT 1", false, false))).Id;
 
     private async Task<SqlTaskResponse> CreateSqlTaskAsync(
-        Guid targetDbId, Guid topicId, Guid sqlQueryId, string taskName = "Task")
+        Guid topicId, Guid sqlQueryId, string taskName = "Task")
         => await SqlTaskClient.CreateAsync(
-            new CreateSqlTaskRequest(targetDbId, topicId, sqlQueryId, taskName, "Текст задания", 1));
+            new CreateSqlTaskRequest(topicId, sqlQueryId, taskName, "Текст задания", 1));
 
     private async Task SeedAttemptAsync(Guid taskId)
     {
@@ -71,14 +70,13 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-        var request = new CreateSqlTaskRequest(targetDbId, topicId, sqlQueryId, "My Task", "Описание", 3);
+        var request = new CreateSqlTaskRequest(topicId, sqlQueryId, "My Task", "Описание", 3);
 
         // Act
         var response = await SqlTaskClient.CreateAsync(request);
 
         // Assert
         response.Id.ShouldNotBe(Guid.Empty);
-        response.TargetDbId.ShouldBe(targetDbId);
         response.TopicId.ShouldBe(topicId);
         response.SqlQueryId.ShouldBe(sqlQueryId);
         response.TaskName.ShouldBe("My Task");
@@ -93,7 +91,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-        var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId, "GetMe");
+        var created = await CreateSqlTaskAsync(topicId, sqlQueryId, "GetMe");
 
         // Act
         var found = await SqlTaskClient.GetByIdAsync(created.Id);
@@ -122,7 +120,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-        var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId);
+        var created = await CreateSqlTaskAsync(topicId, sqlQueryId);
 
         // Act
         var page = await SqlTaskClient.GetAllAsync(0, 100);
@@ -139,7 +137,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-        var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId, "OldName");
+        var created = await CreateSqlTaskAsync(topicId, sqlQueryId, "OldName");
 
         // Act
         await SqlTaskClient.UpdateAsync(created.Id, new UpdateSqlTaskRequest("NewName", "Новый текст", 5));
@@ -166,7 +164,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-        var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId, "ToDelete");
+        var created = await CreateSqlTaskAsync(topicId, sqlQueryId, "ToDelete");
 
         // Act
         await SqlTaskClient.DeleteAsync(created.Id);
@@ -183,21 +181,6 @@ public sealed class SqlTaskTests : ApiTestBase
         await Should.NotThrowAsync(() => SqlTaskClient.DeleteAsync(Guid.NewGuid()));
     }
 
-    [Fact(DisplayName = "Create с несуществующим TargetDbId → ConflictException")]
-    public async Task Create_NonExistentTargetDbId_ThrowsConflictException()
-    {
-        // Arrange
-        var dbmsId = await CreateDbmsDictionaryAsync();
-        var targetDbId = await CreateTargetDbAsync(dbmsId);
-        var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-
-        // Act + Assert
-        await Should.ThrowAsync<ConflictException>(
-            () => SqlTaskClient.CreateAsync(
-                new CreateSqlTaskRequest(Guid.NewGuid(), topicId, sqlQueryId, "Task", "Text", 1)));
-    }
-
     [Fact(DisplayName = "Create с несуществующим TopicId → ConflictException")]
     public async Task Create_NonExistentTopicId_ThrowsConflictException()
     {
@@ -209,21 +192,19 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
             () => SqlTaskClient.CreateAsync(
-                new CreateSqlTaskRequest(targetDbId, Guid.NewGuid(), sqlQueryId, "Task", "Text", 1)));
+                new CreateSqlTaskRequest(Guid.NewGuid(), sqlQueryId, "Task", "Text", 1)));
     }
 
     [Fact(DisplayName = "Create с несуществующим SqlQueryId → ConflictException")]
     public async Task Create_NonExistentSqlQueryId_ThrowsConflictException()
     {
         // Arrange
-        var dbmsId = await CreateDbmsDictionaryAsync();
-        var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
 
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
             () => SqlTaskClient.CreateAsync(
-                new CreateSqlTaskRequest(targetDbId, topicId, Guid.NewGuid(), "Task", "Text", 1)));
+                new CreateSqlTaskRequest(topicId, Guid.NewGuid(), "Task", "Text", 1)));
     }
 
     [Fact(DisplayName = "Create с пустым TaskName → ValidationException")]
@@ -232,7 +213,7 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
             () => SqlTaskClient.CreateAsync(
-                new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "", "Text", 1)));
+                new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), "", "Text", 1)));
 
         // Assert
         ex.Errors.ShouldContainKey("TaskName");
@@ -244,7 +225,7 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
             () => SqlTaskClient.CreateAsync(
-                new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Task", "Text", 6)));
+                new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), "Task", "Text", 6)));
 
         // Assert
         ex.Errors.ShouldContainKey("DifficultyLevel");
@@ -269,7 +250,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-        var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId, "WithAttempts");
+        var created = await CreateSqlTaskAsync(topicId, sqlQueryId, "WithAttempts");
         await SeedAttemptAsync(created.Id);
 
         // Act + Assert

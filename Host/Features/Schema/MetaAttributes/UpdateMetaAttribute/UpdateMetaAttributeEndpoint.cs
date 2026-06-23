@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.MetaAttributes;
 
-internal sealed class UpdateMetaAttributeEndpoint : IEndpoint
+internal sealed class UpdateMetaAttributeEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.MetaAttributes.ById, Handle)
             .WithName("UpdateMetaAttribute")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Обновить мета-атрибут")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Обновляет название, признаки и порядок отображения мета-атрибута. " +
                 "FK-колонки (MetaTableId, PhysicalTypeId) не изменяются. " +
                 "Возвращает 204 No Content. " +

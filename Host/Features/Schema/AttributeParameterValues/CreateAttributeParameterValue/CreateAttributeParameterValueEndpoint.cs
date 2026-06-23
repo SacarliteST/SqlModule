@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.AttributeParameterValues;
 
-internal sealed class CreateAttributeParameterValueEndpoint : IEndpoint
+internal sealed class CreateAttributeParameterValueEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.AttributeParameterValues.Collection, Handle)
             .WithName("CreateAttributeParameterValue")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Задать значение параметра атрибута")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Создаёт значение параметра физического типа для указанной колонки. " +
                 "Возвращает 201 Created с телом ответа. " +
                 "422 — не прошла валидация (пустые Id, пустое или слишком длинное значение). " +

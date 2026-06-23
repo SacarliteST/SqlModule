@@ -51,7 +51,7 @@ public sealed class SqlQueryTests : ApiTestBase
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var task = DomainSqlTask.Create(targetDbId, topicId, sqlQueryId, "Task_" + Guid.NewGuid(), "Text", 1);
+        var task = DomainSqlTask.Create(topicId, sqlQueryId, "Task_" + Guid.NewGuid(), "Text", 1);
         db.SqlTasks.Add(task);
         await db.SaveChangesAsync();
         return task.Id;

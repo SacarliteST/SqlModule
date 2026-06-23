@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.AttributeParameterValues;
 
-internal sealed class UpdateAttributeParameterValueEndpoint : IEndpoint
+internal sealed class UpdateAttributeParameterValueEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.AttributeParameterValues.ById, Handle)
             .WithName("UpdateAttributeParameterValue")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Обновить значение параметра атрибута")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Обновляет строковое значение параметра. " +
                 "FK-поля (MetaAttributeId, ParameterDefinitionId) не изменяются. " +
                 "Возвращает 204 No Content. " +

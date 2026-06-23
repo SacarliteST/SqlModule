@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.MetaRelationships;
 
-internal sealed class UpdateMetaRelationshipEndpoint : IEndpoint
+internal sealed class UpdateMetaRelationshipEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.MetaRelationships.ById, Handle)
             .WithName("UpdateMetaRelationship")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Обновить связь")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Обновляет название и правила поведения FK-связи. FK-колонки (SourceAttributeId, " +
                 "TargetAttributeId) не изменяются. " +
                 "Возвращает 204 No Content. " +

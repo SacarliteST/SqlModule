@@ -12,8 +12,8 @@ using SQLModule.Data.Core.Migrations.PostgreSql;
 namespace SQLModule.Data.Core.Migrations.PostgreSql
 {
     [DbContext(typeof(PostgreSqlDbContext))]
-    [Migration("20260618211910_AddBaseEntities")]
-    partial class AddBaseEntities
+    [Migration("20260623180844_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -474,7 +474,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DbmsId");
+                    b.HasIndex("DbmsId", "DbName")
+                        .IsUnique();
 
                     b.ToTable("TargetDbs");
                 });
@@ -491,17 +492,36 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("EndAttempt")
+                    b.Property<long?>("DurationMs")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("FinishedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsSuccess")
+                    b.Property<bool>("IsCorrect")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("QueryId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("StartAttempt")
+                    b.Property<int?>("RowCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("StartedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SubmittedSql")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("TaskId")
                         .HasColumnType("uuid");
@@ -516,8 +536,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("QueryId");
 
                     b.HasIndex("TaskId");
 
@@ -536,6 +554,9 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ExpectedResult")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("QueryText")
                         .IsRequired()
                         .HasColumnType("text");
@@ -546,6 +567,9 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<bool>("StrictRowOrder")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid>("TargetDbId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -553,6 +577,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TargetDbId");
 
                     b.ToTable("SqlQueries");
                 });
@@ -573,9 +599,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasColumnType("smallint");
 
                     b.Property<Guid>("SqlQueryId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TargetDbId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("TaskName")
@@ -599,8 +622,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.HasKey("Id");
 
                     b.HasIndex("SqlQueryId");
-
-                    b.HasIndex("TargetDbId");
 
                     b.HasIndex("TopicId");
 
@@ -773,15 +794,18 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
             modelBuilder.Entity("SQLModule.Domain.Training.Attempt", b =>
                 {
-                    b.HasOne("SQLModule.Domain.Training.SqlQuery", null)
-                        .WithMany()
-                        .HasForeignKey("QueryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("SQLModule.Domain.Training.SqlTask", null)
                         .WithMany()
                         .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>
+                {
+                    b.HasOne("SQLModule.Domain.Schema.TargetDb", null)
+                        .WithMany()
+                        .HasForeignKey("TargetDbId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -794,12 +818,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("SQLModule.Domain.Schema.TargetDb", "TargetDb")
-                        .WithMany()
-                        .HasForeignKey("TargetDbId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("SQLModule.Domain.Training.Topic", "Topic")
                         .WithMany("Tasks")
                         .HasForeignKey("TopicId")
@@ -807,8 +825,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .IsRequired();
 
                     b.Navigation("SqlQuery");
-
-                    b.Navigation("TargetDb");
 
                     b.Navigation("Topic");
                 });

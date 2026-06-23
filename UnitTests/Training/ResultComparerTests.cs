@@ -34,14 +34,14 @@ public sealed class ResultComparerTests
         outcome.Reason.ShouldBe(CheckReason.Ok);
     }
 
-    [Fact(DisplayName = "Разные колонки → ColumnMismatch")]
-    public void Compare_DifferentColumns_ColumnMismatch()
+    [Fact(DisplayName = "Разные имена колонок при одинаковом числе → Ok (имена не сравниваются)")]
+    public void Compare_DifferentColumnNames_SameCount_Ok()
     {
         var golden = Golden(["id", "name"], []);
         var actual = Ok(["id", "email"], []);
         var outcome = comparer.Compare(golden, actual);
-        outcome.IsCorrect.ShouldBeFalse();
-        outcome.Reason.ShouldBe(CheckReason.ColumnMismatch);
+        outcome.IsCorrect.ShouldBeTrue();
+        outcome.Reason.ShouldBe(CheckReason.Ok);
     }
 
     [Fact(DisplayName = "Разное количество колонок → ColumnMismatch")]
@@ -54,11 +54,11 @@ public sealed class ResultComparerTests
         outcome.Reason.ShouldBe(CheckReason.ColumnMismatch);
     }
 
-    [Fact(DisplayName = "Колонки сравниваются без учёта регистра")]
-    public void Compare_ColumnsCaseInsensitive_Ok()
+    [Fact(DisplayName = "Регистр имён колонок не важен — только количество")]
+    public void Compare_ColumnNamesCaseAndContent_DoNotMatter()
     {
         var golden = Golden(["ID", "Name"], []);
-        var actual = Ok(["id", "name"], []);
+        var actual = Ok(["completely_different", "columns"], []);
         var outcome = comparer.Compare(golden, actual);
         outcome.IsCorrect.ShouldBeTrue();
     }

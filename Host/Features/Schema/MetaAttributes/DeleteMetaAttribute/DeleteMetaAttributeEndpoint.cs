@@ -5,15 +5,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.MetaAttributes;
 
-internal sealed class DeleteMetaAttributeEndpoint : IEndpoint
+internal sealed class DeleteMetaAttributeEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.MetaAttributes.ById, Handle)
             .WithName("DeleteMetaAttribute")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Удалить мета-атрибут")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Удаляет мета-атрибут (колонку) таблицы. " +
                 "Удаление каскадно сносит все ячейки (CellValue) и значения параметров " +
                 "(AttributeParameterValue) данной колонки. " +

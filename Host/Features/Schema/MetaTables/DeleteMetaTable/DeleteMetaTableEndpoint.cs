@@ -5,15 +5,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.MetaTables;
 
-public sealed class DeleteMetaTableEndpoint : IEndpoint
+public sealed class DeleteMetaTableEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.MetaTables.ById, Handle)
             .WithName("DeleteMetaTable")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Удалить мета-таблицу")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Удаляет мета-таблицу. " +
                 "Каскадно удаляет все колонки (MetaAttribute), строки данных (DataRecord) и ячейки (CellValue). " +
                 "Возвращает 204 No Content. " +

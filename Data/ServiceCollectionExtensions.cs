@@ -34,17 +34,9 @@ public static class ServiceCollectionExtensions
                 throw new InvalidOperationException("Не задана строка подключения к базе данных");
             }
 
-            switch (connOpts.DbProvider)
-            {
-                case DbProvider.Sqlite:
-                    options.UseSqlite(connOpts.ConnectionString);
-                    break;
-                case DbProvider.PostgreSql:
-                    options.UseNpgsql(connOpts.ConnectionString);
-                    break;
-                default:
-                    throw new InvalidOperationException("Неизвестный тип провайдера базы данных");
-            }
+
+            options.UseNpgsql(connOpts.ConnectionString);
+
 
             options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
 

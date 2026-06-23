@@ -76,7 +76,7 @@ public sealed class AttemptTests : ApiTestBase
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var task = DomainSqlTask.Create(
-            targetDb.Id, topic.Id, sqlQuery.Id, "Task_" + Guid.NewGuid(), "Text", 1);
+            topic.Id, sqlQuery.Id, "Task_" + Guid.NewGuid(), "Text", 1);
         db.SqlTasks.Add(task);
         await db.SaveChangesAsync();
         return task.Id;

@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.MetaRelationships;
 
-internal sealed class CreateMetaRelationshipEndpoint : IEndpoint
+internal sealed class CreateMetaRelationshipEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.MetaRelationships.Collection, Handle)
             .WithName("CreateMetaRelationship")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Создать связь между мета-атрибутами")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Создаёт Foreign Key-связь между двумя мета-атрибутами. " +
                 "Возвращает 201 Created с телом ответа. " +
                 "400 — не прошла валидация (пустое имя, пустые Id, Source == Target, правило > 50 симв.). " +

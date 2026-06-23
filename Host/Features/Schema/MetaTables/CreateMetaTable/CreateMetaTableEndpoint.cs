@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.MetaTables;
 
-public sealed class CreateMetaTableEndpoint : IEndpoint
+public sealed class CreateMetaTableEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.MetaTables.Collection, Handle)
             .WithName("CreateMetaTable")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Создать мета-таблицу")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Создаёт описание таблицы в схеме данных указанной целевой БД. " +
                 "Возвращает 201 Created с телом ответа. " +
                 "400 — не прошла валидация входных данных. " +

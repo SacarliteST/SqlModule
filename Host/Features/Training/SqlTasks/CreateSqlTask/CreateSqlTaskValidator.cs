@@ -7,7 +7,6 @@ internal sealed class CreateSqlTaskValidator : AbstractValidator<CreateSqlTaskRe
 {
     public CreateSqlTaskValidator()
     {
-        RuleFor(x => x.TargetDbId).NotEmpty();
         RuleFor(x => x.TopicId).NotEmpty();
         RuleFor(x => x.SqlQueryId).NotEmpty();
         RuleFor(x => x.TaskName).NotEmpty().MaximumLength(300);

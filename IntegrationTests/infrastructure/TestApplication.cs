@@ -116,7 +116,7 @@ public sealed class TestApplication :
         var configurationValues = new Dictionary<string, string?>
         {
             { ConfigConstants.DbConnection, postgreContainer.GetConnectionString() },
-            { ConfigConstants.DbProvider, DbProvider.PostgreSql.ToString() }
+            { "DevTools:Enabled", "true" }
         };
 
         builder.ConfigureAppConfiguration(config => config.AddInMemoryCollection(configurationValues));
