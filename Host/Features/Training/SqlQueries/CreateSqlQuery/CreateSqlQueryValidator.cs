@@ -7,6 +7,7 @@ internal sealed class CreateSqlQueryValidator : AbstractValidator<CreateSqlQuery
 {
     public CreateSqlQueryValidator()
     {
+        RuleFor(x => x.TargetDbId).NotEmpty();
         RuleFor(x => x.QueryText).NotEmpty();
     }
 }

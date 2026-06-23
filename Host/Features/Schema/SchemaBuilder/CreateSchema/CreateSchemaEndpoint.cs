@@ -1,4 +1,4 @@
-using SQLModule.Common.Results;
+﻿using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Host.Common;
