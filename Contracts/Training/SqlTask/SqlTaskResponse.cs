@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Данные SQL-задания.</summary>
 /// <param name="Id">Уникальный идентификатор задания.</param>

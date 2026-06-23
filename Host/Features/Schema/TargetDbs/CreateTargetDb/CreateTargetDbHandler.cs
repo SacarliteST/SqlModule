@@ -2,7 +2,6 @@
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Data.Core;
-using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Host.Common.Cqrs;
 
@@ -18,9 +17,7 @@ internal sealed class CreateTargetDbHandler(AppDbContext db)
     {
         if (!await db.DbmsDictionaries.AnyAsync(x => x.Id == command.DbmsId, ct))
         {
-            return Result<TargetDbResponse>.Fail(Error.Conflict(
-                "TargetDb.DbmsNotFound",
-                $"СУБД с id '{command.DbmsId}' не найдена."));
+            return Result<TargetDbResponse>.Fail(TargetDbErrors.DbmsNotFound(command.DbmsId));
         }
 
         var entity = TargetDb.Create(command.DbmsId, command.DbName, command.Description, command.IsReadOnly);

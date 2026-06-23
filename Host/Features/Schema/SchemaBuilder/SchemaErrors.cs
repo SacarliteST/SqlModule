@@ -14,10 +14,10 @@ internal static class SchemaErrors
         DomainErrors<DomainPhysicalType>.Conflict($"Физический тип с id '{id}' не найден.");
 
     internal static Error PhysicalTypeMismatch(Guid typeId, string dbmsName) =>
-        DomainErrors<DomainPhysicalType>.Conflict($"Физический тип '{typeId}' принадлежит другой СУБД (ожидалась '{dbmsName}').");
+        DomainErrors<DomainPhysicalType>.Validation($"Физический тип '{typeId}' принадлежит другой СУБД (ожидалась '{dbmsName}').");
 
     internal static Error UnsupportedDbms(string name) =>
-        Error.Conflict("Schema.UnsupportedDbms", $"Диалект SQL для СУБД '{name}' не поддерживается.");
+        DomainErrors<DomainTargetDb>.Validation($"Диалект SQL для СУБД '{name}' не поддерживается.");
 
     internal static Error AlreadyExists(string name) =>
         DomainErrors<DomainTargetDb>.Conflict($"Схема с именем '{name}' уже существует для этой СУБД.");

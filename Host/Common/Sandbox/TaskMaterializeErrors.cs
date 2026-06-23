@@ -11,5 +11,5 @@ internal static class TaskMaterializeErrors
         DomainErrors<DomainTargetDb>.Conflict($"Целевая БД с id '{id}' не найдена.");
 
     internal static Error UnsupportedDbms(string name) =>
-        Error.Conflict("Task.UnsupportedDbms", $"Диалект SQL для СУБД '{name}' не поддерживается.");
+        DomainErrors<DomainTargetDb>.Conflict($"Диалект SQL для СУБД '{name}' не поддерживается.");
 }

@@ -3,6 +3,7 @@ using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary;
 using SQLModule.Host.Features.DbmsCatalog.ParameterDefinitions;
 using SQLModule.Host.Features.DbmsCatalog.PhysicalTypes;
 using SQLModule.Host.Features.Schema.AttributeParameterValues;
+using SQLModule.Host.Features.Schema.CellValues;
 using SQLModule.Host.Features.Schema.DataRecords;
 using SQLModule.Host.Features.Schema.MetaAttributes;
 using SQLModule.Host.Features.Schema.MetaRelationships;
@@ -39,6 +40,7 @@ internal static class FeaturesExtensions
             .AddMetaAttributes()
             .AddMetaRelationships()
             .AddDataRecords()
+            .AddCellValues()
             .AddAttributeParameterValues()
             .AddTopics()
             .AddSqlTasks()

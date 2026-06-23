@@ -18,7 +18,7 @@ internal sealed class UpdateTargetDbHandler(AppDbContext db)
 
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound(nameof(TargetDb), command.Id));
+            return Result.Fail(TargetDbErrors.NotFound(command.Id));
         }
 
         entity.Update(command.DbName, command.Description, command.IsReadOnly);

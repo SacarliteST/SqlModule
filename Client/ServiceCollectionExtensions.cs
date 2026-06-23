@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using SQLModule.Client.Attempt;
 using SQLModule.Client.AttributeParameterValue;
+using SQLModule.Client.CellValue;
 using SQLModule.Client.DataRecord;
 using SQLModule.Client.DbmsDictionary;
 using SQLModule.Client.MetaAttribute;
@@ -88,6 +89,11 @@ public static class ServiceCollectionExtensions
             .AddHttpMessageHandler<ErrorDelegatingHandler>();
 
         services.AddHttpClient<IAttributeParameterValueClient, AttributeParameterValueClient>((sp, http) =>
+                http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
+                    .Value.BaseAddress)
+            .AddHttpMessageHandler<ErrorDelegatingHandler>();
+
+        services.AddHttpClient<ICellValueClient, CellValueClient>((sp, http) =>
                 http.BaseAddress = sp.GetRequiredService<IOptions<SqlModuleClientOptions>>()
                     .Value.BaseAddress)
             .AddHttpMessageHandler<ErrorDelegatingHandler>();

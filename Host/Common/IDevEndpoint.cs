@@ -1,4 +1,4 @@
-namespace SQLModule.Host.Common;
+﻿namespace SQLModule.Host.Common;
 
 /// <summary>
 /// Маркер dev-эндпоинта: маппится только при IsDevelopment() или DevTools:Enabled=true.

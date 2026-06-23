@@ -7,6 +7,7 @@ using Microsoft.Extensions.Http;
 using SQLModule.Client;
 using SQLModule.Client.Attempt;
 using SQLModule.Client.AttributeParameterValue;
+using SQLModule.Client.CellValue;
 using SQLModule.Client.DataRecord;
 using SQLModule.Client.DbmsDictionary;
 using SQLModule.Client.MetaAttribute;
@@ -66,6 +67,9 @@ public sealed class TestApplication :
     /// <summary>Типизированный клиент для работы с мета-атрибутами (колонками).</summary>
     public IMetaAttributeClient MetaAttributeClient { get; private set; } = null!;
 
+    /// <summary>Типизированный клиент для работы со значениями ячеек (EAV).</summary>
+    public ICellValueClient CellValueClient { get; private set; } = null!;
+
     /// <summary>Типизированный клиент для работы со строками данных (EAV-якоря).</summary>
     public IDataRecordClient DataRecordClient { get; private set; } = null!;
 
@@ -104,6 +108,7 @@ public sealed class TestApplication :
         MetaTableClient = sp.GetRequiredService<IMetaTableClient>();
         MetaRelationshipClient = sp.GetRequiredService<IMetaRelationshipClient>();
         MetaAttributeClient = sp.GetRequiredService<IMetaAttributeClient>();
+        CellValueClient = sp.GetRequiredService<ICellValueClient>();
         DataRecordClient = sp.GetRequiredService<IDataRecordClient>();
         AttributeParameterValueClient = sp.GetRequiredService<IAttributeParameterValueClient>();
         PhysicalTypeClient = sp.GetRequiredService<IPhysicalTypeClient>();

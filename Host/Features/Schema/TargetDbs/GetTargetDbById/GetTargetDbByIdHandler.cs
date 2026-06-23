@@ -20,7 +20,7 @@ internal sealed class GetTargetDbByIdHandler(AppDbContext db)
 
         if (entity is null)
         {
-            return Result<TargetDbResponse>.Fail(Error.NotFound(nameof(TargetDb), query.Id));
+            return Result<TargetDbResponse>.Fail(TargetDbErrors.NotFound(query.Id));
         }
 
         return TargetDbMappings.ToResponse(entity);

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Data.Core;

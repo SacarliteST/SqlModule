@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
 using SQLModule.Contracts.Training.SqlQuery;
