@@ -84,16 +84,6 @@ public class AppDbContext : DbContext
             throw new InvalidOperationException("Не задана строка подключения к базе данных");
         }
 
-        switch (Options.DbProvider)
-        {
-            case DbProvider.Sqlite:
-                optionsBuilder.UseSqlite(Options.ConnectionString);
-                break;
-            case DbProvider.PostgreSql:
-                optionsBuilder.UseNpgsql(Options.ConnectionString);
-                break;
-            default:
-                throw new InvalidOperationException("Неизвестный тип провайдера базы данных");
-        }
+        optionsBuilder.UseNpgsql(Options.ConnectionString);
     }
 }

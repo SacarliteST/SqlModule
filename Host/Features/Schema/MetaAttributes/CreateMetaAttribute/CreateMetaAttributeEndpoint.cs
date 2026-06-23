@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.MetaAttributes;
 
-internal sealed class CreateMetaAttributeEndpoint : IEndpoint
+internal sealed class CreateMetaAttributeEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.MetaAttributes.Collection, Handle)
             .WithName("CreateMetaAttribute")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Создать мета-атрибут (колонку)")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Создаёт мета-атрибут (колонку) в указанной мета-таблице. " +
                 "Возвращает 201 Created с телом ответа. " +
                 "422 — не прошла валидация (пустое имя, пустые Id, SortOrder < 0). " +

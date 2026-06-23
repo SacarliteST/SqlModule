@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Data.Core.Migrations.PostgreSql;
-using SQLModule.Data.Core.Migrations.SqlLite;
 
 namespace SQLModule.Data.Core.Migrations;
 
@@ -23,19 +22,8 @@ internal sealed class DatabaseMigrationManager : IMigrationManager
     {
         var timer = Stopwatch.StartNew();
 
-        switch (options.Value.DbProvider)
-        {
-            case DbProvider.Sqlite:
-                logger.LogInformation("Применение миграций для Sqlite");
-                await new SqliteDbContext(options).Database.MigrateAsync();
-                break;
-            case DbProvider.PostgreSql:
-                logger.LogInformation("Применение миграций для PostgreSql");
-                await new PostgreSqlDbContext(options).Database.MigrateAsync();
-                break;
-            default:
-                throw new InvalidOperationException("Неизвестный тип провайдера базы данных");
-        }
+        logger.LogInformation("Применение миграций для PostgreSql");
+        await new PostgreSqlDbContext(options).Database.MigrateAsync();
 
         logger.LogInformation("Миграции применены. Затраченное время: {Elapsed:0.0000}мс", timer.Elapsed.Milliseconds);
     }

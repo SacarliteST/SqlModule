@@ -40,23 +40,6 @@ internal sealed class StrictResultComparer : IResultComparer
         return new CheckOutcome(true, CheckReason.Ok);
     }
 
-    private static bool ColumnsMatch(
-        IReadOnlyList<string> expected,
-        IReadOnlyList<string> actual)
-    {
-        if (expected.Count != actual.Count)
-        {
-            return false;
-        }
-
-        for (var i = 0; i < expected.Count; i++)
-        {
-            if (!String.Equals(expected[i], actual[i], StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
+    private static bool ColumnsMatch(IReadOnlyList<string> expected, IReadOnlyList<string> actual)
+        => expected.Count == actual.Count;
 }

@@ -5,15 +5,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.AttributeParameterValues;
 
-internal sealed class DeleteAttributeParameterValueEndpoint : IEndpoint
+internal sealed class DeleteAttributeParameterValueEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.AttributeParameterValues.ById, Handle)
             .WithName("DeleteAttributeParameterValue")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Удалить значение параметра атрибута")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Удаляет значение параметра физического типа для колонки. " +
                 "На сущность никто не ссылается — конфликтов не возникает. " +
                 "Возвращает 204 No Content. " +

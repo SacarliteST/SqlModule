@@ -48,8 +48,7 @@ public sealed class DockerTestApplication :
     {
         var configurationValues = new Dictionary<string, string?>
         {
-            { ConfigConstants.DbConnection, postgreContainer.GetConnectionString() },
-            { ConfigConstants.DbProvider, DbProvider.PostgreSql.ToString() }
+            { ConfigConstants.DbConnection, postgreContainer.GetConnectionString() }
         };
 
         builder.ConfigureAppConfiguration(config => config.AddInMemoryCollection(configurationValues));

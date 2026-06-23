@@ -471,7 +471,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DbmsId");
+                    b.HasIndex("DbmsId", "DbName")
+                        .IsUnique();
 
                     b.ToTable("TargetDbs");
                 });
@@ -597,9 +598,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("SqlQueryId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("TargetDbId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("TaskName")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -621,8 +619,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.HasKey("Id");
 
                     b.HasIndex("SqlQueryId");
-
-                    b.HasIndex("TargetDbId");
 
                     b.HasIndex("TopicId");
 
@@ -819,12 +815,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("SQLModule.Domain.Schema.TargetDb", "TargetDb")
-                        .WithMany()
-                        .HasForeignKey("TargetDbId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("SQLModule.Domain.Training.Topic", "Topic")
                         .WithMany("Tasks")
                         .HasForeignKey("TopicId")
@@ -832,8 +822,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .IsRequired();
 
                     b.Navigation("SqlQuery");
-
-                    b.Navigation("TargetDb");
 
                     b.Navigation("Topic");
                 });

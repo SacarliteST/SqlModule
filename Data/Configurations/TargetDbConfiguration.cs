@@ -14,6 +14,8 @@ internal sealed class TargetDbConfiguration : IEntityTypeConfiguration<TargetDb>
         builder.Property(x => x.Description).HasMaxLength(1000);
         builder.ConfigureAudit();
 
+        builder.HasIndex(x => new { x.DbmsId, x.DbName }).IsUnique();
+
         builder.HasMany(x => x.MetaTables)
                .WithOne(x => x.TargetDb)
                .HasForeignKey(x => x.TargetDbId)

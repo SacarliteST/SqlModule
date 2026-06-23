@@ -1,8 +1,7 @@
-﻿namespace SQLModule.Contracts.Training.SqlTask;
+namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Данные SQL-задания.</summary>
 /// <param name="Id">Уникальный идентификатор задания.</param>
-/// <param name="TargetDbId">Идентификатор целевой БД-песочницы.</param>
 /// <param name="TopicId">Идентификатор темы.</param>
 /// <param name="SqlQueryId">Идентификатор эталонного SQL-запроса.</param>
 /// <param name="TaskName">Название задания.</param>
@@ -14,7 +13,6 @@
 /// <param name="UpdatedAt">Дата и время последнего изменения (UTC).</param>
 public record SqlTaskResponse(
     Guid Id,
-    Guid TargetDbId,
     Guid TopicId,
     Guid SqlQueryId,
     string TaskName,

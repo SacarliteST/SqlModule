@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.TargetDbs;
 
-public sealed class CreateTargetDbEndpoint : IEndpoint
+public sealed class CreateTargetDbEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.TargetDbs.Collection, Handle)
             .WithName("CreateTargetDb")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Создать целевую БД")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Создаёт новую БД-песочницу для указанной СУБД. " +
                 "Возвращает 201 Created с телом ответа. " +
                 "400 — не прошла валидация входных данных. " +

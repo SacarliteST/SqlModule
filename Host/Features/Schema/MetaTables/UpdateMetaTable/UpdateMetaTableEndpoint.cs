@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.MetaTables;
 
-public sealed class UpdateMetaTableEndpoint : IEndpoint
+public sealed class UpdateMetaTableEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.MetaTables.ById, Handle)
             .WithName("UpdateMetaTable")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Обновить мета-таблицу")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Обновляет название и описание мета-таблицы. " +
                 "Возвращает 204 No Content. " +
                 "400 — не прошла валидация. " +

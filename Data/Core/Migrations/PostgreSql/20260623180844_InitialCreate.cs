@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SQLModule.Data.Core.Migrations.PostgreSql
 {
     /// <inheritdoc />
-    public partial class AddDomainEntities : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -35,24 +35,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DbmsDictionaries", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SqlQueries",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    QueryText = table.Column<string>(type: "text", nullable: false),
-                    StrictColumnOrder = table.Column<bool>(type: "boolean", nullable: false),
-                    StrictRowOrder = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedById = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SqlQueries", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -183,16 +165,15 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                 });
 
             migrationBuilder.CreateTable(
-                name: "SqlTasks",
+                name: "SqlQueries",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TargetDbId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TopicId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SqlQueryId = table.Column<Guid>(type: "uuid", nullable: false),
-                    TaskName = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
-                    TaskText = table.Column<string>(type: "text", nullable: false),
-                    DifficultyLevel = table.Column<short>(type: "smallint", nullable: false),
+                    QueryText = table.Column<string>(type: "text", nullable: false),
+                    StrictColumnOrder = table.Column<bool>(type: "boolean", nullable: false),
+                    StrictRowOrder = table.Column<bool>(type: "boolean", nullable: false),
+                    ExpectedResult = table.Column<string>(type: "jsonb", nullable: true),
                     CreatedById = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     UpdatedById = table.Column<Guid>(type: "uuid", nullable: false),
@@ -200,23 +181,11 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SqlTasks", x => x.Id);
+                    table.PrimaryKey("PK_SqlQueries", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SqlTasks_SqlQueries_SqlQueryId",
-                        column: x => x.SqlQueryId,
-                        principalTable: "SqlQueries",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_SqlTasks_TargetDbs_TargetDbId",
+                        name: "FK_SqlQueries_TargetDbs_TargetDbId",
                         column: x => x.TargetDbId,
                         principalTable: "TargetDbs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_SqlTasks_Topics_TopicId",
-                        column: x => x.TopicId,
-                        principalTable: "Topics",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -278,16 +247,15 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                 });
 
             migrationBuilder.CreateTable(
-                name: "Attempts",
+                name: "SqlTasks",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsSuccess = table.Column<bool>(type: "boolean", nullable: false),
-                    StartAttempt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    EndAttempt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    TaskId = table.Column<Guid>(type: "uuid", nullable: false),
-                    QueryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TopicId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SqlQueryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TaskName = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    TaskText = table.Column<string>(type: "text", nullable: false),
+                    DifficultyLevel = table.Column<short>(type: "smallint", nullable: false),
                     CreatedById = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     UpdatedById = table.Column<Guid>(type: "uuid", nullable: false),
@@ -295,17 +263,17 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Attempts", x => x.Id);
+                    table.PrimaryKey("PK_SqlTasks", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Attempts_SqlQueries_QueryId",
-                        column: x => x.QueryId,
+                        name: "FK_SqlTasks_SqlQueries_SqlQueryId",
+                        column: x => x.SqlQueryId,
                         principalTable: "SqlQueries",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Attempts_SqlTasks_TaskId",
-                        column: x => x.TaskId,
-                        principalTable: "SqlTasks",
+                        name: "FK_SqlTasks_Topics_TopicId",
+                        column: x => x.TopicId,
+                        principalTable: "Topics",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -402,10 +370,37 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Attempts_QueryId",
-                table: "Attempts",
-                column: "QueryId");
+            migrationBuilder.CreateTable(
+                name: "Attempts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TaskId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubmittedSql = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
+                    Reason = table.Column<string>(type: "text", nullable: false),
+                    RowCount = table.Column<int>(type: "integer", nullable: true),
+                    DurationMs = table.Column<long>(type: "bigint", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    StartedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    FinishedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Attempts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Attempts_SqlTasks_TaskId",
+                        column: x => x.TaskId,
+                        principalTable: "SqlTasks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Attempts_TaskId",
@@ -473,14 +468,14 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                 column: "DbmsId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SqlQueries_TargetDbId",
+                table: "SqlQueries",
+                column: "TargetDbId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SqlTasks_SqlQueryId",
                 table: "SqlTasks",
                 column: "SqlQueryId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SqlTasks_TargetDbId",
-                table: "SqlTasks",
-                column: "TargetDbId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SqlTasks_TopicId",
@@ -488,9 +483,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                 column: "TopicId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TargetDbs_DbmsId",
+                name: "IX_TargetDbs_DbmsId_DbName",
                 table: "TargetDbs",
-                column: "DbmsId");
+                columns: new[] { "DbmsId", "DbName" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Topics_ParentTopicId",

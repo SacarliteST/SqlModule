@@ -48,7 +48,7 @@ internal sealed class SubmitAttemptHandler(
             return Result<SubmitAttemptResponse>.Fail(AttemptErrors.ReferenceNotReady);
         }
 
-        var mat = await materializer.MaterializeAsync(task.TargetDbId, ct);
+        var mat = await materializer.MaterializeAsync(sqlQuery.TargetDbId, ct);
         if (!mat.IsSuccess)
         {
             return Result<SubmitAttemptResponse>.Fail(mat.Error!);

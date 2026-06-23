@@ -32,11 +32,19 @@ public static class EndpointExtensions
     /// <param name="app">Экземпляр <see cref="WebApplication"/>.</param>
     public static WebApplication MapEndpoints(this WebApplication app)
     {
+        var devEnabled = app.Environment.IsDevelopment()
+                         || app.Configuration.GetValue<bool>("DevTools:Enabled");
+
         using var scope = app.Services.CreateScope();
         var endpoints = scope.ServiceProvider.GetRequiredService<IEnumerable<IEndpoint>>();
 
         foreach (var endpoint in endpoints)
         {
+            if (endpoint is IDevEndpoint && !devEnabled)
+            {
+                continue;
+            }
+
             endpoint.MapEndpoints(app);
         }
 

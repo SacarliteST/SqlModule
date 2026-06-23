@@ -6,15 +6,16 @@ using SQLModule.Host.Common.Cqrs;
 
 namespace SQLModule.Host.Features.Schema.TargetDbs;
 
-public sealed class UpdateTargetDbEndpoint : IEndpoint
+public sealed class UpdateTargetDbEndpoint : IDevEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.TargetDbs.ById, Handle)
             .WithName("UpdateTargetDb")
-            .WithTags("Schema")
+            .WithTags("Schema", "DevTools")
             .WithSummary("Обновить целевую БД")
             .WithDescription(
+                "dev-only: правка структуры схемы в обход CreateSchema. " +
                 "Обновляет поля существующей БД-песочницы. " +
                 "Возвращает 204 No Content. " +
                 "400 — не прошла валидация входных данных. " +

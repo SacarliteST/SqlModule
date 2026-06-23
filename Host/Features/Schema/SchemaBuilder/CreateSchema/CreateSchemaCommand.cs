@@ -16,17 +16,17 @@ internal sealed class CreateSchemaHandler(ISchemaPreparer preparer, AppDbContext
     {
         var request = command.Request;
 
-        var prepResult = await preparer.PrepareAndValidateAsync(request, ct);
-        if (!prepResult.IsSuccess)
-        {
-            return Result<CreateSchemaResponse>.Fail(prepResult.Error!);
-        }
-
         var exists = await db.TargetDbs
             .AnyAsync(x => x.DbmsId == request.DbmsId && x.DbName == request.SchemaName, ct);
         if (exists)
         {
             return Result<CreateSchemaResponse>.Fail(SchemaErrors.AlreadyExists(request.SchemaName));
+        }
+
+        var prepResult = await preparer.PrepareAndValidateAsync(request, ct);
+        if (!prepResult.IsSuccess)
+        {
+            return Result<CreateSchemaResponse>.Fail(prepResult.Error!);
         }
 
         var targetDb = TargetDb.Create(request.DbmsId, request.SchemaName, null, isReadOnly: false);
@@ -68,8 +68,14 @@ internal sealed class CreateSchemaHandler(ISchemaPreparer preparer, AppDbContext
                 r.UpdateRule));
         }
 
-        // TODO: схема иммутабельна после создания; переименование — через отдельный эндпоинт.
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            return Result<CreateSchemaResponse>.Fail(SchemaErrors.AlreadyExists(request.SchemaName));
+        }
 
         return Result<CreateSchemaResponse>.Success(new CreateSchemaResponse(targetDb.Id, tableMaps));
     }
