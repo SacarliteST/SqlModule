@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Запрос на создание SQL-задания.</summary>
 /// <param name="TopicId">Идентификатор темы, к которой относится задание.</param>

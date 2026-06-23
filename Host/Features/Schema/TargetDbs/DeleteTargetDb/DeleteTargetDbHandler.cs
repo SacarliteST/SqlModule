@@ -17,7 +17,7 @@ internal sealed class DeleteTargetDbHandler(AppDbContext db)
 
         if (entity is null)
         {
-            return Result.Fail(Error.NotFound(nameof(TargetDb), command.Id));
+            return Result.Fail(TargetDbErrors.NotFound(command.Id));
         }
 
         db.TargetDbs.Remove(entity);

@@ -1,4 +1,4 @@
-using SQLModule.Common.Results;
+﻿using SQLModule.Common.Results;
 using SQLModule.Domain.Training;
 
 namespace SQLModule.Host.Features.Training.SqlTasks;
