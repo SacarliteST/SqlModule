@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Schema.SchemaBuilder;
+﻿namespace SQLModule.Contracts.Schema.SchemaBuilder;
 
 /// <summary>Ответ на успешное создание схемы.</summary>
 /// <param name="TargetDbId">Id созданной целевой БД.</param>

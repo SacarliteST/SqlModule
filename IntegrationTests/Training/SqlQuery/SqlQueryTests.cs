@@ -21,15 +21,26 @@ public sealed class SqlQueryTests : ApiTestBase
         app = testApplication;
     }
 
+    private async Task<Guid> SeedTargetDbIdAsync()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDb = await TargetDbClient.CreateAsync(
+            new CreateTargetDbRequest(dbmsId, "DB_" + Guid.NewGuid(), null, false));
+        return targetDb.Id;
+    }
+
     private async Task<SqlQueryResponse> CreateSqlQueryAsync(string queryText = "SELECT 1")
-        => await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest(queryText, false, false));
+    {
+        var targetDbId = await SeedTargetDbIdAsync();
+        return await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest(targetDbId, queryText, false, false));
+    }
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = Domain.DbmsCatalog.DbmsDictionary.Create(
-            "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,
+            "Test_" + Guid.NewGuid(), "postgres", "postgres:latest", 5432,
             "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", null,
             "testdb", "user", "pass");
         db.DbmsDictionaries.Add(dbms);
@@ -63,7 +74,8 @@ public sealed class SqlQueryTests : ApiTestBase
     public async Task Create_ValidRequest_ReturnsResponse()
     {
         // Arrange
-        var request = new CreateSqlQueryRequest("SELECT id FROM users", true, false);
+        var targetDbId = await SeedTargetDbIdAsync();
+        var request = new CreateSqlQueryRequest(targetDbId, "SELECT id FROM users", true, false);
 
         // Act
         var response = await SqlQueryClient.CreateAsync(request);
@@ -163,7 +175,7 @@ public sealed class SqlQueryTests : ApiTestBase
     {
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
-            () => SqlQueryClient.CreateAsync(new CreateSqlQueryRequest("", false, false)));
+            () => SqlQueryClient.CreateAsync(new CreateSqlQueryRequest(Guid.NewGuid(), "", false, false)));
 
         // Assert
         ex.Errors.ShouldContainKey("QueryText");

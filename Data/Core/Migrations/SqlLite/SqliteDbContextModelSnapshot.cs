@@ -488,6 +488,9 @@ namespace SQLModule.Data.Core.Migrations.SqlLite
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ExpectedResult")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("QueryText")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -498,6 +501,9 @@ namespace SQLModule.Data.Core.Migrations.SqlLite
                     b.Property<bool>("StrictRowOrder")
                         .HasColumnType("INTEGER");
 
+                    b.Property<Guid>("TargetDbId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -505,6 +511,8 @@ namespace SQLModule.Data.Core.Migrations.SqlLite
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TargetDbId");
 
                     b.ToTable("SqlQueries");
                 });

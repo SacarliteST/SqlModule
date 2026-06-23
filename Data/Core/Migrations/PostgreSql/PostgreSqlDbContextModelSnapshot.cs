@@ -533,6 +533,9 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ExpectedResult")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("QueryText")
                         .IsRequired()
                         .HasColumnType("text");
@@ -543,6 +546,9 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<bool>("StrictRowOrder")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid>("TargetDbId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -550,6 +556,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TargetDbId");
 
                     b.ToTable("SqlQueries");
                 });
@@ -779,6 +787,15 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.HasOne("SQLModule.Domain.Training.SqlTask", null)
                         .WithMany()
                         .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>
+                {
+                    b.HasOne("SQLModule.Domain.Schema.TargetDb", null)
+                        .WithMany()
+                        .HasForeignKey("TargetDbId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

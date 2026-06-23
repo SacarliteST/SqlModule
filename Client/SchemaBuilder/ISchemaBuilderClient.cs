@@ -1,4 +1,4 @@
-using SQLModule.Contracts.Schema.SchemaBuilder;
+﻿using SQLModule.Contracts.Schema.SchemaBuilder;
 
 namespace SQLModule.Client.SchemaBuilder;
 

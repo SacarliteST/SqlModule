@@ -27,7 +27,7 @@ public sealed class SqlTaskTests : ApiTestBase
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = DbmsDictionary.Create(
-            "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,
+            "Test_" + Guid.NewGuid(), "postgres", "postgres:latest", 5432,
             "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", null,
             "testdb", "user", "pass");
         db.DbmsDictionaries.Add(dbms);
@@ -42,8 +42,8 @@ public sealed class SqlTaskTests : ApiTestBase
     private async Task<Guid> CreateTopicAsync()
         => (await TopicClient.CreateAsync(new CreateTopicRequest("Topic_" + Guid.NewGuid(), null))).Id;
 
-    private async Task<Guid> CreateSqlQueryAsync()
-        => (await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest("SELECT 1", false, false))).Id;
+    private async Task<Guid> CreateSqlQueryAsync(Guid targetDbId)
+        => (await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest(targetDbId, "SELECT 1", false, false))).Id;
 
     private async Task<SqlTaskResponse> CreateSqlTaskAsync(
         Guid targetDbId, Guid topicId, Guid sqlQueryId, string taskName = "Task")
@@ -69,7 +69,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var request = new CreateSqlTaskRequest(targetDbId, topicId, sqlQueryId, "My Task", "Описание", 3);
 
         // Act
@@ -91,7 +91,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId, "GetMe");
 
         // Act
@@ -120,7 +120,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId);
 
         // Act
@@ -137,7 +137,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId, "OldName");
 
         // Act
@@ -164,7 +164,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId, "ToDelete");
 
         // Act
@@ -186,8 +186,10 @@ public sealed class SqlTaskTests : ApiTestBase
     public async Task Create_NonExistentTargetDbId_ThrowsConflictException()
     {
         // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
 
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
@@ -201,7 +203,7 @@ public sealed class SqlTaskTests : ApiTestBase
         // Arrange
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
-        var sqlQueryId = await CreateSqlQueryAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
 
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
@@ -265,7 +267,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId, "WithAttempts");
         await SeedAttemptAsync(created.Id, sqlQueryId);
 

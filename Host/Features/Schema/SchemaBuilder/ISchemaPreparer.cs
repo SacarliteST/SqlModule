@@ -1,4 +1,4 @@
-using SQLModule.Common.Results;
+﻿using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Sandbox;

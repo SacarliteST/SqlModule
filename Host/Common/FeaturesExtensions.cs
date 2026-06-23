@@ -1,4 +1,5 @@
-﻿using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary;
+﻿using SQLModule.Host.Common.Sandbox;
+using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary;
 using SQLModule.Host.Features.DbmsCatalog.ParameterDefinitions;
 using SQLModule.Host.Features.DbmsCatalog.PhysicalTypes;
 using SQLModule.Host.Features.Schema.AttributeParameterValues;
@@ -29,6 +30,7 @@ internal static class FeaturesExtensions
     /// <summary>Регистрирует хендлеры всех фич.</summary>
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
         => s.AddSandbox()
+            .AddTaskMaterializer()
             .AddDbmsDictionaries()
             .AddPhysicalTypes()
             .AddParameterDefinitions()

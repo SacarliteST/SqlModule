@@ -37,7 +37,7 @@ public sealed class AttemptTests : ApiTestBase
             new CreateTopicRequest("Topic_" + Guid.NewGuid(), null));
 
         var sqlQuery = await SqlQueryClient.CreateAsync(
-            new CreateSqlQueryRequest("SELECT 1", false, false));
+            new CreateSqlQueryRequest(targetDb.Id, "SELECT 1", false, false));
 
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -75,7 +75,7 @@ public sealed class AttemptTests : ApiTestBase
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = Domain.DbmsCatalog.DbmsDictionary.Create(
-            "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,
+            "Test_" + Guid.NewGuid(), "postgres", "postgres:latest", 5432,
             "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", null,
             "testdb", "user", "pass");
         db.DbmsDictionaries.Add(dbms);
