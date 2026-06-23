@@ -31,7 +31,7 @@ internal sealed class GetAllAttemptsHandler(AppDbContext db)
         var total = await q.CountAsync(ct);
 
         var entities = await q
-            .OrderByDescending(a => a.StartAttempt)
+            .OrderByDescending(a => a.StartedAt)
             .Skip(query.Offset)
             .Take(query.Limit)
             .ToListAsync(ct);

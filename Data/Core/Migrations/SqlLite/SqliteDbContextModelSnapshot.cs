@@ -29,16 +29,35 @@ namespace SQLModule.Data.Core.Migrations.SqlLite
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("EndAttempt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsSuccess")
+                    b.Property<long?>("DurationMs")
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid>("QueryId")
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("StartAttempt")
+                    b.Property<DateTimeOffset>("FinishedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("RowCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SubmittedSql")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("TaskId")
@@ -54,8 +73,6 @@ namespace SQLModule.Data.Core.Migrations.SqlLite
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("QueryId");
 
                     b.HasIndex("TaskId");
 
@@ -656,12 +673,6 @@ namespace SQLModule.Data.Core.Migrations.SqlLite
 
             modelBuilder.Entity("Domain.Attempt", b =>
                 {
-                    b.HasOne("Domain.SqlQuery", null)
-                        .WithMany()
-                        .HasForeignKey("QueryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Domain.SqlTask", null)
                         .WithMany()
                         .HasForeignKey("TaskId")

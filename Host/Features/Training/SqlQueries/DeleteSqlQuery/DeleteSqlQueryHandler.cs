@@ -18,8 +18,7 @@ internal sealed class DeleteSqlQueryHandler(AppDbContext db)
             return Result.Fail(SqlQueryErrors.NotFound(command.Id));
         }
 
-        var inUse = await db.SqlTasks.AnyAsync(t => t.SqlQueryId == command.Id, ct)
-                    || await db.Attempts.AnyAsync(a => a.QueryId == command.Id, ct);
+        var inUse = await db.SqlTasks.AnyAsync(t => t.SqlQueryId == command.Id, ct);
 
         if (inUse)
         {

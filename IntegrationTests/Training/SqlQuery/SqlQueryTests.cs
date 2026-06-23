@@ -6,7 +6,6 @@ using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
 using SQLModule.IntegrationTests.infrastructure;
-using DomainAttempt = SQLModule.Domain.Training.Attempt;
 using DomainSqlTask = SQLModule.Domain.Training.SqlTask;
 
 namespace SQLModule.IntegrationTests.Training.SqlQuery;
@@ -56,18 +55,6 @@ public sealed class SqlQueryTests : ApiTestBase
         db.SqlTasks.Add(task);
         await db.SaveChangesAsync();
         return task.Id;
-    }
-
-    private async Task SeedAttemptAsync(Guid taskId, Guid queryId)
-    {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var attempt = DomainAttempt.Create(
-            Guid.NewGuid(), true,
-            DateTimeOffset.UtcNow.AddSeconds(-5), DateTimeOffset.UtcNow,
-            taskId, queryId);
-        db.Attempts.Add(attempt);
-        await db.SaveChangesAsync();
     }
 
     [Fact(DisplayName = "Create → возвращает SqlQueryResponse с корректными полями")]
@@ -213,23 +200,4 @@ public sealed class SqlQueryTests : ApiTestBase
             () => SqlQueryClient.DeleteAsync(sqlQuery.Id));
     }
 
-    [Fact(DisplayName = "Delete запроса, используемого попыткой (но не заданием) → ConflictException")]
-    public async Task Delete_QueryUsedByAttempt_ThrowsConflictException()
-    {
-        // Arrange
-        var sqlQueryToDelete = await CreateSqlQueryAsync("SELECT * FROM attempt_query");
-        var sqlQueryForTask = await CreateSqlQueryAsync("SELECT * FROM task_etalon");
-
-        var dbmsId = await CreateDbmsDictionaryAsync();
-        var targetDb = await TargetDbClient.CreateAsync(
-            new CreateTargetDbRequest(dbmsId, "DB_" + Guid.NewGuid(), null, false));
-        var topic = await TopicClient.CreateAsync(new CreateTopicRequest("Topic_" + Guid.NewGuid(), null));
-
-        var taskId = await SeedSqlTaskAsync(targetDb.Id, topic.Id, sqlQueryForTask.Id);
-        await SeedAttemptAsync(taskId, sqlQueryToDelete.Id);
-
-        // Act + Assert
-        await Should.ThrowAsync<ConflictException>(
-            () => SqlQueryClient.DeleteAsync(sqlQueryToDelete.Id));
-    }
 }

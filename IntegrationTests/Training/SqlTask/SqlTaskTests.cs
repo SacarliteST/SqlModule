@@ -50,14 +50,15 @@ public sealed class SqlTaskTests : ApiTestBase
         => await SqlTaskClient.CreateAsync(
             new CreateSqlTaskRequest(targetDbId, topicId, sqlQueryId, taskName, "Текст задания", 1));
 
-    private async Task SeedAttemptAsync(Guid taskId, Guid sqlQueryId)
+    private async Task SeedAttemptAsync(Guid taskId)
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var attempt = DomainAttempt.Create(
-            Guid.NewGuid(), true,
-            DateTimeOffset.UtcNow.AddSeconds(-10), DateTimeOffset.UtcNow,
-            taskId, sqlQueryId);
+        var attempt = DomainAttempt.Record(
+            Guid.NewGuid(), taskId, "SELECT 1",
+            Domain.Training.ExecutionStatus.Succeeded, true, Domain.Training.CheckReason.Ok,
+            0, 0, null,
+            DateTimeOffset.UtcNow.AddSeconds(-10), DateTimeOffset.UtcNow);
         db.Attempts.Add(attempt);
         await db.SaveChangesAsync();
     }
@@ -269,7 +270,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var created = await CreateSqlTaskAsync(targetDbId, topicId, sqlQueryId, "WithAttempts");
-        await SeedAttemptAsync(created.Id, sqlQueryId);
+        await SeedAttemptAsync(created.Id);
 
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(

@@ -17,6 +17,7 @@ internal static class Startup
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddSingleton(TimeProvider.System);
         services.AddData(builder.Configuration);
         services.AddEndpoints();
         services.AddValidatorsFromAssemblyContaining<IHostMarker>(includeInternalTypes: true);

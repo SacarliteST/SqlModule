@@ -488,17 +488,36 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("EndAttempt")
+                    b.Property<long?>("DurationMs")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("FinishedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsSuccess")
+                    b.Property<bool>("IsCorrect")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid>("QueryId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("StartAttempt")
+                    b.Property<int?>("RowCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("StartedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SubmittedSql")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("TaskId")
                         .HasColumnType("uuid");
@@ -513,8 +532,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("QueryId");
 
                     b.HasIndex("TaskId");
 
@@ -778,12 +795,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
             modelBuilder.Entity("SQLModule.Domain.Training.Attempt", b =>
                 {
-                    b.HasOne("SQLModule.Domain.Training.SqlQuery", null)
-                        .WithMany()
-                        .HasForeignKey("QueryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("SQLModule.Domain.Training.SqlTask", null)
                         .WithMany()
                         .HasForeignKey("TaskId")

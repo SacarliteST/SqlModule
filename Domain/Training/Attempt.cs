@@ -2,39 +2,48 @@
 
 namespace SQLModule.Domain.Training;
 
-/// <summary>Попытка пользователя выполнить SQL-задание.</summary>
+/// <summary>Попытка студента выполнить SQL-задание.</summary>
 public sealed class Attempt : AuditableEntity
 {
-    /// <summary>Идентификатор пользователя (мягкая ссылка на Identity-сервис).</summary>
+    /// <summary>Идентификатор студента (мягкая ссылка на Identity-сервис).</summary>
     public Guid UserId { get; private set; }
-    public bool IsSuccess { get; private set; }
-    public DateTimeOffset StartAttempt { get; private set; }
-    public DateTimeOffset EndAttempt { get; private set; }
     public Guid TaskId { get; private set; }
-    public Guid QueryId { get; private set; }
+    public string SubmittedSql { get; private set; } = String.Empty;
+    public ExecutionStatus Status { get; private set; }
+    public bool IsCorrect { get; private set; }
+    public CheckReason Reason { get; private set; }
+    public int? RowCount { get; private set; }
+    public long? DurationMs { get; private set; }
+    public string? ErrorMessage { get; private set; }
+    public DateTimeOffset StartedAt { get; private set; }
+    public DateTimeOffset FinishedAt { get; private set; }
 
-    private Attempt(Guid id, Guid userId, bool isSuccess,
-        DateTimeOffset startAttempt, DateTimeOffset endAttempt,
-        Guid taskId, Guid queryId) : base(id)
+    private Attempt(
+        Guid id, Guid userId, Guid taskId, string submittedSql,
+        ExecutionStatus status, bool isCorrect, CheckReason reason,
+        int? rowCount, long? durationMs, string? errorMessage,
+        DateTimeOffset startedAt, DateTimeOffset finishedAt) : base(id)
     {
         UserId = userId;
-        IsSuccess = isSuccess;
-        StartAttempt = startAttempt;
-        EndAttempt = endAttempt;
         TaskId = taskId;
-        QueryId = queryId;
+        SubmittedSql = submittedSql;
+        Status = status;
+        IsCorrect = isCorrect;
+        Reason = reason;
+        RowCount = rowCount;
+        DurationMs = durationMs;
+        ErrorMessage = errorMessage;
+        StartedAt = startedAt;
+        FinishedAt = finishedAt;
     }
 
-    public static Attempt Create(
-        Guid userId, bool isSuccess,
-        DateTimeOffset startAttempt, DateTimeOffset endAttempt,
-        Guid taskId, Guid queryId,
+    public static Attempt Record(
+        Guid userId, Guid taskId, string submittedSql,
+        ExecutionStatus status, bool isCorrect, CheckReason reason,
+        int? rowCount, long? durationMs, string? errorMessage,
+        DateTimeOffset startedAt, DateTimeOffset finishedAt,
         Guid? id = null)
-        => new(id ?? Guid.NewGuid(), userId, isSuccess, startAttempt, endAttempt, taskId, queryId);
-
-    public void Update(bool isSuccess, DateTimeOffset endAttempt)
-    {
-        IsSuccess = isSuccess;
-        EndAttempt = endAttempt;
-    }
+        => new(id ?? Guid.NewGuid(), userId, taskId, submittedSql,
+            status, isCorrect, reason, rowCount, durationMs, errorMessage,
+            startedAt, finishedAt);
 }
