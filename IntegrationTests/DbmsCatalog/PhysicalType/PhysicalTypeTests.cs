@@ -8,8 +8,8 @@ using SQLModule.Contracts.Schema.MetaAttribute;
 using SQLModule.Contracts.Schema.MetaTable;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Data.Core;
-using SQLModule.Host.Features.DbmsCatalog.PhysicalTypes;
 using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.Web.Features.DbmsCatalog.PhysicalTypes;
 using DomainDbmsDictionary = SQLModule.Domain.DbmsCatalog.DbmsDictionary;
 
 namespace SQLModule.IntegrationTests.DbmsCatalog.PhysicalType;

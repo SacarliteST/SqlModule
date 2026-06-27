@@ -22,8 +22,8 @@ using SQLModule.Client.TargetDb;
 using SQLModule.Client.Topic;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Host;
-using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 using SQLModule.Sandbox;
+using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 using Testcontainers.PostgreSql;
 
 namespace SQLModule.IntegrationTests.infrastructure;

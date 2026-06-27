@@ -10,8 +10,8 @@ using SQLModule.Contracts.Schema.MetaTable;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
-using SQLModule.Host.Features.Schema.MetaAttributes;
 using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.Web.Features.Schema.MetaAttributes;
 
 namespace SQLModule.IntegrationTests.Schema.MetaAttribute;
 

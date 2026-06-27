@@ -16,6 +16,7 @@
         <ProjectReference Include="..\Client\Client.csproj" />
         <ProjectReference Include="..\Contracts\Contracts.csproj" />
         <ProjectReference Include="..\Host\Host.csproj" />
+        <ProjectReference Include="..\Web\SQLModule.Web.csproj" />
         <ProjectReference Include="..\Sandbox\Sandbox.csproj" />
         <ProjectReference Include="..\TestsCommon\TestsCommon.csproj" />
     </ItemGroup>

@@ -8,8 +8,8 @@ using SQLModule.Contracts.Schema.MetaTable;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
-using SQLModule.Host.Features.Schema.DataRecords;
 using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.Web.Features.Schema.DataRecords;
 
 namespace SQLModule.IntegrationTests.Schema.DataRecord;
 

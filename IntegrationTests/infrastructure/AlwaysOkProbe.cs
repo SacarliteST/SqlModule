@@ -1,5 +1,5 @@
 ﻿using SQLModule.Common.Results;
-using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 
 namespace SQLModule.IntegrationTests.infrastructure;
 

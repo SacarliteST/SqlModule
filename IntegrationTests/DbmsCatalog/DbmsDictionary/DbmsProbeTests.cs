@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Shouldly;
-using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 
 namespace SQLModule.IntegrationTests.DbmsCatalog.DbmsDictionary;
 

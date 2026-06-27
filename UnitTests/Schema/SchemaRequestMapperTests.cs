@@ -2,8 +2,8 @@
 using Shouldly;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Domain.DbmsCatalog;
-using SQLModule.Host.Common.Sandbox;
 using SQLModule.Sandbox;
+using SQLModule.Web.Common.Sandbox;
 
 namespace SQLModule.UnitTests.Schema;
 

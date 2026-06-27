@@ -5,8 +5,8 @@ using SQLModule.Client;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.ParameterDefinition;
 using SQLModule.Data.Core;
-using SQLModule.Host.Features.DbmsCatalog.ParameterDefinitions;
 using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.Web.Features.DbmsCatalog.ParameterDefinitions;
 using DomainDbmsDictionary = SQLModule.Domain.DbmsCatalog.DbmsDictionary;
 
 namespace SQLModule.IntegrationTests.DbmsCatalog.ParameterDefinition;
