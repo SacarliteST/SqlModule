@@ -13,6 +13,7 @@ public sealed class DeleteSqlTaskEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Training.SqlTasks.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteSqlTask")
             .WithTags("Training")
             .WithSummary("Удалить SQL-задание")

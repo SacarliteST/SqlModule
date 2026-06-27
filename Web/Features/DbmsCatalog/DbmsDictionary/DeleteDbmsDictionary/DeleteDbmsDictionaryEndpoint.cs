@@ -13,6 +13,7 @@ internal sealed class DeleteDbmsDictionaryEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.DbmsCatalog.DbmsDictionaries.ById, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("DeleteDbmsDictionary")
             .WithTags("DbmsCatalog")
             .Produces(StatusCodes.Status204NoContent)

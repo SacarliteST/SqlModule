@@ -14,6 +14,7 @@ internal sealed class CreateMetaAttributeEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.MetaAttributes.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateMetaAttribute")
             .WithTags("Schema", "DevTools")
             .WithSummary("Создать мета-атрибут (колонку)")

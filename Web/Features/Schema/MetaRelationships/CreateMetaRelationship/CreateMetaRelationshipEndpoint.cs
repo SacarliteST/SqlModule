@@ -14,6 +14,7 @@ internal sealed class CreateMetaRelationshipEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.MetaRelationships.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateMetaRelationship")
             .WithTags("Schema", "DevTools")
             .WithSummary("Создать связь между мета-атрибутами")

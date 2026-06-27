@@ -13,6 +13,7 @@ public sealed class DeleteTargetDbEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.TargetDbs.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteTargetDb")
             .WithTags("Schema")
             .WithSummary("Удалить целевую БД")

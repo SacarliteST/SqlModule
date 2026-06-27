@@ -14,6 +14,7 @@ internal sealed class UpdateDataRecordEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.DataRecords.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateDataRecord")
             .WithTags("Schema")
             .WithSummary("Обновить строку данных")

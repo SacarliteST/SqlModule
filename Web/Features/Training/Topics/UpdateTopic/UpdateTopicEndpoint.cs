@@ -14,6 +14,7 @@ public sealed class UpdateTopicEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Training.Topics.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateTopic")
             .WithTags("Training")
             .WithSummary("Обновить тему")

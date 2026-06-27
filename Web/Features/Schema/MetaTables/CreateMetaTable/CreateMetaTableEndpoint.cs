@@ -14,6 +14,7 @@ public sealed class CreateMetaTableEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.MetaTables.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateMetaTable")
             .WithTags("Schema", "DevTools")
             .WithSummary("Создать мета-таблицу")

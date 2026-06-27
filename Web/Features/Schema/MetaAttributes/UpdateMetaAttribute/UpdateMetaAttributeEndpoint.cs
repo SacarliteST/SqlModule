@@ -14,6 +14,7 @@ internal sealed class UpdateMetaAttributeEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.MetaAttributes.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateMetaAttribute")
             .WithTags("Schema", "DevTools")
             .WithSummary("Обновить мета-атрибут")

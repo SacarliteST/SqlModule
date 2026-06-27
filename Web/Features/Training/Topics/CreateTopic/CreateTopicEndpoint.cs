@@ -14,6 +14,7 @@ public sealed class CreateTopicEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Training.Topics.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateTopic")
             .WithTags("Training")
             .WithSummary("Создать тему")

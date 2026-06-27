@@ -14,6 +14,7 @@ public sealed class UpdateSqlQueryEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Training.SqlQueries.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateSqlQuery")
             .WithTags("Training")
             .WithSummary("Обновить SQL-запрос")

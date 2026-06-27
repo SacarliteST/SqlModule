@@ -13,6 +13,7 @@ internal sealed class DeleteParameterDefinitionEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.DbmsCatalog.ParameterDefinitions.ById, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("DeleteParameterDefinition")
             .WithTags("DbmsCatalog")
             .WithSummary("Удалить определение параметра")

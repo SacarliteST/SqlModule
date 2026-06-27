@@ -1,12 +1,12 @@
-﻿using FluentValidation;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using System.Security.Claims;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using SQLModule.Data;
 using SQLModule.Data.Core.Migrations;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
+using SQLModule.Web.Common.Auth;
 
 namespace SQLModule.Web;
 
@@ -16,6 +16,30 @@ public static class WebExtensions
     /// <summary>Регистрирует все сервисы Web-слоя.</summary>
     public static IServiceCollection AddWeb(this IServiceCollection services, IConfiguration configuration)
     {
+        var authOptions = configuration.GetSection(AuthOptions.SectionKey).Get<AuthOptions>()
+                          ?? new AuthOptions();
+
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(o =>
+            {
+                o.Authority = authOptions.Authority;
+                o.Audience = authOptions.Audience;
+                o.TokenValidationParameters.NameClaimType = ClaimTypes.NameIdentifier;
+                o.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;
+                o.RequireHttpsMetadata = false;
+            });
+
+        services.AddAuthorization(o =>
+        {
+            o.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+
+            o.AddPolicy(Policies.Admin, p => p.RequireRole(Roles.Admin));
+            o.AddPolicy(Policies.ContentAuthor, p => p.RequireRole(Roles.Teacher, Roles.Admin));
+            o.AddPolicy(Policies.Student, p => p.RequireRole(Roles.Student));
+        });
+
         services.AddEndpointsApiExplorer();
         services.AddOpenApiDocumentation();
         services.AddHttpContextAccessor();
@@ -39,6 +63,8 @@ public static class WebExtensions
             app.UseSwaggerUI();
         }
 
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.MapEndpoints();
         return app;
     }

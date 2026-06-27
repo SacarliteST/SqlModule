@@ -14,6 +14,7 @@ internal sealed class UpdateCellValueEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.CellValues.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateCellValue")
             .WithTags("Schema")
             .WithSummary("Обновить значение ячейки")

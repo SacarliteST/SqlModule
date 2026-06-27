@@ -8,7 +8,6 @@ using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
-using SQLModule.Domain.Common;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.infrastructure;
 using SQLModule.Sandbox;
@@ -23,36 +22,33 @@ namespace SQLModule.IntegrationTests.Training.Attempt;
 [Collection(IntegrationTestCollection.Name)]
 public sealed class AttemptTests : ApiTestBase
 {
-    private readonly TestApplication app;
-
     public AttemptTests(TestApplication testApplication) : base(testApplication)
     {
-        app = testApplication;
     }
 
     private FakeSandboxExecutor GetFakeExecutor()
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         return (FakeSandboxExecutor)scope.ServiceProvider.GetRequiredService<ISandboxExecutor>();
     }
 
     private void ResetFakeExecutor()
     {
         // FakeSandboxExecutor is singleton so we can cast directly from the root container
-        var executor = (FakeSandboxExecutor)app.Services.GetRequiredService<ISandboxExecutor>();
+        var executor = (FakeSandboxExecutor)App.Services.GetRequiredService<ISandboxExecutor>();
         executor.OverrideRun = null;
         executor.OverrideSetup = null;
     }
 
     private void SetFakeRun(QueryResultSet resultSet)
     {
-        var executor = (FakeSandboxExecutor)app.Services.GetRequiredService<ISandboxExecutor>();
+        var executor = (FakeSandboxExecutor)App.Services.GetRequiredService<ISandboxExecutor>();
         executor.OverrideRun = Result<QueryResultSet>.Success(resultSet);
     }
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = Domain.DbmsCatalog.DbmsDictionary.Create(
             "Test_" + Guid.NewGuid(), "postgres", "postgres:latest", 5432,
@@ -73,7 +69,7 @@ public sealed class AttemptTests : ApiTestBase
         var sqlQuery = await SqlQueryClient.CreateAsync(
             new CreateSqlQueryRequest(targetDb.Id, "SELECT 1", false, false));
 
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var task = DomainSqlTask.Create(
             topic.Id, sqlQuery.Id, "Task_" + Guid.NewGuid(), "Text", 1);
@@ -88,6 +84,7 @@ public sealed class AttemptTests : ApiTestBase
         // Arrange
         ResetFakeExecutor();
         var taskId = await CreateTaskAsync();
+        AsStudent();
 
         // Act
         var response = await AttemptClient.SubmitAsync(
@@ -100,12 +97,14 @@ public sealed class AttemptTests : ApiTestBase
         response.Reason.ShouldBe(CheckReason.Ok);
     }
 
-    [Fact(DisplayName = "Submit → UserId в сохранённой попытке равен SystemUser.Id (нет JWT)")]
-    public async Task Submit_NoJwt_UserIdEqualsSystemUserId()
+    [Fact(DisplayName = "Submit → UserId в сохранённой попытке совпадает с userId текущего студента")]
+    public async Task Submit_WithAuth_UserIdEqualsCurrentStudentId()
     {
         // Arrange
         ResetFakeExecutor();
         var taskId = await CreateTaskAsync();
+        var studentId = Guid.NewGuid();
+        AsStudent(userId: studentId);
 
         // Act
         var response = await AttemptClient.SubmitAsync(
@@ -114,7 +113,7 @@ public sealed class AttemptTests : ApiTestBase
         // Assert: verify via GetById
         var attempt = await AttemptClient.GetByIdAsync(response.AttemptId);
         attempt.ShouldNotBeNull();
-        attempt!.UserId.ShouldBe(SystemUser.Id);
+        attempt!.UserId.ShouldBe(studentId);
     }
 
     [Fact(DisplayName = "Submit → SQL-ошибка создаёт Attempt со Status=Error")]
@@ -124,6 +123,7 @@ public sealed class AttemptTests : ApiTestBase
         ResetFakeExecutor();
         var taskId = await CreateTaskAsync();
         SetFakeRun(new QueryResultSet(false, "syntax error", [], [], 0, 0));
+        AsStudent();
 
         // Act
         var response = await AttemptClient.SubmitAsync(
@@ -144,6 +144,7 @@ public sealed class AttemptTests : ApiTestBase
         var taskId = await CreateTaskAsync();
         // Golden is empty columns/rows; return a result with columns to cause ColumnMismatch
         SetFakeRun(new QueryResultSet(true, null, ["id"], [["1"]], 1, 5));
+        AsStudent();
 
         // Act
         var response = await AttemptClient.SubmitAsync(
@@ -161,6 +162,7 @@ public sealed class AttemptTests : ApiTestBase
         // Arrange
         ResetFakeExecutor();
         var taskId = await CreateTaskAsync();
+        AsStudent();
         var submitted = await AttemptClient.SubmitAsync(
             new SubmitAttemptRequest(taskId, "SELECT 1"));
 
@@ -179,6 +181,7 @@ public sealed class AttemptTests : ApiTestBase
         // Arrange
         ResetFakeExecutor();
         var taskId = await CreateTaskAsync();
+        AsStudent();
         var submitted = await AttemptClient.SubmitAsync(
             new SubmitAttemptRequest(taskId, "SELECT 1"));
 
@@ -195,6 +198,7 @@ public sealed class AttemptTests : ApiTestBase
         // Arrange
         ResetFakeExecutor();
         var taskId = await CreateTaskAsync();
+        AsStudent();
         var submitted = await AttemptClient.SubmitAsync(
             new SubmitAttemptRequest(taskId, "SELECT 1"));
 
@@ -222,6 +226,7 @@ public sealed class AttemptTests : ApiTestBase
     [Fact(DisplayName = "Submit с несуществующим TaskId → NotFoundException")]
     public async Task Submit_UnknownTaskId_ThrowsNotFoundException()
     {
+        AsStudent();
         await Should.ThrowAsync<NotFoundException>(
             () => AttemptClient.SubmitAsync(
                 new SubmitAttemptRequest(Guid.NewGuid(), "SELECT 1")));
@@ -230,6 +235,7 @@ public sealed class AttemptTests : ApiTestBase
     [Fact(DisplayName = "Submit с пустым SubmittedSql → ValidationException")]
     public async Task Submit_EmptySubmittedSql_ThrowsValidationException()
     {
+        AsStudent();
         var ex = await Should.ThrowAsync<ValidationException>(
             () => AttemptClient.SubmitAsync(
                 new SubmitAttemptRequest(Guid.NewGuid(), "")));

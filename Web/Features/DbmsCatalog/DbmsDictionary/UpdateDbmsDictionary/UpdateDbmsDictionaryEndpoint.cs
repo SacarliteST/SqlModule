@@ -14,6 +14,7 @@ internal sealed class UpdateDbmsDictionaryEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.DbmsCatalog.DbmsDictionaries.ById, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("UpdateDbmsDictionary")
             .WithTags("DbmsCatalog")
             .Produces<DbmsDictionaryResponse>()

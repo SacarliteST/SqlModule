@@ -14,6 +14,7 @@ public sealed class UpdateSqlTaskEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Training.SqlTasks.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateSqlTask")
             .WithTags("Training")
             .WithSummary("Обновить SQL-задание")

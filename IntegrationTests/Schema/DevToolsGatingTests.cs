@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -25,6 +26,8 @@ public sealed class DevToolsGatingTests : IClassFixture<DevToolsGatingTests.DevD
     public DevToolsGatingTests(DevDisabledApp app)
     {
         client = app.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-UserId", Guid.NewGuid().ToString());
+        client.DefaultRequestHeaders.Add("X-Test-Roles", "Admin");
     }
 
     [Fact(DisplayName = "E6: DevTools disabled → POST meta-tables возвращает 404 или 405 (эндпоинт не зарегистрирован)")]
@@ -83,6 +86,15 @@ public sealed class DevToolsGatingTests : IClassFixture<DevToolsGatingTests.DevD
             {
                 services.AddSingleton<IDbmsProbe, AlwaysOkProbe>();
                 services.AddSingleton<ISandboxExecutor, FakeSandboxExecutor>();
+
+                services.AddAuthentication()
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+                services.PostConfigure<AuthenticationOptions>(o =>
+                {
+                    o.DefaultScheme = TestAuthHandler.SchemeName;
+                    o.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+                    o.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+                });
             });
         }
 

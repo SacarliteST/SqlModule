@@ -13,6 +13,7 @@ internal sealed class DeleteAttributeParameterValueEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.AttributeParameterValues.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteAttributeParameterValue")
             .WithTags("Schema", "DevTools")
             .WithSummary("Удалить значение параметра атрибута")

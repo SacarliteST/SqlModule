@@ -12,11 +12,9 @@ namespace SQLModule.IntegrationTests.Schema.SchemaBuilder;
 [Collection(IntegrationTestCollection.Name)]
 public sealed class CreateSchemaTests : ApiTestBase
 {
-    private readonly TestApplication app;
 
     public CreateSchemaTests(TestApplication testApplication) : base(testApplication)
     {
-        app = testApplication;
     }
 
     // ── E1: успешное создание + tempId resolution ────────────────────────────
@@ -53,7 +51,7 @@ public sealed class CreateSchemaTests : ApiTestBase
 
         var response = await SchemaBuilderClient.CreateAsync(request);
 
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var targetDb = await db.TargetDbs.FindAsync(response.TargetDbId);
@@ -81,7 +79,7 @@ public sealed class CreateSchemaTests : ApiTestBase
 
         var response = await SchemaBuilderClient.CreateAsync(request);
 
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var colMaps = response.Tables.SelectMany(t => t.Columns).ToList();

@@ -14,6 +14,7 @@ public sealed class MoveTopicEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Training.Topics.Parent, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("MoveTopic")
             .WithTags("Training")
             .WithSummary("Переместить тему")

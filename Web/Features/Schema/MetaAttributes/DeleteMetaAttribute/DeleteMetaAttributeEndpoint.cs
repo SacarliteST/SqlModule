@@ -13,6 +13,7 @@ internal sealed class DeleteMetaAttributeEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.MetaAttributes.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteMetaAttribute")
             .WithTags("Schema", "DevTools")
             .WithSummary("Удалить мета-атрибут")

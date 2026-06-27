@@ -15,6 +15,7 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Training.Attempts.Collection, Handle)
+            .RequireAuthorization(Policies.Student)
             .WithName("SubmitAttempt")
             .WithTags("Training")
             .WithSummary("Отправить попытку выполнения задания")
@@ -35,7 +36,7 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
     private static async Task<IResult> Handle(
         SubmitAttemptRequest request, ISender sender, ICurrentUser currentUser, CancellationToken ct)
     {
-        var userId = currentUser.UserId ?? SystemUser.Id;
+        var userId = currentUser.UserId!.Value;
         var result = await sender.Send<SubmitAttemptCommand, Result<SubmitAttemptResponse>>(
             new SubmitAttemptCommand(userId, request.TaskId, request.SubmittedSql), ct);
         return result.ToCreated(r => ApiRoutes.Training.Attempts.ForId(r.AttemptId));

@@ -13,6 +13,7 @@ public sealed class DeleteMetaTableEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.MetaTables.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteMetaTable")
             .WithTags("Schema", "DevTools")
             .WithSummary("Удалить мета-таблицу")

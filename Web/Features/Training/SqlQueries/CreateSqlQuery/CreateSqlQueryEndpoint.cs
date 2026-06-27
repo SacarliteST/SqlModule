@@ -14,6 +14,7 @@ public sealed class CreateSqlQueryEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Training.SqlQueries.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateSqlQuery")
             .WithTags("Training")
             .WithSummary("Создать эталонный SQL-запрос")

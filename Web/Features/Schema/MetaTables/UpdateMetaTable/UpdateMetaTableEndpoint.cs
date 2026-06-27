@@ -14,6 +14,7 @@ public sealed class UpdateMetaTableEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.MetaTables.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateMetaTable")
             .WithTags("Schema", "DevTools")
             .WithSummary("Обновить мета-таблицу")

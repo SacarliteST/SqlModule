@@ -14,6 +14,7 @@ internal sealed class CreateCellValueEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.CellValues.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateCellValue")
             .WithTags("Schema")
             .WithSummary("Создать значение ячейки")
