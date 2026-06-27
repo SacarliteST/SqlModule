@@ -7,9 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Contracts;
 using SQLModule.Host;
-using SQLModule.Host.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 using SQLModule.IntegrationTests.infrastructure;
 using SQLModule.Sandbox;
+using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 using Testcontainers.PostgreSql;
 
 namespace SQLModule.IntegrationTests.Schema;

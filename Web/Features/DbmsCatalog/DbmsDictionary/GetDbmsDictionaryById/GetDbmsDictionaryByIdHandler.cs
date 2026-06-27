@@ -1,0 +1,28 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Common.Results;
+using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
+using SQLModule.Data.Core;
+using SQLModule.Web.Common.Cqrs;
+
+namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.GetDbmsDictionaryById;
+
+internal record GetDbmsDictionaryByIdQuery(Guid Id) : IRequest<Result<DbmsDictionaryResponse>>;
+
+internal sealed class GetDbmsDictionaryByIdHandler(AppDbContext db)
+    : IRequestHandler<GetDbmsDictionaryByIdQuery, Result<DbmsDictionaryResponse>>
+{
+    public async Task<Result<DbmsDictionaryResponse>> Handle(
+        GetDbmsDictionaryByIdQuery query, CancellationToken ct)
+    {
+        var entity = await db.DbmsDictionaries
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == query.Id, ct);
+
+        if (entity is null)
+        {
+            return Result<DbmsDictionaryResponse>.Fail(DbmsDictionaryErrors.NotFound(query.Id));
+        }
+
+        return DbmsDictionaryMappings.ToResponse(entity);
+    }
+}

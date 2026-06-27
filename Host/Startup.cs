@@ -1,29 +1,11 @@
-﻿using FluentValidation;
-using SQLModule.Data;
-using SQLModule.Domain;
-using SQLModule.Domain.Common;
-using SQLModule.Host.Common;
+﻿using SQLModule.Web;
 
 namespace SQLModule.Host;
 
 internal static class Startup
 {
-    public static void ConfigureServices(WebApplicationBuilder builder)
-    {
-        var services = builder.Services;
-
-        services.AddEndpointsApiExplorer();
-        services.AddOpenApiDocumentation();
-
-        services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUser, CurrentUser>();
-        services.AddSingleton(TimeProvider.System);
-        services.AddData(builder.Configuration);
-        services.AddEndpoints();
-        services.AddValidatorsFromAssemblyContaining<IHostMarker>(includeInternalTypes: true);
-        services.AddCqrs();
-        services.AddFeatures();
-    }
+    public static void ConfigureServices(WebApplicationBuilder builder) =>
+        builder.Services.AddWeb(builder.Configuration);
 
     public static ILogger CreateLogger()
     {
@@ -36,14 +18,7 @@ internal static class Startup
 
     public static void ConfigureApp(WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
-
         app.UseHttpsRedirection();
-        app.UseApiExceptionHandler();
-        app.MapEndpoints();
+        app.UseWeb();
     }
 }

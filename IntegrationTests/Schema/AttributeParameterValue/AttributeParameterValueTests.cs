@@ -11,8 +11,8 @@ using SQLModule.Contracts.Schema.MetaTable;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
-using SQLModule.Host.Features.Schema.AttributeParameterValues;
 using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.Web.Features.Schema.AttributeParameterValues;
 
 namespace SQLModule.IntegrationTests.Schema.AttributeParameterValue;
 

@@ -1,0 +1,26 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Common.Results;
+using SQLModule.Data.Core;
+using SQLModule.Web.Common.Cqrs;
+
+namespace SQLModule.Web.Features.Training.SqlTasks;
+
+internal record UpdateSqlTaskCommand(Guid Id, string TaskName, string TaskText, short DifficultyLevel)
+    : IRequest<Result>;
+
+internal sealed class UpdateSqlTaskHandler(AppDbContext db)
+    : IRequestHandler<UpdateSqlTaskCommand, Result>
+{
+    public async Task<Result> Handle(UpdateSqlTaskCommand command, CancellationToken ct)
+    {
+        var entity = await db.SqlTasks.FirstOrDefaultAsync(x => x.Id == command.Id, ct);
+        if (entity is null)
+        {
+            return Result.Fail(SqlTaskErrors.NotFound(command.Id));
+        }
+
+        entity.Update(command.TaskName, command.TaskText, command.DifficultyLevel);
+        await db.SaveChangesAsync(ct);
+        return Result.Success();
+    }
+}

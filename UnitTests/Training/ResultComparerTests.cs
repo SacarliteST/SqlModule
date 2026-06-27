@@ -1,8 +1,8 @@
 ﻿using Shouldly;
 using SQLModule.Domain.Training;
-using SQLModule.Host.Common.Sandbox;
-using SQLModule.Host.Features.Training.Attempts;
 using SQLModule.Sandbox;
+using SQLModule.Web.Common.Sandbox;
+using SQLModule.Web.Features.Training.Attempts;
 
 namespace SQLModule.UnitTests.Training;
 

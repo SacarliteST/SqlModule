@@ -1,5 +1,4 @@
-﻿
-using SQLModule.Data.Core.Migrations;
+﻿using SQLModule.Web;
 
 namespace SQLModule.Host;
 
@@ -8,7 +7,6 @@ internal sealed class Program
     public static async Task Main(string[] args)
     {
         var logger = Startup.CreateLogger();
-
         var builder = WebApplication.CreateBuilder(args);
 
         try
@@ -20,10 +18,7 @@ internal sealed class Program
 
             Startup.ConfigureApp(app);
 
-            using (var scope = app.Services.CreateScope())
-            {
-                await scope.ServiceProvider.GetRequiredService<IMigrationManager>().MigrateAsync();
-            }
+            await app.InitializeWebAsync();
 
             await app.RunAsync();
         }
@@ -36,7 +31,7 @@ internal sealed class Program
         finally
         {
             Console.WriteLine("Stopping application...");
-            logger.LogInformation($"Stopping application...");
+            logger.LogInformation("Stopping application...");
         }
     }
 }
