@@ -24,6 +24,7 @@ using SQLModule.Client.Topic;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Host;
 using SQLModule.Sandbox;
+using SQLModule.Web.Common.Isolated;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 using Testcontainers.PostgreSql;
 
