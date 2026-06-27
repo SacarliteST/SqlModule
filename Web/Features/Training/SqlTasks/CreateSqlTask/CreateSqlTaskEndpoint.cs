@@ -14,6 +14,7 @@ public sealed class CreateSqlTaskEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Training.SqlTasks.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateSqlTask")
             .WithTags("Training")
             .WithSummary("Создать SQL-задание")

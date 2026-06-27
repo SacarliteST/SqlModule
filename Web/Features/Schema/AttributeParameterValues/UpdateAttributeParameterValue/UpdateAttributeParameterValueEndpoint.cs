@@ -14,6 +14,7 @@ internal sealed class UpdateAttributeParameterValueEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.AttributeParameterValues.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateAttributeParameterValue")
             .WithTags("Schema", "DevTools")
             .WithSummary("Обновить значение параметра атрибута")

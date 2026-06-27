@@ -14,6 +14,7 @@ internal sealed class UpdateParameterDefinitionEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.DbmsCatalog.ParameterDefinitions.ById, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("UpdateParameterDefinition")
             .WithTags("DbmsCatalog")
             .WithSummary("Обновить определение параметра")

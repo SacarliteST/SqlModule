@@ -14,6 +14,7 @@ internal sealed class ValidateDbmsDictionaryEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.DbmsCatalog.DbmsDictionaries.Validate, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("ValidateDbmsDictionary")
             .WithTags("DbmsCatalog")
             .Produces(StatusCodes.Status204NoContent)

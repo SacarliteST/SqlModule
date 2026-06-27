@@ -16,16 +16,14 @@ namespace SQLModule.IntegrationTests.Schema.DataRecord;
 [Collection(IntegrationTestCollection.Name)]
 public sealed class DataRecordTests : ApiTestBase
 {
-    private readonly TestApplication app;
 
     public DataRecordTests(TestApplication testApplication) : base(testApplication)
     {
-        app = testApplication;
     }
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = DbmsDictionary.Create(
             "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,

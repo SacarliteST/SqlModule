@@ -13,6 +13,7 @@ internal sealed class DeleteMetaRelationshipEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.MetaRelationships.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteMetaRelationship")
             .WithTags("Schema", "DevTools")
             .WithSummary("Удалить связь")

@@ -14,6 +14,7 @@ internal sealed class UpdateMetaRelationshipEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.MetaRelationships.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateMetaRelationship")
             .WithTags("Schema", "DevTools")
             .WithSummary("Обновить связь")

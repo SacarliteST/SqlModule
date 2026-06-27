@@ -14,6 +14,7 @@ internal sealed class UpdatePhysicalTypeEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.DbmsCatalog.PhysicalTypes.ById, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("UpdatePhysicalType")
             .WithTags("DbmsCatalog")
             .WithSummary("Обновить физический тип данных")

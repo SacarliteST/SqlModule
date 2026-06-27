@@ -14,6 +14,7 @@ public sealed class UpdateTargetDbEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPut(ApiRoutes.Schema.TargetDbs.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("UpdateTargetDb")
             .WithTags("Schema", "DevTools")
             .WithSummary("Обновить целевую БД")

@@ -13,6 +13,7 @@ internal sealed class DeletePhysicalTypeEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.DbmsCatalog.PhysicalTypes.ById, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("DeletePhysicalType")
             .WithTags("DbmsCatalog")
             .WithSummary("Удалить физический тип данных")

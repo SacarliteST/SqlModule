@@ -14,6 +14,7 @@ internal sealed class ValidateSchemaEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.SchemaBuilder.Validate, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("ValidateSchema")
             .WithTags("Schema")
             .WithSummary("Проверить схему в контейнере")

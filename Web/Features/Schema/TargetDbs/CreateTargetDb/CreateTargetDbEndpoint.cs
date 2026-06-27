@@ -14,6 +14,7 @@ public sealed class CreateTargetDbEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.TargetDbs.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateTargetDb")
             .WithTags("Schema", "DevTools")
             .WithSummary("Создать целевую БД")

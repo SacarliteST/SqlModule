@@ -14,6 +14,7 @@ internal sealed class CreateAttributeParameterValueEndpoint : IDevEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.AttributeParameterValues.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateAttributeParameterValue")
             .WithTags("Schema", "DevTools")
             .WithSummary("Задать значение параметра атрибута")

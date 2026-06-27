@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Data.Core;
-using SQLModule.Domain.Common;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Cqrs;
@@ -98,10 +97,8 @@ internal sealed class SubmitAttemptHandler(
             actualRows = result.Rows;
         }
 
-        var userId = command.UserId == Guid.Empty ? SystemUser.Id : command.UserId;
-
         var attempt = Attempt.Record(
-            userId, command.TaskId, command.SubmittedSql,
+            command.UserId, command.TaskId, command.SubmittedSql,
             status, isCorrect, reason,
             result.Succeeded ? result.RowCount : null,
             result.Succeeded ? result.DurationMs : null,

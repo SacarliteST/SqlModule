@@ -19,16 +19,14 @@ namespace SQLModule.IntegrationTests.Schema.AttributeParameterValue;
 [Collection(IntegrationTestCollection.Name)]
 public sealed class AttributeParameterValueTests : ApiTestBase
 {
-    private readonly TestApplication app;
 
     public AttributeParameterValueTests(TestApplication testApplication) : base(testApplication)
     {
-        app = testApplication;
     }
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = DbmsDictionary.Create(
             "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,

@@ -13,6 +13,7 @@ internal sealed class DeleteDataRecordEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.DataRecords.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteDataRecord")
             .WithTags("Schema")
             .WithSummary("Удалить строку данных")

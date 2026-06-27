@@ -14,6 +14,7 @@ internal sealed class CreatePhysicalTypeEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.DbmsCatalog.PhysicalTypes.Collection, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("CreatePhysicalType")
             .WithTags("DbmsCatalog")
             .WithSummary("Создать физический тип данных")

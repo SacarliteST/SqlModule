@@ -14,6 +14,7 @@ internal sealed class CreateParameterDefinitionEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.DbmsCatalog.ParameterDefinitions.Collection, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("CreateParameterDefinition")
             .WithTags("DbmsCatalog")
             .WithSummary("Создать определение параметра")

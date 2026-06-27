@@ -14,16 +14,14 @@ namespace SQLModule.IntegrationTests.Training.SqlTask;
 [Collection(IntegrationTestCollection.Name)]
 public sealed class SqlTaskTests : ApiTestBase
 {
-    private readonly TestApplication app;
 
     public SqlTaskTests(TestApplication testApplication) : base(testApplication)
     {
-        app = testApplication;
     }
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = DbmsDictionary.Create(
             "Test_" + Guid.NewGuid(), "postgres", "postgres:latest", 5432,
@@ -51,7 +49,7 @@ public sealed class SqlTaskTests : ApiTestBase
 
     private async Task SeedAttemptAsync(Guid taskId)
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var attempt = DomainAttempt.Record(
             Guid.NewGuid(), taskId, "SELECT 1",

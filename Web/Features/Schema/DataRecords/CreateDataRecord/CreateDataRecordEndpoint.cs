@@ -14,6 +14,7 @@ internal sealed class CreateDataRecordEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.DataRecords.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateDataRecord")
             .WithTags("Schema")
             .WithSummary("Создать строку данных")

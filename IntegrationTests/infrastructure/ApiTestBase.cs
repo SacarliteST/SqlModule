@@ -12,6 +12,7 @@ using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
 using SQLModule.Client.Topic;
+using SQLModule.Web.Common.Auth;
 
 namespace SQLModule.IntegrationTests.infrastructure;
 
@@ -19,6 +20,8 @@ namespace SQLModule.IntegrationTests.infrastructure;
 [Collection(IntegrationTestCollection.Name)]
 public abstract class ApiTestBase
 {
+    protected readonly TestApplication App;
+
     /// <summary>HTTP-клиент без типизации — для вызовов эндпоинтов без клиентского SDK.</summary>
     protected readonly HttpClient HttpClient;
 
@@ -66,7 +69,9 @@ public abstract class ApiTestBase
 
     protected ApiTestBase(TestApplication testApplication)
     {
+        App = testApplication;
         HttpClient = testApplication.CreateClient();
+        AsTeacher();
         DbmsDictionaryClient = testApplication.DbmsDictionaryClient;
         TargetDbClient = testApplication.TargetDbClient;
         TopicClient = testApplication.TopicClient;
@@ -81,5 +86,25 @@ public abstract class ApiTestBase
         PhysicalTypeClient = testApplication.PhysicalTypeClient;
         ParameterDefinitionClient = testApplication.ParameterDefinitionClient;
         SchemaBuilderClient = testApplication.SchemaBuilderClient;
+    }
+
+    /// <summary>Переключает контекст на пользователя с ролью Teacher (ContentAuthor).</summary>
+    protected void AsTeacher(Guid? userId = null) => SetUser(userId, Roles.Teacher);
+
+    /// <summary>Переключает контекст на пользователя с ролью Student.</summary>
+    protected void AsStudent(Guid? userId = null) => SetUser(userId, Roles.Student);
+
+    /// <summary>Переключает контекст на пользователя с ролью Admin.</summary>
+    protected void AsAdmin(Guid? userId = null) => SetUser(userId, Roles.Admin);
+
+    private void SetUser(Guid? userId, string role)
+    {
+        var id = (userId ?? Guid.NewGuid()).ToString();
+        App.UserContext.UserId = id;
+        App.UserContext.Roles = role;
+        HttpClient.DefaultRequestHeaders.Remove("X-Test-UserId");
+        HttpClient.DefaultRequestHeaders.Remove("X-Test-Roles");
+        HttpClient.DefaultRequestHeaders.Add("X-Test-UserId", id);
+        HttpClient.DefaultRequestHeaders.Add("X-Test-Roles", role);
     }
 }

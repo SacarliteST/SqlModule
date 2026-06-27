@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -85,6 +86,9 @@ public sealed class TestApplication :
     /// <summary>Типизированный клиент для построителя схемы.</summary>
     public ISchemaBuilderClient SchemaBuilderClient { get; private set; } = null!;
 
+    /// <summary>Контекст текущего тест-пользователя (роль, userId).</summary>
+    public TestUserContext UserContext { get; } = new();
+
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
                     .WithImage(DockerImages.PostgreSql)
@@ -129,6 +133,15 @@ public sealed class TestApplication :
         {
             services.AddSingleton<IDbmsProbe, AlwaysOkProbe>();
             services.AddSingleton<ISandboxExecutor, FakeSandboxExecutor>();
+
+            services.AddAuthentication()
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+            services.PostConfigure<AuthenticationOptions>(o =>
+            {
+                o.DefaultScheme = TestAuthHandler.SchemeName;
+                o.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+                o.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+            });
         });
         base.ConfigureWebHost(builder);
     }
@@ -150,6 +163,9 @@ public sealed class TestApplication :
         services.TryAddSingleton(Server);
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, TestServerMessageFilter>());
+        services.AddSingleton(UserContext);
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IHttpMessageHandlerBuilderFilter, TestAuthMessageFilter>());
         services.AddSqlModuleClient(config);
 
         return services.BuildServiceProvider();

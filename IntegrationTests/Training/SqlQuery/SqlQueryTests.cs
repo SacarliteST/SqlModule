@@ -13,11 +13,9 @@ namespace SQLModule.IntegrationTests.Training.SqlQuery;
 [Collection(IntegrationTestCollection.Name)]
 public sealed class SqlQueryTests : ApiTestBase
 {
-    private readonly TestApplication app;
 
     public SqlQueryTests(TestApplication testApplication) : base(testApplication)
     {
-        app = testApplication;
     }
 
     private async Task<Guid> SeedTargetDbIdAsync()
@@ -36,7 +34,7 @@ public sealed class SqlQueryTests : ApiTestBase
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = Domain.DbmsCatalog.DbmsDictionary.Create(
             "Test_" + Guid.NewGuid(), "postgres", "postgres:latest", 5432,
@@ -49,7 +47,7 @@ public sealed class SqlQueryTests : ApiTestBase
 
     private async Task<Guid> SeedSqlTaskAsync(Guid targetDbId, Guid topicId, Guid sqlQueryId)
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var task = DomainSqlTask.Create(topicId, sqlQueryId, "Task_" + Guid.NewGuid(), "Text", 1);
         db.SqlTasks.Add(task);

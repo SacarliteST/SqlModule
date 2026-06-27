@@ -14,6 +14,7 @@ internal sealed class CreateDbmsDictionaryEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.DbmsCatalog.DbmsDictionaries.Collection, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("CreateDbmsDictionary")
             .WithTags("DbmsCatalog")
             .Produces<DbmsDictionaryResponse>(StatusCodes.Status201Created)

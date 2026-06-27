@@ -13,6 +13,7 @@ internal sealed class DeleteCellValueEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Schema.CellValues.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteCellValue")
             .WithTags("Schema")
             .WithSummary("Удалить значение ячейки")

@@ -14,6 +14,7 @@ internal sealed class CreateSchemaEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapPost(ApiRoutes.Schema.SchemaBuilder.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("CreateSchema")
             .WithTags("Schema")
             .WithSummary("Создать схему")

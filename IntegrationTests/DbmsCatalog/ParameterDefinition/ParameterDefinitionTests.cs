@@ -14,16 +14,14 @@ namespace SQLModule.IntegrationTests.DbmsCatalog.ParameterDefinition;
 [Collection(IntegrationTestCollection.Name)]
 public sealed class ParameterDefinitionTests : ApiTestBase
 {
-    private readonly TestApplication app;
-
     public ParameterDefinitionTests(TestApplication testApplication) : base(testApplication)
     {
-        app = testApplication;
+        AsAdmin();
     }
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = DomainDbmsDictionary.Create(
             "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,

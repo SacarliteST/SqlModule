@@ -11,16 +11,14 @@ namespace SQLModule.IntegrationTests.Schema.TargetDb;
 [Collection(IntegrationTestCollection.Name)]
 public sealed class TargetDbTests : ApiTestBase
 {
-    private readonly TestApplication app;
 
     public TargetDbTests(TestApplication testApplication) : base(testApplication)
     {
-        app = testApplication;
     }
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = DbmsDictionary.Create(
             "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,

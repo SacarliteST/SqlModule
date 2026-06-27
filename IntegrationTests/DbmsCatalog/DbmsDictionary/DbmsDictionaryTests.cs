@@ -11,6 +11,7 @@ public sealed class DbmsDictionaryTests : ApiTestBase
 {
     public DbmsDictionaryTests(TestApplication testApplication) : base(testApplication)
     {
+        AsAdmin();
     }
 
     private static CreateDbmsDictionaryRequest MakeRequest(string? name = null) => new(

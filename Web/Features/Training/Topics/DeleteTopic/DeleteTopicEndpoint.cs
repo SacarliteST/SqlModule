@@ -13,6 +13,7 @@ public sealed class DeleteTopicEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Training.Topics.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteTopic")
             .WithTags("Training")
             .WithSummary("Удалить тему")

@@ -18,16 +18,14 @@ namespace SQLModule.IntegrationTests.Schema.MetaRelationship;
 [Collection(IntegrationTestCollection.Name)]
 public sealed class MetaRelationshipTests : ApiTestBase
 {
-    private readonly TestApplication app;
 
     public MetaRelationshipTests(TestApplication testApplication) : base(testApplication)
     {
-        app = testApplication;
     }
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
-        using var scope = app.Services.CreateScope();
+        using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var dbms = DbmsDictionary.Create(
             "Test_" + Guid.NewGuid(), "test", "postgres:latest", 5432,

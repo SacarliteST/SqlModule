@@ -13,6 +13,7 @@ public sealed class DeleteSqlQueryEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Training.SqlQueries.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("DeleteSqlQuery")
             .WithTags("Training")
             .WithSummary("Удалить SQL-запрос")
