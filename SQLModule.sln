@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{00DF4CEB-892
 	ProjectSection(SolutionItems) = preProject
 		CONCEPT.md = CONCEPT.md
 		ROADMAP.md = ROADMAP.md
+		swagger.json = swagger.json
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "Sandbox\Sandbox.csproj", "{A8B95728-F2BC-42B9-B489-62E9C38A9E1B}"

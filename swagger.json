@@ -1,0 +1,5821 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "SQLModule API",
+    "description": "API SQL-тренажёра (модуль Scoodle).",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/v1/physical-types": {
+      "post": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Создать физический тип данных",
+        "description": "Создаёт физический тип данных для указанной СУБД. Возвращает 201 Created с телом ответа. 422 — не прошла валидация (пустое имя или DbmsId, TypeName > 100 символов). 409 — СУБД с указанным DbmsId не найдена.",
+        "operationId": "CreatePhysicalType",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreatePhysicalTypeRequest"
+                  }
+                ],
+                "description": "Запрос на создание физического типа данных."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhysicalTypeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Получить список физических типов данных",
+        "description": "Возвращает постраничный список физических типов данных. Параметры: offset (≥ 0), limit (1–100), dbmsId (опц. — фильтрация по СУБД). Результат упорядочен по TypeName. 422 — не прошла валидация пагинации.",
+        "operationId": "GetAllPhysicalTypes",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Смещение (количество пропускаемых записей).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Максимальное количество возвращаемых записей.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "DbmsId",
+            "in": "query",
+            "description": "Фильтр по идентификатору СУБД.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhysicalTypeResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/physical-types/{id}": {
+      "delete": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Удалить физический тип данных",
+        "description": "Удаляет физический тип данных. Возвращает 204 No Content. 404 — физический тип с указанным Id не найден. 409 — физический тип используется мета-атрибутами и не может быть удалён.",
+        "operationId": "DeletePhysicalType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Получить физический тип данных по Id",
+        "description": "Возвращает физический тип данных по идентификатору. 404 — физический тип с указанным Id не найден.",
+        "operationId": "GetPhysicalTypeById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhysicalTypeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Обновить физический тип данных",
+        "description": "Обновляет название физического типа данных. Возвращает 204 No Content. 422 — не прошла валидация (пустое имя или > 100 символов). 404 — физический тип с указанным Id не найден.",
+        "operationId": "UpdatePhysicalType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdatePhysicalTypeRequest"
+                  }
+                ],
+                "description": "Запрос на обновление физического типа данных."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/parameter-definitions": {
+      "post": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Создать определение параметра",
+        "description": "Создаёт определение параметра для физического типа данных. Возвращает 201 Created с телом ответа. 422 — не прошла валидация (пустые обязательные поля, превышена длина, SortOrder < 0). 409 — PhysicalType с указанным Id не найден или параметр с таким ParameterKey уже существует для этого физического типа.",
+        "operationId": "CreateParameterDefinition",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateParameterDefinitionRequest"
+                  }
+                ],
+                "description": "Запрос на создание определения параметра физического типа данных."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParameterDefinitionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Получить список определений параметров",
+        "description": "Возвращает постраничный список определений параметров физических типов данных. Параметры: offset (≥ 0), limit (1–100), physicalTypeId (опц. — фильтрация по типу). Результат упорядочен по SortOrder, затем по ParameterKey. 422 — не прошла валидация пагинации.",
+        "operationId": "GetAllParameterDefinitions",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Смещение (количество пропускаемых записей, ≥ 0).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Максимальное количество возвращаемых записей (1–100).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PhysicalTypeId",
+            "in": "query",
+            "description": "Опциональный фильтр по идентификатору физического типа.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParameterDefinitionResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/parameter-definitions/{id}": {
+      "delete": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Удалить определение параметра",
+        "description": "Удаляет определение параметра физического типа данных. Удаление каскадно сносит все значения параметра у колонок (AttributeParameterValue). Возвращает 204 No Content. 404 — определение параметра с указанным Id не найдено.",
+        "operationId": "DeleteParameterDefinition",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Получить определение параметра по Id",
+        "description": "Возвращает определение параметра физического типа данных по идентификатору. 404 — определение параметра с указанным Id не найдено.",
+        "operationId": "GetParameterDefinitionById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParameterDefinitionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "summary": "Обновить определение параметра",
+        "description": "Обновляет поля определения параметра физического типа данных. FK (PhysicalTypeId) не изменяется. Возвращает 204 No Content. 422 — не прошла валидация. 404 — определение параметра с указанным Id не найдено.",
+        "operationId": "UpdateParameterDefinition",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateParameterDefinitionRequest"
+                  }
+                ],
+                "description": "Запрос на обновление определения параметра физического типа данных."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dbms-dictionaries/validate": {
+      "post": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "operationId": "ValidateDbmsDictionary",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateDbmsDictionaryRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dbms-dictionaries/{id}": {
+      "put": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "operationId": "UpdateDbmsDictionary",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateDbmsDictionaryRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DbmsDictionaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "operationId": "GetDbmsDictionaryById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DbmsDictionaryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "operationId": "DeleteDbmsDictionary",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dbms-dictionaries": {
+      "get": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "operationId": "GetAllDbmsDictionaries",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DbmsDictionaryResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "operationId": "CreateDbmsDictionary",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateDbmsDictionaryRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DbmsDictionaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/target-dbs": {
+      "post": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Создать целевую БД",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт новую БД-песочницу для указанной СУБД. Возвращает 201 Created с телом ответа. 400 — не прошла валидация входных данных. 409 — СУБД с указанным dbmsId не найдена в справочнике.",
+        "operationId": "CreateTargetDb",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateTargetDbRequest"
+                  }
+                ],
+                "description": "Запрос на создание целевой БД-песочницы."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetDbResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Список целевых БД с пагинацией",
+        "description": "Возвращает 200 OK со страницей целевых БД, отсортированных по имени. offset — количество пропускаемых записей (≥ 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). 400 — невалидные параметры пагинации.",
+        "operationId": "GetAllTargetDbs",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Количество пропускаемых записей. Минимум: 0. По умолчанию: 0.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Максимальное количество записей на странице. Диапазон: 1–100. По умолчанию: 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetDbResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/target-dbs/{id}": {
+      "delete": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Удалить целевую БД",
+        "description": "Удаляет БД-песочницу по Id. Возвращает 204 No Content. 404 — запись с указанным id не найдена.",
+        "operationId": "DeleteTargetDb",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить целевую БД по Id",
+        "description": "Возвращает 200 OK с данными БД. 404 — запись с указанным id не найдена.",
+        "operationId": "GetTargetDbById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetDbResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Обновить целевую БД",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет поля существующей БД-песочницы. Возвращает 204 No Content. 400 — не прошла валидация входных данных. 404 — запись с указанным id не найдена.",
+        "operationId": "UpdateTargetDb",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateTargetDbRequest"
+                  }
+                ],
+                "description": "Запрос на обновление целевой БД-песочницы."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schemas/validate": {
+      "post": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Проверить схему в контейнере",
+        "description": "Генерирует DDL из черновика схемы и прогоняет его в реальном Docker-контейнере СУБД. Мета не сохраняется.",
+        "operationId": "ValidateSchema",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateSchemaRequest"
+                  }
+                ],
+                "description": "Запрос на построение схемы в песочнице (с временными идентификаторами)."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schemas": {
+      "post": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Создать схему",
+        "description": "Валидирует DDL в реальном Docker-контейнере и атомарно сохраняет мету схемы.",
+        "operationId": "CreateSchema",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateSchemaRequest"
+                  }
+                ],
+                "description": "Запрос на построение схемы в песочнице (с временными идентификаторами)."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSchemaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta-tables": {
+      "post": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Создать мета-таблицу",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт описание таблицы в схеме данных указанной целевой БД. Возвращает 201 Created с телом ответа. 400 — не прошла валидация входных данных. 409 — целевая БД с указанным targetDbId не найдена.",
+        "operationId": "CreateMetaTable",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateMetaTableRequest"
+                  }
+                ],
+                "description": "Запрос на создание мета-таблицы."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaTableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Список мета-таблиц с пагинацией",
+        "description": "Возвращает 200 OK со страницей мета-таблиц, отсортированных по названию. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). targetDbId — необязательный фильтр по целевой БД. 400 — невалидные параметры пагинации.",
+        "operationId": "GetAllMetaTables",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Количество пропускаемых записей (>= 0). По умолчанию 0.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Размер страницы (1–100). По умолчанию 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TargetDbId",
+            "in": "query",
+            "description": "Опциональный фильтр по целевой БД.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaTableResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta-tables/{id}": {
+      "delete": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Удалить мета-таблицу",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Удаляет мета-таблицу. Каскадно удаляет все колонки (MetaAttribute), строки данных (DataRecord) и ячейки (CellValue). Возвращает 204 No Content. 404 — мета-таблица не найдена. 409 — одна или несколько колонок таблицы участвуют в MetaRelationship (FK).",
+        "operationId": "DeleteMetaTable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить мета-таблицу по Id",
+        "description": "Возвращает 200 OK с данными мета-таблицы. 404 — мета-таблица с указанным id не найдена.",
+        "operationId": "GetMetaTableById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaTableResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Обновить мета-таблицу",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет название и описание мета-таблицы. Возвращает 204 No Content. 400 — не прошла валидация. 404 — мета-таблица с указанным id не найдена.",
+        "operationId": "UpdateMetaTable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateMetaTableRequest"
+                  }
+                ],
+                "description": "Запрос на обновление мета-таблицы."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta-relationships": {
+      "post": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Создать связь между мета-атрибутами",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт Foreign Key-связь между двумя мета-атрибутами. Возвращает 201 Created с телом ответа. 400 — не прошла валидация (пустое имя, пустые Id, Source == Target, правило > 50 симв.). 409 — SourceAttribute или TargetAttribute с указанным Id не найден.",
+        "operationId": "CreateMetaRelationship",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateMetaRelationshipRequest"
+                  }
+                ],
+                "description": "Запрос на создание связи между двумя мета-атрибутами."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaRelationshipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить список связей",
+        "description": "Возвращает постраничный список FK-связей. Параметры: offset (≥0), limit (1–100), attributeId (опц. — вернуть связи, где атрибут является Source или Target). 400 — не прошла валидация пагинации.",
+        "operationId": "GetAllMetaRelationships",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Смещение (число пропускаемых записей). Минимум 0.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Максимальное число записей в ответе. От 1 до 100.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "AttributeId",
+            "in": "query",
+            "description": "Опциональный фильтр: если задан, возвращаются только связи, в которых данный\r\nмета-атрибут участвует в роли SourceAttribute или TargetAttribute.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaRelationshipResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta-relationships/{id}": {
+      "delete": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Удалить связь",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Удаляет FK-связь между мета-атрибутами. Сущность листовая — каскадных ограничений нет. Возвращает 204 No Content. 404 — связь не найдена.",
+        "operationId": "DeleteMetaRelationship",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить связь по Id",
+        "description": "Возвращает связь между мета-атрибутами по идентификатору. 404 — связь с указанным Id не найдена.",
+        "operationId": "GetMetaRelationshipById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaRelationshipResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Обновить связь",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет название и правила поведения FK-связи. FK-колонки (SourceAttributeId, TargetAttributeId) не изменяются. Возвращает 204 No Content. 400 — не прошла валидация. 404 — связь с указанным Id не найдена.",
+        "operationId": "UpdateMetaRelationship",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateMetaRelationshipRequest"
+                  }
+                ],
+                "description": "Запрос на обновление связи между мета-атрибутами. FK-колонки не изменяются."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta-attributes": {
+      "post": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Создать мета-атрибут (колонку)",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт мета-атрибут (колонку) в указанной мета-таблице. Возвращает 201 Created с телом ответа. 422 — не прошла валидация (пустое имя, пустые Id, SortOrder < 0). 409 — MetaTable или PhysicalType с указанным Id не найден.",
+        "operationId": "CreateMetaAttribute",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateMetaAttributeRequest"
+                  }
+                ],
+                "description": "Запрос на создание мета-атрибута (колонки) таблицы."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaAttributeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить список мета-атрибутов",
+        "description": "Возвращает постраничный список мета-атрибутов (колонок). Параметры: offset (≥ 0), limit (1–100), metaTableId (опц. — вернуть только колонки указанной таблицы). Результат упорядочен по SortOrder, затем по AttributeName. 422 — не прошла валидация пагинации.",
+        "operationId": "GetAllMetaAttributes",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Смещение от начала списка (≥ 0).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Количество записей на странице (1–100).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "MetaTableId",
+            "in": "query",
+            "description": "Опциональный фильтр по мета-таблице — вернуть только колонки указанной таблицы.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaAttributeResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta-attributes/{id}": {
+      "delete": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Удалить мета-атрибут",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Удаляет мета-атрибут (колонку) таблицы. Удаление каскадно сносит все ячейки (CellValue) и значения параметров (AttributeParameterValue) данной колонки. Возвращает 204 No Content. 404 — мета-атрибут с указанным Id не найден. 409 — колонка участвует в FK-связи (MetaRelationship) и не может быть удалена.",
+        "operationId": "DeleteMetaAttribute",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить мета-атрибут по Id",
+        "description": "Возвращает мета-атрибут (колонку) по идентификатору. 404 — мета-атрибут с указанным Id не найден.",
+        "operationId": "GetMetaAttributeById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaAttributeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Обновить мета-атрибут",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет название, признаки и порядок отображения мета-атрибута. FK-колонки (MetaTableId, PhysicalTypeId) не изменяются. Возвращает 204 No Content. 422 — не прошла валидация. 404 — мета-атрибут с указанным Id не найден.",
+        "operationId": "UpdateMetaAttribute",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateMetaAttributeRequest"
+                  }
+                ],
+                "description": "Запрос на обновление мета-атрибута (колонки) таблицы."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/data-records": {
+      "post": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Создать строку данных",
+        "description": "Создаёт EAV-якорь строки в указанной мета-таблице. Возвращает 201 Created с телом ответа. 422 — не прошла валидация (пустой MetaTableId, отрицательный SortOrder). 409 — MetaTable с указанным Id не найдена.",
+        "operationId": "CreateDataRecord",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateDataRecordRequest"
+                  }
+                ],
+                "description": "Запрос на создание строки данных (EAV-якорь)."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить список строк данных",
+        "description": "Возвращает постраничный список EAV-строк. Параметры: offset (≥ 0), limit (1–100), metaTableId (опц. — вернуть только строки указанной таблицы). Результат упорядочен по SortOrder, затем по Id. 422 — не прошла валидация пагинации.",
+        "operationId": "GetAllDataRecords",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Смещение от начала списка (≥ 0).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Количество записей на странице (1–100).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "MetaTableId",
+            "in": "query",
+            "description": "Опциональный фильтр по мета-таблице — вернуть только строки указанной таблицы.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataRecordResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/data-records/{id}": {
+      "delete": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Удалить строку данных",
+        "description": "Удаляет строку данных (EAV-якорь). Удаление каскадно сносит все ячейки строки (CellValue). На DataRecord никто более не ссылается — конфликтов не возникает. Возвращает 204 No Content. 404 — строка с указанным Id не найдена.",
+        "operationId": "DeleteDataRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить строку данных по Id",
+        "description": "Возвращает строку данных (EAV-якорь) по идентификатору. 404 — строка с указанным Id не найдена.",
+        "operationId": "GetDataRecordById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataRecordResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Обновить строку данных",
+        "description": "Обновляет порядок отображения строки данных (SortOrder). FK-поля (MetaTableId) не изменяются. Возвращает 204 No Content. 422 — не прошла валидация (отрицательный SortOrder). 404 — строка с указанным Id не найдена.",
+        "operationId": "UpdateDataRecord",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateDataRecordRequest"
+                  }
+                ],
+                "description": "Запрос на обновление строки данных."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cell-values": {
+      "post": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Создать значение ячейки",
+        "description": "Создаёт значение ячейки EAV для заданной строки и атрибута. Возвращает 201 Created с телом ответа. 422 — не прошла валидация (пустые Id, TextValue > 2000 символов). 409 — DataRecord или MetaAttribute с указанным Id не найдены.",
+        "operationId": "CreateCellValue",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateCellValueRequest"
+                  }
+                ],
+                "description": "Запрос на создание значения ячейки (EAV)."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CellValueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить список значений ячеек",
+        "description": "Постраничный список значений ячеек EAV. 422 — Offset < 0 или Limit вне диапазона 1–100.",
+        "operationId": "GetAllCellValues",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Смещение от начала списка (≥ 0).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Количество записей на странице (1–100).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CellValueResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cell-values/{id}": {
+      "delete": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Удалить значение ячейки",
+        "description": "Удаляет значение ячейки EAV. 404 — значение с указанным Id не найдено.",
+        "operationId": "DeleteCellValue",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить значение ячейки по Id",
+        "description": "Возвращает значение ячейки EAV. 404 — значение с указанным Id не найдено.",
+        "operationId": "GetCellValueById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CellValueResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Обновить значение ячейки",
+        "description": "Обновляет текстовое значение ячейки EAV. 422 — TextValue > 2000 символов. 404 — значение с указанным Id не найдено.",
+        "operationId": "UpdateCellValue",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateCellValueRequest"
+                  }
+                ],
+                "description": "Запрос на обновление значения ячейки (EAV)."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CellValueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attribute-parameter-values": {
+      "post": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Задать значение параметра атрибута",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт значение параметра физического типа для указанной колонки. Возвращает 201 Created с телом ответа. 422 — не прошла валидация (пустые Id, пустое или слишком длинное значение). 409 — колонка или определение параметра не найдено, либо значение этого параметра для колонки уже задано.",
+        "operationId": "CreateAttributeParameterValue",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateAttributeParameterValueRequest"
+                  }
+                ],
+                "description": "Запрос на создание значения параметра атрибута."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttributeParameterValueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить список значений параметров атрибутов",
+        "description": "Возвращает постраничный список значений параметров физических типов колонок. Параметры: offset (≥ 0), limit (1–100), metaAttributeId (опц. — вернуть только значения параметров указанной колонки). Результат упорядочен по CreatedAt. 422 — не прошла валидация пагинации.",
+        "operationId": "GetAllAttributeParameterValues",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Смещение от начала списка (≥ 0).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Количество записей на странице (1–100).",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "MetaAttributeId",
+            "in": "query",
+            "description": "Опциональный фильтр по мета-атрибуту — вернуть только значения параметров указанной колонки.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttributeParameterValueResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attribute-parameter-values/{id}": {
+      "delete": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Удалить значение параметра атрибута",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Удаляет значение параметра физического типа для колонки. На сущность никто не ссылается — конфликтов не возникает. Возвращает 204 No Content. 404 — запись с указанным Id не найдена.",
+        "operationId": "DeleteAttributeParameterValue",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить значение параметра атрибута по Id",
+        "description": "Возвращает значение параметра физического типа по идентификатору. 404 — запись с указанным Id не найдена.",
+        "operationId": "GetAttributeParameterValueById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttributeParameterValueResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Schema",
+          "DevTools"
+        ],
+        "summary": "Обновить значение параметра атрибута",
+        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет строковое значение параметра. FK-поля (MetaAttributeId, ParameterDefinitionId) не изменяются. Возвращает 204 No Content. 422 — не прошла валидация (пустое или слишком длинное значение). 404 — запись с указанным Id не найдена.",
+        "operationId": "UpdateAttributeParameterValue",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateAttributeParameterValueRequest"
+                  }
+                ],
+                "description": "Запрос на обновление значения параметра атрибута."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/topics": {
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Создать тему",
+        "description": "Создаёт новую тему тренажёра. Возвращает 201 Created с телом ответа. ParentTopicId = null — корневая тема. 400 — не прошла валидация. 409 — родительская тема с указанным ParentTopicId не найдена.",
+        "operationId": "CreateTopic",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateTopicRequest"
+                  }
+                ],
+                "description": "Запрос на создание темы тренажёра."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Список тем с пагинацией",
+        "description": "Возвращает 200 OK со страницей тем, отсортированных по названию. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). 400 — невалидные параметры пагинации.",
+        "operationId": "GetAllTopics",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Количество пропускаемых записей. Минимум: 0. По умолчанию: 0.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Максимальное количество записей на странице. Диапазон: 1–100. По умолчанию: 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/topics/{id}": {
+      "delete": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Удалить тему",
+        "description": "Удаляет тему по Id. Возвращает 204 No Content. 404 — тема не найдена. 409 — тема содержит подтемы или задания.",
+        "operationId": "DeleteTopic",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Получить тему по Id",
+        "description": "Возвращает 200 OK с данными темы. 404 — тема с указанным id не найдена.",
+        "operationId": "GetTopicById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Обновить тему",
+        "description": "Обновляет название существующей темы. Возвращает 204 No Content. 400 — не прошла валидация. 404 — тема с указанным id не найдена.",
+        "operationId": "UpdateTopic",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateTopicRequest"
+                  }
+                ],
+                "description": "Запрос на обновление названия темы."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/topics/{id}/parent": {
+      "put": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Переместить тему",
+        "description": "Перемещает тему в иерархии. Возвращает 204 No Content. 404 — тема с указанным id не найдена. 409 — новый родитель не найден или перемещение создаёт цикл.",
+        "operationId": "MoveTopic",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MoveTopicRequest"
+                  }
+                ],
+                "description": "Запрос на перемещение темы в иерархии."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks": {
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Создать SQL-задание",
+        "description": "Создаёт новое задание тренажёра. Возвращает 201 Created с телом ответа. 400 — не прошла валидация. 409 — TargetDb, тема или SQL-запрос не найдены.",
+        "operationId": "CreateSqlTask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateSqlTaskRequest"
+                  }
+                ],
+                "description": "Запрос на создание SQL-задания."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SqlTaskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Список SQL-заданий с пагинацией",
+        "description": "Возвращает 200 OK со страницей заданий, отсортированных по сложности, затем по названию. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). 400 — невалидные параметры пагинации.",
+        "operationId": "GetAllSqlTasks",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Количество пропускаемых записей. Минимум: 0. По умолчанию: 0.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Максимальное количество записей на странице. Диапазон: 1–100. По умолчанию: 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SqlTaskResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks/{id}": {
+      "delete": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Удалить SQL-задание",
+        "description": "Удаляет задание по Id. Возвращает 204 No Content. 404 — задание не найдено. 409 — задание имеет попытки выполнения.",
+        "operationId": "DeleteSqlTask",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Получить SQL-задание по Id",
+        "description": "Возвращает 200 OK с данными задания. 404 — задание с указанным id не найдено.",
+        "operationId": "GetSqlTaskById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SqlTaskResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Обновить SQL-задание",
+        "description": "Обновляет название, текст и сложность задания (FK не меняются). Возвращает 204 No Content. 400 — не прошла валидация. 404 — задание с указанным id не найдено.",
+        "operationId": "UpdateSqlTask",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateSqlTaskRequest"
+                  }
+                ],
+                "description": "Запрос на обновление SQL-задания (FK не меняются)."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-queries": {
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Создать эталонный SQL-запрос",
+        "description": "Создаёт новый эталонный SQL-запрос. Возвращает 201 Created с телом ответа. 400 — не прошла валидация (пустой QueryText).",
+        "operationId": "CreateSqlQuery",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateSqlQueryRequest"
+                  }
+                ],
+                "description": "Запрос на создание эталонного SQL-запроса."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SqlQueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Список SQL-запросов с пагинацией",
+        "description": "Возвращает 200 OK со страницей запросов, отсортированных по дате создания. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). 400 — невалидные параметры пагинации.",
+        "operationId": "GetAllSqlQueries",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Количество пропускаемых записей. Минимум: 0. По умолчанию: 0.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Максимальное количество возвращаемых записей. Диапазон: 1–100. По умолчанию: 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SqlQueryResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-queries/{id}": {
+      "delete": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Удалить SQL-запрос",
+        "description": "Удаляет SQL-запрос по Id. Возвращает 204 No Content. 404 — запрос не найден. 409 — запрос используется заданиями или попытками.",
+        "operationId": "DeleteSqlQuery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Получить SQL-запрос по Id",
+        "description": "Возвращает 200 OK с данными запроса. 404 — запрос с указанным id не найден.",
+        "operationId": "GetSqlQueryById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SqlQueryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Обновить SQL-запрос",
+        "description": "Обновляет текст запроса и настройки сравнения. Возвращает 204 No Content. 400 — не прошла валидация. 404 — запрос с указанным id не найден.",
+        "operationId": "UpdateSqlQuery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateSqlQueryRequest"
+                  }
+                ],
+                "description": "Запрос на обновление эталонного SQL-запроса."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attempts/{id}": {
+      "delete": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Удалить попытку",
+        "description": "Удаляет запись попытки по Id. Возвращает 204 No Content. 404 — попытка не найдена.",
+        "operationId": "DeleteAttempt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Получить попытку по Id",
+        "description": "Возвращает 200 OK с данными попытки. 404 — попытка с указанным id не найдена.",
+        "operationId": "GetAttemptById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attempts": {
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Список попыток с пагинацией",
+        "description": "Возвращает 200 OK со страницей попыток, отсортированных по убыванию даты начала. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). taskId — необязательный фильтр по заданию. userId — необязательный фильтр по студенту. 400 — невалидные параметры пагинации.",
+        "operationId": "GetAllAttempts",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "description": "Количество пропускаемых записей. Минимум: 0. По умолчанию: 0.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Максимальное количество возвращаемых записей. Диапазон: 1–100. По умолчанию: 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "TaskId",
+            "in": "query",
+            "description": "Необязательный фильтр по заданию.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "UserId",
+            "in": "query",
+            "description": "Необязательный фильтр по студенту.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptResponsePageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Отправить попытку выполнения задания",
+        "description": "Запускает SQL студента в песочнице, сравнивает с эталоном и сохраняет результат. UserId берётся из текущей сессии. Возвращает 201 Created с результатом проверки. 400 — не прошла валидация. 404 — задание не найдено. 409 — эталонный результат задания ещё не готов.",
+        "operationId": "SubmitAttempt",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SubmitAttemptRequest"
+                  }
+                ],
+                "description": "Запрос на отправку попытки выполнения задания."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitAttemptResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AttemptResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submittedSql": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionStatus"
+              }
+            ]
+          },
+          "isCorrect": {
+            "type": "boolean"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckReason"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными попытки выполнения задания."
+      },
+      "AttemptResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttemptResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "AttributeParameterValueResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор значения параметра.",
+            "format": "uuid"
+          },
+          "metaAttributeId": {
+            "type": "string",
+            "description": "Идентификатор мета-атрибута (колонки).",
+            "format": "uuid"
+          },
+          "parameterDefinitionId": {
+            "type": "string",
+            "description": "Идентификатор определения параметра физического типа.",
+            "format": "uuid"
+          },
+          "parameterValue": {
+            "type": "string",
+            "description": "Значение параметра."
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания записи.",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним обновившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего обновления записи.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными значения параметра атрибута."
+      },
+      "AttributeParameterValueResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttributeParameterValueResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "CellValueResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор значения ячейки.",
+            "format": "uuid"
+          },
+          "dataRecordId": {
+            "type": "string",
+            "description": "Идентификатор строки данных, которой принадлежит ячейка.",
+            "format": "uuid"
+          },
+          "metaAttributeId": {
+            "type": "string",
+            "description": "Идентификатор мета-атрибута (столбца), которому соответствует значение.",
+            "format": "uuid"
+          },
+          "textValue": {
+            "type": "string",
+            "description": "Текстовое значение ячейки (null, если не задано).",
+            "nullable": true
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания записи.",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним обновившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего обновления записи.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными значения ячейки (EAV)."
+      },
+      "CellValueResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CellValueResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "CheckReason": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "ColumnDraft": {
+        "type": "object",
+        "properties": {
+          "tempId": {
+            "type": "string",
+            "description": "Временный строковый идентификатор (уникальный внутри запроса)."
+          },
+          "name": {
+            "type": "string",
+            "description": "Имя колонки в целевой БД."
+          },
+          "physicalTypeId": {
+            "type": "string",
+            "description": "Идентификатор физического типа данных.",
+            "format": "uuid"
+          },
+          "isPrimaryKey": {
+            "type": "boolean",
+            "description": "Признак первичного ключа."
+          },
+          "isRequired": {
+            "type": "boolean",
+            "description": "Признак обязательности (NOT NULL)."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Порядок колонки в таблице (≥ 0).",
+            "format": "int32"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnParameterDraft"
+            },
+            "description": "Значения параметров физического типа (например, длина для VARCHAR)."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Черновик колонки с временным идентификатором."
+      },
+      "ColumnParameterDraft": {
+        "type": "object",
+        "properties": {
+          "parameterDefinitionId": {
+            "type": "string",
+            "description": "Идентификатор определения параметра.",
+            "format": "uuid"
+          },
+          "value": {
+            "type": "string",
+            "description": "Значение параметра (например, «255» для VARCHAR(255))."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Значение параметра физического типа для колонки-черновика."
+      },
+      "CreateAttributeParameterValueRequest": {
+        "type": "object",
+        "properties": {
+          "metaAttributeId": {
+            "type": "string",
+            "description": "Идентификатор мета-атрибута (колонки), которому принадлежит значение.",
+            "format": "uuid"
+          },
+          "parameterDefinitionId": {
+            "type": "string",
+            "description": "Идентификатор определения параметра физического типа.",
+            "format": "uuid"
+          },
+          "parameterValue": {
+            "type": "string",
+            "description": "Значение параметра (не более 500 символов)."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание значения параметра атрибута."
+      },
+      "CreateCellValueRequest": {
+        "type": "object",
+        "properties": {
+          "dataRecordId": {
+            "type": "string",
+            "description": "Идентификатор строки данных (EAV-якоря), которой принадлежит ячейка.",
+            "format": "uuid"
+          },
+          "metaAttributeId": {
+            "type": "string",
+            "description": "Идентификатор мета-атрибута (столбца).",
+            "format": "uuid"
+          },
+          "textValue": {
+            "type": "string",
+            "description": "Текстовое значение ячейки (null — если значение не задано; до 2000 символов).",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание значения ячейки (EAV)."
+      },
+      "CreateDataRecordRequest": {
+        "type": "object",
+        "properties": {
+          "metaTableId": {
+            "type": "string",
+            "description": "Идентификатор мета-таблицы, которой принадлежит строка.",
+            "format": "uuid"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Опциональный порядок отображения строки (≥ 0).",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание строки данных (EAV-якорь)."
+      },
+      "CreateDbmsDictionaryRequest": {
+        "type": "object",
+        "properties": {
+          "dbmsName": {
+            "type": "string"
+          },
+          "dbmsSystemName": {
+            "type": "string"
+          },
+          "dockerImage": {
+            "type": "string"
+          },
+          "defaultPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "envUserKey": {
+            "type": "string"
+          },
+          "envPasswordKey": {
+            "type": "string"
+          },
+          "envDatabaseKey": {
+            "type": "string"
+          },
+          "extraEnvConfig": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultDatabase": {
+            "type": "string"
+          },
+          "defaultUsername": {
+            "type": "string"
+          },
+          "defaultPassword": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateMetaAttributeRequest": {
+        "type": "object",
+        "properties": {
+          "metaTableId": {
+            "type": "string",
+            "description": "Идентификатор мета-таблицы, которой принадлежит колонка.",
+            "format": "uuid"
+          },
+          "physicalTypeId": {
+            "type": "string",
+            "description": "Идентификатор физического типа данных колонки.",
+            "format": "uuid"
+          },
+          "attributeName": {
+            "type": "string",
+            "description": "Название колонки (не более 200 символов)."
+          },
+          "isPrimaryKey": {
+            "type": "boolean",
+            "description": "Признак первичного ключа."
+          },
+          "isRequired": {
+            "type": "boolean",
+            "description": "Признак обязательности значения."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Порядок отображения колонки (≥ 0).",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание мета-атрибута (колонки) таблицы."
+      },
+      "CreateMetaRelationshipRequest": {
+        "type": "object",
+        "properties": {
+          "relationshipName": {
+            "type": "string",
+            "description": "Название связи (FK). Обязательно, до 200 символов."
+          },
+          "sourceAttributeId": {
+            "type": "string",
+            "description": "Id исходного мета-атрибута (сторона «многие»).",
+            "format": "uuid"
+          },
+          "targetAttributeId": {
+            "type": "string",
+            "description": "Id целевого мета-атрибута (сторона «один»). Должен отличаться от SourceAttributeId.",
+            "format": "uuid"
+          },
+          "deleteRule": {
+            "type": "string",
+            "description": "Правило при удалении (CASCADE, RESTRICT, SET NULL, SET DEFAULT, NO ACTION). До 50 символов.",
+            "nullable": true
+          },
+          "updateRule": {
+            "type": "string",
+            "description": "Правило при обновлении. До 50 символов.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание связи между двумя мета-атрибутами."
+      },
+      "CreateMetaTableRequest": {
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "description": "Идентификатор целевой БД, которой принадлежит таблица.",
+            "format": "uuid"
+          },
+          "tableName": {
+            "type": "string",
+            "description": "Название таблицы (не пустое, максимум 200 символов)."
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание таблицы (необязательно, максимум 1000 символов).",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание мета-таблицы."
+      },
+      "CreateParameterDefinitionRequest": {
+        "type": "object",
+        "properties": {
+          "physicalTypeId": {
+            "type": "string",
+            "description": "Идентификатор физического типа, которому принадлежит параметр.",
+            "format": "uuid"
+          },
+          "parameterKey": {
+            "type": "string",
+            "description": "Ключ параметра (не более 100 символов)."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Отображаемое название параметра (не более 200 символов)."
+          },
+          "inputType": {
+            "type": "string",
+            "description": "Тип поля ввода (не более 50 символов)."
+          },
+          "defaultValue": {
+            "type": "string",
+            "description": "Значение по умолчанию (не более 500 символов).",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Порядок отображения (≥ 0).",
+            "format": "int32"
+          },
+          "sqlFragment": {
+            "type": "string",
+            "description": "Шаблон SQL-фрагмента с плейсхолдером {value} (не более 200 символов)."
+          },
+          "isRequired": {
+            "type": "boolean",
+            "description": "Признак обязательности параметра."
+          },
+          "valuePrefix": {
+            "type": "string",
+            "description": "Префикс значения в SQL-выражении (не более 50 символов).",
+            "nullable": true
+          },
+          "valueSuffix": {
+            "type": "string",
+            "description": "Суффикс значения в SQL-выражении (не более 50 символов).",
+            "nullable": true
+          },
+          "separator": {
+            "type": "string",
+            "description": "Разделитель для списочных значений (не более 10 символов).",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание определения параметра физического типа данных."
+      },
+      "CreatePhysicalTypeRequest": {
+        "type": "object",
+        "properties": {
+          "dbmsId": {
+            "type": "string",
+            "description": "Идентификатор СУБД, которой принадлежит тип данных.",
+            "format": "uuid"
+          },
+          "typeName": {
+            "type": "string",
+            "description": "Название физического типа данных (не более 100 символов)."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание физического типа данных."
+      },
+      "CreateSchemaRequest": {
+        "type": "object",
+        "properties": {
+          "dbmsId": {
+            "type": "string",
+            "description": "Идентификатор СУБД из справочника.",
+            "format": "uuid"
+          },
+          "schemaName": {
+            "type": "string",
+            "description": "Название схемы (или базы данных)."
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableDraft"
+            },
+            "description": "Список таблиц-черновиков."
+          },
+          "relationships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RelationshipDraft"
+            },
+            "description": "Список связей между колонками (Foreign Key)."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на построение схемы в песочнице (с временными идентификаторами)."
+      },
+      "CreateSchemaResponse": {
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "description": "Id созданной целевой БД.",
+            "format": "uuid"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaTableMap"
+            },
+            "description": "Карта временных Id таблиц → реальных Id + карта колонок."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ на успешное создание схемы."
+      },
+      "CreateSqlQueryRequest": {
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "description": "Идентификатор целевой БД (датасет для выполнения запроса).",
+            "format": "uuid"
+          },
+          "queryText": {
+            "type": "string",
+            "description": "Текст SQL-запроса (не пустой)."
+          },
+          "strictColumnOrder": {
+            "type": "boolean",
+            "description": "Если `true` — порядок колонок в ответе обязателен."
+          },
+          "strictRowOrder": {
+            "type": "boolean",
+            "description": "Если `true` — порядок строк в ответе обязателен."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание эталонного SQL-запроса."
+      },
+      "CreateSqlTaskRequest": {
+        "type": "object",
+        "properties": {
+          "topicId": {
+            "type": "string",
+            "description": "Идентификатор темы, к которой относится задание.",
+            "format": "uuid"
+          },
+          "sqlQueryId": {
+            "type": "string",
+            "description": "Идентификатор эталонного SQL-запроса (определяет целевую БД).",
+            "format": "uuid"
+          },
+          "taskName": {
+            "type": "string",
+            "description": "Название задания (не пустое, не более 300 символов)."
+          },
+          "taskText": {
+            "type": "string",
+            "description": "Текст условия задания (не пустое)."
+          },
+          "difficultyLevel": {
+            "type": "integer",
+            "description": "Уровень сложности задания (1–5).",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание SQL-задания."
+      },
+      "CreateTargetDbRequest": {
+        "type": "object",
+        "properties": {
+          "dbmsId": {
+            "type": "string",
+            "description": "Идентификатор СУБД из справочника (`DbmsDictionary.Id`).",
+            "format": "uuid"
+          },
+          "dbName": {
+            "type": "string",
+            "description": "Уникальное имя создаваемой БД-песочницы."
+          },
+          "description": {
+            "type": "string",
+            "description": "Необязательное описание назначения БД.",
+            "nullable": true
+          },
+          "isReadOnly": {
+            "type": "boolean",
+            "description": "Если `true` — запросы к БД выполняются только на чтение."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание целевой БД-песочницы."
+      },
+      "CreateTopicRequest": {
+        "type": "object",
+        "properties": {
+          "topicName": {
+            "type": "string",
+            "description": "Название темы (не пустое, не более 300 символов)."
+          },
+          "parentTopicId": {
+            "type": "string",
+            "description": "Идентификатор родительской темы. `null` — корневая тема.",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на создание темы тренажёра."
+      },
+      "DataRecordResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор строки данных.",
+            "format": "uuid"
+          },
+          "metaTableId": {
+            "type": "string",
+            "description": "Идентификатор мета-таблицы, которой принадлежит строка.",
+            "format": "uuid"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Порядок отображения строки (null, если не задан).",
+            "format": "int32",
+            "nullable": true
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания записи.",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним обновившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего обновления записи.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными строки (EAV-якорь)."
+      },
+      "DataRecordResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataRecordResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "DbmsDictionaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dbmsName": {
+            "type": "string"
+          },
+          "dbmsSystemName": {
+            "type": "string"
+          },
+          "dockerImage": {
+            "type": "string"
+          },
+          "defaultPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "envUserKey": {
+            "type": "string"
+          },
+          "envPasswordKey": {
+            "type": "string"
+          },
+          "envDatabaseKey": {
+            "type": "string"
+          },
+          "extraEnvConfig": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultDatabase": {
+            "type": "string"
+          },
+          "defaultUsername": {
+            "type": "string"
+          },
+          "createdById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DbmsDictionaryResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DbmsDictionaryResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "ExecutionStatus": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "additionalProperties": { }
+      },
+      "MetaAttributeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор мета-атрибута.",
+            "format": "uuid"
+          },
+          "metaTableId": {
+            "type": "string",
+            "description": "Идентификатор мета-таблицы.",
+            "format": "uuid"
+          },
+          "physicalTypeId": {
+            "type": "string",
+            "description": "Идентификатор физического типа данных.",
+            "format": "uuid"
+          },
+          "attributeName": {
+            "type": "string",
+            "description": "Название колонки."
+          },
+          "isPrimaryKey": {
+            "type": "boolean",
+            "description": "Признак первичного ключа."
+          },
+          "isRequired": {
+            "type": "boolean",
+            "description": "Признак обязательности значения."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Порядок отображения колонки.",
+            "format": "int32"
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания записи.",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним обновившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего обновления записи.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными мета-атрибута (колонки) таблицы."
+      },
+      "MetaAttributeResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetaAttributeResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "MetaRelationshipResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор связи.",
+            "format": "uuid"
+          },
+          "relationshipName": {
+            "type": "string",
+            "description": "Название связи (FK)."
+          },
+          "sourceAttributeId": {
+            "type": "string",
+            "description": "Id исходного мета-атрибута.",
+            "format": "uuid"
+          },
+          "targetAttributeId": {
+            "type": "string",
+            "description": "Id целевого мета-атрибута.",
+            "format": "uuid"
+          },
+          "deleteRule": {
+            "type": "string",
+            "description": "Правило при удалении.",
+            "nullable": true
+          },
+          "updateRule": {
+            "type": "string",
+            "description": "Правило при обновлении.",
+            "nullable": true
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Id пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания.",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Id пользователя, последним изменившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего изменения.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными связи между мета-атрибутами."
+      },
+      "MetaRelationshipResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetaRelationshipResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "MetaTableResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор мета-таблицы.",
+            "format": "uuid"
+          },
+          "targetDbId": {
+            "type": "string",
+            "description": "Идентификатор целевой БД.",
+            "format": "uuid"
+          },
+          "tableName": {
+            "type": "string",
+            "description": "Название таблицы."
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание таблицы.",
+            "nullable": true
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор создавшего пользователя.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания.",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор последнего редактора.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего обновления.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными мета-таблицы."
+      },
+      "MetaTableResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetaTableResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "MoveTopicRequest": {
+        "type": "object",
+        "properties": {
+          "parentTopicId": {
+            "type": "string",
+            "description": "Идентификатор нового родителя. `null` — сделать корневой темой.",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на перемещение темы в иерархии."
+      },
+      "ParameterDefinitionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор определения параметра.",
+            "format": "uuid"
+          },
+          "physicalTypeId": {
+            "type": "string",
+            "description": "Идентификатор физического типа, которому принадлежит параметр.",
+            "format": "uuid"
+          },
+          "parameterKey": {
+            "type": "string",
+            "description": "Ключ параметра."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Отображаемое название параметра."
+          },
+          "inputType": {
+            "type": "string",
+            "description": "Тип поля ввода."
+          },
+          "defaultValue": {
+            "type": "string",
+            "description": "Значение по умолчанию.",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Порядок отображения.",
+            "format": "int32"
+          },
+          "sqlFragment": {
+            "type": "string",
+            "description": "Шаблон SQL-фрагмента с плейсхолдером {value}."
+          },
+          "isRequired": {
+            "type": "boolean",
+            "description": "Признак обязательности параметра."
+          },
+          "valuePrefix": {
+            "type": "string",
+            "description": "Префикс значения в SQL-выражении.",
+            "nullable": true
+          },
+          "valueSuffix": {
+            "type": "string",
+            "description": "Суффикс значения в SQL-выражении.",
+            "nullable": true
+          },
+          "separator": {
+            "type": "string",
+            "description": "Разделитель для списочных значений.",
+            "nullable": true
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания записи.",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним обновившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего обновления записи.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными определения параметра физического типа данных."
+      },
+      "ParameterDefinitionResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParameterDefinitionResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "PhysicalTypeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор физического типа данных.",
+            "format": "uuid"
+          },
+          "dbmsId": {
+            "type": "string",
+            "description": "Идентификатор СУБД, которой принадлежит тип.",
+            "format": "uuid"
+          },
+          "typeName": {
+            "type": "string",
+            "description": "Название физического типа данных."
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания записи.",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним обновившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего обновления записи.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными физического типа данных."
+      },
+      "PhysicalTypeResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhysicalTypeResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "RelationshipDraft": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название ограничения FK."
+          },
+          "sourceColumnTempId": {
+            "type": "string",
+            "description": "TempId колонки, содержащей Foreign Key."
+          },
+          "targetColumnTempId": {
+            "type": "string",
+            "description": "TempId колонки, на которую ссылается Foreign Key."
+          },
+          "deleteRule": {
+            "type": "string",
+            "description": "Действие при удалении родительской строки (CASCADE, RESTRICT, SET NULL, NO ACTION) или `null`.",
+            "nullable": true
+          },
+          "updateRule": {
+            "type": "string",
+            "description": "Действие при обновлении родительской строки (CASCADE, RESTRICT, SET NULL, NO ACTION) или `null`.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Черновик связи (Foreign Key) между двумя колонками."
+      },
+      "SchemaColumnMap": {
+        "type": "object",
+        "properties": {
+          "tempId": {
+            "type": "string",
+            "description": "Временный Id колонки из черновика."
+          },
+          "id": {
+            "type": "string",
+            "description": "Реальный Id созданного MetaAttribute.",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Карта атрибута: TempId → реальный MetaAttribute.Id."
+      },
+      "SchemaTableMap": {
+        "type": "object",
+        "properties": {
+          "tempId": {
+            "type": "string",
+            "description": "Временный Id таблицы из черновика."
+          },
+          "id": {
+            "type": "string",
+            "description": "Реальный Id созданной MetaTable.",
+            "format": "uuid"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaColumnMap"
+            },
+            "description": "Карты атрибутов таблицы."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Карта таблицы: TempId → реальный MetaTable.Id."
+      },
+      "SqlQueryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Уникальный идентификатор запроса.",
+            "format": "uuid"
+          },
+          "targetDbId": {
+            "type": "string",
+            "description": "Идентификатор целевой БД (датасет).",
+            "format": "uuid"
+          },
+          "queryText": {
+            "type": "string",
+            "description": "Текст SQL-запроса."
+          },
+          "strictColumnOrder": {
+            "type": "boolean",
+            "description": "Признак обязательного порядка колонок."
+          },
+          "strictRowOrder": {
+            "type": "boolean",
+            "description": "Признак обязательного порядка строк."
+          },
+          "expectedColumns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Колонки золотого результата."
+          },
+          "expectedRows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Строки золотого результата."
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания записи.",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним изменившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего изменения записи.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными эталонного SQL-запроса."
+      },
+      "SqlQueryResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SqlQueryResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "SqlTaskResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Уникальный идентификатор задания.",
+            "format": "uuid"
+          },
+          "topicId": {
+            "type": "string",
+            "description": "Идентификатор темы.",
+            "format": "uuid"
+          },
+          "sqlQueryId": {
+            "type": "string",
+            "description": "Идентификатор эталонного SQL-запроса.",
+            "format": "uuid"
+          },
+          "taskName": {
+            "type": "string",
+            "description": "Название задания."
+          },
+          "taskText": {
+            "type": "string",
+            "description": "Текст условия задания."
+          },
+          "difficultyLevel": {
+            "type": "integer",
+            "description": "Уровень сложности (1–5).",
+            "format": "int32"
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания (UTC).",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним изменившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего изменения (UTC).",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Данные SQL-задания."
+      },
+      "SqlTaskResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SqlTaskResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "SubmitAttemptRequest": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submittedSql": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на отправку попытки выполнения задания."
+      },
+      "SubmitAttemptResponse": {
+        "type": "object",
+        "properties": {
+          "attemptId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionStatus"
+              }
+            ]
+          },
+          "isCorrect": {
+            "type": "boolean"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckReason"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "actualColumns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "actualRows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Результат проверки попытки выполнения задания."
+      },
+      "TableDraft": {
+        "type": "object",
+        "properties": {
+          "tempId": {
+            "type": "string",
+            "description": "Временный строковый идентификатор (уникальный внутри запроса)."
+          },
+          "name": {
+            "type": "string",
+            "description": "Имя таблицы в целевой БД."
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnDraft"
+            },
+            "description": "Список колонок таблицы."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Черновик таблицы с временным идентификатором."
+      },
+      "TargetDbResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Уникальный идентификатор записи.",
+            "format": "uuid"
+          },
+          "dbmsId": {
+            "type": "string",
+            "description": "Идентификатор СУБД из справочника.",
+            "format": "uuid"
+          },
+          "dbName": {
+            "type": "string",
+            "description": "Имя БД-песочницы."
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание назначения БД (может быть `null`).",
+            "nullable": true
+          },
+          "isReadOnly": {
+            "type": "boolean",
+            "description": "Признак доступа только на чтение."
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания записи (UTC).",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним изменившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего изменения записи (UTC).",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Данные целевой БД-песочницы."
+      },
+      "TargetDbResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetDbResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "TopicResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Уникальный идентификатор темы.",
+            "format": "uuid"
+          },
+          "topicName": {
+            "type": "string",
+            "description": "Название темы."
+          },
+          "parentTopicId": {
+            "type": "string",
+            "description": "Идентификатор родительской темы (`null` — корневая тема).",
+            "format": "uuid",
+            "nullable": true
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, создавшего запись.",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата и время создания (UTC).",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "description": "Идентификатор пользователя, последним изменившего запись.",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата и время последнего изменения (UTC).",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Данные темы тренажёра."
+      },
+      "TopicResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopicResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "UpdateAttributeParameterValueRequest": {
+        "type": "object",
+        "properties": {
+          "parameterValue": {
+            "type": "string",
+            "description": "Новое значение параметра (не более 500 символов)."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление значения параметра атрибута."
+      },
+      "UpdateCellValueRequest": {
+        "type": "object",
+        "properties": {
+          "textValue": {
+            "type": "string",
+            "description": "Новое текстовое значение ячейки (null — сброс; до 2000 символов).",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление значения ячейки (EAV)."
+      },
+      "UpdateDataRecordRequest": {
+        "type": "object",
+        "properties": {
+          "sortOrder": {
+            "type": "integer",
+            "description": "Новый порядок отображения строки (≥ 0). Передайте null для сброса.",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление строки данных."
+      },
+      "UpdateDbmsDictionaryRequest": {
+        "type": "object",
+        "properties": {
+          "dbmsName": {
+            "type": "string"
+          },
+          "dbmsSystemName": {
+            "type": "string"
+          },
+          "dockerImage": {
+            "type": "string"
+          },
+          "defaultPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "envUserKey": {
+            "type": "string"
+          },
+          "envPasswordKey": {
+            "type": "string"
+          },
+          "envDatabaseKey": {
+            "type": "string"
+          },
+          "extraEnvConfig": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultDatabase": {
+            "type": "string"
+          },
+          "defaultUsername": {
+            "type": "string"
+          },
+          "defaultPassword": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateMetaAttributeRequest": {
+        "type": "object",
+        "properties": {
+          "attributeName": {
+            "type": "string",
+            "description": "Новое название колонки (не более 200 символов)."
+          },
+          "isPrimaryKey": {
+            "type": "boolean",
+            "description": "Признак первичного ключа."
+          },
+          "isRequired": {
+            "type": "boolean",
+            "description": "Признак обязательности значения."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Порядок отображения колонки (≥ 0).",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление мета-атрибута (колонки) таблицы."
+      },
+      "UpdateMetaRelationshipRequest": {
+        "type": "object",
+        "properties": {
+          "relationshipName": {
+            "type": "string",
+            "description": "Новое название связи. Обязательно, до 200 символов."
+          },
+          "deleteRule": {
+            "type": "string",
+            "description": "Правило при удалении. До 50 символов.",
+            "nullable": true
+          },
+          "updateRule": {
+            "type": "string",
+            "description": "Правило при обновлении. До 50 символов.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление связи между мета-атрибутами. FK-колонки не изменяются."
+      },
+      "UpdateMetaTableRequest": {
+        "type": "object",
+        "properties": {
+          "tableName": {
+            "type": "string",
+            "description": "Новое название таблицы (не пустое, максимум 200 символов)."
+          },
+          "description": {
+            "type": "string",
+            "description": "Новое описание таблицы (необязательно, максимум 1000 символов).",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление мета-таблицы."
+      },
+      "UpdateParameterDefinitionRequest": {
+        "type": "object",
+        "properties": {
+          "parameterKey": {
+            "type": "string",
+            "description": "Новый ключ параметра (не более 100 символов)."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Новое отображаемое название параметра (не более 200 символов)."
+          },
+          "inputType": {
+            "type": "string",
+            "description": "Новый тип поля ввода (не более 50 символов)."
+          },
+          "defaultValue": {
+            "type": "string",
+            "description": "Новое значение по умолчанию (не более 500 символов).",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Новый порядок отображения (≥ 0).",
+            "format": "int32"
+          },
+          "sqlFragment": {
+            "type": "string",
+            "description": "Новый шаблон SQL-фрагмента (не более 200 символов)."
+          },
+          "isRequired": {
+            "type": "boolean",
+            "description": "Новый признак обязательности параметра."
+          },
+          "valuePrefix": {
+            "type": "string",
+            "description": "Новый префикс значения (не более 50 символов).",
+            "nullable": true
+          },
+          "valueSuffix": {
+            "type": "string",
+            "description": "Новый суффикс значения (не более 50 символов).",
+            "nullable": true
+          },
+          "separator": {
+            "type": "string",
+            "description": "Новый разделитель (не более 10 символов).",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление определения параметра физического типа данных."
+      },
+      "UpdatePhysicalTypeRequest": {
+        "type": "object",
+        "properties": {
+          "typeName": {
+            "type": "string",
+            "description": "Новое название физического типа данных (не более 100 символов)."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление физического типа данных."
+      },
+      "UpdateSqlQueryRequest": {
+        "type": "object",
+        "properties": {
+          "queryText": {
+            "type": "string",
+            "description": "Новый текст SQL-запроса (не пустой)."
+          },
+          "strictColumnOrder": {
+            "type": "boolean",
+            "description": "Если `true` — порядок колонок в ответе обязателен."
+          },
+          "strictRowOrder": {
+            "type": "boolean",
+            "description": "Если `true` — порядок строк в ответе обязателен."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление эталонного SQL-запроса."
+      },
+      "UpdateSqlTaskRequest": {
+        "type": "object",
+        "properties": {
+          "taskName": {
+            "type": "string",
+            "description": "Новое название задания (не пустое, не более 300 символов)."
+          },
+          "taskText": {
+            "type": "string",
+            "description": "Новый текст условия задания (не пустое)."
+          },
+          "difficultyLevel": {
+            "type": "integer",
+            "description": "Новый уровень сложности (1–5).",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление SQL-задания (FK не меняются)."
+      },
+      "UpdateTargetDbRequest": {
+        "type": "object",
+        "properties": {
+          "dbName": {
+            "type": "string",
+            "description": "Новое имя БД-песочницы."
+          },
+          "description": {
+            "type": "string",
+            "description": "Новое описание (передайте `null`, чтобы очистить).",
+            "nullable": true
+          },
+          "isReadOnly": {
+            "type": "boolean",
+            "description": "Флаг доступа только на чтение."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление целевой БД-песочницы."
+      },
+      "UpdateTopicRequest": {
+        "type": "object",
+        "properties": {
+          "topicName": {
+            "type": "string",
+            "description": "Новое название темы (не пустое, не более 300 символов)."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на обновление названия темы."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "DbmsCatalog"
+    },
+    {
+      "name": "Schema"
+    },
+    {
+      "name": "DevTools"
+    },
+    {
+      "name": "Training"
+    }
+  ]
+}
