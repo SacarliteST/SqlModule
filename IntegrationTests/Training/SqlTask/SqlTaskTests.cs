@@ -6,6 +6,8 @@ using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
+using SQLModule.Domain.Schema;
+using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.infrastructure;
 using DomainAttempt = SQLModule.Domain.Training.Attempt;
 
@@ -43,9 +45,18 @@ public sealed class SqlTaskTests : ApiTestBase
         => (await SqlQueryClient.CreateAsync(new CreateSqlQueryRequest(targetDbId, "SELECT 1", false, false))).Id;
 
     private async Task<SqlTaskResponse> CreateSqlTaskAsync(
-        Guid topicId, Guid sqlQueryId, string taskName = "Task")
+        Guid topicId,
+        Guid sqlQueryId,
+        string taskName = "Task",
+        PublicationStatus publicationStatus = PublicationStatus.Draft)
         => await SqlTaskClient.CreateAsync(
-            new CreateSqlTaskRequest(topicId, sqlQueryId, taskName, "Текст задания", 1));
+            new CreateSqlTaskRequest(
+                topicId,
+                sqlQueryId,
+                taskName,
+                "Текст задания",
+                1,
+                publicationStatus));
 
     private async Task SeedAttemptAsync(Guid taskId)
     {
@@ -79,6 +90,7 @@ public sealed class SqlTaskTests : ApiTestBase
         response.SqlQueryId.ShouldBe(sqlQueryId);
         response.TaskName.ShouldBe("My Task");
         response.DifficultyLevel.ShouldBe((short)3);
+        response.PublicationStatus.ShouldBe(PublicationStatus.Draft);
     }
 
     [Fact(DisplayName = "GetById → возвращает ранее созданное задание")]
@@ -144,6 +156,71 @@ public sealed class SqlTaskTests : ApiTestBase
         var updated = await SqlTaskClient.GetByIdAsync(created.Id);
         updated!.TaskName.ShouldBe("NewName");
         updated.DifficultyLevel.ShouldBe((short)5);
+        updated.PublicationStatus.ShouldBe(PublicationStatus.Draft);
+    }
+
+    [Fact(DisplayName = "TeacherDetails → возвращает агрегированную read-модель задания")]
+    public async Task GetTeacherDetails_ExistingTask_ReturnsAggregate()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(
+            topicId,
+            sqlQueryId,
+            "Published task",
+            PublicationStatus.Published);
+
+        var studentId = Guid.NewGuid();
+        using (var scope = App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var physicalType = PhysicalType.Create(dbmsId, "integer");
+            var table = MetaTable.Create(targetDbId, "employees", null);
+            db.PhysicalTypes.Add(physicalType);
+            db.MetaTables.Add(table);
+            db.MetaAttributes.AddRange(
+                MetaAttribute.Create(table.Id, physicalType.Id, "id", true, true, 0),
+                MetaAttribute.Create(table.Id, physicalType.Id, "department_id", false, true, 1));
+            db.Attempts.Add(DomainAttempt.Record(
+                studentId,
+                task.Id,
+                "SELECT * FROM employees",
+                ExecutionStatus.Succeeded,
+                true,
+                CheckReason.Ok,
+                1,
+                42,
+                null,
+                DateTimeOffset.UtcNow.AddSeconds(-1),
+                DateTimeOffset.UtcNow,
+                studentName: "Иван Петров"));
+            await db.SaveChangesAsync();
+        }
+
+        // Act
+        var details = await SqlTaskClient.GetTeacherDetailsAsync(task.Id);
+
+        // Assert
+        details.ShouldNotBeNull();
+        details.TaskId.ShouldBe(task.Id);
+        details.TaskName.ShouldBe("Published task");
+        details.PublicationStatus.ShouldBe(PublicationStatus.Published);
+        details.TargetDb.TargetDbId.ShouldBe(targetDbId);
+        details.TargetDb.Tables.ShouldHaveSingleItem()
+            .ShouldBe(new TeacherTaskTableResponse("employees", 2));
+        details.AttemptsCount.ShouldBe(1);
+        details.LastAttempts.ShouldHaveSingleItem().StudentName.ShouldBe("Иван Петров");
+        details.LastAttempts[0].StudentId.ShouldBe(studentId);
+    }
+
+    [Fact(DisplayName = "TeacherDetails несуществующего задания → null")]
+    public async Task GetTeacherDetails_UnknownTask_ReturnsNull()
+    {
+        var details = await SqlTaskClient.GetTeacherDetailsAsync(Guid.NewGuid());
+        details.ShouldBeNull();
     }
 
     [Fact(DisplayName = "Update несуществующего → NotFoundException")]

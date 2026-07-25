@@ -10,7 +10,7 @@ using SQLModule.Web.Common.Sandbox;
 
 namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;
 
-internal record SubmitAttemptCommand(Guid UserId, Guid TaskId, string SubmittedSql)
+internal record SubmitAttemptCommand(Guid UserId, string StudentName, Guid TaskId, string SubmittedSql)
     : IRequest<Result<SubmitAttemptResponse>>;
 
 internal sealed class SubmitAttemptHandler(
@@ -103,7 +103,8 @@ internal sealed class SubmitAttemptHandler(
             result.Succeeded ? result.RowCount : null,
             result.Succeeded ? result.DurationMs : null,
             result.Succeeded ? null : result.Error,
-            startedAt, finishedAt);
+            startedAt, finishedAt,
+            studentName: command.StudentName);
 
         db.Attempts.Add(attempt);
         await db.SaveChangesAsync(ct);

@@ -21,6 +21,7 @@ public sealed class AuthorizationTests : ApiTestBase
     public async Task NoAuth_AnyEndpoint_Returns401()
     {
         var anonymousClient = App.CreateClient();
+        anonymousClient.DefaultRequestHeaders.Add("X-Test-Anonymous", "true");
         var response = await anonymousClient.GetAsync(ApiRoutes.Schema.MetaTables.ForPagination(0, 10));
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
@@ -46,6 +47,14 @@ public sealed class AuthorizationTests : ApiTestBase
     {
         AsStudent();
         var response = await HttpClient.PostAsJsonAsync(ApiRoutes.DbmsCatalog.DbmsDictionaries.Collection, new { });
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact(DisplayName = "Auth: Student запрашивает teacher details → 403 Forbidden")]
+    public async Task Student_GetTeacherTaskDetails_Returns403()
+    {
+        AsStudent();
+        var response = await HttpClient.GetAsync(ApiRoutes.Training.TeacherTasks.ForDetails(Guid.NewGuid()));
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 }

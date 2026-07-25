@@ -102,9 +102,12 @@ public abstract class ApiTestBase
         var id = (userId ?? Guid.NewGuid()).ToString();
         App.UserContext.UserId = id;
         App.UserContext.Roles = role;
+        App.UserContext.DisplayName = $"Test {role}";
         HttpClient.DefaultRequestHeaders.Remove("X-Test-UserId");
         HttpClient.DefaultRequestHeaders.Remove("X-Test-Roles");
+        HttpClient.DefaultRequestHeaders.Remove("X-Test-DisplayName");
         HttpClient.DefaultRequestHeaders.Add("X-Test-UserId", id);
         HttpClient.DefaultRequestHeaders.Add("X-Test-Roles", role);
+        HttpClient.DefaultRequestHeaders.Add("X-Test-DisplayName", App.UserContext.DisplayName);
     }
 }

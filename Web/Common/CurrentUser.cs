@@ -17,4 +17,16 @@ internal sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
     /// </summary>
     public Guid? UserId =>
         Guid.TryParse(accessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+
+    /// <summary>Отображаемое имя из JWT claim <c>name</c>.</summary>
+    public string? DisplayName
+    {
+        get
+        {
+            var principal = accessor.HttpContext?.User;
+            var value = principal?.FindFirstValue("name")
+                        ?? principal?.FindFirstValue(ClaimTypes.Name);
+            return String.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+    }
 }

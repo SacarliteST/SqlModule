@@ -6,6 +6,7 @@ namespace SQLModule.Contracts.Training.Attempt;
 public record AttemptResponse(
     Guid Id,
     Guid UserId,
+    string StudentName,
     Guid TaskId,
     string SubmittedSql,
     ExecutionStatus Status,

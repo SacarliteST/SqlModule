@@ -1,11 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Data.Core;
+using SQLModule.Domain.Training;
 using SQLModule.Web.Common.Cqrs;
 
 namespace SQLModule.Web.Features.Training.SqlTasks;
 
-internal record UpdateSqlTaskCommand(Guid Id, string TaskName, string TaskText, short DifficultyLevel)
+internal record UpdateSqlTaskCommand(
+    Guid Id,
+    string TaskName,
+    string TaskText,
+    short DifficultyLevel,
+    PublicationStatus? PublicationStatus)
     : IRequest<Result>;
 
 internal sealed class UpdateSqlTaskHandler(AppDbContext db)
@@ -19,7 +25,7 @@ internal sealed class UpdateSqlTaskHandler(AppDbContext db)
             return Result.Fail(SqlTaskErrors.NotFound(command.Id));
         }
 
-        entity.Update(command.TaskName, command.TaskText, command.DifficultyLevel);
+        entity.Update(command.TaskName, command.TaskText, command.DifficultyLevel, command.PublicationStatus);
         await db.SaveChangesAsync(ct);
         return Result.Success();
     }

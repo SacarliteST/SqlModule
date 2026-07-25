@@ -9,7 +9,8 @@ namespace SQLModule.Web.Features.Training.SqlTasks;
 
 internal record CreateSqlTaskCommand(
     Guid TopicId, Guid SqlQueryId,
-    string TaskName, string TaskText, short DifficultyLevel)
+    string TaskName, string TaskText, short DifficultyLevel,
+    PublicationStatus PublicationStatus)
     : IRequest<Result<SqlTaskResponse>>;
 
 internal sealed class CreateSqlTaskHandler(AppDbContext db)
@@ -29,7 +30,8 @@ internal sealed class CreateSqlTaskHandler(AppDbContext db)
 
         var entity = SqlTask.Create(
             command.TopicId, command.SqlQueryId,
-            command.TaskName, command.TaskText, command.DifficultyLevel);
+            command.TaskName, command.TaskText, command.DifficultyLevel,
+            publicationStatus: command.PublicationStatus);
 
         db.SqlTasks.Add(entity);
         await db.SaveChangesAsync(ct);

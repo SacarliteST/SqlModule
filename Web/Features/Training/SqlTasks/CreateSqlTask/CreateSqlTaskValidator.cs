@@ -12,5 +12,6 @@ internal sealed class CreateSqlTaskValidator : AbstractValidator<CreateSqlTaskRe
         RuleFor(x => x.TaskName).NotEmpty().MaximumLength(300);
         RuleFor(x => x.TaskText).NotEmpty();
         RuleFor(x => x.DifficultyLevel).InclusiveBetween((short)1, (short)5);
+        RuleFor(x => x.PublicationStatus).IsInEnum();
     }
 }

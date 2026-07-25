@@ -38,7 +38,11 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
     {
         var userId = currentUser.UserId!.Value;
         var result = await sender.Send<SubmitAttemptCommand, Result<SubmitAttemptResponse>>(
-            new SubmitAttemptCommand(userId, request.TaskId, request.SubmittedSql), ct);
+            new SubmitAttemptCommand(
+                userId,
+                currentUser.DisplayName ?? userId.ToString(),
+                request.TaskId,
+                request.SubmittedSql), ct);
         return result.ToCreated(r => ApiRoutes.Training.Attempts.ForId(r.AttemptId));
     }
 }

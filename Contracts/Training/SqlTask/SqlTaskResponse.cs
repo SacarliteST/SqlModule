@@ -7,6 +7,7 @@
 /// <param name="TaskName">Название задания.</param>
 /// <param name="TaskText">Текст условия задания.</param>
 /// <param name="DifficultyLevel">Уровень сложности (1–5).</param>
+/// <param name="PublicationStatus">Статус публикации задания.</param>
 /// <param name="CreatedById">Идентификатор пользователя, создавшего запись.</param>
 /// <param name="CreatedAt">Дата и время создания (UTC).</param>
 /// <param name="UpdatedById">Идентификатор пользователя, последним изменившего запись.</param>
@@ -18,6 +19,7 @@ public record SqlTaskResponse(
     string TaskName,
     string TaskText,
     short DifficultyLevel,
+    SQLModule.Domain.Training.PublicationStatus PublicationStatus,
     Guid CreatedById,
     DateTimeOffset CreatedAt,
     Guid UpdatedById,
