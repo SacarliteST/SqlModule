@@ -237,8 +237,14 @@ public static class ApiRoutes
             /// <summary>Элемент по Id.</summary>
             public const string ById = Collection + "/{id}";
 
+            /// <summary>Публикация задания.</summary>
+            public const string Publish = ById + "/publish";
+
             /// <inheritdoc cref="ForId"/>
             public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForPublish"/>
+            public static string ForPublish(Guid id) => $"{Collection}/{id}/publish";
 
             /// <inheritdoc cref="ForPagination"/>
             public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";

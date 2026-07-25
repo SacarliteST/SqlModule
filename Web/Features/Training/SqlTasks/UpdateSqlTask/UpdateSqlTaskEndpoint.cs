@@ -19,13 +19,16 @@ public sealed class UpdateSqlTaskEndpoint : IEndpoint
             .WithTags("Training")
             .WithSummary("Обновить SQL-задание")
             .WithDescription(
-                "Обновляет название, текст, сложность и при необходимости статус публикации задания (FK не меняются). " +
+                "Обновляет название, текст, сложность и статус, кроме перехода в Published (FK не меняются). " +
+                "Для публикации используйте отдельную операцию. " +
                 "Возвращает 204 No Content. " +
                 "400 — не прошла валидация. " +
-                "404 — задание с указанным id не найдено.")
+                "404 — задание с указанным id не найдено. " +
+                "409 — предпринята публикация через обычное обновление.")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<UpdateSqlTaskRequest>>();
     }
 

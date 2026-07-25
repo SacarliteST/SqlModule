@@ -167,11 +167,8 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-        var task = await CreateSqlTaskAsync(
-            topicId,
-            sqlQueryId,
-            "Published task",
-            PublicationStatus.Published);
+        var draftTask = await CreateSqlTaskAsync(topicId, sqlQueryId, "Published task");
+        var task = await SqlTaskClient.PublishAsync(draftTask.Id);
 
         var studentId = Guid.NewGuid();
         using (var scope = App.Services.CreateScope())
@@ -229,6 +226,114 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act + Assert
         await Should.ThrowAsync<NotFoundException>(
             () => SqlTaskClient.UpdateAsync(Guid.NewGuid(), new UpdateSqlTaskRequest("Name", "Text", 1)));
+    }
+
+    [Fact(DisplayName = "Create с Published → ValidationException")]
+    public async Task Create_PublishedStatus_ThrowsValidationException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+
+        // Act + Assert
+        await Should.ThrowAsync<ValidationException>(
+            () => CreateSqlTaskAsync(topicId, sqlQueryId, publicationStatus: PublicationStatus.Published));
+    }
+
+    [Fact(DisplayName = "Update Draft в Published → ConflictException")]
+    public async Task Update_DraftToPublished_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.UpdateAsync(
+                task.Id,
+                new UpdateSqlTaskRequest(
+                    task.TaskName,
+                    task.TaskText,
+                    task.DifficultyLevel,
+                    PublicationStatus.Published)));
+    }
+
+    [Fact(DisplayName = "Publish валидного Draft → Published")]
+    public async Task Publish_ValidDraft_ReturnsPublishedTask()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+
+        // Act
+        var published = await SqlTaskClient.PublishAsync(task.Id);
+
+        // Assert
+        published.Id.ShouldBe(task.Id);
+        published.PublicationStatus.ShouldBe(PublicationStatus.Published);
+        (await SqlTaskClient.GetByIdAsync(task.Id))!.PublicationStatus
+            .ShouldBe(PublicationStatus.Published);
+    }
+
+    [Fact(DisplayName = "Publish уже опубликованного задания → ConflictException")]
+    public async Task Publish_AlreadyPublished_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        await SqlTaskClient.PublishAsync(task.Id);
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(() => SqlTaskClient.PublishAsync(task.Id));
+    }
+
+    [Fact(DisplayName = "Publish задания с попытками → ConflictException")]
+    public async Task Publish_TaskWithAttempts_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        await SeedAttemptAsync(task.Id);
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(() => SqlTaskClient.PublishAsync(task.Id));
+    }
+
+    [Fact(DisplayName = "Publish задания без проверенного эталона → ValidationException")]
+    public async Task Publish_UnvalidatedReferenceQuery_ThrowsValidationException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        Guid sqlQueryId;
+        using (var scope = App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var query = Domain.Training.SqlQuery.Create("SELECT 1", false, false, targetDbId);
+            db.SqlQueries.Add(query);
+            await db.SaveChangesAsync();
+            sqlQueryId = query.Id;
+        }
+
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+
+        // Act + Assert
+        await Should.ThrowAsync<ValidationException>(() => SqlTaskClient.PublishAsync(task.Id));
     }
 
     [Fact(DisplayName = "Delete → задание больше не возвращается GetById")]

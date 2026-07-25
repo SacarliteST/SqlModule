@@ -48,4 +48,9 @@ public sealed class SqlTask : AuditableEntity
             PublicationStatus = publicationStatus.Value;
         }
     }
+
+    public void Publish()
+    {
+        PublicationStatus = PublicationStatus.Published;
+    }
 }

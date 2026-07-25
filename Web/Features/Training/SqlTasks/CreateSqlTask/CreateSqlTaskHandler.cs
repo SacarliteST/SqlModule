@@ -18,6 +18,11 @@ internal sealed class CreateSqlTaskHandler(AppDbContext db)
 {
     public async Task<Result<SqlTaskResponse>> Handle(CreateSqlTaskCommand command, CancellationToken ct)
     {
+        if (command.PublicationStatus != PublicationStatus.Draft)
+        {
+            return Result<SqlTaskResponse>.Fail(SqlTaskErrors.InitialStatusMustBeDraft);
+        }
+
         if (!await db.Topics.AnyAsync(x => x.Id == command.TopicId, ct))
         {
             return Result<SqlTaskResponse>.Fail(SqlTaskErrors.TopicNotFound(command.TopicId));

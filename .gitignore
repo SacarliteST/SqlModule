@@ -7,6 +7,9 @@
 ROADMAP.md
 CONCEPT.md
 
+# Local Codex skills
+.codex/skills/
+
 # User-specific files
 *.rsuser
 *.suo
