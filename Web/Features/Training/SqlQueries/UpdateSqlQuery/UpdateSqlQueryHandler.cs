@@ -12,9 +12,7 @@ internal record UpdateSqlQueryCommand(Guid Id, string QueryText, bool StrictColu
     : IRequest<Result>;
 
 internal sealed class UpdateSqlQueryHandler(
-    ITaskMaterializer materializer,
-    ISandboxExecutor executor,
-    IOptions<SandboxOptions> sandboxOptions,
+    ISqlQueryValidationRunner validationRunner,
     AppDbContext db)
     : IRequestHandler<UpdateSqlQueryCommand, Result>
 {
@@ -26,31 +24,14 @@ internal sealed class UpdateSqlQueryHandler(
             return Result.Fail(SqlQueryErrors.NotFound(command.Id));
         }
 
-        var mat = await materializer.MaterializeAsync(entity.TargetDbId, ct);
-        if (!mat.IsSuccess)
-        {
-            return Result.Fail(mat.Error!);
-        }
-
-        var opts = sandboxOptions.Value;
-        var run = await executor.RunAsync(
-            mat.Value!.Dbms.ToSandboxSpec(),
-            mat.Value.Setup,
-            new SandboxQuery(command.QueryText, opts.DefaultQueryTimeoutSeconds, opts.MaxRows),
-            ct);
-
+        var run = await validationRunner.ValidateAsync(entity.TargetDbId, command.QueryText, ct);
         if (!run.IsSuccess)
         {
             return Result.Fail(run.Error!);
         }
 
-        if (!run.Value!.Succeeded)
-        {
-            return Result.Fail(SqlQueryErrors.ReferenceInvalid(run.Value.Error ?? String.Empty));
-        }
-
         entity.Update(command.QueryText, command.StrictColumnOrder, command.StrictRowOrder);
-        entity.SetExpectedResult(GoldenResult.Serialize(run.Value));
+        entity.SetExpectedResult(GoldenResult.Serialize(run.Value!));
         await db.SaveChangesAsync(ct);
         return Result.Success();
     }
