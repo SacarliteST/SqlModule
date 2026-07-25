@@ -516,6 +516,11 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("StudentName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<string>("SubmittedSql")
                         .IsRequired()
                         .HasColumnType("text");
@@ -594,6 +599,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<short>("DifficultyLevel")
                         .HasColumnType("smallint");
+
+                    b.Property<string>("PublicationStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("SqlQueryId")
                         .HasColumnType("uuid");

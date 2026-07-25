@@ -12,6 +12,7 @@ internal sealed class SqlTaskConfiguration : IEntityTypeConfiguration<SqlTask>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TaskName).IsRequired().HasMaxLength(300);
         builder.Property(x => x.TaskText).IsRequired();
+        builder.Property(x => x.PublicationStatus).HasConversion<string>().IsRequired();
         builder.ConfigureAudit();
 
         builder.HasOne(x => x.SqlQuery)

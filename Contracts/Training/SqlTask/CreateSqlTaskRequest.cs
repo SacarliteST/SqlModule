@@ -6,9 +6,11 @@
 /// <param name="TaskName">Название задания (не пустое, не более 300 символов).</param>
 /// <param name="TaskText">Текст условия задания (не пустое).</param>
 /// <param name="DifficultyLevel">Уровень сложности задания (1–5).</param>
+/// <param name="PublicationStatus">Начальный статус публикации. По умолчанию Draft.</param>
 public record CreateSqlTaskRequest(
     Guid TopicId,
     Guid SqlQueryId,
     string TaskName,
     string TaskText,
-    short DifficultyLevel);
+    short DifficultyLevel,
+    SQLModule.Domain.Training.PublicationStatus PublicationStatus = SQLModule.Domain.Training.PublicationStatus.Draft);

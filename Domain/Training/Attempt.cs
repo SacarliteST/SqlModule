@@ -7,6 +7,8 @@ public sealed class Attempt : AuditableEntity
 {
     /// <summary>Идентификатор студента (мягкая ссылка на Identity-сервис).</summary>
     public Guid UserId { get; private set; }
+    /// <summary>Отображаемое имя студента на момент отправки попытки.</summary>
+    public string StudentName { get; private set; }
     public Guid TaskId { get; private set; }
     public string SubmittedSql { get; private set; } = String.Empty;
     public ExecutionStatus Status { get; private set; }
@@ -19,12 +21,13 @@ public sealed class Attempt : AuditableEntity
     public DateTimeOffset FinishedAt { get; private set; }
 
     private Attempt(
-        Guid id, Guid userId, Guid taskId, string submittedSql,
+        Guid id, Guid userId, string studentName, Guid taskId, string submittedSql,
         ExecutionStatus status, bool isCorrect, CheckReason reason,
         int? rowCount, long? durationMs, string? errorMessage,
         DateTimeOffset startedAt, DateTimeOffset finishedAt) : base(id)
     {
         UserId = userId;
+        StudentName = studentName;
         TaskId = taskId;
         SubmittedSql = submittedSql;
         Status = status;
@@ -42,8 +45,12 @@ public sealed class Attempt : AuditableEntity
         ExecutionStatus status, bool isCorrect, CheckReason reason,
         int? rowCount, long? durationMs, string? errorMessage,
         DateTimeOffset startedAt, DateTimeOffset finishedAt,
-        Guid? id = null)
-        => new(id ?? Guid.NewGuid(), userId, taskId, submittedSql,
+        Guid? id = null,
+        string? studentName = null)
+        => new(id ?? Guid.NewGuid(), userId, NormalizeStudentName(studentName, userId), taskId, submittedSql,
             status, isCorrect, reason, rowCount, durationMs, errorMessage,
             startedAt, finishedAt);
+
+    private static string NormalizeStudentName(string? studentName, Guid userId)
+        => String.IsNullOrWhiteSpace(studentName) ? userId.ToString() : studentName.Trim();
 }

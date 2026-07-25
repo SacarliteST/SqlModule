@@ -15,6 +15,8 @@ internal sealed class TestAuthHandler : AuthenticationHandler<AuthenticationSche
     public const string SchemeName = "TestAuth";
     private const string UserIdHeader = "X-Test-UserId";
     private const string RolesHeader = "X-Test-Roles";
+    private const string DisplayNameHeader = "X-Test-DisplayName";
+    private const string AnonymousHeader = "X-Test-Anonymous";
     private const string DefaultRole = "Teacher";
 
     public TestAuthHandler(
@@ -27,10 +29,20 @@ internal sealed class TestAuthHandler : AuthenticationHandler<AuthenticationSche
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        if (Request.Headers[AnonymousHeader].FirstOrDefault() == "true")
+        {
+            return Task.FromResult(AuthenticateResult.NoResult());
+        }
+
         var userId = Request.Headers[UserIdHeader].FirstOrDefault() ?? Guid.NewGuid().ToString();
         var rolesHeader = Request.Headers[RolesHeader].FirstOrDefault() ?? DefaultRole;
+        var displayName = Request.Headers[DisplayNameHeader].FirstOrDefault() ?? "Test User";
 
-        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId) };
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, userId),
+            new(ClaimTypes.Name, displayName)
+        };
         claims.AddRange(
             rolesHeader.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                        .Select(r => new Claim(ClaimTypes.Role, r)));

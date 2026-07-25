@@ -115,6 +115,7 @@ public sealed class AttemptTests : ApiTestBase
         var attempt = await AttemptClient.GetByIdAsync(response.AttemptId);
         attempt.ShouldNotBeNull();
         attempt!.UserId.ShouldBe(studentId);
+        attempt.StudentName.ShouldBe("Test Student");
     }
 
     [Fact(DisplayName = "Submit → SQL-ошибка создаёт Attempt со Status=Error")]

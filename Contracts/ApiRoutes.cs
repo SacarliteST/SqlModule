@@ -244,6 +244,16 @@ public static class ApiRoutes
             public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
         }
 
+        /// <summary>Преподавательские read-модели заданий.</summary>
+        public static class TeacherTasks
+        {
+            /// <summary>Агрегированные детали задания.</summary>
+            public const string Details = PrefixV1 + "/teacher/tasks/{taskId}/details";
+
+            /// <inheritdoc cref="ForDetails"/>
+            public static string ForDetails(Guid taskId) => $"{PrefixV1}/teacher/tasks/{taskId}/details";
+        }
+
         /// <summary>Попытки выполнения заданий.</summary>
         public static class Attempts
         {

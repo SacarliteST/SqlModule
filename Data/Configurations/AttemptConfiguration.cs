@@ -10,6 +10,7 @@ internal sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.UserId).IsRequired();
+        builder.Property(x => x.StudentName).IsRequired().HasMaxLength(300);
         builder.Property(x => x.TaskId).IsRequired();
         builder.Property(x => x.SubmittedSql).IsRequired();
         builder.Property(x => x.Status).HasConversion<string>().IsRequired();
