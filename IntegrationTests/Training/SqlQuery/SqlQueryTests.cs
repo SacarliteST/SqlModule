@@ -116,6 +116,85 @@ public sealed class SqlQueryTests : ApiTestBase
         updated.StrictRowOrder.ShouldBeTrue();
     }
 
+    [Fact(DisplayName = "Validate → возвращает preview и не сохраняет изменения")]
+    public async Task Validate_ValidQuery_ReturnsPreviewWithoutPersistence()
+    {
+        // Arrange
+        var targetDbId = await SeedTargetDbIdAsync();
+        var existing = await SqlQueryClient.CreateAsync(
+            new CreateSqlQueryRequest(targetDbId, "SELECT 1", false, false));
+
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var fakeSandbox = (global::SQLModule.Web.Common.Isolated.FakeSandboxExecutor)
+            scope.ServiceProvider.GetRequiredService<global::SQLModule.Sandbox.ISandboxExecutor>();
+        var countBefore = db.SqlQueries.Count();
+        fakeSandbox.OverrideRun = global::SQLModule.Common.Results.Result<global::SQLModule.Sandbox.QueryResultSet>.Success(
+            new global::SQLModule.Sandbox.QueryResultSet(
+                true,
+                null,
+                ["id", "name"],
+                [["1", "Ivan"], ["2", "Anna"]],
+                2,
+                37));
+
+        try
+        {
+            // Act
+            var response = await SqlQueryClient.ValidateAsync(
+                new ValidateSqlQueryRequest(targetDbId, "SELECT id, name FROM users"));
+
+            // Assert
+            response.IsValid.ShouldBeTrue();
+            response.Columns.ShouldBe(["id", "name"]);
+            response.SampleRows.Count.ShouldBe(2);
+            response.RowCount.ShouldBe(2);
+            response.ExecutionTimeMs.ShouldBe(37);
+            response.ValidatedAt.ShouldBeGreaterThan(DateTimeOffset.UtcNow.AddMinutes(-1));
+            db.SqlQueries.Count().ShouldBe(countBefore);
+
+            var unchanged = await SqlQueryClient.GetByIdAsync(existing.Id);
+            unchanged!.QueryText.ShouldBe("SELECT 1");
+        }
+        finally
+        {
+            fakeSandbox.OverrideRun = null;
+        }
+    }
+
+    [Fact(DisplayName = "Validate с SQL-ошибкой → ValidationException без сохранения")]
+    public async Task Validate_InvalidQuery_ThrowsValidationExceptionWithoutPersistence()
+    {
+        // Arrange
+        var targetDbId = await SeedTargetDbIdAsync();
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var fakeSandbox = (global::SQLModule.Web.Common.Isolated.FakeSandboxExecutor)
+            scope.ServiceProvider.GetRequiredService<global::SQLModule.Sandbox.ISandboxExecutor>();
+        var countBefore = db.SqlQueries.Count();
+        fakeSandbox.OverrideRun = global::SQLModule.Common.Results.Result<global::SQLModule.Sandbox.QueryResultSet>.Success(
+            new global::SQLModule.Sandbox.QueryResultSet(
+                false,
+                "relation users does not exist",
+                [],
+                [],
+                0,
+                12));
+
+        try
+        {
+            // Act + Assert
+            await Should.ThrowAsync<ValidationException>(
+                () => SqlQueryClient.ValidateAsync(
+                    new ValidateSqlQueryRequest(targetDbId, "SELECT * FROM users")));
+            db.SqlQueries.Count().ShouldBe(countBefore);
+        }
+        finally
+        {
+            fakeSandbox.OverrideRun = null;
+        }
+    }
+
     [Fact(DisplayName = "Delete → запрос больше не возвращается GetById")]
     public async Task Delete_ExistingId_EntityRemoved()
     {
