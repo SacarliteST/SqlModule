@@ -23,4 +23,8 @@ internal static class SqlTaskErrors
         DomainErrors<SqlTask>.Conflict($"Задание '{id}' имеет попытки выполнения и не может быть опубликовано.");
     internal static Error TrainingDatabaseUnavailable(Guid id) =>
         DomainErrors<SqlTask>.Conflict($"Учебная база данных задания '{id}' недоступна.");
+    internal static Error LinksChangeRequiresDraft(Guid id) =>
+        DomainErrors<SqlTask>.Conflict($"Связи задания '{id}' можно менять только в статусе Draft.");
+    internal static Error LinksChangeBlockedByAttempts(Guid id) =>
+        DomainErrors<SqlTask>.Conflict($"Связи задания '{id}' нельзя менять после появления попыток.");
 }
