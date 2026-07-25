@@ -13,5 +13,11 @@ internal sealed class UpdateSqlTaskValidator : AbstractValidator<UpdateSqlTaskRe
         RuleFor(x => x.PublicationStatus!.Value)
             .IsInEnum()
             .When(x => x.PublicationStatus.HasValue);
+        RuleFor(x => x.TopicId!.Value)
+            .NotEmpty()
+            .When(x => x.TopicId.HasValue);
+        RuleFor(x => x.SqlQueryId!.Value)
+            .NotEmpty()
+            .When(x => x.SqlQueryId.HasValue);
     }
 }

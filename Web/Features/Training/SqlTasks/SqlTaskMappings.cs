@@ -14,5 +14,12 @@ internal static class SqlTaskMappings
         new(req.TopicId, req.SqlQueryId, req.TaskName, req.TaskText, req.DifficultyLevel, req.PublicationStatus);
 
     internal static UpdateSqlTaskCommand ToCommand(Guid id, UpdateSqlTaskRequest req) =>
-        new(id, req.TaskName, req.TaskText, req.DifficultyLevel, req.PublicationStatus);
+        new(
+            id,
+            req.TaskName,
+            req.TaskText,
+            req.DifficultyLevel,
+            req.PublicationStatus,
+            req.TopicId,
+            req.SqlQueryId);
 }

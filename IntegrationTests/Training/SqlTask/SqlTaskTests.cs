@@ -159,6 +159,182 @@ public sealed class SqlTaskTests : ApiTestBase
         updated.PublicationStatus.ShouldBe(PublicationStatus.Draft);
     }
 
+    [Fact(DisplayName = "Update связей Draft без попыток → тема и запрос изменены")]
+    public async Task UpdateLinks_DraftWithoutAttempts_PersistsLinks()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var initialTopicId = await CreateTopicAsync();
+        var newTopicId = await CreateTopicAsync();
+        var initialQueryId = await CreateSqlQueryAsync(targetDbId);
+        var newQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(initialTopicId, initialQueryId);
+
+        // Act
+        await SqlTaskClient.UpdateAsync(
+            task.Id,
+            new UpdateSqlTaskRequest(
+                task.TaskName,
+                task.TaskText,
+                task.DifficultyLevel,
+                TopicId: newTopicId,
+                SqlQueryId: newQueryId));
+
+        // Assert
+        var updated = await SqlTaskClient.GetByIdAsync(task.Id);
+        updated!.TopicId.ShouldBe(newTopicId);
+        updated.SqlQueryId.ShouldBe(newQueryId);
+    }
+
+    [Fact(DisplayName = "Update связей Published → ConflictException")]
+    public async Task UpdateLinks_PublishedTask_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var newTopicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        var published = await SqlTaskClient.PublishAsync(task.Id);
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.UpdateAsync(
+                task.Id,
+                new UpdateSqlTaskRequest(
+                    published.TaskName,
+                    published.TaskText,
+                    published.DifficultyLevel,
+                    PublicationStatus.Published,
+                    TopicId: newTopicId)));
+    }
+
+    [Fact(DisplayName = "Update связей Archived → ConflictException")]
+    public async Task UpdateLinks_ArchivedTask_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var newTopicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        await SqlTaskClient.UpdateAsync(
+            task.Id,
+            new UpdateSqlTaskRequest(
+                task.TaskName,
+                task.TaskText,
+                task.DifficultyLevel,
+                PublicationStatus.Archived));
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.UpdateAsync(
+                task.Id,
+                new UpdateSqlTaskRequest(
+                    task.TaskName,
+                    task.TaskText,
+                    task.DifficultyLevel,
+                    PublicationStatus.Archived,
+                    TopicId: newTopicId)));
+    }
+
+    [Fact(DisplayName = "Update связей Draft с попытками → ConflictException")]
+    public async Task UpdateLinks_DraftWithAttempts_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var newTopicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        await SeedAttemptAsync(task.Id);
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.UpdateAsync(
+                task.Id,
+                new UpdateSqlTaskRequest(
+                    task.TaskName,
+                    task.TaskText,
+                    task.DifficultyLevel,
+                    TopicId: newTopicId)));
+    }
+
+    [Fact(DisplayName = "Update с несуществующей новой темой → ConflictException")]
+    public async Task UpdateLinks_UnknownTopic_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.UpdateAsync(
+                task.Id,
+                new UpdateSqlTaskRequest(
+                    task.TaskName,
+                    task.TaskText,
+                    task.DifficultyLevel,
+                    TopicId: Guid.NewGuid())));
+    }
+
+    [Fact(DisplayName = "Update с несуществующим новым SQL-запросом → ConflictException")]
+    public async Task UpdateLinks_UnknownSqlQuery_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+
+        // Act + Assert
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.UpdateAsync(
+                task.Id,
+                new UpdateSqlTaskRequest(
+                    task.TaskName,
+                    task.TaskText,
+                    task.DifficultyLevel,
+                    SqlQueryId: Guid.NewGuid())));
+    }
+
+    [Fact(DisplayName = "Update Published с текущими связями → изменения контента разрешены")]
+    public async Task UpdateLinks_PublishedWithUnchangedLinks_AllowsContentUpdate()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
+        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        await SqlTaskClient.PublishAsync(task.Id);
+
+        // Act
+        await SqlTaskClient.UpdateAsync(
+            task.Id,
+            new UpdateSqlTaskRequest(
+                "Updated published task",
+                task.TaskText,
+                task.DifficultyLevel,
+                PublicationStatus.Published,
+                topicId,
+                sqlQueryId));
+
+        // Assert
+        var updated = await SqlTaskClient.GetByIdAsync(task.Id);
+        updated!.TaskName.ShouldBe("Updated published task");
+        updated.TopicId.ShouldBe(topicId);
+        updated.SqlQueryId.ShouldBe(sqlQueryId);
+    }
+
     [Fact(DisplayName = "TeacherDetails → возвращает агрегированную read-модель задания")]
     public async Task GetTeacherDetails_ExistingTask_ReturnsAggregate()
     {

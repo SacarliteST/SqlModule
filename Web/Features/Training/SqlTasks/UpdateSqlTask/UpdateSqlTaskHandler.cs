@@ -11,7 +11,9 @@ internal record UpdateSqlTaskCommand(
     string TaskName,
     string TaskText,
     short DifficultyLevel,
-    PublicationStatus? PublicationStatus)
+    PublicationStatus? PublicationStatus,
+    Guid? TopicId,
+    Guid? SqlQueryId)
     : IRequest<Result>;
 
 internal sealed class UpdateSqlTaskHandler(AppDbContext db)
@@ -29,6 +31,37 @@ internal sealed class UpdateSqlTaskHandler(AppDbContext db)
             entity.PublicationStatus != PublicationStatus.Published)
         {
             return Result.Fail(SqlTaskErrors.PublishRequiresAction);
+        }
+
+        var topicId = command.TopicId ?? entity.TopicId;
+        var sqlQueryId = command.SqlQueryId ?? entity.SqlQueryId;
+        var linksChanged = topicId != entity.TopicId || sqlQueryId != entity.SqlQueryId;
+
+        if (linksChanged)
+        {
+            if (entity.PublicationStatus != PublicationStatus.Draft)
+            {
+                return Result.Fail(SqlTaskErrors.LinksChangeRequiresDraft(command.Id));
+            }
+
+            if (await db.Attempts.AnyAsync(x => x.TaskId == command.Id, ct))
+            {
+                return Result.Fail(SqlTaskErrors.LinksChangeBlockedByAttempts(command.Id));
+            }
+
+            if (topicId != entity.TopicId &&
+                !await db.Topics.AnyAsync(x => x.Id == topicId, ct))
+            {
+                return Result.Fail(SqlTaskErrors.TopicNotFound(topicId));
+            }
+
+            if (sqlQueryId != entity.SqlQueryId &&
+                !await db.SqlQueries.AnyAsync(x => x.Id == sqlQueryId, ct))
+            {
+                return Result.Fail(SqlTaskErrors.QueryNotFound(sqlQueryId));
+            }
+
+            entity.UpdateLinks(topicId, sqlQueryId);
         }
 
         entity.Update(command.TaskName, command.TaskText, command.DifficultyLevel, command.PublicationStatus);
