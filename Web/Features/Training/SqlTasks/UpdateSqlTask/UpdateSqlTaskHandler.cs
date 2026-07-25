@@ -25,6 +25,12 @@ internal sealed class UpdateSqlTaskHandler(AppDbContext db)
             return Result.Fail(SqlTaskErrors.NotFound(command.Id));
         }
 
+        if (command.PublicationStatus == PublicationStatus.Published &&
+            entity.PublicationStatus != PublicationStatus.Published)
+        {
+            return Result.Fail(SqlTaskErrors.PublishRequiresAction);
+        }
+
         entity.Update(command.TaskName, command.TaskText, command.DifficultyLevel, command.PublicationStatus);
         await db.SaveChangesAsync(ct);
         return Result.Success();

@@ -9,4 +9,7 @@ public interface ISqlTaskClient : ICrudClient<CreateSqlTaskRequest, UpdateSqlTas
     Task<TeacherTaskDetailsResponse?> GetTeacherDetailsAsync(
         Guid taskId,
         CancellationToken ct = default);
+
+    /// <summary>Опубликовать подготовленное SQL-задание.</summary>
+    Task<SqlTaskResponse> PublishAsync(Guid taskId, CancellationToken ct = default);
 }

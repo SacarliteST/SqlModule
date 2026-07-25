@@ -19,12 +19,13 @@ public sealed class CreateSqlTaskEndpoint : IEndpoint
             .WithTags("Training")
             .WithSummary("Создать SQL-задание")
             .WithDescription(
-                "Создаёт новое задание тренажёра. " +
+                "Создаёт новое задание тренажёра в статусе Draft. Для публикации используйте отдельную операцию. " +
                 "Возвращает 201 Created с телом ответа. " +
-                "400 — не прошла валидация. " +
+                "422 — не прошла бизнес-валидация. " +
                 "409 — TargetDb, тема или SQL-запрос не найдены.")
             .Produces<SqlTaskResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateSqlTaskRequest>>();
     }

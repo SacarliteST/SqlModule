@@ -27,4 +27,19 @@ internal sealed class SqlTaskClient(HttpClient httpClient)
                    ct)
                ?? throw new InvalidResponseFormatException();
     }
+
+    public async Task<SqlTaskResponse> PublishAsync(Guid taskId, CancellationToken ct = default)
+    {
+        var response = await HttpClient.PostAsync(ApiRoutes.Training.SqlTasks.ForPublish(taskId), null, ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            throw new NotFoundException((int)response.StatusCode, await TryReadProblemAsync(response, ct));
+        }
+
+        return await System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsync<SqlTaskResponse>(
+                   response.Content,
+                   ClientJson.Options,
+                   ct)
+               ?? throw new InvalidResponseFormatException();
+    }
 }
