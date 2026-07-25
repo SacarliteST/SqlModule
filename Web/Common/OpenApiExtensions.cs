@@ -6,6 +6,8 @@ namespace SQLModule.Web.Common;
 
 internal static class OpenApiExtensions
 {
+    private const string BearerScheme = "Bearer";
+
     internal static IServiceCollection AddOpenApiDocumentation(this IServiceCollection services) =>
         services.AddSwaggerGen(c =>
         {
@@ -18,6 +20,17 @@ internal static class OpenApiExtensions
 
             c.SupportNonNullableReferenceTypes();
             c.UseAllOfToExtendReferenceSchemas();
+            c.AddSecurityDefinition(BearerScheme, new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "Введите access token, полученный от IdentityService."
+            });
+            c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference(BearerScheme, document, null)] = []
+            });
 
             foreach (var assembly in new[] { typeof(IWebMarker).Assembly, typeof(ApiRoutes).Assembly })
             {
