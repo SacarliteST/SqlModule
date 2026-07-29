@@ -123,8 +123,8 @@ public sealed class CreateSchemaTests : ApiTestBase
 
     // ── E6: структурные ошибки → 400 ─────────────────────────────────────────
 
-    [Fact(DisplayName = "E6: дублирующийся TempId колонки → ValidationException (400)")]
-    public async Task CreateAsync_DuplicateColumnTempId_Throws400()
+    [Fact(DisplayName = "E6: дублирующийся TempId колонки → ValidationException (422)")]
+    public async Task CreateAsync_DuplicateColumnTempId_Throws422()
     {
         var request = new CreateSchemaRequest(
             Guid.NewGuid(), "s",
@@ -137,7 +137,7 @@ public sealed class CreateSchemaTests : ApiTestBase
             []);
 
         var ex = await Should.ThrowAsync<ValidationException>(() => SchemaBuilderClient.CreateAsync(request));
-        ex.StatusCode.ShouldBe(400);
+        ex.StatusCode.ShouldBe(422);
         ex.Errors.ShouldContainKey("Tables");
     }
 

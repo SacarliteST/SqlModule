@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -24,7 +24,7 @@ public sealed class CreateSqlTaskEndpoint : IEndpoint
                 "422 — не прошла бизнес-валидация. " +
                 "409 — TargetDb, тема или SQL-запрос не найдены.")
             .Produces<SqlTaskResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateSqlTaskRequest>>();

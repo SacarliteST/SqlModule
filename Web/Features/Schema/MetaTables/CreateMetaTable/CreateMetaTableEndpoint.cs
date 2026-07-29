@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -25,7 +25,7 @@ public sealed class CreateMetaTableEndpoint : IDevEndpoint
                 "400 — не прошла валидация входных данных. " +
                 "409 — целевая БД с указанным targetDbId не найдена.")
             .Produces<MetaTableResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateMetaTableRequest>>();
     }

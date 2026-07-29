@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -23,7 +23,7 @@ internal sealed class GetAllMetaRelationshipsEndpoint : IEndpoint
                 "где атрибут является Source или Target). " +
                 "400 — не прошла валидация пагинации.")
             .Produces<PageResponse<MetaRelationshipResponse>>()
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<GetAllMetaRelationshipsRequest>>();
     }
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -25,7 +25,7 @@ internal sealed class CreateMetaAttributeEndpoint : IDevEndpoint
                 "422 — не прошла валидация (пустое имя, пустые Id, SortOrder < 0). " +
                 "409 — MetaTable или PhysicalType с указанным Id не найден.")
             .Produces<MetaAttributeResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateMetaAttributeRequest>>();
     }

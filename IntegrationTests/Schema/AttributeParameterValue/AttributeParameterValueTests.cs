@@ -209,7 +209,7 @@ public sealed class AttributeParameterValueTests : ApiTestBase
                 new CreateAttributeParameterValueRequest(unknownAttrId, paramDefId, "val")));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(AttributeParameterValueErrors.MetaAttributeNotFound(unknownAttrId).Code);
+        ex.Problem!.Code.ShouldBe(AttributeParameterValueErrors.MetaAttributeNotFound(unknownAttrId).Code);
     }
 
     [Fact(DisplayName = "Create с несуществующим ParameterDefinitionId → ConflictException с кодом ParameterDefinitionNotFound")]
@@ -225,7 +225,7 @@ public sealed class AttributeParameterValueTests : ApiTestBase
                 new CreateAttributeParameterValueRequest(attrId, unknownParamDefId, "val")));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(AttributeParameterValueErrors.ParameterDefinitionNotFound(unknownParamDefId).Code);
+        ex.Problem!.Code.ShouldBe(AttributeParameterValueErrors.ParameterDefinitionNotFound(unknownParamDefId).Code);
     }
 
     [Fact(DisplayName = "Повторный Create той же пары → ConflictException с кодом AlreadyExists")]
@@ -242,7 +242,7 @@ public sealed class AttributeParameterValueTests : ApiTestBase
                 new CreateAttributeParameterValueRequest(attrId, paramDefId, "second_val")));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(AttributeParameterValueErrors.AlreadyExists.Code);
+        ex.Problem!.Code.ShouldBe(AttributeParameterValueErrors.AlreadyExists.Code);
     }
 
     [Fact(DisplayName = "Create с пустым ParameterValue → ValidationException")]

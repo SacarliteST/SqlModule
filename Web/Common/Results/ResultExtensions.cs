@@ -38,6 +38,18 @@ public static class ResultExtensions
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         };
-        return TypedResults.Problem(detail: error.Message, statusCode: statusCode, title: error.Code);
+        var title = error.Type switch
+        {
+            ErrorType.Validation => "Ошибка бизнес-валидации",
+            ErrorType.NotFound => "Ресурс не найден",
+            ErrorType.Conflict => "Конфликт состояния",
+            _ => "Внутренняя ошибка"
+        };
+
+        return SQLModule.Web.Common.ApiProblemFactory.ToResult(
+            statusCode,
+            title,
+            error.Message,
+            error.Code);
     }
 }

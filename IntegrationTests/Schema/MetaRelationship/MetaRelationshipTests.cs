@@ -210,7 +210,7 @@ public sealed class MetaRelationshipTests : ApiTestBase
                 new CreateMetaRelationshipRequest("fk_bad_src", unknownSrcId, tgtId, null, null)));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(MetaRelationshipErrors.SourceAttributeNotFound(unknownSrcId).Code);
+        ex.Problem!.Code.ShouldBe(MetaRelationshipErrors.SourceAttributeNotFound(unknownSrcId).Code);
     }
 
     [Fact(DisplayName = "Create с несуществующим TargetAttributeId → ConflictException с кодом TargetAttributeNotFound")]
@@ -226,7 +226,7 @@ public sealed class MetaRelationshipTests : ApiTestBase
                 new CreateMetaRelationshipRequest("fk_bad_tgt", srcId, unknownTgtId, null, null)));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(MetaRelationshipErrors.TargetAttributeNotFound(unknownTgtId).Code);
+        ex.Problem!.Code.ShouldBe(MetaRelationshipErrors.TargetAttributeNotFound(unknownTgtId).Code);
     }
 
     [Fact(DisplayName = "Create с Source == Target → ValidationException")]

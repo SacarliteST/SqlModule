@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -23,7 +23,7 @@ internal sealed class GetAllDataRecordsEndpoint : IEndpoint
                 "строки указанной таблицы). Результат упорядочен по SortOrder, затем по Id. " +
                 "422 — не прошла валидация пагинации.")
             .Produces<PageResponse<DataRecordResponse>>()
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<GetAllDataRecordsRequest>>();
     }
 

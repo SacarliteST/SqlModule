@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -26,7 +26,7 @@ internal sealed class UpdateAttributeParameterValueEndpoint : IDevEndpoint
                 "422 — не прошла валидация (пустое или слишком длинное значение). " +
                 "404 — запись с указанным Id не найдена.")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .AddEndpointFilter<ValidationFilter<UpdateAttributeParameterValueRequest>>();
     }

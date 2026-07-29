@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -26,7 +26,7 @@ internal sealed class CreateAttributeParameterValueEndpoint : IDevEndpoint
                 "409 — колонка или определение параметра не найдено, либо значение этого " +
                 "параметра для колонки уже задано.")
             .Produces<AttributeParameterValueResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateAttributeParameterValueRequest>>();
     }

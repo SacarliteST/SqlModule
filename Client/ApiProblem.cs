@@ -6,4 +6,5 @@ public sealed record ApiProblem(
     string? Title,
     int? Status,
     string? Detail,
-    IDictionary<string, string[]>? Errors);
+    IDictionary<string, string[]>? Errors,
+    string? Code);

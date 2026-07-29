@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -23,7 +23,7 @@ public sealed class CreateSqlQueryEndpoint : IEndpoint
                 "Возвращает 201 Created с телом ответа. " +
                 "400 — не прошла валидация (пустой QueryText).")
             .Produces<SqlQueryResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<CreateSqlQueryRequest>>();
     }
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -23,7 +23,7 @@ internal sealed class UpdateCellValueEndpoint : IEndpoint
                 "422 — TextValue > 2000 символов. " +
                 "404 — значение с указанным Id не найдено.")
             .Produces<CellValueResponse>()
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .AddEndpointFilter<ValidationFilter<UpdateCellValueRequest>>();
     }

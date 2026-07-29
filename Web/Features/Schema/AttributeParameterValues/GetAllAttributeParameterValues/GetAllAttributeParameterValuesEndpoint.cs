@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -23,7 +23,7 @@ internal sealed class GetAllAttributeParameterValuesEndpoint : IEndpoint
                 "значения параметров указанной колонки). Результат упорядочен по CreatedAt. " +
                 "422 — не прошла валидация пагинации.")
             .Produces<PageResponse<AttributeParameterValueResponse>>()
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<GetAllAttributeParameterValuesRequest>>();
     }
 

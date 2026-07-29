@@ -190,7 +190,7 @@ public sealed class MetaTableTests : ApiTestBase
             () => MetaTableClient.CreateAsync(new CreateMetaTableRequest(Guid.NewGuid(), "t", null)));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(MetaTableErrors.TargetDbNotFound(Guid.Empty).Code);
+        ex.Problem!.Code.ShouldBe(MetaTableErrors.TargetDbNotFound(Guid.Empty).Code);
     }
 
     [Fact(DisplayName = "Create с пустым TableName → ValidationException")]
@@ -240,6 +240,6 @@ public sealed class MetaTableTests : ApiTestBase
             () => MetaTableClient.DeleteAsync(table.Id));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(MetaTableErrors.InUse.Code);
+        ex.Problem!.Code.ShouldBe(MetaTableErrors.InUse.Code);
     }
 }
