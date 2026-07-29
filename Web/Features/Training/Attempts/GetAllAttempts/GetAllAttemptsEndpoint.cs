@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -25,7 +25,7 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
                 "userId — необязательный фильтр по студенту. " +
                 "400 — невалидные параметры пагинации.")
             .Produces<PageResponse<AttemptResponse>>(StatusCodes.Status200OK)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<GetAllAttemptsRequest>>();
     }
 

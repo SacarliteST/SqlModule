@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -18,7 +18,7 @@ internal sealed class CreateDbmsDictionaryEndpoint : IEndpoint
             .WithName("CreateDbmsDictionary")
             .WithTags("DbmsCatalog")
             .Produces<DbmsDictionaryResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateDbmsDictionaryRequest>>();
     }

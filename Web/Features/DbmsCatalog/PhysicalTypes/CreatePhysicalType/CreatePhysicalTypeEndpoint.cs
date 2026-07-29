@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -24,7 +24,7 @@ internal sealed class CreatePhysicalTypeEndpoint : IEndpoint
                 "422 — не прошла валидация (пустое имя или DbmsId, TypeName > 100 символов). " +
                 "409 — СУБД с указанным DbmsId не найдена.")
             .Produces<PhysicalTypeResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreatePhysicalTypeRequest>>();
     }

@@ -20,6 +20,7 @@ internal static class OpenApiExtensions
 
             c.SupportNonNullableReferenceTypes();
             c.UseAllOfToExtendReferenceSchemas();
+            c.SchemaFilter<ApiProblemSchemaFilter>();
             c.AddSecurityDefinition(BearerScheme, new OpenApiSecurityScheme
             {
                 Type = SecuritySchemeType.Http,

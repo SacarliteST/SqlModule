@@ -163,8 +163,8 @@ public sealed class DbmsDictionaryTests : ApiTestBase
             () => DbmsDictionaryClient.CreateAsync(MakeRequest(name)));
 
         // Assert
-        ex.Problem!.Title.ShouldNotBeNull();
-        ex.Problem.Title!.ShouldContain("AlreadyExists");
+        ex.Problem!.Title.ShouldBe("Конфликт состояния");
+        ex.Problem.Code.ShouldBe("DbmsDictionary.AlreadyExists");
     }
 
     [Fact(DisplayName = "Create с пустым DbmsName → ValidationException")]

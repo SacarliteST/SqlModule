@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -25,7 +25,7 @@ internal sealed class CreateParameterDefinitionEndpoint : IEndpoint
                 "409 — PhysicalType с указанным Id не найден или параметр с таким ParameterKey " +
                 "уже существует для этого физического типа.")
             .Produces<ParameterDefinitionResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateParameterDefinitionRequest>>();
     }

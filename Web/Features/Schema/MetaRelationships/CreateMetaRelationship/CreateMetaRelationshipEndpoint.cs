@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -25,7 +25,7 @@ internal sealed class CreateMetaRelationshipEndpoint : IDevEndpoint
                 "400 — не прошла валидация (пустое имя, пустые Id, Source == Target, правило > 50 симв.). " +
                 "409 — SourceAttribute или TargetAttribute с указанным Id не найден.")
             .Produces<MetaRelationshipResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateMetaRelationshipRequest>>();
     }

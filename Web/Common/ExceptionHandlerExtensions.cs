@@ -53,12 +53,11 @@ internal static class ExceptionHandlerExtensions
                 context.Response.StatusCode = statusCode;
                 context.Response.ContentType = "application/problem+json";
 
-                await context.Response.WriteAsJsonAsync(new ProblemDetails
-                {
-                    Status = statusCode,
-                    Title = GetTitle(statusCode),
-                    Detail = exception?.Message
-                });
+                await context.Response.WriteAsJsonAsync(ApiProblemFactory.Create(
+                    statusCode,
+                    GetTitle(statusCode),
+                    exception?.Message ?? "Неизвестная ошибка.",
+                    GetCode(statusCode)));
             });
         });
 
@@ -67,8 +66,15 @@ internal static class ExceptionHandlerExtensions
 
     private static string GetTitle(int statusCode) => statusCode switch
     {
-        StatusCodes.Status404NotFound => "Not Found",
-        StatusCodes.Status400BadRequest => "Bad Request",
-        _ => "Internal Server Error"
+        StatusCodes.Status404NotFound => "Ресурс не найден",
+        StatusCodes.Status400BadRequest => "Некорректный запрос",
+        _ => "Внутренняя ошибка"
+    };
+
+    private static string GetCode(int statusCode) => statusCode switch
+    {
+        StatusCodes.Status404NotFound => "Unhandled.NotFound",
+        StatusCodes.Status400BadRequest => "Unhandled.BadRequest",
+        _ => "Unhandled.InternalServerError"
     };
 }

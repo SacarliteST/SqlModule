@@ -200,7 +200,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var published = await SqlTaskClient.PublishAsync(task.Id);
 
         // Act + Assert
-        await Should.ThrowAsync<ConflictException>(
+        var ex = await Should.ThrowAsync<ConflictException>(
             () => SqlTaskClient.UpdateAsync(
                 task.Id,
                 new UpdateSqlTaskRequest(
@@ -209,6 +209,11 @@ public sealed class SqlTaskTests : ApiTestBase
                     published.DifficultyLevel,
                     PublicationStatus.Published,
                     TopicId: newTopicId)));
+
+        ex.Problem!.Title.ShouldBe("Конфликт состояния");
+        ex.Problem.Code.ShouldBe("SqlTask.LinksChangeRequiresDraft");
+        ex.Problem.Detail.ShouldNotBeNullOrWhiteSpace();
+        ex.Problem.Errors.ShouldBeEmpty();
     }
 
     [Fact(DisplayName = "Update связей Archived → ConflictException")]
@@ -572,6 +577,9 @@ public sealed class SqlTaskTests : ApiTestBase
                 new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), "", "Text", 1)));
 
         // Assert
+        ex.Problem!.Title.ShouldBe("Ошибка валидации запроса");
+        ex.Problem.Code.ShouldBe("Request.ValidationFailed");
+        ex.Problem.Detail.ShouldNotBeNullOrWhiteSpace();
         ex.Errors.ShouldContainKey("TaskName");
     }
 

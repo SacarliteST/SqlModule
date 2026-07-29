@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -24,7 +24,7 @@ public sealed class UpdateSqlQueryEndpoint : IEndpoint
                 "400 — не прошла валидация. " +
                 "404 — запрос с указанным id не найден.")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .AddEndpointFilter<ValidationFilter<UpdateSqlQueryRequest>>();
     }

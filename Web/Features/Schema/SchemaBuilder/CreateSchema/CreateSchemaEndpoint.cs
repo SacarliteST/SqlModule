@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -20,7 +20,7 @@ internal sealed class CreateSchemaEndpoint : IEndpoint
             .WithSummary("Создать схему")
             .WithDescription("Валидирует DDL в реальном Docker-контейнере и атомарно сохраняет мету схемы.")
             .Produces<CreateSchemaResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<CreateSchemaRequest>>();

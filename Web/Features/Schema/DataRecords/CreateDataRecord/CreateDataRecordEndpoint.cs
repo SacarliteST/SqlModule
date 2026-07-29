@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -24,7 +24,7 @@ internal sealed class CreateDataRecordEndpoint : IEndpoint
                 "422 — не прошла валидация (пустой MetaTableId, отрицательный SortOrder). " +
                 "409 — MetaTable с указанным Id не найдена.")
             .Produces<DataRecordResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateDataRecordRequest>>();
     }

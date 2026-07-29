@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -17,7 +17,7 @@ internal sealed class GetAllDbmsDictionariesEndpoint : IEndpoint
             .WithName("GetAllDbmsDictionaries")
             .WithTags("DbmsCatalog")
             .Produces<PageResponse<DbmsDictionaryResponse>>()
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<GetAllDbmsDictionariesRequest>>();
     }
 

@@ -7,7 +7,7 @@ namespace SQLModule.Web.Common;
 /// <summary>
 /// Endpoint-фильтр, запускающий FluentValidation-валидатор для параметра типа <typeparamref name="TRequest"/>.
 /// Если валидатор не зарегистрирован или параметр не найден — пропускает запрос дальше.
-/// При неуспешной валидации возвращает 400 ValidationProblem со словарём ошибок.
+/// При неуспешной валидации возвращает 422 ProblemDetails со словарём ошибок.
 /// </summary>
 /// <typeparam name="TRequest">Тип DTO запроса, для которого ищется <see cref="IValidator{T}"/>.</typeparam>
 internal sealed class ValidationFilter<TRequest>(IServiceProvider sp) : IEndpointFilter
@@ -31,7 +31,12 @@ internal sealed class ValidationFilter<TRequest>(IServiceProvider sp) : IEndpoin
         var result = await validator.ValidateAsync(argument, context.HttpContext.RequestAborted);
         if (!result.IsValid)
         {
-            return TypedResults.ValidationProblem(result.ToDictionary());
+            return ApiProblemFactory.ToResult(
+                StatusCodes.Status422UnprocessableEntity,
+                "Ошибка валидации запроса",
+                "Одно или несколько полей заполнено некорректно.",
+                "Request.ValidationFailed",
+                result.ToDictionary());
         }
 
         return await next(context);

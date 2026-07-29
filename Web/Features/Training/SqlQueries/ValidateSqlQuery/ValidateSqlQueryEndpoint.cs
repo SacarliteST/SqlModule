@@ -23,7 +23,7 @@ public sealed class ValidateSqlQueryEndpoint : IEndpoint
                 "применяет настроенные timeout и лимит строк и возвращает preview результата. " +
                 "Не создаёт и не изменяет SqlQuery.")
             .Produces<ValidateSqlQueryResponse>(StatusCodes.Status200OK)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<ValidateSqlQueryRequest>>();
     }

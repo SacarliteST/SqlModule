@@ -213,7 +213,7 @@ public sealed class MetaAttributeTests : ApiTestBase
                 new CreateMetaAttributeRequest(unknownMetaTableId, physicalTypeId, "col_bad_tbl", false, false, 0)));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(MetaAttributeErrors.MetaTableNotFound(unknownMetaTableId).Code);
+        ex.Problem!.Code.ShouldBe(MetaAttributeErrors.MetaTableNotFound(unknownMetaTableId).Code);
     }
 
     [Fact(DisplayName = "Create с несуществующим PhysicalTypeId → ConflictException с кодом PhysicalTypeNotFound")]
@@ -229,7 +229,7 @@ public sealed class MetaAttributeTests : ApiTestBase
                 new CreateMetaAttributeRequest(metaTableId, unknownPhysicalTypeId, "col_bad_type", false, false, 0)));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(MetaAttributeErrors.PhysicalTypeNotFound(unknownPhysicalTypeId).Code);
+        ex.Problem!.Code.ShouldBe(MetaAttributeErrors.PhysicalTypeNotFound(unknownPhysicalTypeId).Code);
     }
 
     [Fact(DisplayName = "Create с пустым AttributeName → ValidationException")]
@@ -278,6 +278,6 @@ public sealed class MetaAttributeTests : ApiTestBase
             () => MetaAttributeClient.DeleteAsync(srcId));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(MetaAttributeErrors.InUse.Code);
+        ex.Problem!.Code.ShouldBe(MetaAttributeErrors.InUse.Code);
     }
 }

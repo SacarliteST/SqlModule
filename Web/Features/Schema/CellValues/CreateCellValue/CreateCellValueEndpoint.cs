@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -24,7 +24,7 @@ internal sealed class CreateCellValueEndpoint : IEndpoint
                 "422 — не прошла валидация (пустые Id, TextValue > 2000 символов). " +
                 "409 — DataRecord или MetaAttribute с указанным Id не найдены.")
             .Produces<CellValueResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateCellValueRequest>>();
     }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -26,7 +26,7 @@ internal sealed class UpdateMetaAttributeEndpoint : IDevEndpoint
                 "422 — не прошла валидация. " +
                 "404 — мета-атрибут с указанным Id не найден.")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .AddEndpointFilter<ValidationFilter<UpdateMetaAttributeRequest>>();
     }

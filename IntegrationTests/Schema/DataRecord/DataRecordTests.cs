@@ -180,7 +180,7 @@ public sealed class DataRecordTests : ApiTestBase
             () => DataRecordClient.CreateAsync(new CreateDataRecordRequest(unknownMetaTableId, null)));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(DataRecordErrors.MetaTableNotFound(unknownMetaTableId).Code);
+        ex.Problem!.Code.ShouldBe(DataRecordErrors.MetaTableNotFound(unknownMetaTableId).Code);
     }
 
     [Fact(DisplayName = "Create с отрицательным SortOrder → ValidationException")]

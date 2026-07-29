@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -21,7 +21,7 @@ internal sealed class GetAllCellValuesEndpoint : IEndpoint
                 "Постраничный список значений ячеек EAV. " +
                 "422 — Offset < 0 или Limit вне диапазона 1–100.")
             .Produces<PageResponse<CellValueResponse>>()
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<GetAllCellValuesRequest>>();
     }
 

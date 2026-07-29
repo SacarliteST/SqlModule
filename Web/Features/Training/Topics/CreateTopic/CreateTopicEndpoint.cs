@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -25,7 +25,7 @@ public sealed class CreateTopicEndpoint : IEndpoint
                 "400 — не прошла валидация. " +
                 "409 — родительская тема с указанным ParentTopicId не найдена.")
             .Produces<TopicResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .AddEndpointFilter<ValidationFilter<CreateTopicRequest>>();
     }

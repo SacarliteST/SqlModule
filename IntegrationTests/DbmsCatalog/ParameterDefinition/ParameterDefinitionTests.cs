@@ -200,7 +200,7 @@ public sealed class ParameterDefinitionTests : ApiTestBase
             () => ParameterDefinitionClient.CreateAsync(BuildRequest(unknownId)));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(ParameterDefinitionErrors.PhysicalTypeNotFound(unknownId).Code);
+        ex.Problem!.Code.ShouldBe(ParameterDefinitionErrors.PhysicalTypeNotFound(unknownId).Code);
     }
 
     [Fact(DisplayName = "Повторный Create того же ParameterKey для типа → ConflictException с кодом AlreadyExists")]
@@ -217,7 +217,7 @@ public sealed class ParameterDefinitionTests : ApiTestBase
             () => ParameterDefinitionClient.CreateAsync(BuildRequest(physicalTypeId, key)));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(ParameterDefinitionErrors.AlreadyExists.Code);
+        ex.Problem!.Code.ShouldBe(ParameterDefinitionErrors.AlreadyExists.Code);
     }
 
     [Fact(DisplayName = "Create с пустым ParameterKey → ValidationException")]

@@ -201,7 +201,7 @@ public sealed class PhysicalTypeTests : ApiTestBase
             () => PhysicalTypeClient.CreateAsync(new CreatePhysicalTypeRequest(unknownDbmsId, "TYPE")));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(PhysicalTypeErrors.DbmsNotFound(unknownDbmsId).Code);
+        ex.Problem!.Code.ShouldBe(PhysicalTypeErrors.DbmsNotFound(unknownDbmsId).Code);
     }
 
     [Fact(DisplayName = "Delete типа, используемого MetaAttribute → ConflictException с кодом InUse")]
@@ -217,7 +217,7 @@ public sealed class PhysicalTypeTests : ApiTestBase
             () => PhysicalTypeClient.DeleteAsync(physicalTypeId));
 
         // Assert
-        ex.Problem!.Title.ShouldBe(PhysicalTypeErrors.InUse.Code);
+        ex.Problem!.Code.ShouldBe(PhysicalTypeErrors.InUse.Code);
     }
 
     [Fact(DisplayName = "Create с пустым TypeName → ValidationException")]
