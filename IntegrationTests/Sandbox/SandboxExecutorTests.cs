@@ -114,5 +114,6 @@ public sealed class SandboxExecutorTests
 
         result.IsSuccess.ShouldBeTrue();
         result.Value!.RowCount.ShouldBe(3);
+        result.Value.IsTruncated.ShouldBeTrue();
     }
 }

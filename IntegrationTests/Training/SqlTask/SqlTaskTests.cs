@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
+using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Topic;
@@ -9,6 +11,9 @@ using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.Sandbox;
+using SQLModule.Web.Common.Isolated;
+using SQLModule.Web.Common.Sandbox;
 using DomainAttempt = SQLModule.Domain.Training.Attempt;
 
 namespace SQLModule.IntegrationTests.Training.SqlTask;
@@ -20,6 +25,9 @@ public sealed class SqlTaskTests : ApiTestBase
     public SqlTaskTests(TestApplication testApplication) : base(testApplication)
     {
     }
+
+    private FakeSandboxExecutor GetFakeExecutor() =>
+        (FakeSandboxExecutor)App.Services.GetRequiredService<ISandboxExecutor>();
 
     private async Task<Guid> CreateDbmsDictionaryAsync()
     {
@@ -46,17 +54,31 @@ public sealed class SqlTaskTests : ApiTestBase
 
     private async Task<SqlTaskResponse> CreateSqlTaskAsync(
         Guid topicId,
-        Guid sqlQueryId,
-        string taskName = "Task",
-        PublicationStatus publicationStatus = PublicationStatus.Draft)
-        => await SqlTaskClient.CreateAsync(
+        Guid referenceSourceId,
+        string taskName = "Task")
+    {
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var targetDbId = await db.SqlQueries
+            .Where(x => x.Id == referenceSourceId)
+            .Select(x => (Guid?)x.TargetDbId)
+            .FirstOrDefaultAsync() ?? referenceSourceId;
+
+        return await SqlTaskClient.CreateAsync(
             new CreateSqlTaskRequest(
                 topicId,
-                sqlQueryId,
                 taskName,
                 "Текст задания",
                 1,
-                publicationStatus));
+                Reference(targetDbId)));
+    }
+
+    private static ReferenceQueryRequest Reference(
+        Guid targetDbId,
+        string queryText = "SELECT 1",
+        bool strictColumnOrder = false,
+        bool strictRowOrder = false)
+        => new(targetDbId, queryText, strictColumnOrder, strictRowOrder);
 
     private async Task SeedAttemptAsync(Guid taskId)
     {
@@ -78,8 +100,12 @@ public sealed class SqlTaskTests : ApiTestBase
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-        var request = new CreateSqlTaskRequest(topicId, sqlQueryId, "My Task", "Описание", 3);
+        var request = new CreateSqlTaskRequest(
+            topicId,
+            "My Task",
+            "Описание",
+            3,
+            Reference(targetDbId));
 
         // Act
         var response = await SqlTaskClient.CreateAsync(request);
@@ -87,10 +113,16 @@ public sealed class SqlTaskTests : ApiTestBase
         // Assert
         response.Id.ShouldNotBe(Guid.Empty);
         response.TopicId.ShouldBe(topicId);
-        response.SqlQueryId.ShouldBe(sqlQueryId);
+        response.SqlQueryId.ShouldNotBe(Guid.Empty);
         response.TaskName.ShouldBe("My Task");
         response.DifficultyLevel.ShouldBe((short)3);
         response.PublicationStatus.ShouldBe(PublicationStatus.Draft);
+        response.CreatedAt.ShouldBeGreaterThan(DateTimeOffset.UnixEpoch);
+        response.UpdatedAt.ShouldBeGreaterThanOrEqualTo(response.CreatedAt);
+        response.CreatedById.ShouldNotBe(Guid.Empty);
+        response.UpdatedById.ShouldNotBe(Guid.Empty);
+        response.CreatedByName.ShouldBe("Test Teacher");
+        response.UpdatedByName.ShouldBe("Test Teacher");
     }
 
     [Fact(DisplayName = "GetById → возвращает ранее созданное задание")]
@@ -159,7 +191,178 @@ public sealed class SqlTaskTests : ApiTestBase
         updated.PublicationStatus.ShouldBe(PublicationStatus.Draft);
     }
 
-    [Fact(DisplayName = "Update связей Draft без попыток → тема и запрос изменены")]
+    [Fact(DisplayName = "Create → атомарно создаёт собственный проверенный эталон")]
+    public async Task Create_WithNestedReference_PersistsOwnedReference()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+
+        // Act
+        var task = await SqlTaskClient.CreateAsync(
+            new CreateSqlTaskRequest(
+                topicId,
+                "Nested reference",
+                "Text",
+                2,
+                Reference(targetDbId, "SELECT 42", true, false)));
+
+        // Assert
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var reference = await db.SqlQueries.SingleAsync(x => x.Id == task.SqlQueryId);
+        reference.TargetDbId.ShouldBe(targetDbId);
+        reference.QueryText.ShouldBe("SELECT 42");
+        reference.StrictColumnOrder.ShouldBeTrue();
+        reference.StrictRowOrder.ShouldBeFalse();
+        reference.ExpectedResult.ShouldNotBeNullOrWhiteSpace();
+        (await db.SqlTasks.CountAsync(x => x.SqlQueryId == reference.Id)).ShouldBe(1);
+    }
+
+    [Fact(DisplayName = "Update без ReferenceQuery → текущий эталон не изменяется")]
+    public async Task Update_WithoutReference_PreservesReference()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId);
+
+        // Act
+        await SqlTaskClient.UpdateAsync(
+            task.Id,
+            new UpdateSqlTaskRequest("Renamed", task.TaskText, task.DifficultyLevel));
+
+        // Assert
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var reference = await db.SqlQueries.SingleAsync(x => x.Id == task.SqlQueryId);
+        reference.TargetDbId.ShouldBe(targetDbId);
+        reference.QueryText.ShouldBe("SELECT 1");
+    }
+
+    [Fact(DisplayName = "Отдельный endpoint эталона → обновляет только текущий эталон")]
+    public async Task Update_WithCompleteReference_UpdatesOwnedReference()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var initialTargetDbId = await CreateTargetDbAsync(dbmsId);
+        var newTargetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, initialTargetDbId);
+
+        // Act
+        var response = await SqlTaskClient.UpdateReferenceQueryAsync(
+            task.Id,
+            new UpdateTaskReferenceQueryRequest(newTargetDbId, "SELECT 2", true, true));
+
+        // Assert
+        response.SqlText.ShouldBe("SELECT 2");
+        response.IsRequiredColumnOrder.ShouldBeTrue();
+        response.IsRequiredRowOrder.ShouldBeTrue();
+        response.TargetDb.TargetDbId.ShouldBe(newTargetDbId);
+        response.TargetDb.DbName.ShouldNotBeNullOrWhiteSpace();
+        response.TargetDb.DbmsName.ShouldNotBeNullOrWhiteSpace();
+
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var reference = await db.SqlQueries.SingleAsync(x => x.Id == task.SqlQueryId);
+        reference.TargetDbId.ShouldBe(newTargetDbId);
+        reference.QueryText.ShouldBe("SELECT 2");
+        reference.StrictColumnOrder.ShouldBeTrue();
+        reference.StrictRowOrder.ShouldBeTrue();
+    }
+
+    [Fact(DisplayName = "Неполный эталон → ошибки валидации полей запроса")]
+    public async Task Update_WithPartialReference_ReturnsNestedValidationErrors()
+    {
+        // Act
+        var ex = await Should.ThrowAsync<ValidationException>(
+            () => SqlTaskClient.UpdateReferenceQueryAsync(
+                Guid.NewGuid(),
+                new UpdateTaskReferenceQueryRequest(null, null, null, null)));
+
+        // Assert
+        ex.Errors.ShouldContainKey("TargetDbId");
+        ex.Errors.ShouldContainKey("QueryText");
+        ex.Errors.ShouldContainKey("StrictColumnOrder");
+        ex.Errors.ShouldContainKey("StrictRowOrder");
+    }
+
+    [Fact(DisplayName = "Update задания с некорректными nullable-полями → единый 422 со всеми путями")]
+    public async Task Update_WithInvalidNullableFields_ReturnsStructuredValidationErrors()
+    {
+        var ex = await Should.ThrowAsync<ValidationException>(
+            () => SqlTaskClient.UpdateAsync(
+                Guid.NewGuid(),
+                new UpdateSqlTaskRequest(
+                    null,
+                    null,
+                    null,
+                    (PublicationStatus)999,
+                    Guid.Empty)));
+
+        ex.StatusCode.ShouldBe(422);
+        ex.Errors.ShouldContainKey("TaskName");
+        ex.Errors.ShouldContainKey("TaskText");
+        ex.Errors.ShouldContainKey("DifficultyLevel");
+        ex.Errors.ShouldContainKey("PublicationStatus");
+        ex.Errors.ShouldContainKey("TopicId");
+    }
+
+    [Fact(DisplayName = "Update эталона Published-задания → ConflictException")]
+    public async Task UpdateReference_PublishedTask_ThrowsConflictException()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId);
+        await SqlTaskClient.PublishAsync(task.Id);
+
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.UpdateReferenceQueryAsync(
+                task.Id,
+                new UpdateTaskReferenceQueryRequest(targetDbId, "SELECT 2", false, false)));
+    }
+
+    [Fact(DisplayName = "Update эталона Draft-задания с попытками → ConflictException")]
+    public async Task UpdateReference_DraftWithAttempts_ThrowsConflictException()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId);
+        await SeedAttemptAsync(task.Id);
+
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.UpdateReferenceQueryAsync(
+                task.Id,
+                new UpdateTaskReferenceQueryRequest(targetDbId, "SELECT 2", false, false)));
+    }
+
+    [Fact(DisplayName = "Update эталона Archived-задания → ConflictException")]
+    public async Task UpdateReference_ArchivedTask_ThrowsConflictException()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId);
+        await SqlTaskClient.UpdateAsync(
+            task.Id,
+            new UpdateSqlTaskRequest(
+                task.TaskName,
+                task.TaskText,
+                task.DifficultyLevel,
+                PublicationStatus.Archived));
+
+        await Should.ThrowAsync<ConflictException>(
+            () => SqlTaskClient.UpdateReferenceQueryAsync(
+                task.Id,
+                new UpdateTaskReferenceQueryRequest(targetDbId, "SELECT 2", false, false)));
+    }
+
+    [Fact(DisplayName = "Update темы Draft без попыток → тема изменена, эталон сохранён")]
     public async Task UpdateLinks_DraftWithoutAttempts_PersistsLinks()
     {
         // Arrange
@@ -168,7 +371,6 @@ public sealed class SqlTaskTests : ApiTestBase
         var initialTopicId = await CreateTopicAsync();
         var newTopicId = await CreateTopicAsync();
         var initialQueryId = await CreateSqlQueryAsync(targetDbId);
-        var newQueryId = await CreateSqlQueryAsync(targetDbId);
         var task = await CreateSqlTaskAsync(initialTopicId, initialQueryId);
 
         // Act
@@ -178,13 +380,12 @@ public sealed class SqlTaskTests : ApiTestBase
                 task.TaskName,
                 task.TaskText,
                 task.DifficultyLevel,
-                TopicId: newTopicId,
-                SqlQueryId: newQueryId));
+                TopicId: newTopicId));
 
         // Assert
         var updated = await SqlTaskClient.GetByIdAsync(task.Id);
         updated!.TopicId.ShouldBe(newTopicId);
-        updated.SqlQueryId.ShouldBe(newQueryId);
+        updated.SqlQueryId.ShouldBe(task.SqlQueryId);
     }
 
     [Fact(DisplayName = "Update связей Published → ConflictException")]
@@ -290,27 +491,6 @@ public sealed class SqlTaskTests : ApiTestBase
                     TopicId: Guid.NewGuid())));
     }
 
-    [Fact(DisplayName = "Update с несуществующим новым SQL-запросом → ConflictException")]
-    public async Task UpdateLinks_UnknownSqlQuery_ThrowsConflictException()
-    {
-        // Arrange
-        var dbmsId = await CreateDbmsDictionaryAsync();
-        var targetDbId = await CreateTargetDbAsync(dbmsId);
-        var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
-
-        // Act + Assert
-        await Should.ThrowAsync<ConflictException>(
-            () => SqlTaskClient.UpdateAsync(
-                task.Id,
-                new UpdateSqlTaskRequest(
-                    task.TaskName,
-                    task.TaskText,
-                    task.DifficultyLevel,
-                    SqlQueryId: Guid.NewGuid())));
-    }
-
     [Fact(DisplayName = "Update Published с текущими связями → изменения контента разрешены")]
     public async Task UpdateLinks_PublishedWithUnchangedLinks_AllowsContentUpdate()
     {
@@ -330,14 +510,13 @@ public sealed class SqlTaskTests : ApiTestBase
                 task.TaskText,
                 task.DifficultyLevel,
                 PublicationStatus.Published,
-                topicId,
-                sqlQueryId));
+                topicId));
 
         // Assert
         var updated = await SqlTaskClient.GetByIdAsync(task.Id);
         updated!.TaskName.ShouldBe("Updated published task");
         updated.TopicId.ShouldBe(topicId);
-        updated.SqlQueryId.ShouldBe(sqlQueryId);
+        updated.SqlQueryId.ShouldBe(task.SqlQueryId);
     }
 
     [Fact(DisplayName = "TeacherDetails → возвращает агрегированную read-модель задания")]
@@ -390,8 +569,86 @@ public sealed class SqlTaskTests : ApiTestBase
         details.TargetDb.Tables.ShouldHaveSingleItem()
             .ShouldBe(new TeacherTaskTableResponse("employees", 2));
         details.AttemptsCount.ShouldBe(1);
+        details.CanEditTask.ShouldBeTrue();
+        details.CanEditReferenceQuery.ShouldBeFalse();
+        details.ReferenceQueryEditRestriction.ShouldNotBeNull().ShouldContain("опубликованного");
         details.LastAttempts.ShouldHaveSingleItem().StudentName.ShouldBe("Иван Петров");
         details.LastAttempts[0].StudentId.ShouldBe(studentId);
+        details.CreatedAt.ShouldBeGreaterThan(DateTimeOffset.UnixEpoch);
+        details.UpdatedAt.ShouldBeGreaterThanOrEqualTo(details.CreatedAt);
+        details.CreatedById.ShouldNotBe(Guid.Empty);
+        details.CreatedByName.ShouldBe("Test Teacher");
+        details.LastAttempts[0].FinishedAt.ShouldBeGreaterThan(DateTimeOffset.UnixEpoch);
+    }
+
+    [Fact(DisplayName = "TeacherDetails Draft без попыток → эталон доступен для редактирования")]
+    public async Task GetTeacherDetails_DraftWithoutAttempts_CanEditReference()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId);
+
+        var details = await SqlTaskClient.GetTeacherDetailsAsync(task.Id);
+
+        details.ShouldNotBeNull();
+        details.CanEditTask.ShouldBeTrue();
+        details.CanEditReferenceQuery.ShouldBeTrue();
+        details.ReferenceQueryEditRestriction.ShouldBeNull();
+    }
+
+    [Fact(DisplayName = "TeacherDetails Draft с попытками → возвращает причину запрета")]
+    public async Task GetTeacherDetails_DraftWithAttempts_ReturnsRestriction()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId);
+        await SeedAttemptAsync(task.Id);
+
+        var details = await SqlTaskClient.GetTeacherDetailsAsync(task.Id);
+
+        details.ShouldNotBeNull();
+        details.CanEditReferenceQuery.ShouldBeFalse();
+        details.ReferenceQueryEditRestriction.ShouldNotBeNull().ShouldContain("попытки");
+    }
+
+    [Fact(DisplayName = "TeacherDetails Published → возвращает причину запрета")]
+    public async Task GetTeacherDetails_Published_ReturnsRestriction()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId);
+        await SqlTaskClient.PublishAsync(task.Id);
+
+        var details = await SqlTaskClient.GetTeacherDetailsAsync(task.Id);
+
+        details.ShouldNotBeNull();
+        details.CanEditReferenceQuery.ShouldBeFalse();
+        details.ReferenceQueryEditRestriction.ShouldNotBeNull().ShouldContain("опубликованного");
+    }
+
+    [Fact(DisplayName = "TeacherDetails Archived → возвращает причину запрета")]
+    public async Task GetTeacherDetails_Archived_ReturnsRestriction()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId);
+        await SqlTaskClient.UpdateAsync(
+            task.Id,
+            new UpdateSqlTaskRequest(
+                task.TaskName,
+                task.TaskText,
+                task.DifficultyLevel,
+                PublicationStatus.Archived));
+
+        var details = await SqlTaskClient.GetTeacherDetailsAsync(task.Id);
+
+        details.ShouldNotBeNull();
+        details.CanEditReferenceQuery.ShouldBeFalse();
+        details.ReferenceQueryEditRestriction.ShouldNotBeNull().ShouldContain("архивного");
     }
 
     [Fact(DisplayName = "TeacherDetails несуществующего задания → null")]
@@ -407,20 +664,6 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act + Assert
         await Should.ThrowAsync<NotFoundException>(
             () => SqlTaskClient.UpdateAsync(Guid.NewGuid(), new UpdateSqlTaskRequest("Name", "Text", 1)));
-    }
-
-    [Fact(DisplayName = "Create с Published → ValidationException")]
-    public async Task Create_PublishedStatus_ThrowsValidationException()
-    {
-        // Arrange
-        var dbmsId = await CreateDbmsDictionaryAsync();
-        var targetDbId = await CreateTargetDbAsync(dbmsId);
-        var topicId = await CreateTopicAsync();
-        var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
-
-        // Act + Assert
-        await Should.ThrowAsync<ValidationException>(
-            () => CreateSqlTaskAsync(topicId, sqlQueryId, publicationStatus: PublicationStatus.Published));
     }
 
     [Fact(DisplayName = "Update Draft в Published → ConflictException")]
@@ -501,20 +744,25 @@ public sealed class SqlTaskTests : ApiTestBase
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
-        Guid sqlQueryId;
+        Guid taskId;
         using (var scope = App.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var query = Domain.Training.SqlQuery.Create("SELECT 1", false, false, targetDbId);
+            var task = Domain.Training.SqlTask.Create(
+                topicId,
+                query.Id,
+                "Task with unvalidated reference",
+                "Text",
+                1);
             db.SqlQueries.Add(query);
+            db.SqlTasks.Add(task);
             await db.SaveChangesAsync();
-            sqlQueryId = query.Id;
+            taskId = task.Id;
         }
 
-        var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
-
         // Act + Assert
-        await Should.ThrowAsync<ValidationException>(() => SqlTaskClient.PublishAsync(task.Id));
+        await Should.ThrowAsync<ValidationException>(() => SqlTaskClient.PublishAsync(taskId));
     }
 
     [Fact(DisplayName = "Delete → задание больше не возвращается GetById")]
@@ -553,11 +801,11 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
             () => SqlTaskClient.CreateAsync(
-                new CreateSqlTaskRequest(Guid.NewGuid(), sqlQueryId, "Task", "Text", 1)));
+                new CreateSqlTaskRequest(Guid.NewGuid(), "Task", "Text", 1, Reference(targetDbId))));
     }
 
-    [Fact(DisplayName = "Create с несуществующим SqlQueryId → ConflictException")]
-    public async Task Create_NonExistentSqlQueryId_ThrowsConflictException()
+    [Fact(DisplayName = "Create с несуществующей учебной базой → ConflictException")]
+    public async Task Create_NonExistentTargetDbId_ThrowsConflictException()
     {
         // Arrange
         var topicId = await CreateTopicAsync();
@@ -565,7 +813,7 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
             () => SqlTaskClient.CreateAsync(
-                new CreateSqlTaskRequest(topicId, Guid.NewGuid(), "Task", "Text", 1)));
+                new CreateSqlTaskRequest(topicId, "Task", "Text", 1, Reference(Guid.NewGuid()))));
     }
 
     [Fact(DisplayName = "Create с пустым TaskName → ValidationException")]
@@ -574,7 +822,7 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
             () => SqlTaskClient.CreateAsync(
-                new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), "", "Text", 1)));
+                new CreateSqlTaskRequest(Guid.NewGuid(), "", "Text", 1, Reference(Guid.NewGuid()))));
 
         // Assert
         ex.Problem!.Title.ShouldBe("Ошибка валидации запроса");
@@ -589,7 +837,7 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act
         var ex = await Should.ThrowAsync<ValidationException>(
             () => SqlTaskClient.CreateAsync(
-                new CreateSqlTaskRequest(Guid.NewGuid(), Guid.NewGuid(), "Task", "Text", 6)));
+                new CreateSqlTaskRequest(Guid.NewGuid(), "Task", "Text", 6, Reference(Guid.NewGuid()))));
 
         // Assert
         ex.Errors.ShouldContainKey("DifficultyLevel");
@@ -620,5 +868,89 @@ public sealed class SqlTaskTests : ApiTestBase
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
             () => SqlTaskClient.DeleteAsync(created.Id));
+    }
+
+    [Fact(DisplayName = "Comparison limit → создание и обновление слишком большого эталона возвращают стабильный 422")]
+    public async Task OversizedReference_CreateAndUpdate_ReturnStableValidationError()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId, "Comparison limit");
+        var executor = GetFakeExecutor();
+        executor.OverrideRun = Result<QueryResultSet>.Success(
+            new QueryResultSet(true, null, ["id"], [], 10000, 1, IsTruncated: true));
+
+        try
+        {
+            var createError = await Should.ThrowAsync<ValidationException>(() =>
+                SqlTaskClient.CreateAsync(new CreateSqlTaskRequest(
+                    topicId, "Too large", "Text", 1, Reference(targetDbId, "SELECT huge"))));
+            AssertComparisonLimitError(createError);
+
+            var updateError = await Should.ThrowAsync<ValidationException>(() =>
+                SqlTaskClient.UpdateReferenceQueryAsync(task.Id,
+                    new UpdateTaskReferenceQueryRequest(targetDbId, "SELECT huge", false, false)));
+            AssertComparisonLimitError(updateError);
+            executor.LastQuery.ShouldNotBeNull().MaxRows.ShouldBe(10000);
+        }
+        finally
+        {
+            executor.OverrideRun = null;
+        }
+    }
+
+    [Fact(DisplayName = "Comparison limit → старый большой эталон нельзя опубликовать, capability согласована")]
+    public async Task OversizedLegacyReference_CannotBePublished()
+    {
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDbId = await CreateTargetDbAsync(dbmsId);
+        var topicId = await CreateTopicAsync();
+        var task = await CreateSqlTaskAsync(topicId, targetDbId, "Legacy oversized");
+        var oversizedRows = Enumerable.Range(1, 10001)
+            .Select(value => (IReadOnlyList<string?>)[value.ToString()])
+            .ToList();
+
+        using (var scope = App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var query = await db.SqlQueries.SingleAsync(x => x.Id == task.SqlQueryId);
+            query.SetExpectedResult(GoldenResult.Serialize(
+                new QueryResultSet(true, null, ["id"], oversizedRows, oversizedRows.Count, 1)));
+            await db.SaveChangesAsync();
+        }
+
+        var details = await SqlTaskClient.GetTeacherDetailsAsync(task.Id);
+        details.ShouldNotBeNull();
+        details.CanPublish.ShouldBeFalse();
+        details.LifecycleRestriction.ShouldNotBeNull().ShouldContain("10000");
+
+        var executor = GetFakeExecutor();
+        executor.OverrideRun = Result<QueryResultSet>.Success(
+            new QueryResultSet(true, null, ["id"], oversizedRows.Take(10000).ToList(), 10000, 1,
+                IsTruncated: true));
+        try
+        {
+            var error = await Should.ThrowAsync<ValidationException>(() =>
+                SqlTaskClient.PublishAsync(task.Id));
+            AssertComparisonLimitError(error);
+            executor.LastQuery.ShouldNotBeNull().MaxRows.ShouldBe(10000);
+        }
+        finally
+        {
+            executor.OverrideRun = null;
+        }
+    }
+
+    private static void AssertComparisonLimitError(ValidationException error)
+    {
+        error.StatusCode.ShouldBe(422);
+        error.Problem.ShouldNotBeNull();
+        error.Problem.Code.ShouldBe("ReferenceResultExceedsComparisonLimit");
+        error.Errors.ShouldContainKey("referenceQuery.queryText");
+        var violation = error.Problem.Violations.ShouldHaveSingleItem();
+        violation.Path.ShouldBe("referenceQuery.queryText");
+        violation.Code.ShouldBe("ReferenceResultExceedsComparisonLimit");
+        violation.Limit.ShouldBe(10000);
     }
 }

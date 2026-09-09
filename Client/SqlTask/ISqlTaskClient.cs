@@ -12,4 +12,13 @@ public interface ISqlTaskClient : ICrudClient<CreateSqlTaskRequest, UpdateSqlTas
 
     /// <summary>Опубликовать подготовленное SQL-задание.</summary>
     Task<SqlTaskResponse> PublishAsync(Guid taskId, CancellationToken ct = default);
+
+    /// <summary>Архивировать SQL-задание.</summary>
+    Task<SqlTaskResponse> ArchiveAsync(Guid taskId, CancellationToken ct = default);
+
+    /// <summary>Обновить эталонное решение подготовленного SQL-задания.</summary>
+    Task<UpdateTaskReferenceQueryResponse> UpdateReferenceQueryAsync(
+        Guid taskId,
+        UpdateTaskReferenceQueryRequest request,
+        CancellationToken ct = default);
 }

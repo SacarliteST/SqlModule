@@ -8,5 +8,6 @@ internal sealed class CreateTopicValidator : AbstractValidator<CreateTopicReques
     public CreateTopicValidator()
     {
         RuleFor(x => x.TopicName).NotEmpty().MaximumLength(300);
+        RuleFor(x => x.Description).MaximumLength(2000);
     }
 }

@@ -119,4 +119,67 @@ public sealed class ResultComparerTests
         var outcome = comparer.Compare(golden, actual);
         outcome.Reason.ShouldBe(CheckReason.RowCountMismatch);
     }
+
+    [Fact(DisplayName = "Порядок строк после snapshot учитывается в strict-режиме")]
+    public void Compare_ReorderedAfterSnapshot_Strict_ValueMismatch()
+    {
+        var rows = Enumerable.Range(1, 250)
+            .Select(value => (IReadOnlyList<string?>)[value.ToString()])
+            .ToList();
+        var reordered = rows.Select(row => (IReadOnlyList<string?>)row.ToArray()).ToList();
+        (reordered[200], reordered[201]) = (reordered[201], reordered[200]);
+
+        var outcome = comparer.Compare(Golden(["id"], rows), Ok(["id"], reordered), strictRowOrder: true);
+
+        outcome.IsCorrect.ShouldBeFalse();
+        outcome.Reason.ShouldBe(CheckReason.ValueMismatch);
+    }
+
+    [Fact(DisplayName = "Порядок строк после snapshot игнорируется в non-strict-режиме")]
+    public void Compare_ReorderedAfterSnapshot_NonStrict_Ok()
+    {
+        var rows = Enumerable.Range(1, 250)
+            .Select(value => (IReadOnlyList<string?>)[value.ToString()])
+            .ToList();
+        var reordered = rows.Select(row => (IReadOnlyList<string?>)row.ToArray()).ToList();
+        (reordered[200], reordered[201]) = (reordered[201], reordered[200]);
+
+        var outcome = comparer.Compare(Golden(["id"], rows), Ok(["id"], reordered), strictRowOrder: false);
+
+        outcome.IsCorrect.ShouldBeTrue();
+        outcome.Reason.ShouldBe(CheckReason.Ok);
+    }
+
+    [Theory(DisplayName = "Сравнение использует полный результат до comparison-лимита")]
+    [InlineData(199)]
+    [InlineData(200)]
+    [InlineData(201)]
+    [InlineData(10000)]
+    public void Compare_IdenticalRowsThroughComparisonLimit_Ok(int rowCount)
+    {
+        var rows = Enumerable.Range(1, rowCount)
+            .Select(value => (IReadOnlyList<string?>)[value.ToString()])
+            .ToList();
+
+        var outcome = comparer.Compare(Golden(["id"], rows), Ok(["id"], rows));
+
+        outcome.IsCorrect.ShouldBeTrue();
+        outcome.Reason.ShouldBe(CheckReason.Ok);
+    }
+
+    [Theory(DisplayName = "Разница количества строк обнаруживается по обе стороны snapshot-границы")]
+    [InlineData(199)]
+    [InlineData(201)]
+    public void Compare_DifferentCountsAroundSnapshotLimit_RowCountMismatch(int expectedCount)
+    {
+        var expected = Enumerable.Range(1, expectedCount)
+            .Select(value => (IReadOnlyList<string?>)[value.ToString()])
+            .ToList();
+        var actual = expected.Take(expectedCount - 1).ToList();
+
+        var outcome = comparer.Compare(Golden(["id"], expected), Ok(["id"], actual));
+
+        outcome.IsCorrect.ShouldBeFalse();
+        outcome.Reason.ShouldBe(CheckReason.RowCountMismatch);
+    }
 }

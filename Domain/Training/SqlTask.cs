@@ -54,9 +54,8 @@ public sealed class SqlTask : AuditableEntity
         PublicationStatus = PublicationStatus.Published;
     }
 
-    public void UpdateLinks(Guid topicId, Guid sqlQueryId)
+    public void ChangeTopic(Guid topicId)
     {
         TopicId = topicId;
-        SqlQueryId = sqlQueryId;
     }
 }

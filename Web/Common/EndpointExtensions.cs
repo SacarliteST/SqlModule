@@ -15,11 +15,16 @@ public static class EndpointExtensions
     /// Сканирует сборку и регистрирует все конкретные реализации <see cref="IEndpoint"/> как Transient.
     /// </summary>
     /// <param name="services">Коллекция сервисов.</param>
-    public static IServiceCollection AddEndpoints(this IServiceCollection services)
+    /// <param name="configuration">Конфигурация активного deployment-профиля.</param>
+    public static IServiceCollection AddEndpoints(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
+        var moduleIntegrationEnabled = configuration.GetValue<bool>("ModuleIntegration:Enabled");
         var endpointTypes = typeof(EndpointExtensions).Assembly
             .GetTypes()
-            .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsAssignableTo(typeof(IEndpoint)));
+            .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsAssignableTo(typeof(IEndpoint)))
+            .Where(t => moduleIntegrationEnabled || !t.IsAssignableTo(typeof(IModuleIntegrationEndpoint)));
 
         foreach (var type in endpointTypes)
         {

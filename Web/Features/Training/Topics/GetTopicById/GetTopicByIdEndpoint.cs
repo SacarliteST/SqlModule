@@ -14,6 +14,7 @@ public sealed class GetTopicByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Training.Topics.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetTopicById")
             .WithTags("Training")
             .WithSummary("Получить тему по Id")

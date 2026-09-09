@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -11,6 +12,8 @@ using SQLModule.Web.Common.Auth;
 using SQLModule.Web.Common.Auth.Isolated;
 using SQLModule.Web.Common.Isolated;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Web.Features.ModuleIntegration;
+using SQLModule.Web.Features.Training.Attempts;
 
 namespace SQLModule.Web;
 
@@ -79,13 +82,28 @@ public static class WebExtensions
             services.AddScoped<DemoDataSeeder>();
         }
 
+        services.AddScoped<SmokeDataSeeder>();
+        services.AddOptions<CourseSeedOptions>()
+            .Bind(configuration.GetSection(CourseSeedOptions.SectionKey))
+            .Validate(
+                value => !value.Enabled || !String.IsNullOrWhiteSpace(value.FilePath),
+                "CourseSeed:FilePath обязателен при CourseSeed:Enabled=true.")
+            .ValidateOnStart();
+        services.AddScoped<CourseDataSeeder>();
+
         services.AddEndpointsApiExplorer();
+        services.ConfigureHttpJsonOptions(options =>
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         services.AddOpenApiDocumentation();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton(TimeProvider.System);
+        services.Configure<SandboxOptions>(configuration.GetSection(SandboxOptions.SectionKey));
+        services.Configure<AttemptResultSnapshotsOptions>(
+            configuration.GetSection(AttemptResultSnapshotsOptions.SectionKey));
         services.AddData(configuration);
-        services.AddEndpoints();
+        services.AddModuleIntegration(configuration);
+        services.AddEndpoints(configuration);
         services.AddValidatorsFromAssemblyContaining<IWebMarker>(includeInternalTypes: true);
         services.AddCqrs();
         services.AddFeatures();
@@ -113,9 +131,14 @@ public static class WebExtensions
         return app;
     }
 
-    /// <summary>Применяет EF Core миграции и (при SeedDemoData) засевает демо-данные.</summary>
+    /// <summary>Применяет миграции и независимо запускает включённые demo/smoke-сидеры.</summary>
     public static async Task InitializeWebAsync(this WebApplication app)
     {
+        if (app.Configuration.GetValue<bool>(IsolatedKeys.SkipDatabaseInitialization))
+        {
+            return;
+        }
+
         using var scope = app.Services.CreateScope();
         var sp = scope.ServiceProvider;
 
@@ -125,5 +148,12 @@ public static class WebExtensions
         {
             await sp.GetRequiredService<DemoDataSeeder>().SeedAsync();
         }
+
+        if (app.Configuration.GetValue<bool>(IsolatedKeys.SeedSmokeData))
+        {
+            await sp.GetRequiredService<SmokeDataSeeder>().SeedAsync();
+        }
+
+        await sp.GetRequiredService<CourseDataSeeder>().SeedAsync();
     }
 }

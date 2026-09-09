@@ -6,11 +6,9 @@
 /// <param name="DifficultyLevel">Новый уровень сложности (1–5).</param>
 /// <param name="PublicationStatus">Новый статус публикации; null сохраняет текущий статус.</param>
 /// <param name="TopicId">Новая тема; null сохраняет текущую. Смена доступна только для Draft без попыток.</param>
-/// <param name="SqlQueryId">Новый эталонный запрос; null сохраняет текущий. Смена доступна только для Draft без попыток.</param>
 public record UpdateSqlTaskRequest(
-    string TaskName,
-    string TaskText,
-    short DifficultyLevel,
+    string? TaskName = null,
+    string? TaskText = null,
+    short? DifficultyLevel = null,
     SQLModule.Domain.Training.PublicationStatus? PublicationStatus = null,
-    Guid? TopicId = null,
-    Guid? SqlQueryId = null);
+    Guid? TopicId = null);

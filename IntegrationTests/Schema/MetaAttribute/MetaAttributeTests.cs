@@ -49,8 +49,8 @@ public sealed class MetaAttributeTests : ApiTestBase
         var dbmsId = await CreateDbmsDictionaryAsync();
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var metaTableId = await CreateMetaTableAsync(targetDbId);
-        var pt = await PhysicalTypeClient.CreateAsync(
-            new CreatePhysicalTypeRequest(dbmsId, "type_" + Guid.NewGuid().ToString("N")[..8]));
+        var pt = await AsAdminAsync(() => PhysicalTypeClient.CreateAsync(
+            new CreatePhysicalTypeRequest(dbmsId, "type_" + Guid.NewGuid().ToString("N")[..8])));
         return (metaTableId, pt.Id);
     }
 

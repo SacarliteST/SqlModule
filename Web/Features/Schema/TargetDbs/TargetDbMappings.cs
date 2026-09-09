@@ -7,7 +7,8 @@ internal static class TargetDbMappings
 {
     internal static TargetDbResponse ToResponse(TargetDb e) => new(
         e.Id, e.DbmsId, e.DbName, e.Description, e.IsReadOnly,
-        e.CreatedById, e.CreatedAt, e.UpdatedById, e.UpdatedAt);
+        e.CreatedById, e.CreatedAt, e.UpdatedById, e.UpdatedAt,
+        e.CreatedByName, e.UpdatedByName);
 
     internal static CreateTargetDbCommand ToCommand(CreateTargetDbRequest req) =>
         new(req.DbmsId, req.DbName, req.Description, req.IsReadOnly);

@@ -41,9 +41,14 @@ internal sealed class TestAuthDelegatingHandler : DelegatingHandler
         request.Headers.Remove("X-Test-UserId");
         request.Headers.Remove("X-Test-Roles");
         request.Headers.Remove("X-Test-DisplayName");
+        request.Headers.Remove("X-Test-SessionId");
         request.Headers.Add("X-Test-UserId", userContext.UserId);
         request.Headers.Add("X-Test-Roles", userContext.Roles);
         request.Headers.Add("X-Test-DisplayName", userContext.DisplayName);
+        if (!String.IsNullOrWhiteSpace(userContext.SessionId))
+        {
+            request.Headers.Add("X-Test-SessionId", userContext.SessionId);
+        }
         return base.SendAsync(request, ct);
     }
 }

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -22,6 +22,10 @@ internal sealed class ApiProblemSchemaFilter : ISchemaFilter
         {
             Type = JsonSchemaType.String
         };
+        schema.Properties["traceId"] = new OpenApiSchema
+        {
+            Type = JsonSchemaType.String
+        };
         schema.Properties["errors"] = new OpenApiSchema
         {
             Type = JsonSchemaType.Object,
@@ -31,6 +35,26 @@ internal sealed class ApiProblemSchemaFilter : ISchemaFilter
                 Items = new OpenApiSchema
                 {
                     Type = JsonSchemaType.String
+                }
+            }
+        };
+        schema.Properties["violations"] = new OpenApiSchema
+        {
+            Type = JsonSchemaType.Array,
+            Items = new OpenApiSchema
+            {
+                Type = JsonSchemaType.Object,
+                Properties = new Dictionary<string, IOpenApiSchema>
+                {
+                    ["path"] = new OpenApiSchema { Type = JsonSchemaType.String },
+                    ["code"] = new OpenApiSchema { Type = JsonSchemaType.String },
+                    ["message"] = new OpenApiSchema { Type = JsonSchemaType.String },
+                    ["severity"] = new OpenApiSchema { Type = JsonSchemaType.String },
+                    ["affectedRows"] = new OpenApiSchema
+                    {
+                        Type = JsonSchemaType.Integer,
+                        Format = "int64"
+                    }
                 }
             }
         };

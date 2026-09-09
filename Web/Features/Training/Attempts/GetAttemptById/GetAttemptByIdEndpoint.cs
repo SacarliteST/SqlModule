@@ -14,6 +14,7 @@ public sealed class GetAttemptByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Training.Attempts.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAttemptById")
             .WithTags("Training")
             .WithSummary("Получить попытку по Id")
@@ -21,7 +22,10 @@ public sealed class GetAttemptByIdEndpoint : IEndpoint
                 "Возвращает 200 OK с данными попытки. " +
                 "404 — попытка с указанным id не найдена.")
             .Produces<AttemptResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 
     private static async Task<IResult> Handle(Guid id, ISender sender, CancellationToken ct)

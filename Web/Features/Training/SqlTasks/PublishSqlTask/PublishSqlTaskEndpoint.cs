@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -21,6 +21,8 @@ public sealed class PublishSqlTaskEndpoint : IEndpoint
             .WithDescription(
                 "Публикует подготовленное Draft-задание. Эталонный запрос должен иметь проверенный результат, " +
                 "учебная база должна существовать, а у задания не должно быть попыток. " +
+                "Перед публикацией эталон повторно проверяется; превышение лимита сравнения возвращает " +
+                "ReferenceResultExceedsComparisonLimit. " +
                 "Возвращает 200 OK с обновлённым заданием.")
             .Produces<SqlTaskResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -14,6 +14,7 @@ public sealed class GetAllSqlTasksEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Training.SqlTasks.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllSqlTasks")
             .WithTags("Training")
             .WithSummary("Список SQL-заданий с пагинацией")
@@ -31,7 +32,9 @@ public sealed class GetAllSqlTasksEndpoint : IEndpoint
         [AsParameters] GetAllSqlTasksRequest request, ISender sender, CancellationToken ct)
     {
         var result = await sender.Send<GetAllSqlTasksQuery, Result<PageResponse<SqlTaskResponse>>>(
-            new GetAllSqlTasksQuery(request.Offset, request.Limit), ct);
+            new GetAllSqlTasksQuery(
+                request.Offset, request.Limit, request.TopicId, request.Name,
+                request.TargetDbId, request.DifficultyLevel, request.PublicationStatus), ct);
         return result.ToOk();
     }
 }

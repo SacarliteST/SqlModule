@@ -28,4 +28,10 @@ public interface ISandboxExecutor
         SandboxDbmsSpec dbms,
         SandboxSetup setup,
         CancellationToken ct);
+
+    /// <summary>Применяет DDL в одноразовой песочнице и читает созданную схему из системного каталога.</summary>
+    Task<Result<InspectedSchema>> InspectDdlAsync(
+        SandboxDbmsSpec dbms,
+        string ddlScript,
+        CancellationToken ct);
 }

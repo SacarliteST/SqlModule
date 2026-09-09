@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -14,6 +14,7 @@ public sealed class GetAllTopicsEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Training.Topics.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllTopics")
             .WithTags("Training")
             .WithSummary("Список тем с пагинацией")

@@ -43,4 +43,14 @@ public sealed class MetaAttribute : AuditableEntity
         IsRequired = isRequired;
         SortOrder = sortOrder;
     }
+
+    public void UpdateSchema(
+        string attributeName, Guid physicalTypeId, bool isPrimaryKey, bool isRequired, short sortOrder)
+    {
+        AttributeName = attributeName;
+        PhysicalTypeId = physicalTypeId;
+        IsPrimaryKey = isPrimaryKey;
+        IsRequired = isRequired;
+        SortOrder = sortOrder;
+    }
 }

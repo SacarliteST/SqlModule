@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -20,7 +20,7 @@ public sealed class UpdateSqlTaskEndpoint : IEndpoint
             .WithSummary("Обновить SQL-задание")
             .WithDescription(
                 "Обновляет название, текст, сложность и статус, кроме перехода в Published. " +
-                "Тему и эталонный запрос можно изменить только у Draft-задания без попыток. " +
+                "Тему можно изменить только у Draft-задания без попыток. " +
                 "Для публикации используйте отдельную операцию. " +
                 "Возвращает 204 No Content. " +
                 "400 — не прошла валидация. " +

@@ -51,19 +51,24 @@ public sealed class AttributeParameterValueTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var metaTableId = await CreateMetaTableAsync(targetDbId);
 
-        var pt = await PhysicalTypeClient.CreateAsync(
-            new CreatePhysicalTypeRequest(dbmsId, "type_" + Guid.NewGuid().ToString("N")[..8]));
+        var (physicalTypeId, parameterDefinitionId) = await AsAdminAsync(async () =>
+        {
+            var physicalType = await PhysicalTypeClient.CreateAsync(
+                new CreatePhysicalTypeRequest(dbmsId, "type_" + Guid.NewGuid().ToString("N")[..8]));
 
-        var paramDef = await ParameterDefinitionClient.CreateAsync(
-            new CreateParameterDefinitionRequest(pt.Id,
-                "key_" + Guid.NewGuid().ToString("N")[..8], "Display", "text",
-                null, 1, "{value}", false, null, null, null));
+            var parameterDefinition = await ParameterDefinitionClient.CreateAsync(
+                new CreateParameterDefinitionRequest(physicalType.Id,
+                    "key_" + Guid.NewGuid().ToString("N")[..8], "Display", "text",
+                    null, 1, "{value}", false, null, null, null));
+
+            return (physicalType.Id, parameterDefinition.Id);
+        });
 
         var attr = await MetaAttributeClient.CreateAsync(
-            new CreateMetaAttributeRequest(metaTableId, pt.Id,
+            new CreateMetaAttributeRequest(metaTableId, physicalTypeId,
                 "col_" + Guid.NewGuid().ToString("N")[..8], false, false, 1));
 
-        return (attr.Id, paramDef.Id);
+        return (attr.Id, parameterDefinitionId);
     }
 
     [Fact(DisplayName = "Create → возвращает AttributeParameterValueResponse с корректными полями")]

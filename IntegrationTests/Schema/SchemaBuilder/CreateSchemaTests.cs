@@ -145,23 +145,26 @@ public sealed class CreateSchemaTests : ApiTestBase
 
     private async Task<(Guid dbmsId, Guid intTypeId)> SeedDbmsAndTypeAsync()
     {
-        var dbms = await DbmsDictionaryClient.CreateAsync(new CreateDbmsDictionaryRequest(
-            DbmsName: "Postgres_CS_" + Uid(),
-            DbmsSystemName: "postgres",
-            DockerImage: "postgres:15-alpine",
-            DefaultPort: 5432,
-            EnvUserKey: "POSTGRES_USER",
-            EnvPasswordKey: "POSTGRES_PASSWORD",
-            EnvDatabaseKey: "POSTGRES_DB",
-            ExtraEnvConfig: null,
-            DefaultDatabase: "testdb",
-            DefaultUsername: "user",
-            DefaultPassword: "pass"));
+        return await AsAdminAsync(async () =>
+        {
+            var dbms = await DbmsDictionaryClient.CreateAsync(new CreateDbmsDictionaryRequest(
+                DbmsName: "Postgres_CS_" + Uid(),
+                DbmsSystemName: "postgres",
+                DockerImage: "postgres:15-alpine",
+                DefaultPort: 5432,
+                EnvUserKey: "POSTGRES_USER",
+                EnvPasswordKey: "POSTGRES_PASSWORD",
+                EnvDatabaseKey: "POSTGRES_DB",
+                ExtraEnvConfig: null,
+                DefaultDatabase: "testdb",
+                DefaultUsername: "user",
+                DefaultPassword: "pass"));
 
-        var physType = await PhysicalTypeClient.CreateAsync(
-            new CreatePhysicalTypeRequest(dbms.Id, "INTEGER"));
+            var physType = await PhysicalTypeClient.CreateAsync(
+                new CreatePhysicalTypeRequest(dbms.Id, "INTEGER"));
 
-        return (dbms.Id, physType.Id);
+            return (dbms.Id, physType.Id);
+        });
     }
 
     private static CreateSchemaRequest BuildTwoTableRequest(Guid dbmsId, Guid intTypeId) =>

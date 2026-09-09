@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Domain.DbmsCatalog;
+using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 
@@ -43,6 +44,9 @@ public class AppDbContext : DbContext
     /// <summary>Значения ячеек (EAV)</summary>
     public DbSet<CellValue> CellValues { get; set; }
 
+    /// <summary>Сохранённые результаты идемпотентных mutation-запросов.</summary>
+    public DbSet<MutationReceipt> MutationReceipts { get; set; }
+
     /// <summary>Темы заданий</summary>
     public DbSet<Topic> Topics { get; set; }
 
@@ -55,8 +59,23 @@ public class AppDbContext : DbContext
     /// <summary>Попытки выполнения заданий</summary>
     public DbSet<Attempt> Attempts { get; set; }
 
+    /// <summary>Контексты запусков SQL-модуля из основной платформы.</summary>
+    public DbSet<ModuleSession> ModuleSessions { get; set; }
+
+    /// <summary>Сообщения integration outbox, ожидающие доставки платформе.</summary>
+    public DbSet<PendingPublish> PendingPublishes { get; set; }
+
+    /// <param name="dbContextOptions">Настройки runtime-контекста из DI, включая interceptors.</param>
     /// <param name="options">Параметры подключения.</param>
-    public AppDbContext(IOptions<ConnectionOptions> options)
+    public AppDbContext(
+        DbContextOptions<AppDbContext> dbContextOptions,
+        IOptions<ConnectionOptions> options) : base(dbContextOptions)
+    {
+        Options = options.Value;
+    }
+
+    /// <summary>Конструктор design-time контекстов миграций.</summary>
+    protected AppDbContext(IOptions<ConnectionOptions> options)
     {
         Options = options.Value;
     }

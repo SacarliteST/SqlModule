@@ -26,6 +26,12 @@ public sealed class TopicTests : ApiTestBase
         response.TopicName.ShouldBe("Root Topic");
         response.ParentTopicId.ShouldBeNull();
         response.Id.ShouldNotBe(Guid.Empty);
+        response.CreatedAt.ShouldBeGreaterThan(DateTimeOffset.UnixEpoch);
+        response.UpdatedAt.ShouldBeGreaterThanOrEqualTo(response.CreatedAt);
+        response.CreatedById.ShouldNotBe(Guid.Empty);
+        response.UpdatedById.ShouldNotBe(Guid.Empty);
+        response.CreatedByName.ShouldBe("Test Teacher");
+        response.UpdatedByName.ShouldBe("Test Teacher");
     }
 
     [Fact(DisplayName = "Create (с родителем) → ParentTopicId установлен")]

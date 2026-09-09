@@ -11,6 +11,7 @@ internal sealed class TopicConfiguration : IEntityTypeConfiguration<Topic>
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TopicName).IsRequired().HasMaxLength(300);
+        builder.Property(x => x.Description).HasMaxLength(2000);
         builder.ConfigureAudit();
 
         builder.HasMany(x => x.SubTopics)

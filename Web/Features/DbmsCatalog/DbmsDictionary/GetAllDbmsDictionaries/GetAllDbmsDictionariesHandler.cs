@@ -3,6 +3,7 @@ using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Data.Core;
+using SQLModule.Web.Common.Auth;
 using SQLModule.Web.Common.Cqrs;
 
 namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionaries;
@@ -10,7 +11,7 @@ namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionari
 internal record GetAllDbmsDictionariesQuery(int Offset, int Limit)
     : IRequest<Result<PageResponse<DbmsDictionaryResponse>>>;
 
-internal sealed class GetAllDbmsDictionariesHandler(AppDbContext db)
+internal sealed class GetAllDbmsDictionariesHandler(AppDbContext db, IHttpContextAccessor httpContextAccessor)
     : IRequestHandler<GetAllDbmsDictionariesQuery, Result<PageResponse<DbmsDictionaryResponse>>>
 {
     public async Task<Result<PageResponse<DbmsDictionaryResponse>>> Handle(
@@ -26,7 +27,10 @@ internal sealed class GetAllDbmsDictionariesHandler(AppDbContext db)
 
         return Result<PageResponse<DbmsDictionaryResponse>>.Success(new PageResponse<DbmsDictionaryResponse>
         {
-            Items = entities.Select(DbmsDictionaryMappings.ToResponse).ToList(),
+            Items = entities.Select(entity => DbmsDictionaryMappings.ToResponse(entity) with
+            {
+                CanManageCatalog = httpContextAccessor.HttpContext?.User.IsInRole(Roles.Admin) == true
+            }).ToList(),
             Count = total
         });
     }

@@ -373,3 +373,18 @@ FodyWeavers.xsd
 .db-wal
 /src/Host/storage.db-shm
 /src/Host/storage.db-wal
+
+# Local documentation and agent work artifacts
+*.[mM][dD]
+/docs/
+/[Pp]romts/
+/[Pp]rompts/
+.codex/
+.agents/
+.claude/
+.cursor/
+.aider*
+/tmp/
+
+# Local IDE settings
+.idea/

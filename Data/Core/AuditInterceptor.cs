@@ -28,6 +28,7 @@ internal sealed class AuditInterceptor(ICurrentUser currentUser, TimeProvider ti
         { return; }
 
         var userId = currentUser.UserId ?? SystemUser.Id;
+        var userName = currentUser.DisplayName ?? (userId == SystemUser.Id ? "Система" : userId.ToString());
         var now = timeProvider.GetUtcNow();
 
         foreach (var entry in context.ChangeTracker.Entries<AuditableEntity>())
@@ -35,10 +36,10 @@ internal sealed class AuditInterceptor(ICurrentUser currentUser, TimeProvider ti
             switch (entry.State)
             {
                 case EntityState.Added:
-                    entry.Entity.SetCreated(userId, now);
+                    entry.Entity.SetCreated(userId, userName, now);
                     break;
                 case EntityState.Modified:
-                    entry.Entity.SetUpdated(userId, now);
+                    entry.Entity.SetUpdated(userId, userName, now);
                     break;
             }
         }

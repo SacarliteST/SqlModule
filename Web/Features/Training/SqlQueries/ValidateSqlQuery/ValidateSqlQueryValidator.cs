@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using SQLModule.Contracts.Training.SqlQuery;
 
 namespace SQLModule.Web.Features.Training.SqlQueries;

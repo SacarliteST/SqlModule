@@ -30,7 +30,7 @@ internal sealed class UpdateSqlQueryHandler(
             return Result.Fail(run.Error!);
         }
 
-        entity.Update(command.QueryText, command.StrictColumnOrder, command.StrictRowOrder);
+        entity.Update(entity.TargetDbId, command.QueryText, command.StrictColumnOrder, command.StrictRowOrder);
         entity.SetExpectedResult(GoldenResult.Serialize(run.Value!));
         await db.SaveChangesAsync(ct);
         return Result.Success();

@@ -1,16 +1,19 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
 using SQLModule.Web.Common.Cqrs;
+using SQLModule.Web.Features.Training.SqlQueries;
 
 namespace SQLModule.Web.Features.Training.SqlTasks;
 
 internal sealed record PublishSqlTaskCommand(Guid Id)
     : IRequest<Result<SqlTaskResponse>>;
 
-internal sealed class PublishSqlTaskHandler(AppDbContext db)
+internal sealed class PublishSqlTaskHandler(
+    ISqlQueryValidationRunner validationRunner,
+    AppDbContext db)
     : IRequestHandler<PublishSqlTaskCommand, Result<SqlTaskResponse>>
 {
     public async Task<Result<SqlTaskResponse>> Handle(PublishSqlTaskCommand command, CancellationToken ct)
@@ -42,11 +45,13 @@ internal sealed class PublishSqlTaskHandler(AppDbContext db)
             .Select(x => new
             {
                 x.ExpectedResult,
+                x.TargetDbId,
+                x.QueryText,
                 TrainingDatabaseExists = db.TargetDbs.Any(targetDb => targetDb.Id == x.TargetDbId)
             })
             .FirstOrDefaultAsync(ct);
 
-        if (reference is null || string.IsNullOrWhiteSpace(reference.ExpectedResult))
+        if (reference is null || String.IsNullOrWhiteSpace(reference.ExpectedResult))
         {
             return Result<SqlTaskResponse>.Fail(SqlTaskErrors.ReferenceQueryNotValidated(command.Id));
         }
@@ -54,6 +59,13 @@ internal sealed class PublishSqlTaskHandler(AppDbContext db)
         if (!reference.TrainingDatabaseExists)
         {
             return Result<SqlTaskResponse>.Fail(SqlTaskErrors.TrainingDatabaseUnavailable(command.Id));
+        }
+
+        var validation = await validationRunner.ValidateAsync(
+            reference.TargetDbId, reference.QueryText, ct);
+        if (!validation.IsSuccess)
+        {
+            return Result<SqlTaskResponse>.Fail(validation.Error!);
         }
 
         task.Publish();

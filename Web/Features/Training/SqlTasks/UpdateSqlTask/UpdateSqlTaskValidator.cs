@@ -7,17 +7,14 @@ internal sealed class UpdateSqlTaskValidator : AbstractValidator<UpdateSqlTaskRe
 {
     public UpdateSqlTaskValidator()
     {
-        RuleFor(x => x.TaskName).NotEmpty().MaximumLength(300);
-        RuleFor(x => x.TaskText).NotEmpty();
-        RuleFor(x => x.DifficultyLevel).InclusiveBetween((short)1, (short)5);
-        RuleFor(x => x.PublicationStatus!.Value)
+        RuleFor(x => x.TaskName).NotNull().NotEmpty().MaximumLength(300);
+        RuleFor(x => x.TaskText).NotNull().NotEmpty();
+        RuleFor(x => x.DifficultyLevel).NotNull().InclusiveBetween((short)1, (short)5);
+        RuleFor(x => x.PublicationStatus)
             .IsInEnum()
             .When(x => x.PublicationStatus.HasValue);
-        RuleFor(x => x.TopicId!.Value)
-            .NotEmpty()
-            .When(x => x.TopicId.HasValue);
-        RuleFor(x => x.SqlQueryId!.Value)
-            .NotEmpty()
-            .When(x => x.SqlQueryId.HasValue);
+        RuleFor(x => x.TopicId)
+            .Must(topicId => !topicId.HasValue || topicId.Value != Guid.Empty)
+            .WithMessage("'Topic Id' не должен быть пустым.");
     }
 }

@@ -38,4 +38,15 @@ public sealed class MetaRelationship : AuditableEntity
         DeleteRule = deleteRule;
         UpdateRule = updateRule;
     }
+
+    public void UpdateSchema(
+        string relationshipName, Guid sourceAttributeId, Guid targetAttributeId,
+        string? deleteRule, string? updateRule)
+    {
+        RelationshipName = relationshipName;
+        SourceAttributeId = sourceAttributeId;
+        TargetAttributeId = targetAttributeId;
+        DeleteRule = deleteRule;
+        UpdateRule = updateRule;
+    }
 }

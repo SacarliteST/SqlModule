@@ -8,4 +8,6 @@ public sealed class SandboxOptions
     public int ContainerStartupTimeoutSeconds { get; init; } = 120;
     public int DefaultQueryTimeoutSeconds { get; init; } = 15;
     public int MaxRows { get; init; } = 1000;
+    public int ComparisonMaxRows { get; init; } = 10000;
+    public int MaxSqlLength { get; init; } = 20000;
 }

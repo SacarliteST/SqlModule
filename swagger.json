@@ -40,8 +40,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -109,8 +109,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -245,8 +245,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -302,8 +302,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -371,8 +371,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -497,8 +497,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -544,8 +544,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -609,8 +609,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -758,8 +758,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -800,8 +800,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -816,6 +816,175 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/module-integration/sessions/current": {
+      "get": {
+        "tags": [
+          "Module Integration"
+        ],
+        "summary": "Получить текущую платформенную сессию",
+        "description": "Берёт session_id и пользователя только из валидированного JWT. Отсутствующая, неизвестная или чужая сессия скрывается единым ответом 404.",
+        "operationId": "GetCurrentModuleSession",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentModuleSessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/module-integration/tasks-catalog": {
+      "get": {
+        "tags": [
+          "Module Integration"
+        ],
+        "summary": "Получить каталог опубликованных SQL-заданий",
+        "description": "Сервер-сервер каталог для Education. Требует X-Service-Key и возвращает только Published-задания.",
+        "operationId": "GetModuleTasksCatalog",
+        "parameters": [
+          {
+            "name": "X-Service-Key",
+            "in": "header",
+            "description": "Секрет сервер-сервер интеграции Education и SqlModule.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ModuleTaskCatalogItemResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/module-integration/sessions": {
+      "post": {
+        "tags": [
+          "Module Integration"
+        ],
+        "summary": "Создать или восстановить платформенную сессию",
+        "description": "Сервер-сервер push от Education. Повторный push синхронизирует Active-сессию; Completed-сессия отвечает 409 и не изменяется.",
+        "operationId": "UpsertModuleSession",
+        "parameters": [
+          {
+            "name": "X-Service-Key",
+            "in": "header",
+            "description": "Секрет сервер-сервер интеграции Education и SqlModule.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpsertModuleSessionRequest"
+                  }
+                ],
+                "description": "Доверенный контекст платформенной сессии, отправляемый Education."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -858,8 +1027,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -918,8 +1087,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1045,8 +1214,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1057,6 +1226,138 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/target-dbs/{id}/schema/validate": {
+      "post": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Проверить желаемую схему существующей учебной базы",
+        "operationId": "ValidateTargetDbSchema",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SchemaUpsertRequest"
+                  }
+                ],
+                "description": "Полное желаемое состояние схемы существующей учебной базы."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaValidationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/target-dbs/ddl/validate": {
+      "post": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Проверить пользовательский DDL без сохранения",
+        "operationId": "ValidateTargetDbDdl",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ValidateTargetDbDdlRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateTargetDbDdlResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1095,12 +1396,209 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/target-dbs/{id}/schema": {
+      "get": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Получить согласованный снимок схемы учебной базы",
+        "operationId": "GetTargetDbSchema",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetDbSchemaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Проверить и атомарно применить полный снимок схемы",
+        "operationId": "ApplyTargetDbSchema",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SchemaUpsertRequest"
+                  }
+                ],
+                "description": "Полное желаемое состояние схемы существующей учебной базы."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetDbSchemaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/target-dbs/from-ddl": {
+      "post": {
+        "tags": [
+          "Schema"
+        ],
+        "summary": "Атомарно создать учебную базу из пользовательского DDL",
+        "operationId": "CreateTargetDbFromDdl",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateTargetDbFromDdlRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTargetDbFromDdlResponse"
                 }
               }
             }
@@ -1117,6 +1615,16 @@
           },
           "422": {
             "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1162,18 +1670,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1182,8 +1680,8 @@
               }
             }
           },
-          "422": {
-            "description": "Unprocessable Content",
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1230,8 +1728,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1299,8 +1797,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1437,8 +1935,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1495,8 +1993,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1564,8 +2062,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1692,8 +2190,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1750,8 +2248,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1819,8 +2317,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1957,8 +2455,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2014,8 +2512,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2083,8 +2581,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2209,8 +2707,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2266,8 +2764,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2326,8 +2824,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2459,8 +2957,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2517,8 +3015,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2586,8 +3084,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2714,8 +3212,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2726,6 +3224,684 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/target-dbs/{id}/tables/{tableId}/rows": {
+      "get": {
+        "tags": [
+          "Schema Data"
+        ],
+        "summary": "Получить страницу учебных строк в табличном представлении",
+        "operationId": "GetTargetDbTableRows",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableRowsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Schema Data"
+        ],
+        "summary": "Атомарно сохранить пакет изменений учебных строк",
+        "operationId": "BatchTargetDbTableRows",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BatchTableRowsRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchTableRowsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/topics": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "operationId": "GetStudentTopics",
+        "parameters": [
+          {
+            "name": "Offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentTopicResponsePageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "operationId": "GetStudentTasks",
+        "parameters": [
+          {
+            "name": "TopicId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "DifficultyLevel",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentTaskResponsePageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks/{taskId}": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "operationId": "GetStudentTaskById",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentTaskDetailsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks/{taskId}/schema": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "summary": "Получить безопасную схему учебной базы задания",
+        "description": "Возвращает только структуру базы опубликованного задания: таблицы, колонки и внешние ключи. Закрытые задания скрываются ответом 404.",
+        "operationId": "GetStudentTaskSchema",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentTaskSchemaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/attempts": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "operationId": "GetStudentAttempts",
+        "parameters": [
+          {
+            "name": "TaskId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "TopicId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Status",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Succeeded",
+                "Error",
+                "TimedOut"
+              ],
+              "type": "string",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ExecutionStatus"
+                }
+              ]
+            }
+          },
+          {
+            "name": "IsCorrect",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "DateFrom",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "DateTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "Offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentAttemptListItemResponsePageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/attempts/{attemptId}": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "operationId": "GetStudentAttemptById",
+        "parameters": [
+          {
+            "name": "attemptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentAttemptResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2771,8 +3947,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2831,8 +4007,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2967,8 +4143,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3051,13 +4227,65 @@
         }
       }
     },
+    "/api/v1/sql-tasks/{id}/archive": {
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Архивировать SQL-задание",
+        "operationId": "ArchiveSqlTask",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SqlTaskResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sql-tasks": {
       "post": {
         "tags": [
           "Training"
         ],
         "summary": "Создать SQL-задание",
-        "description": "Создаёт новое задание тренажёра. Возвращает 201 Created с телом ответа. 400 — не прошла валидация. 409 — TargetDb, тема или SQL-запрос не найдены.",
+        "description": "Проверяет и создаёт эталонное решение вместе с новым заданием в статусе Draft. Эталон, превышающий серверный лимит сравнения, отклоняется с кодом ReferenceResultExceedsComparisonLimit. Для публикации используйте отдельную операцию. Возвращает 201 Created с телом ответа. 422 — не прошла бизнес-валидация. 409 — тема или учебная база не найдены.",
         "operationId": "CreateSqlTask",
         "requestBody": {
           "content": {
@@ -3085,12 +4313,12 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3132,6 +4360,59 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "TopicId",
+            "in": "query",
+            "description": "Фильтр по теме.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Поиск по названию.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "TargetDbId",
+            "in": "query",
+            "description": "Фильтр по учебной базе.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "DifficultyLevel",
+            "in": "query",
+            "description": "Фильтр по сложности.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PublicationStatus",
+            "in": "query",
+            "description": "Фильтр по статусу публикации.",
+            "schema": {
+              "enum": [
+                "Draft",
+                "Published",
+                "Archived"
+              ],
+              "type": "string",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/PublicationStatus"
+                }
+              ]
+            }
           }
         ],
         "responses": {
@@ -3145,8 +4426,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3249,7 +4530,7 @@
           "Training"
         ],
         "summary": "Обновить SQL-задание",
-        "description": "Обновляет название, текст и сложность задания (FK не меняются). Возвращает 204 No Content. 400 — не прошла валидация. 404 — задание с указанным id не найдено.",
+        "description": "Обновляет название, текст, сложность и статус, кроме перехода в Published. Тему можно изменить только у Draft-задания без попыток. Для публикации используйте отдельную операцию. Возвращает 204 No Content. 400 — не прошла валидация. 404 — задание с указанным id не найдено. 409 — предпринята публикация через обычное обновление.",
         "operationId": "UpdateSqlTask",
         "parameters": [
           {
@@ -3271,7 +4552,7 @@
                     "$ref": "#/components/schemas/UpdateSqlTaskRequest"
                   }
                 ],
-                "description": "Запрос на обновление SQL-задания (FK не меняются)."
+                "description": "Запрос на обновление SQL-задания."
               }
             }
           },
@@ -3281,12 +4562,206 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks/{id}/publish": {
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Опубликовать SQL-задание",
+        "description": "Публикует подготовленное Draft-задание. Эталонный запрос должен иметь проверенный результат, учебная база должна существовать, а у задания не должно быть попыток. Перед публикацией эталон повторно проверяется; превышение лимита сравнения возвращает ReferenceResultExceedsComparisonLimit. Возвращает 200 OK с обновлённым заданием.",
+        "operationId": "PublishSqlTask",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SqlTaskResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks/{id}/reference-query": {
+      "put": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Обновить эталонное решение задания",
+        "description": "Проверяет SQL в выбранной учебной базе и обновляет собственный эталон Draft-задания. Эталон, превышающий серверный лимит сравнения, отклоняется с кодом ReferenceResultExceedsComparisonLimit. Эталон нельзя изменить после появления попыток. Возвращает сохранённое состояние эталона.",
+        "operationId": "UpdateTaskReferenceQuery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateTaskReferenceQueryRequest"
+                  }
+                ],
+                "description": "Полное новое состояние эталонного решения текущего задания."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTaskReferenceQueryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/teacher/tasks/{taskId}/details": {
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Получить агрегированные детали задания для преподавателя",
+        "description": "Возвращает задание, тему, эталонный запрос, учебную базу, состав таблиц, общее число попыток и пять последних попыток.",
+        "operationId": "GetTeacherTaskDetails",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherTaskDetailsResponse"
                 }
               }
             }
@@ -3338,8 +4813,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3388,8 +4863,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3524,8 +4999,8 @@
           "204": {
             "description": "No Content"
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3536,6 +5011,53 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-queries/validate": {
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Проверить SQL-запрос без сохранения",
+        "description": "Выполняет SQL-запрос в read-only песочнице на выбранной учебной базе, применяет настроенные timeout и лимит строк и возвращает preview результата. Не создаёт и не изменяет SqlQuery.",
+        "operationId": "ValidateSqlQuery",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ValidateSqlQueryRequest"
+                  }
+                ],
+                "description": "Запрос на проверку эталонного SQL без сохранения."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateSqlQueryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3569,6 +5091,26 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not Found",
@@ -3611,8 +5153,38 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3668,6 +5240,59 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "TopicId",
+            "in": "query",
+            "description": "Необязательный фильтр по теме.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Status",
+            "in": "query",
+            "description": "Необязательный фильтр по статусу выполнения.",
+            "schema": {
+              "enum": [
+                "Succeeded",
+                "Error",
+                "TimedOut"
+              ],
+              "type": "string",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ExecutionStatus"
+                }
+              ]
+            }
+          },
+          {
+            "name": "IsCorrect",
+            "in": "query",
+            "description": "Необязательный фильтр по корректности результата.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "DateFrom",
+            "in": "query",
+            "description": "Нижняя граница даты начала.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "DateTo",
+            "in": "query",
+            "description": "Верхняя граница даты начала.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
           }
         ],
         "responses": {
@@ -3676,13 +5301,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AttemptResponsePageResponse"
+                  "$ref": "#/components/schemas/AttemptListItemResponsePageResponse"
                 }
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "422": {
+            "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3698,8 +5323,22 @@
           "Training"
         ],
         "summary": "Отправить попытку выполнения задания",
-        "description": "Запускает SQL студента в песочнице, сравнивает с эталоном и сохраняет результат. UserId берётся из текущей сессии. Возвращает 201 Created с результатом проверки. 400 — не прошла валидация. 404 — задание не найдено. 409 — эталонный результат задания ещё не готов.",
+        "description": "Запускает SQL студента в песочнице, сравнивает с эталоном и сохраняет результат. UserId берётся из текущей сессии. Требует UUID в заголовке Idempotency-Key. Ключ уникален для текущего студента и действует 24 часа. Повтор с тем же телом возвращает исходную попытку без повторного запуска sandbox; другое тело возвращает 409. В platform-профиле session_id берётся из JWT и сверяется с владельцем, заданием и сроком сессии. Возвращает 201 Created с результатом проверки. 400 — Idempotency-Key отсутствует или некорректен. 404 — задание не найдено. 409 — эталонный результат задания ещё не готов.",
         "operationId": "SubmitAttempt",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Действует 24 часа в пределах текущего студента.",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 36,
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -3731,6 +5370,36 @@
             "content": {
               "application/problem+json": {
                 "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
@@ -3755,6 +5424,309 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attempts/filter-options/students": {
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Студенты для фильтра журнала попыток",
+        "description": "Возвращает уникальных студентов, встречающихся в доступном журнале. Поддерживает поиск по имени/email, восстановление по id и серверную пагинацию.",
+        "operationId": "GetAttemptStudentFilterOptions",
+        "parameters": [
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptStudentFilterOptionResponsePageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attempts/filter-options/topics": {
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Темы для фильтра журнала попыток",
+        "description": "Возвращает уникальные темы заданий, встречающихся в доступном журнале, включая архивные данные с попытками.",
+        "operationId": "GetAttemptTopicFilterOptions",
+        "parameters": [
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptTopicFilterOptionResponsePageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attempts/filter-options/tasks": {
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Задания для фильтра журнала попыток",
+        "description": "Возвращает уникальные задания, встречающиеся в доступном журнале. Поддерживает поиск, фильтр по теме, восстановление по id и пагинацию.",
+        "operationId": "GetAttemptTaskFilterOptions",
+        "parameters": [
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "TopicId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptTaskFilterOptionResponsePageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -3762,7 +5734,7 @@
   },
   "components": {
     "schemas": {
-      "AttemptResponse": {
+      "AttemptListItemResponse": {
         "type": "object",
         "properties": {
           "id": {
@@ -3773,6 +5745,9 @@
             "type": "string",
             "format": "uuid"
           },
+          "studentName": {
+            "type": "string"
+          },
           "taskId": {
             "type": "string",
             "format": "uuid"
@@ -3781,6 +5756,12 @@
             "type": "string"
           },
           "status": {
+            "enum": [
+              "Succeeded",
+              "Error",
+              "TimedOut"
+            ],
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExecutionStatus"
@@ -3791,6 +5772,17 @@
             "type": "boolean"
           },
           "reason": {
+            "enum": [
+              "Ok",
+              "ColumnMismatch",
+              "RowCountMismatch",
+              "ValueMismatch",
+              "SqlError",
+              "Timeout",
+              "NotRun",
+              "ResultLimitExceeded"
+            ],
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/CheckReason"
@@ -3799,6 +5791,7 @@
           },
           "rowCount": {
             "type": "integer",
+            "description": "Количество строк, прочитанных для сравнения в рамках внутреннего comparison-лимита. Это не общее количество строк полного неограниченного результата; returnedRowCount содержит число строк публичного snapshot, а resultRowLimit — его отдельный лимит.",
             "format": "int32",
             "nullable": true
           },
@@ -3834,12 +5827,32 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "taskName": {
+            "type": "string",
+            "nullable": true
+          },
+          "topicName": {
+            "type": "string",
+            "nullable": true
+          },
+          "publicError": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedByName": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false,
-        "description": "Ответ с данными попытки выполнения задания."
+        "description": "Элемент списка журнала попыток без тяжёлого snapshot."
       },
-      "AttemptResponsePageResponse": {
+      "AttemptListItemResponsePageResponse": {
         "type": "object",
         "properties": {
           "count": {
@@ -3851,7 +5864,328 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/AttemptResponse"
+              "$ref": "#/components/schemas/AttemptListItemResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "AttemptResponse": {
+        "required": [
+          "resultSnapshotState"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submittedSql": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Succeeded",
+              "Error",
+              "TimedOut"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionStatus"
+              }
+            ]
+          },
+          "isCorrect": {
+            "type": "boolean"
+          },
+          "reason": {
+            "enum": [
+              "Ok",
+              "ColumnMismatch",
+              "RowCountMismatch",
+              "ValueMismatch",
+              "SqlError",
+              "Timeout",
+              "NotRun",
+              "ResultLimitExceeded"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckReason"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer",
+            "description": "Количество строк, прочитанных для сравнения в рамках внутреннего comparison-лимита. Это не общее количество строк полного неограниченного результата; returnedRowCount содержит число строк публичного snapshot, а resultRowLimit — его отдельный лимит.",
+            "format": "int32",
+            "nullable": true
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resultSnapshotState": {
+            "enum": [
+              "NotStored",
+              "Available",
+              "NotProduced",
+              "Expired"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttemptResultSnapshotState"
+              }
+            ]
+          },
+          "taskName": {
+            "type": "string",
+            "nullable": true
+          },
+          "topicName": {
+            "type": "string",
+            "nullable": true
+          },
+          "publicError": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedByName": {
+            "type": "string",
+            "nullable": true
+          },
+          "actualColumns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "actualRows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "nullable": true
+          },
+          "returnedRowCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isResultTruncated": {
+            "type": "boolean"
+          },
+          "resultRowLimit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resultSnapshotCreatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resultSnapshotExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ с данными попытки выполнения задания."
+      },
+      "AttemptResultSnapshotState": {
+        "enum": [
+          "NotStored",
+          "Available",
+          "NotProduced",
+          "Expired"
+        ],
+        "type": "string"
+      },
+      "AttemptStudentFilterOptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAvailable": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Студент, встречающийся в доступном журнале попыток."
+      },
+      "AttemptStudentFilterOptionResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttemptStudentFilterOptionResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "AttemptTaskFilterOptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "topicId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "topicName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAvailable": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Задание, встречающееся в доступном журнале попыток."
+      },
+      "AttemptTaskFilterOptionResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttemptTaskFilterOptionResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "AttemptTopicFilterOptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAvailable": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Тема, встречающаяся в доступном журнале попыток."
+      },
+      "AttemptTopicFilterOptionResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttemptTopicFilterOptionResponse"
             },
             "description": "Список элементов"
           }
@@ -3925,6 +6259,50 @@
         "additionalProperties": false,
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
       },
+      "BatchTableRowsRequest": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "nullable": true
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableRowChange"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BatchTableRowsResponse": {
+        "required": [
+          "createdIds",
+          "rows",
+          "schemaVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string"
+          },
+          "createdIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableRowResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "CellValueResponse": {
         "type": "object",
         "properties": {
@@ -3994,16 +6372,16 @@
       },
       "CheckReason": {
         "enum": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
+          "Ok",
+          "ColumnMismatch",
+          "RowCountMismatch",
+          "ValueMismatch",
+          "SqlError",
+          "Timeout",
+          "NotRun",
+          "ResultLimitExceeded"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "ColumnDraft": {
         "type": "object",
@@ -4401,29 +6779,82 @@
           "topicId": {
             "type": "string",
             "description": "Идентификатор темы, к которой относится задание.",
-            "format": "uuid"
-          },
-          "sqlQueryId": {
-            "type": "string",
-            "description": "Идентификатор эталонного SQL-запроса (определяет целевую БД).",
-            "format": "uuid"
+            "format": "uuid",
+            "nullable": true
           },
           "taskName": {
             "type": "string",
-            "description": "Название задания (не пустое, не более 300 символов)."
+            "description": "Название задания (не пустое, не более 300 символов).",
+            "nullable": true
           },
           "taskText": {
             "type": "string",
-            "description": "Текст условия задания (не пустое)."
+            "description": "Текст условия задания (не пустое).",
+            "nullable": true
           },
           "difficultyLevel": {
             "type": "integer",
             "description": "Уровень сложности задания (1–5).",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
+          },
+          "referenceQuery": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceQueryRequest"
+              }
+            ],
+            "description": "Новое эталонное решение задания.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
         "description": "Запрос на создание SQL-задания."
+      },
+      "CreateTargetDbFromDdlRequest": {
+        "type": "object",
+        "properties": {
+          "dbmsId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "dbName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "isReadOnly": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "ddlScript": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateTargetDbFromDdlResponse": {
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schema": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TargetDbSchemaResponse"
+              }
+            ],
+            "description": "Согласованный снимок логической схемы учебной базы."
+          }
+        },
+        "additionalProperties": false
       },
       "CreateTargetDbRequest": {
         "type": "object",
@@ -4462,10 +6893,37 @@
             "description": "Идентификатор родительской темы. `null` — корневая тема.",
             "format": "uuid",
             "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание темы.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
         "description": "Запрос на создание темы тренажёра."
+      },
+      "CurrentModuleSessionResponse": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "Идентификатор SQL-задания, доверенно полученный от Education.",
+            "format": "uuid"
+          },
+          "returnUrl": {
+            "type": "string",
+            "description": "Канонический адрес возврата в платформу."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "Время окончания сессии или null для сессии без лимита.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Канонический контекст текущего платформенного запуска."
       },
       "DataRecordResponse": {
         "type": "object",
@@ -4584,6 +7042,19 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isAvailable": {
+            "type": "boolean"
+          },
+          "unavailableReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "canManageCatalog": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -4610,12 +7081,11 @@
       },
       "ExecutionStatus": {
         "enum": [
-          0,
-          1,
-          2
+          "Succeeded",
+          "Error",
+          "TimedOut"
         ],
-        "type": "integer",
-        "format": "int32"
+        "type": "string"
       },
       "HttpValidationProblemDetails": {
         "type": "object",
@@ -4647,6 +7117,36 @@
               "type": "array",
               "items": {
                 "type": "string"
+              }
+            }
+          },
+          "code": {
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "violations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string"
+                },
+                "affectedRows": {
+                  "type": "integer",
+                  "format": "int64"
+                }
               }
             }
           }
@@ -4874,6 +7374,25 @@
         "additionalProperties": false,
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
       },
+      "ModuleTaskCatalogItemResponse": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Непрозрачный идентификатор задания во внешнем модуле."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название задания."
+          },
+          "description": {
+            "type": "string",
+            "description": "Краткое описание задания."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Опубликованное задание, доступное для привязки в Education."
+      },
       "MoveTopicRequest": {
         "type": "object",
         "properties": {
@@ -5073,9 +7592,84 @@
           "instance": {
             "type": "string",
             "nullable": true
+          },
+          "code": {
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "violations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "severity": {
+                  "type": "string"
+                },
+                "affectedRows": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
           }
         },
         "additionalProperties": { }
+      },
+      "PublicationStatus": {
+        "enum": [
+          "Draft",
+          "Published",
+          "Archived"
+        ],
+        "type": "string"
+      },
+      "ReferenceQueryRequest": {
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "description": "Учебная база для выполнения эталона.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "queryText": {
+            "type": "string",
+            "description": "Текст эталонного SQL-запроса.",
+            "nullable": true
+          },
+          "strictColumnOrder": {
+            "type": "boolean",
+            "description": "Требовать совпадение порядка колонок.",
+            "nullable": true
+          },
+          "strictRowOrder": {
+            "type": "boolean",
+            "description": "Требовать совпадение порядка строк.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Эталонное решение, принадлежащее SQL-заданию."
       },
       "RelationshipDraft": {
         "type": "object",
@@ -5106,6 +7700,136 @@
         "additionalProperties": false,
         "description": "Черновик связи (Foreign Key) между двумя колонками."
       },
+      "SchemaCapabilitiesResponse": {
+        "required": [
+          "canApplySchema",
+          "canDeleteTargetDb",
+          "canEditData",
+          "canEditSchema",
+          "canValidateSchema"
+        ],
+        "type": "object",
+        "properties": {
+          "canEditSchema": {
+            "type": "boolean"
+          },
+          "canValidateSchema": {
+            "type": "boolean"
+          },
+          "canApplySchema": {
+            "type": "boolean"
+          },
+          "canEditData": {
+            "type": "boolean"
+          },
+          "canDeleteTargetDb": {
+            "type": "boolean"
+          },
+          "schemaEditBlockReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataEditBlockReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "deleteTargetDbBlockReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SchemaChangeResponse": {
+        "required": [
+          "description",
+          "entityType",
+          "kind",
+          "path",
+          "severity"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tempId": {
+            "type": "string",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "affectedRows": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "severity": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SchemaColumnDraft": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tempId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "physicalTypeId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isPrimaryKey": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "isRequired": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaColumnParameterDraft"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SchemaColumnMap": {
         "type": "object",
         "properties": {
@@ -5121,6 +7845,212 @@
         },
         "additionalProperties": false,
         "description": "Карта атрибута: TempId → реальный MetaAttribute.Id."
+      },
+      "SchemaColumnParameterDraft": {
+        "type": "object",
+        "properties": {
+          "parameterDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SchemaColumnResponse": {
+        "required": [
+          "id",
+          "isPrimaryKey",
+          "isRequired",
+          "name",
+          "parameters",
+          "physicalTypeId",
+          "physicalTypeName",
+          "sortOrder"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "physicalTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "physicalTypeName": {
+            "type": "string"
+          },
+          "isPrimaryKey": {
+            "type": "boolean"
+          },
+          "isRequired": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaParameterResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SchemaLifecycleState": {
+        "enum": [
+          "Draft",
+          "Ready"
+        ],
+        "type": "string"
+      },
+      "SchemaParameterResponse": {
+        "required": [
+          "displayName",
+          "inputType",
+          "isRequired",
+          "parameterDefinitionId",
+          "parameterKey"
+        ],
+        "type": "object",
+        "properties": {
+          "parameterDefinitionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parameterKey": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "inputType": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "isRequired": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SchemaRelationshipDraft": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tempId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourceColumnRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetColumnRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "deleteRule": {
+            "type": "string",
+            "nullable": true
+          },
+          "updateRule": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SchemaRelationshipResponse": {
+        "required": [
+          "id",
+          "name",
+          "sourceColumnId",
+          "targetColumnId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sourceColumnId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetColumnId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deleteRule": {
+            "type": "string",
+            "nullable": true
+          },
+          "updateRule": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SchemaTableDraft": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tempId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaColumnDraft"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "SchemaTableMap": {
         "type": "object",
@@ -5144,6 +8074,110 @@
         },
         "additionalProperties": false,
         "description": "Карта таблицы: TempId → реальный MetaTable.Id."
+      },
+      "SchemaTableResponse": {
+        "required": [
+          "columns",
+          "id",
+          "name",
+          "sortOrder"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaColumnResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SchemaUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "nullable": true
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaTableDraft"
+            },
+            "nullable": true
+          },
+          "relationships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaRelationshipDraft"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Полное желаемое состояние схемы существующей учебной базы."
+      },
+      "SchemaValidationResponse": {
+        "required": [
+          "isValid",
+          "warnings"
+        ],
+        "type": "object",
+        "properties": {
+          "isValid": {
+            "type": "boolean"
+          },
+          "requiresConfirmation": {
+            "type": "boolean"
+          },
+          "normalizedVersion": {
+            "type": "string",
+            "nullable": true
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaChangeResponse"
+            }
+          },
+          "destructiveChanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaChangeResponse"
+            }
+          },
+          "confirmationToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "ddlPreview": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "SqlQueryResponse": {
         "type": "object",
@@ -5262,6 +8296,20 @@
             "description": "Уровень сложности (1–5).",
             "format": "int32"
           },
+          "publicationStatus": {
+            "enum": [
+              "Draft",
+              "Published",
+              "Archived"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicationStatus"
+              }
+            ],
+            "description": "Статус публикации задания."
+          },
           "createdById": {
             "type": "string",
             "description": "Идентификатор пользователя, создавшего запись.",
@@ -5281,6 +8329,42 @@
             "type": "string",
             "description": "Дата и время последнего изменения (UTC).",
             "format": "date-time"
+          },
+          "topicName": {
+            "type": "string",
+            "description": "Название темы для teacher-списка.",
+            "nullable": true
+          },
+          "targetDbId": {
+            "type": "string",
+            "description": "Идентификатор учебной базы эталона.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "targetDbName": {
+            "type": "string",
+            "description": "Название учебной базы эталона.",
+            "nullable": true
+          },
+          "dbmsName": {
+            "type": "string",
+            "description": "Название СУБД.",
+            "nullable": true
+          },
+          "attemptsCount": {
+            "type": "integer",
+            "description": "Общее число попыток.",
+            "format": "int32"
+          },
+          "createdByName": {
+            "type": "string",
+            "description": "Отображаемое имя автора на момент создания.",
+            "nullable": true
+          },
+          "updatedByName": {
+            "type": "string",
+            "description": "Отображаемое имя последнего редактора.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -5306,6 +8390,514 @@
         "additionalProperties": false,
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
       },
+      "StudentAttemptListItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskName": {
+            "type": "string"
+          },
+          "topicId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topicName": {
+            "type": "string"
+          },
+          "submittedSql": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Succeeded",
+              "Error",
+              "TimedOut"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionStatus"
+              }
+            ]
+          },
+          "isCorrect": {
+            "type": "boolean"
+          },
+          "reason": {
+            "enum": [
+              "Ok",
+              "ColumnMismatch",
+              "RowCountMismatch",
+              "ValueMismatch",
+              "SqlError",
+              "Timeout",
+              "NotRun",
+              "ResultLimitExceeded"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckReason"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer",
+            "description": "Количество строк, прочитанных для сравнения в рамках внутреннего comparison-лимита. Это не общее количество строк полного неограниченного результата; returnedRowCount содержит число строк публичного snapshot, а resultRowLimit — его отдельный лимит.",
+            "format": "int32",
+            "nullable": true
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "publicError": {
+            "type": "string",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentAttemptListItemResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentAttemptListItemResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "StudentAttemptResponse": {
+        "required": [
+          "resultSnapshotState"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskName": {
+            "type": "string"
+          },
+          "topicId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topicName": {
+            "type": "string"
+          },
+          "submittedSql": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Succeeded",
+              "Error",
+              "TimedOut"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionStatus"
+              }
+            ]
+          },
+          "isCorrect": {
+            "type": "boolean"
+          },
+          "reason": {
+            "enum": [
+              "Ok",
+              "ColumnMismatch",
+              "RowCountMismatch",
+              "ValueMismatch",
+              "SqlError",
+              "Timeout",
+              "NotRun",
+              "ResultLimitExceeded"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CheckReason"
+              }
+            ]
+          },
+          "rowCount": {
+            "type": "integer",
+            "description": "Количество строк, прочитанных для сравнения в рамках внутреннего comparison-лимита. Это не общее количество строк полного неограниченного результата; returnedRowCount содержит число строк публичного snapshot, а resultRowLimit — его отдельный лимит.",
+            "format": "int32",
+            "nullable": true
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "publicError": {
+            "type": "string",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resultSnapshotState": {
+            "enum": [
+              "NotStored",
+              "Available",
+              "NotProduced",
+              "Expired"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttemptResultSnapshotState"
+              }
+            ]
+          },
+          "actualColumns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "actualRows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "nullable": true
+          },
+          "returnedRowCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isResultTruncated": {
+            "type": "boolean"
+          },
+          "resultRowLimit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resultSnapshotCreatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resultSnapshotExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentExecutionLimitsResponse": {
+        "type": "object",
+        "properties": {
+          "timeoutSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxSqlLength": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentSchemaColumnPairResponse": {
+        "type": "object",
+        "properties": {
+          "fromColumnId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toColumnId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentSchemaColumnResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dataType": {
+            "type": "string"
+          },
+          "isNullable": {
+            "type": "boolean"
+          },
+          "isPrimaryKey": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentSchemaForeignKeyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "fromTableId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toTableId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "columnPairs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentSchemaColumnPairResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentSchemaTableResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentSchemaColumnResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentTaskDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topicId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topicName": {
+            "type": "string"
+          },
+          "taskName": {
+            "type": "string"
+          },
+          "taskText": {
+            "type": "string"
+          },
+          "difficultyLevel": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dbmsName": {
+            "type": "string"
+          },
+          "executionLimits": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentExecutionLimitsResponse"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentTaskResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topicId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topicName": {
+            "type": "string"
+          },
+          "taskName": {
+            "type": "string"
+          },
+          "taskTextPreview": {
+            "type": "string"
+          },
+          "difficultyLevel": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dbmsName": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentTaskResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentTaskResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "StudentTaskSchemaResponse": {
+        "type": "object",
+        "properties": {
+          "databaseName": {
+            "type": "string"
+          },
+          "dbms": {
+            "type": "string"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentSchemaTableResponse"
+            }
+          },
+          "foreignKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentSchemaForeignKeyResponse"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Безопасное представление структуры учебной базы для студента."
+      },
+      "StudentTopicResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topicName": {
+            "type": "string"
+          },
+          "parentTopicId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "publishedTasksCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentTopicResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentTopicResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
       "SubmitAttemptRequest": {
         "type": "object",
         "properties": {
@@ -5321,6 +8913,9 @@
         "description": "Запрос на отправку попытки выполнения задания."
       },
       "SubmitAttemptResponse": {
+        "required": [
+          "resultSnapshotState"
+        ],
         "type": "object",
         "properties": {
           "attemptId": {
@@ -5328,6 +8923,12 @@
             "format": "uuid"
           },
           "status": {
+            "enum": [
+              "Succeeded",
+              "Error",
+              "TimedOut"
+            ],
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/ExecutionStatus"
@@ -5338,6 +8939,17 @@
             "type": "boolean"
           },
           "reason": {
+            "enum": [
+              "Ok",
+              "ColumnMismatch",
+              "RowCountMismatch",
+              "ValueMismatch",
+              "SqlError",
+              "Timeout",
+              "NotRun",
+              "ResultLimitExceeded"
+            ],
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/CheckReason"
@@ -5346,6 +8958,7 @@
           },
           "rowCount": {
             "type": "integer",
+            "description": "Количество строк, прочитанных для сравнения в рамках внутреннего comparison-лимита. Это не общее количество строк полного неограниченного результата; returnedRowCount содержит число строк публичного snapshot, а resultRowLimit — его отдельный лимит.",
             "format": "int32",
             "nullable": true
           },
@@ -5354,7 +8967,7 @@
             "format": "int64",
             "nullable": true
           },
-          "errorMessage": {
+          "publicError": {
             "type": "string",
             "nullable": true
           },
@@ -5362,20 +8975,90 @@
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "nullable": true
           },
           "actualRows": {
             "type": "array",
             "items": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "nullable": true
               }
-            }
+            },
+            "nullable": true
+          },
+          "isResultTruncated": {
+            "type": "boolean"
+          },
+          "resultSnapshotState": {
+            "enum": [
+              "NotStored",
+              "Available",
+              "NotProduced",
+              "Expired"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttemptResultSnapshotState"
+              }
+            ]
+          },
+          "returnedRowCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resultRowLimit": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resultSnapshotCreatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resultSnapshotExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "additionalProperties": false,
         "description": "Результат проверки попытки выполнения задания."
+      },
+      "TableCellRequest": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "isNull": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TableCellResponse": {
+        "required": [
+          "isNull"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "isNull": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
       },
       "TableDraft": {
         "type": "object",
@@ -5398,6 +9081,153 @@
         },
         "additionalProperties": false,
         "description": "Черновик таблицы с временным идентификатором."
+      },
+      "TableRowChange": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "enum": [
+              "Create",
+              "Update",
+              "Delete"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TableRowOperation"
+              }
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "tempId": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cells": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TableCellRequest"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TableRowOperation": {
+        "enum": [
+          "Create",
+          "Update",
+          "Delete"
+        ],
+        "type": "string"
+      },
+      "TableRowResponse": {
+        "required": [
+          "cells",
+          "id",
+          "sortOrder",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cells": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TableCellResponse"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "TableRowsColumnResponse": {
+        "required": [
+          "id",
+          "isRequired",
+          "name",
+          "physicalTypeName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "physicalTypeName": {
+            "type": "string"
+          },
+          "isRequired": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TableRowsResponse": {
+        "required": [
+          "columns",
+          "count",
+          "items",
+          "limit",
+          "offset",
+          "schemaVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "schemaVersion": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableRowsColumnResponse"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableRowResponse"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "TargetDbResponse": {
         "type": "object",
@@ -5444,6 +9274,16 @@
             "type": "string",
             "description": "Дата и время последнего изменения записи (UTC).",
             "format": "date-time"
+          },
+          "createdByName": {
+            "type": "string",
+            "description": "Отображаемое имя автора на момент создания.",
+            "nullable": true
+          },
+          "updatedByName": {
+            "type": "string",
+            "description": "Отображаемое имя последнего редактора.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -5469,6 +9309,294 @@
         "additionalProperties": false,
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
       },
+      "TargetDbSchemaResponse": {
+        "required": [
+          "capabilities",
+          "dbmsId",
+          "dbName",
+          "relationships",
+          "state",
+          "tables",
+          "targetDbId",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dbmsId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dbName": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "Draft",
+              "Ready"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SchemaLifecycleState"
+              }
+            ]
+          },
+          "capabilities": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SchemaCapabilitiesResponse"
+              }
+            ]
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaTableResponse"
+            }
+          },
+          "relationships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaRelationshipResponse"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Согласованный снимок логической схемы учебной базы."
+      },
+      "TeacherTaskAttemptResponse": {
+        "type": "object",
+        "properties": {
+          "attemptId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string"
+          },
+          "isCorrect": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "Succeeded",
+              "Error",
+              "TimedOut"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExecutionStatus"
+              }
+            ]
+          },
+          "durationMs": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Краткая попытка студента."
+      },
+      "TeacherTaskDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "Идентификатор задания.",
+            "format": "uuid"
+          },
+          "topicId": {
+            "type": "string",
+            "description": "Идентификатор темы.",
+            "format": "uuid"
+          },
+          "topicName": {
+            "type": "string",
+            "description": "Название темы."
+          },
+          "taskName": {
+            "type": "string",
+            "description": "Название задания."
+          },
+          "description": {
+            "type": "string",
+            "description": "Условие задания."
+          },
+          "difficultyLevel": {
+            "type": "integer",
+            "description": "Уровень сложности.",
+            "format": "int32"
+          },
+          "publicationStatus": {
+            "enum": [
+              "Draft",
+              "Published",
+              "Archived"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicationStatus"
+              }
+            ],
+            "description": "Статус публикации."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Дата создания.",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Дата последнего изменения.",
+            "format": "date-time"
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Идентификатор автора.",
+            "format": "uuid"
+          },
+          "sqlQuery": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TeacherTaskSqlQueryResponse"
+              }
+            ],
+            "description": "Текущее эталонное решение."
+          },
+          "targetDb": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TeacherTaskTargetDbResponse"
+              }
+            ],
+            "description": "Учебная база эталонного решения."
+          },
+          "canEditTask": {
+            "type": "boolean",
+            "description": "Можно ли изменять основные поля задания: название, условие и сложность.\r\nФлаг не распространяется на тему, статус публикации и эталонное решение — для них действуют отдельные правила."
+          },
+          "canEditReferenceQuery": {
+            "type": "boolean",
+            "description": "Можно ли сейчас изменить эталонное решение отдельной операцией."
+          },
+          "referenceQueryEditRestriction": {
+            "type": "string",
+            "description": "Понятная пользователю причина запрета изменения эталона; null, если изменение разрешено.",
+            "nullable": true
+          },
+          "attemptsCount": {
+            "type": "integer",
+            "description": "Общее количество попыток.",
+            "format": "int32"
+          },
+          "lastAttempts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeacherTaskAttemptResponse"
+            },
+            "description": "Последние попытки выполнения."
+          },
+          "canPublish": {
+            "type": "boolean",
+            "description": "Можно ли опубликовать задание сейчас."
+          },
+          "canArchive": {
+            "type": "boolean",
+            "description": "Можно ли архивировать задание сейчас."
+          },
+          "canDelete": {
+            "type": "boolean",
+            "description": "Можно ли удалить задание сейчас."
+          },
+          "lifecycleRestriction": {
+            "type": "string",
+            "description": "Причина запрета lifecycle-операции, если она общая.",
+            "nullable": true
+          },
+          "createdByName": {
+            "type": "string",
+            "description": "Отображаемое имя автора на момент создания задания.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Агрегированная read-модель деталей задания для преподавателя."
+      },
+      "TeacherTaskSqlQueryResponse": {
+        "type": "object",
+        "properties": {
+          "sqlQueryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sqlText": {
+            "type": "string"
+          },
+          "isRequiredColumnOrder": {
+            "type": "boolean"
+          },
+          "isRequiredRowOrder": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Эталонный запрос в деталях задания."
+      },
+      "TeacherTaskTableResponse": {
+        "type": "object",
+        "properties": {
+          "tableName": {
+            "type": "string"
+          },
+          "columnsCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Краткое описание таблицы учебной базы."
+      },
+      "TeacherTaskTargetDbResponse": {
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dbName": {
+            "type": "string"
+          },
+          "dbmsName": {
+            "type": "string"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeacherTaskTableResponse"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Учебная база в деталях задания."
+      },
       "TopicResponse": {
         "type": "object",
         "properties": {
@@ -5485,6 +9613,11 @@
             "type": "string",
             "description": "Идентификатор родительской темы (`null` — корневая тема).",
             "format": "uuid",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание темы.",
             "nullable": true
           },
           "createdById": {
@@ -5506,6 +9639,16 @@
             "type": "string",
             "description": "Дата и время последнего изменения (UTC).",
             "format": "date-time"
+          },
+          "createdByName": {
+            "type": "string",
+            "description": "Отображаемое имя автора на момент создания.",
+            "nullable": true
+          },
+          "updatedByName": {
+            "type": "string",
+            "description": "Отображаемое имя последнего редактора.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -5756,20 +9899,43 @@
         "properties": {
           "taskName": {
             "type": "string",
-            "description": "Новое название задания (не пустое, не более 300 символов)."
+            "description": "Новое название задания (не пустое, не более 300 символов).",
+            "nullable": true
           },
           "taskText": {
             "type": "string",
-            "description": "Новый текст условия задания (не пустое)."
+            "description": "Новый текст условия задания (не пустое).",
+            "nullable": true
           },
           "difficultyLevel": {
             "type": "integer",
             "description": "Новый уровень сложности (1–5).",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
+          },
+          "publicationStatus": {
+            "enum": [
+              "Draft",
+              "Published",
+              "Archived"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicationStatus"
+              }
+            ],
+            "description": "Новый статус публикации; null сохраняет текущий статус."
+          },
+          "topicId": {
+            "type": "string",
+            "description": "Новая тема; null сохраняет текущую. Смена доступна только для Draft без попыток.",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false,
-        "description": "Запрос на обновление SQL-задания (FK не меняются)."
+        "description": "Запрос на обновление SQL-задания."
       },
       "UpdateTargetDbRequest": {
         "type": "object",
@@ -5791,28 +9957,271 @@
         "additionalProperties": false,
         "description": "Запрос на обновление целевой БД-песочницы."
       },
+      "UpdateTaskReferenceQueryRequest": {
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "description": "Учебная база для выполнения эталона.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "queryText": {
+            "type": "string",
+            "description": "Текст эталонного SQL-запроса.",
+            "nullable": true
+          },
+          "strictColumnOrder": {
+            "type": "boolean",
+            "description": "Требовать совпадение порядка колонок.",
+            "nullable": true
+          },
+          "strictRowOrder": {
+            "type": "boolean",
+            "description": "Требовать совпадение порядка строк.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Полное новое состояние эталонного решения текущего задания."
+      },
+      "UpdateTaskReferenceQueryResponse": {
+        "type": "object",
+        "properties": {
+          "sqlText": {
+            "type": "string",
+            "description": "Сохранённый текст эталонного SQL-запроса."
+          },
+          "isRequiredColumnOrder": {
+            "type": "boolean",
+            "description": "Требуется ли совпадение порядка колонок."
+          },
+          "isRequiredRowOrder": {
+            "type": "boolean",
+            "description": "Требуется ли совпадение порядка строк."
+          },
+          "targetDb": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UpdateTaskReferenceTargetDbResponse"
+              }
+            ],
+            "description": "Учебная база, в которой проверен эталон."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Актуальное состояние эталонного решения после обновления."
+      },
+      "UpdateTaskReferenceTargetDbResponse": {
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "description": "Идентификатор учебной базы.",
+            "format": "uuid"
+          },
+          "dbName": {
+            "type": "string",
+            "description": "Название учебной базы."
+          },
+          "dbmsName": {
+            "type": "string",
+            "description": "Название СУБД."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Учебная база обновлённого эталонного решения."
+      },
       "UpdateTopicRequest": {
         "type": "object",
         "properties": {
           "topicName": {
             "type": "string",
             "description": "Новое название темы (не пустое, не более 300 символов)."
+          },
+          "description": {
+            "type": "string",
+            "description": "Новое описание темы.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
         "description": "Запрос на обновление названия темы."
+      },
+      "UpsertModuleSessionRequest": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Идентификатор сессии Education.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "sessionKey": {
+            "type": "string",
+            "description": "Секрет сессии для Kafka-событий и отправки оценки.",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "description": "Идентификатор студента.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "taskRef": {
+            "type": "string",
+            "description": "Непрозрачная ссылка на задание; для SQL-модуля это SqlTask.Id.",
+            "nullable": true
+          },
+          "returnUrl": {
+            "type": "string",
+            "description": "Канонический адрес возврата в платформу.",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "Необязательное время окончания сессии.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Доверенный контекст платформенной сессии, отправляемый Education."
+      },
+      "ValidateSqlQueryRequest": {
+        "type": "object",
+        "properties": {
+          "targetDbId": {
+            "type": "string",
+            "description": "Идентификатор учебной базы, на которой выполняется запрос.",
+            "format": "uuid"
+          },
+          "queryText": {
+            "type": "string",
+            "description": "Проверяемый текст SQL-запроса."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на проверку эталонного SQL без сохранения."
+      },
+      "ValidateSqlQueryResponse": {
+        "type": "object",
+        "properties": {
+          "isValid": {
+            "type": "boolean",
+            "description": "Признак успешного выполнения запроса."
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Обнаруженные колонки результата."
+          },
+          "sampleRows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Строки preview, ограниченные настройкой Sandbox:MaxRows."
+          },
+          "rowCount": {
+            "type": "integer",
+            "description": "Количество строк, возвращённых в preview.",
+            "format": "int32"
+          },
+          "executionTimeMs": {
+            "type": "integer",
+            "description": "Продолжительность выполнения SQL-запроса.",
+            "format": "int64"
+          },
+          "validatedAt": {
+            "type": "string",
+            "description": "Момент завершения проверки.",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Результат успешной проверки эталонного SQL без сохранения."
+      },
+      "ValidateTargetDbDdlRequest": {
+        "type": "object",
+        "properties": {
+          "dbmsId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "dbName": {
+            "type": "string",
+            "nullable": true
+          },
+          "ddlScript": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidateTargetDbDdlResponse": {
+        "type": "object",
+        "properties": {
+          "isValid": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "detectedTables": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detectedRelationships": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Введите access token, полученный от IdentityService.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ],
   "tags": [
     {
       "name": "DbmsCatalog"
+    },
+    {
+      "name": "Module Integration"
     },
     {
       "name": "Schema"
     },
     {
       "name": "DevTools"
+    },
+    {
+      "name": "Schema Data"
+    },
+    {
+      "name": "Student"
     },
     {
       "name": "Training"

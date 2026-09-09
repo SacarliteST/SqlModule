@@ -16,7 +16,9 @@ internal sealed class TestAuthHandler : AuthenticationHandler<AuthenticationSche
     private const string UserIdHeader = "X-Test-UserId";
     private const string RolesHeader = "X-Test-Roles";
     private const string DisplayNameHeader = "X-Test-DisplayName";
+    private const string EmailHeader = "X-Test-Email";
     private const string AnonymousHeader = "X-Test-Anonymous";
+    private const string SessionIdHeader = "X-Test-SessionId";
     private const string DefaultRole = "Teacher";
 
     public TestAuthHandler(
@@ -37,15 +39,22 @@ internal sealed class TestAuthHandler : AuthenticationHandler<AuthenticationSche
         var userId = Request.Headers[UserIdHeader].FirstOrDefault() ?? Guid.NewGuid().ToString();
         var rolesHeader = Request.Headers[RolesHeader].FirstOrDefault() ?? DefaultRole;
         var displayName = Request.Headers[DisplayNameHeader].FirstOrDefault() ?? "Test User";
+        var email = Request.Headers[EmailHeader].FirstOrDefault() ?? "test.user@example.com";
 
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId),
-            new(ClaimTypes.Name, displayName)
+            new(ClaimTypes.Name, displayName),
+            new(ClaimTypes.Email, email)
         };
         claims.AddRange(
             rolesHeader.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                        .Select(r => new Claim(ClaimTypes.Role, r)));
+        var sessionId = Request.Headers[SessionIdHeader].FirstOrDefault();
+        if (!String.IsNullOrWhiteSpace(sessionId))
+        {
+            claims.Add(new Claim("session_id", sessionId));
+        }
 
         var ticket = new AuthenticationTicket(
             new ClaimsPrincipal(new ClaimsIdentity(claims, SchemeName)),

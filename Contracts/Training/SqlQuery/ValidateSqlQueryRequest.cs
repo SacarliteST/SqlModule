@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlQuery;
+﻿namespace SQLModule.Contracts.Training.SqlQuery;
 
 /// <summary>Запрос на проверку эталонного SQL без сохранения.</summary>
 /// <param name="TargetDbId">Идентификатор учебной базы, на которой выполняется запрос.</param>

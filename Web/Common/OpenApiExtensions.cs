@@ -21,6 +21,12 @@ internal static class OpenApiExtensions
             c.SupportNonNullableReferenceTypes();
             c.UseAllOfToExtendReferenceSchemas();
             c.SchemaFilter<ApiProblemSchemaFilter>();
+            c.SchemaFilter<StringEnumSchemaFilter>();
+            c.SchemaFilter<NullableResultRowsSchemaFilter>();
+            c.OperationFilter<SubmitAttemptIdempotencyOpenApiFilter>();
+            c.OperationFilter<AttemptFilterOptionsOpenApiFilter>();
+            c.OperationFilter<ModuleIntegrationServiceKeyOpenApiFilter>();
+            c.OperationFilter<IntegrationErrorCodesOpenApiFilter>();
             c.AddSecurityDefinition(BearerScheme, new OpenApiSecurityScheme
             {
                 Type = SecuritySchemeType.Http,

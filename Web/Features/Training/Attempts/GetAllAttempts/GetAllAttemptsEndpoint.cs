@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -14,6 +14,7 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Training.Attempts.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllAttempts")
             .WithTags("Training")
             .WithSummary("Список попыток с пагинацией")
@@ -24,7 +25,7 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
                 "taskId — необязательный фильтр по заданию. " +
                 "userId — необязательный фильтр по студенту. " +
                 "400 — невалидные параметры пагинации.")
-            .Produces<PageResponse<AttemptResponse>>(StatusCodes.Status200OK)
+            .Produces<PageResponse<AttemptListItemResponse>>(StatusCodes.Status200OK)
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<GetAllAttemptsRequest>>();
     }
@@ -32,8 +33,11 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
     private static async Task<IResult> Handle(
         [AsParameters] GetAllAttemptsRequest request, ISender sender, CancellationToken ct)
     {
-        var result = await sender.Send<GetAllAttemptsQuery, Result<PageResponse<AttemptResponse>>>(
-            new GetAllAttemptsQuery(request.Offset, request.Limit, request.TaskId, request.UserId), ct);
+        var result = await sender.Send<GetAllAttemptsQuery, Result<PageResponse<AttemptListItemResponse>>>(
+            new GetAllAttemptsQuery(
+                request.Offset, request.Limit, request.TaskId, request.UserId,
+                request.TopicId, request.Status, request.IsCorrect,
+                request.DateFrom, request.DateTo), ct);
         return result.ToOk();
     }
 }

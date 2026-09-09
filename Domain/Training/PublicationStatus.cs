@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training;
+﻿namespace SQLModule.Domain.Training;
 
 /// <summary>Статус публикации SQL-задания.</summary>
 public enum PublicationStatus

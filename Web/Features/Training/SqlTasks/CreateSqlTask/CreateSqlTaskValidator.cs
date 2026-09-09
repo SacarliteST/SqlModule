@@ -7,11 +7,14 @@ internal sealed class CreateSqlTaskValidator : AbstractValidator<CreateSqlTaskRe
 {
     public CreateSqlTaskValidator()
     {
-        RuleFor(x => x.TopicId).NotEmpty();
-        RuleFor(x => x.SqlQueryId).NotEmpty();
+        RuleFor(x => x.TopicId).NotNull().NotEmpty();
         RuleFor(x => x.TaskName).NotEmpty().MaximumLength(300);
         RuleFor(x => x.TaskText).NotEmpty();
-        RuleFor(x => x.DifficultyLevel).InclusiveBetween((short)1, (short)5);
-        RuleFor(x => x.PublicationStatus).IsInEnum();
+        RuleFor(x => x.DifficultyLevel)
+            .NotNull()
+            .InclusiveBetween((short)1, (short)5);
+        RuleFor(x => x.ReferenceQuery)
+            .NotNull()
+            .SetValidator(new ReferenceQueryRequestValidator()!);
     }
 }

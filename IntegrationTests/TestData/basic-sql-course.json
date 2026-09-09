@@ -1,0 +1,894 @@
+{
+  "formatVersion": 1,
+  "course": {
+    "id": "90000000-0000-0000-0000-000000000001",
+    "code": "sql-basics-ru",
+    "name": "Основы SQL",
+    "description": "Базовый практический курс по выборке, фильтрации, агрегированию и объединению данных в PostgreSQL.",
+    "locale": "ru-RU",
+    "estimatedMinutes": 360,
+    "prerequisites": [],
+    "learningOutcomes": [
+      "Писать простые SELECT-запросы и задавать псевдонимы столбцов",
+      "Фильтровать, сортировать и ограничивать результат",
+      "Использовать агрегатные функции, GROUP BY и HAVING",
+      "Объединять связанные таблицы с помощью JOIN",
+      "Применять подзапросы, EXISTS и общие табличные выражения"
+    ]
+  },
+  "dbms": {
+    "id": "91000000-0000-0000-0000-000000000001",
+    "dbmsName": "PostgreSQL (курс Основы SQL)",
+    "dbmsSystemName": "postgres",
+    "dockerImage": "postgres:16-alpine",
+    "defaultPort": 5432,
+    "envUserKey": "POSTGRES_USER",
+    "envPasswordKey": "POSTGRES_PASSWORD",
+    "envDatabaseKey": "POSTGRES_DB",
+    "defaultDatabase": "sql_basics",
+    "defaultUsername": "student",
+    "defaultPassword": "student"
+  },
+  "physicalTypes": [
+    {
+      "id": "91100000-0000-0000-0000-000000000001",
+      "typeName": "integer",
+      "parameters": []
+    },
+    {
+      "id": "91100000-0000-0000-0000-000000000002",
+      "typeName": "text",
+      "parameters": []
+    },
+    {
+      "id": "91100000-0000-0000-0000-000000000003",
+      "typeName": "numeric",
+      "parameters": [
+        {
+          "id": "91200000-0000-0000-0000-000000000001",
+          "key": "precision",
+          "displayName": "Точность",
+          "inputType": "number",
+          "defaultValue": "10",
+          "sortOrder": 0,
+          "sqlFragment": "({value}"
+        },
+        {
+          "id": "91200000-0000-0000-0000-000000000002",
+          "key": "scale",
+          "displayName": "Масштаб",
+          "inputType": "number",
+          "defaultValue": "2",
+          "sortOrder": 1,
+          "sqlFragment": ", {value})"
+        }
+      ]
+    },
+    {
+      "id": "91100000-0000-0000-0000-000000000004",
+      "typeName": "date",
+      "parameters": []
+    },
+    {
+      "id": "91100000-0000-0000-0000-000000000005",
+      "typeName": "boolean",
+      "parameters": []
+    }
+  ],
+  "databases": [
+    {
+      "id": "92000000-0000-0000-0000-000000000001",
+      "dbmsId": "91000000-0000-0000-0000-000000000001",
+      "name": "Учебный магазин",
+      "description": "Небольшая база клиентов, товаров и заказов для всех заданий курса.",
+      "isReadOnly": false,
+      "tables": [
+        {
+          "id": "92100000-0000-0000-0000-000000000001",
+          "name": "customers",
+          "description": "Клиенты магазина",
+          "sortOrder": 0,
+          "columns": [
+            {
+              "id": "92200000-0000-0000-0000-000000000001",
+              "name": "id",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000001",
+              "isPrimaryKey": true,
+              "isRequired": true,
+              "sortOrder": 0,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000002",
+              "name": "full_name",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000002",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 1,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000003",
+              "name": "city",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000002",
+              "isPrimaryKey": false,
+              "isRequired": false,
+              "sortOrder": 2,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000004",
+              "name": "is_active",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000005",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 3,
+              "parameters": {}
+            }
+          ],
+          "rows": [
+            {
+              "id": "92300000-0000-0000-0000-000000000001",
+              "sortOrder": 0,
+              "values": { "id": "1", "full_name": "Анна", "city": "Москва", "is_active": "true" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000002",
+              "sortOrder": 1,
+              "values": { "id": "2", "full_name": "Борис", "city": "Казань", "is_active": "true" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000003",
+              "sortOrder": 2,
+              "values": { "id": "3", "full_name": "Вера", "city": "Москва", "is_active": "false" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000004",
+              "sortOrder": 3,
+              "values": { "id": "4", "full_name": "Глеб", "city": null, "is_active": "true" }
+            }
+          ]
+        },
+        {
+          "id": "92100000-0000-0000-0000-000000000002",
+          "name": "products",
+          "description": "Каталог товаров",
+          "sortOrder": 1,
+          "columns": [
+            {
+              "id": "92200000-0000-0000-0000-000000000005",
+              "name": "id",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000001",
+              "isPrimaryKey": true,
+              "isRequired": true,
+              "sortOrder": 0,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000006",
+              "name": "name",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000002",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 1,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000007",
+              "name": "category",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000002",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 2,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000008",
+              "name": "price",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000003",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 3,
+              "parameters": { "precision": "10", "scale": "2" }
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000009",
+              "name": "stock",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000001",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 4,
+              "parameters": {}
+            }
+          ],
+          "rows": [
+            {
+              "id": "92300000-0000-0000-0000-000000000005",
+              "sortOrder": 0,
+              "values": { "id": "1", "name": "Ноутбук", "category": "electronics", "price": "90000.00", "stock": "5" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000006",
+              "sortOrder": 1,
+              "values": { "id": "2", "name": "Мышь", "category": "electronics", "price": "1500.00", "stock": "20" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000007",
+              "sortOrder": 2,
+              "values": { "id": "3", "name": "Стол", "category": "furniture", "price": "25000.00", "stock": "3" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000008",
+              "sortOrder": 3,
+              "values": { "id": "4", "name": "Книга", "category": "books", "price": "1200.00", "stock": "0" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000009",
+              "sortOrder": 4,
+              "values": { "id": "5", "name": "Лампа", "category": "furniture", "price": "4000.00", "stock": "8" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000010",
+              "sortOrder": 5,
+              "values": { "id": "6", "name": "Кресло", "category": "furniture", "price": "18000.00", "stock": "4" }
+            }
+          ]
+        },
+        {
+          "id": "92100000-0000-0000-0000-000000000003",
+          "name": "orders",
+          "description": "Заказы клиентов",
+          "sortOrder": 2,
+          "columns": [
+            {
+              "id": "92200000-0000-0000-0000-000000000010",
+              "name": "id",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000001",
+              "isPrimaryKey": true,
+              "isRequired": true,
+              "sortOrder": 0,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000011",
+              "name": "customer_id",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000001",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 1,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000012",
+              "name": "order_date",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000004",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 2,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000013",
+              "name": "status",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000002",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 3,
+              "parameters": {}
+            }
+          ],
+          "rows": [
+            {
+              "id": "92300000-0000-0000-0000-000000000011",
+              "sortOrder": 0,
+              "values": { "id": "1", "customer_id": "1", "order_date": "2026-01-10", "status": "paid" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000012",
+              "sortOrder": 1,
+              "values": { "id": "2", "customer_id": "2", "order_date": "2026-01-11", "status": "pending" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000013",
+              "sortOrder": 2,
+              "values": { "id": "3", "customer_id": "1", "order_date": "2026-02-01", "status": "paid" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000014",
+              "sortOrder": 3,
+              "values": { "id": "4", "customer_id": "3", "order_date": "2026-02-05", "status": "cancelled" }
+            }
+          ]
+        },
+        {
+          "id": "92100000-0000-0000-0000-000000000004",
+          "name": "order_items",
+          "description": "Позиции заказов",
+          "sortOrder": 3,
+          "columns": [
+            {
+              "id": "92200000-0000-0000-0000-000000000014",
+              "name": "id",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000001",
+              "isPrimaryKey": true,
+              "isRequired": true,
+              "sortOrder": 0,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000015",
+              "name": "order_id",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000001",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 1,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000016",
+              "name": "product_id",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000001",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 2,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000017",
+              "name": "quantity",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000001",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 3,
+              "parameters": {}
+            },
+            {
+              "id": "92200000-0000-0000-0000-000000000018",
+              "name": "unit_price",
+              "physicalTypeId": "91100000-0000-0000-0000-000000000003",
+              "isPrimaryKey": false,
+              "isRequired": true,
+              "sortOrder": 4,
+              "parameters": { "precision": "10", "scale": "2" }
+            }
+          ],
+          "rows": [
+            {
+              "id": "92300000-0000-0000-0000-000000000015",
+              "sortOrder": 0,
+              "values": { "id": "1", "order_id": "1", "product_id": "1", "quantity": "1", "unit_price": "90000.00" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000016",
+              "sortOrder": 1,
+              "values": { "id": "2", "order_id": "1", "product_id": "2", "quantity": "2", "unit_price": "1500.00" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000017",
+              "sortOrder": 2,
+              "values": { "id": "3", "order_id": "2", "product_id": "3", "quantity": "1", "unit_price": "25000.00" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000018",
+              "sortOrder": 3,
+              "values": { "id": "4", "order_id": "3", "product_id": "4", "quantity": "3", "unit_price": "1200.00" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000019",
+              "sortOrder": 4,
+              "values": { "id": "5", "order_id": "3", "product_id": "5", "quantity": "1", "unit_price": "4000.00" }
+            },
+            {
+              "id": "92300000-0000-0000-0000-000000000020",
+              "sortOrder": 5,
+              "values": { "id": "6", "order_id": "4", "product_id": "2", "quantity": "1", "unit_price": "1500.00" }
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "id": "92400000-0000-0000-0000-000000000001",
+          "name": "fk_orders_customers",
+          "fromTableId": "92100000-0000-0000-0000-000000000003",
+          "toTableId": "92100000-0000-0000-0000-000000000001",
+          "columnPairs": [
+            {
+              "fromColumnId": "92200000-0000-0000-0000-000000000011",
+              "toColumnId": "92200000-0000-0000-0000-000000000001"
+            }
+          ],
+          "onDelete": "RESTRICT",
+          "onUpdate": "CASCADE"
+        },
+        {
+          "id": "92400000-0000-0000-0000-000000000002",
+          "name": "fk_order_items_orders",
+          "fromTableId": "92100000-0000-0000-0000-000000000004",
+          "toTableId": "92100000-0000-0000-0000-000000000003",
+          "columnPairs": [
+            {
+              "fromColumnId": "92200000-0000-0000-0000-000000000015",
+              "toColumnId": "92200000-0000-0000-0000-000000000010"
+            }
+          ],
+          "onDelete": "CASCADE",
+          "onUpdate": "CASCADE"
+        },
+        {
+          "id": "92400000-0000-0000-0000-000000000003",
+          "name": "fk_order_items_products",
+          "fromTableId": "92100000-0000-0000-0000-000000000004",
+          "toTableId": "92100000-0000-0000-0000-000000000002",
+          "columnPairs": [
+            {
+              "fromColumnId": "92200000-0000-0000-0000-000000000016",
+              "toColumnId": "92200000-0000-0000-0000-000000000005"
+            }
+          ],
+          "onDelete": "RESTRICT",
+          "onUpdate": "CASCADE"
+        }
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "id": "93000000-0000-0000-0000-000000000001",
+      "name": "1. Простые выборки",
+      "description": "SELECT, выбор столбцов, псевдонимы, DISTINCT и вычисляемые выражения.",
+      "parentTopicId": null,
+      "sortOrder": 0
+    },
+    {
+      "id": "93000000-0000-0000-0000-000000000002",
+      "name": "2. Фильтрация и сортировка",
+      "description": "WHERE, логические условия, BETWEEN, NULL, ORDER BY и LIMIT.",
+      "parentTopicId": null,
+      "sortOrder": 1
+    },
+    {
+      "id": "93000000-0000-0000-0000-000000000003",
+      "name": "3. Агрегирование",
+      "description": "COUNT, SUM, MIN, MAX, GROUP BY и HAVING.",
+      "parentTopicId": null,
+      "sortOrder": 2
+    },
+    {
+      "id": "93000000-0000-0000-0000-000000000004",
+      "name": "4. Связи и JOIN",
+      "description": "INNER JOIN, LEFT JOIN и агрегирование связанных данных.",
+      "parentTopicId": null,
+      "sortOrder": 3
+    },
+    {
+      "id": "93000000-0000-0000-0000-000000000005",
+      "name": "5. Подзапросы и CTE",
+      "description": "Скалярные подзапросы, EXISTS, NOT EXISTS и WITH.",
+      "parentTopicId": null,
+      "sortOrder": 4
+    }
+  ],
+  "tasks": [
+    {
+      "id": "94000000-0000-0000-0000-000000000001",
+      "topicId": "93000000-0000-0000-0000-000000000001",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000001",
+      "name": "Список клиентов",
+      "text": "Выведите идентификатор и имя каждого клиента. Сохраните порядок по id.",
+      "learningGoal": "Выбрать нужные столбцы и упорядочить строки.",
+      "difficultyLevel": 1,
+      "publicationStatus": "Published",
+      "hints": ["Укажите столбцы после SELECT.", "Используйте ORDER BY id."],
+      "referenceQuery": {
+        "sqlText": "SELECT id, full_name FROM customers ORDER BY id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "full_name"],
+          "rows": [["1", "Анна"], ["2", "Борис"], ["3", "Вера"], ["4", "Глеб"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000002",
+      "topicId": "93000000-0000-0000-0000-000000000001",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000002",
+      "name": "Каталог товаров",
+      "text": "Выведите id, название и цену всех товаров в порядке id.",
+      "learningGoal": "Прочитать несколько столбцов одной таблицы.",
+      "difficultyLevel": 1,
+      "publicationStatus": "Published",
+      "hints": ["Данные находятся в products."],
+      "referenceQuery": {
+        "sqlText": "SELECT id, name, price FROM products ORDER BY id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "name", "price"],
+          "rows": [["1", "Ноутбук", "90000.00"], ["2", "Мышь", "1500.00"], ["3", "Стол", "25000.00"], ["4", "Книга", "1200.00"], ["5", "Лампа", "4000.00"], ["6", "Кресло", "18000.00"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000003",
+      "topicId": "93000000-0000-0000-0000-000000000001",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000003",
+      "name": "Псевдоним столбца",
+      "text": "Выведите имя клиента как customer_name и его город. Отсортируйте по id клиента.",
+      "learningGoal": "Назначить столбцу понятный псевдоним через AS.",
+      "difficultyLevel": 1,
+      "publicationStatus": "Published",
+      "hints": ["Псевдоним задаётся конструкцией AS customer_name."],
+      "referenceQuery": {
+        "sqlText": "SELECT full_name AS customer_name, city FROM customers ORDER BY id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["customer_name", "city"],
+          "rows": [["Анна", "Москва"], ["Борис", "Казань"], ["Вера", "Москва"], ["Глеб", null]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000004",
+      "topicId": "93000000-0000-0000-0000-000000000001",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000004",
+      "name": "Стоимость запасов",
+      "text": "Для каждого товара вычислите price * stock и назовите столбец inventory_value. Выведите id и результат в порядке id.",
+      "learningGoal": "Использовать арифметическое выражение в SELECT.",
+      "difficultyLevel": 1,
+      "publicationStatus": "Published",
+      "hints": ["Умножьте price на stock прямо в списке SELECT."],
+      "referenceQuery": {
+        "sqlText": "SELECT id, price * stock AS inventory_value FROM products ORDER BY id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "inventory_value"],
+          "rows": [["1", "450000.00"], ["2", "30000.00"], ["3", "75000.00"], ["4", "0.00"], ["5", "32000.00"], ["6", "72000.00"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000005",
+      "topicId": "93000000-0000-0000-0000-000000000002",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000005",
+      "name": "Товары дороже 3000",
+      "text": "Выведите название и цену товаров дороже 3000. Сортируйте сначала по цене, затем по id.",
+      "learningGoal": "Отфильтровать строки числовым условием.",
+      "difficultyLevel": 1,
+      "publicationStatus": "Published",
+      "hints": ["Условие задаётся после WHERE."],
+      "referenceQuery": {
+        "sqlText": "SELECT name, price FROM products WHERE price > 3000 ORDER BY price, id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["name", "price"],
+          "rows": [["Лампа", "4000.00"], ["Кресло", "18000.00"], ["Стол", "25000.00"], ["Ноутбук", "90000.00"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000006",
+      "topicId": "93000000-0000-0000-0000-000000000002",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000006",
+      "name": "Активные клиенты Москвы",
+      "text": "Выведите id и имя активных клиентов из Москвы в порядке id.",
+      "learningGoal": "Соединить два условия оператором AND.",
+      "difficultyLevel": 1,
+      "publicationStatus": "Published",
+      "hints": ["Проверьте одновременно city и is_active."],
+      "referenceQuery": {
+        "sqlText": "SELECT id, full_name FROM customers WHERE city = 'Москва' AND is_active = true ORDER BY id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "full_name"],
+          "rows": [["1", "Анна"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000007",
+      "topicId": "93000000-0000-0000-0000-000000000002",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000007",
+      "name": "Остаток от 1 до 10",
+      "text": "Выведите id, название и остаток товаров, у которых stock от 1 до 10 включительно. Сортируйте по stock и id.",
+      "learningGoal": "Использовать BETWEEN и составную сортировку.",
+      "difficultyLevel": 2,
+      "publicationStatus": "Published",
+      "hints": ["BETWEEN включает обе границы."],
+      "referenceQuery": {
+        "sqlText": "SELECT id, name, stock FROM products WHERE stock BETWEEN 1 AND 10 ORDER BY stock, id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "name", "stock"],
+          "rows": [["3", "Стол", "3"], ["6", "Кресло", "4"], ["1", "Ноутбук", "5"], ["5", "Лампа", "8"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000008",
+      "topicId": "93000000-0000-0000-0000-000000000002",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000008",
+      "name": "Клиент без города",
+      "text": "Найдите клиента, у которого город не указан. Выведите id и full_name.",
+      "learningGoal": "Корректно проверять NULL через IS NULL.",
+      "difficultyLevel": 2,
+      "publicationStatus": "Published",
+      "hints": ["NULL нельзя сравнивать оператором =."],
+      "referenceQuery": {
+        "sqlText": "SELECT id, full_name FROM customers WHERE city IS NULL ORDER BY id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "full_name"],
+          "rows": [["4", "Глеб"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000009",
+      "topicId": "93000000-0000-0000-0000-000000000003",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000009",
+      "name": "Количество товаров",
+      "text": "Посчитайте количество товаров. Назовите результат product_count.",
+      "learningGoal": "Применить COUNT к набору строк.",
+      "difficultyLevel": 1,
+      "publicationStatus": "Published",
+      "hints": ["Для подсчёта всех строк подойдёт COUNT(*)."],
+      "referenceQuery": {
+        "sqlText": "SELECT COUNT(*) AS product_count FROM products;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["product_count"],
+          "rows": [["6"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000010",
+      "topicId": "93000000-0000-0000-0000-000000000003",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000010",
+      "name": "Общий остаток",
+      "text": "Посчитайте суммарный остаток всех товаров. Назовите результат total_stock.",
+      "learningGoal": "Суммировать значения столбца.",
+      "difficultyLevel": 1,
+      "publicationStatus": "Published",
+      "hints": ["Используйте SUM(stock)."],
+      "referenceQuery": {
+        "sqlText": "SELECT SUM(stock) AS total_stock FROM products;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["total_stock"],
+          "rows": [["40"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000011",
+      "topicId": "93000000-0000-0000-0000-000000000003",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000011",
+      "name": "Товары по категориям",
+      "text": "Для каждой категории посчитайте количество товаров как product_count. Отсортируйте по category.",
+      "learningGoal": "Сгруппировать строки и агрегировать каждую группу.",
+      "difficultyLevel": 2,
+      "publicationStatus": "Published",
+      "hints": ["Все неагрегированные столбцы SELECT укажите в GROUP BY."],
+      "referenceQuery": {
+        "sqlText": "SELECT category, COUNT(*) AS product_count FROM products GROUP BY category ORDER BY category;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["category", "product_count"],
+          "rows": [["books", "1"], ["electronics", "2"], ["furniture", "3"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000012",
+      "topicId": "93000000-0000-0000-0000-000000000003",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000012",
+      "name": "Категории с несколькими товарами",
+      "text": "Выведите категории, в которых больше одного товара, и количество товаров как product_count. Сортируйте по category.",
+      "learningGoal": "Отфильтровать сгруппированный результат через HAVING.",
+      "difficultyLevel": 2,
+      "publicationStatus": "Published",
+      "hints": ["WHERE фильтрует строки до группировки, HAVING — группы после неё."],
+      "referenceQuery": {
+        "sqlText": "SELECT category, COUNT(*) AS product_count FROM products GROUP BY category HAVING COUNT(*) > 1 ORDER BY category;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["category", "product_count"],
+          "rows": [["electronics", "2"], ["furniture", "3"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000013",
+      "topicId": "93000000-0000-0000-0000-000000000004",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000013",
+      "name": "Заказы и клиенты",
+      "text": "Выведите id заказа и имя клиента для каждого заказа. Сортируйте по id заказа.",
+      "learningGoal": "Соединить orders и customers по внешнему ключу.",
+      "difficultyLevel": 2,
+      "publicationStatus": "Published",
+      "hints": ["Свяжите orders.customer_id с customers.id."],
+      "referenceQuery": {
+        "sqlText": "SELECT o.id AS order_id, c.full_name FROM orders o JOIN customers c ON c.id = o.customer_id ORDER BY o.id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["order_id", "full_name"],
+          "rows": [["1", "Анна"], ["2", "Борис"], ["3", "Анна"], ["4", "Вера"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000014",
+      "topicId": "93000000-0000-0000-0000-000000000004",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000014",
+      "name": "Состав заказов",
+      "text": "Выведите order_id, название товара и quantity для каждой позиции заказа. Сортируйте по id позиции.",
+      "learningGoal": "Получить понятные данные из таблицы-связки.",
+      "difficultyLevel": 2,
+      "publicationStatus": "Published",
+      "hints": ["Соедините order_items с products по product_id."],
+      "referenceQuery": {
+        "sqlText": "SELECT oi.order_id, p.name, oi.quantity FROM order_items oi JOIN products p ON p.id = oi.product_id ORDER BY oi.id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["order_id", "name", "quantity"],
+          "rows": [["1", "Ноутбук", "1"], ["1", "Мышь", "2"], ["2", "Стол", "1"], ["3", "Книга", "3"], ["3", "Лампа", "1"], ["4", "Мышь", "1"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000015",
+      "topicId": "93000000-0000-0000-0000-000000000004",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000015",
+      "name": "Сумма каждого заказа",
+      "text": "Для каждого заказа вычислите сумму quantity * unit_price как order_total. Сортируйте по order_id.",
+      "learningGoal": "Совместить GROUP BY с вычислением по строкам связанной таблицы.",
+      "difficultyLevel": 3,
+      "publicationStatus": "Published",
+      "hints": ["Сначала вычислите стоимость позиции, затем примените SUM."],
+      "referenceQuery": {
+        "sqlText": "SELECT order_id, SUM(quantity * unit_price) AS order_total FROM order_items GROUP BY order_id ORDER BY order_id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["order_id", "order_total"],
+          "rows": [["1", "93000.00"], ["2", "25000.00"], ["3", "7600.00"], ["4", "1500.00"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000016",
+      "topicId": "93000000-0000-0000-0000-000000000004",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000016",
+      "name": "Число заказов у каждого клиента",
+      "text": "Выведите id, имя каждого клиента и число его заказов как order_count, включая клиентов без заказов. Сортируйте по id клиента.",
+      "learningGoal": "Сохранить строки левой таблицы с помощью LEFT JOIN.",
+      "difficultyLevel": 3,
+      "publicationStatus": "Published",
+      "hints": ["Используйте LEFT JOIN и считайте o.id, а не все строки."],
+      "referenceQuery": {
+        "sqlText": "SELECT c.id, c.full_name, COUNT(o.id) AS order_count FROM customers c LEFT JOIN orders o ON o.customer_id = c.id GROUP BY c.id, c.full_name ORDER BY c.id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "full_name", "order_count"],
+          "rows": [["1", "Анна", "2"], ["2", "Борис", "1"], ["3", "Вера", "1"], ["4", "Глеб", "0"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000017",
+      "topicId": "93000000-0000-0000-0000-000000000005",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000017",
+      "name": "Товары дороже среднего",
+      "text": "Выведите id и название товаров, цена которых выше средней цены всех товаров. Сортируйте по id.",
+      "learningGoal": "Использовать скалярный подзапрос в WHERE.",
+      "difficultyLevel": 3,
+      "publicationStatus": "Published",
+      "hints": ["Среднюю цену можно вычислить отдельным SELECT AVG(price)."],
+      "referenceQuery": {
+        "sqlText": "SELECT id, name FROM products WHERE price > (SELECT AVG(price) FROM products) ORDER BY id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "name"],
+          "rows": [["1", "Ноутбук"], ["3", "Стол"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000018",
+      "topicId": "93000000-0000-0000-0000-000000000005",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000018",
+      "name": "Клиенты с оплаченными заказами",
+      "text": "Выведите id и имя клиентов, у которых есть хотя бы один заказ со статусом paid. Сортируйте по id.",
+      "learningGoal": "Проверить существование связанных строк через EXISTS.",
+      "difficultyLevel": 3,
+      "publicationStatus": "Published",
+      "hints": ["Свяжите подзапрос с текущим клиентом по customer_id."],
+      "referenceQuery": {
+        "sqlText": "SELECT c.id, c.full_name FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status = 'paid') ORDER BY c.id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "full_name"],
+          "rows": [["1", "Анна"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000019",
+      "topicId": "93000000-0000-0000-0000-000000000005",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000019",
+      "name": "Товары без заказов",
+      "text": "Выведите id и название товаров, которые ни разу не встречаются в order_items. Сортируйте по id.",
+      "learningGoal": "Найти отсутствие связанных строк через NOT EXISTS.",
+      "difficultyLevel": 3,
+      "publicationStatus": "Published",
+      "hints": ["В коррелированном подзапросе сравните product_id с id товара."],
+      "referenceQuery": {
+        "sqlText": "SELECT p.id, p.name FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["id", "name"],
+          "rows": [["6", "Кресло"]]
+        }
+      }
+    },
+    {
+      "id": "94000000-0000-0000-0000-000000000020",
+      "topicId": "93000000-0000-0000-0000-000000000005",
+      "targetDatabaseId": "92000000-0000-0000-0000-000000000001",
+      "referenceQueryId": "95000000-0000-0000-0000-000000000020",
+      "name": "Крупные заказы через CTE",
+      "text": "Через CTE вычислите суммы заказов и выведите order_id и order_total для сумм больше 10000. Сортируйте по order_total по убыванию.",
+      "learningGoal": "Разбить запрос на понятные этапы с помощью WITH.",
+      "difficultyLevel": 3,
+      "publicationStatus": "Published",
+      "hints": ["В CTE сгруппируйте order_items, затем фильтруйте готовые суммы."],
+      "referenceQuery": {
+        "sqlText": "WITH order_totals AS (SELECT order_id, SUM(quantity * unit_price) AS order_total FROM order_items GROUP BY order_id) SELECT order_id, order_total FROM order_totals WHERE order_total > 10000 ORDER BY order_total DESC;",
+        "strictColumnOrder": true,
+        "strictRowOrder": true,
+        "expectedResult": {
+          "columns": ["order_id", "order_total"],
+          "rows": [["1", "93000.00"], ["2", "25000.00"]]
+        }
+      }
+    }
+  ]
+}
