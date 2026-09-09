@@ -46,8 +46,8 @@ public sealed class MetaRelationshipTests : ApiTestBase
 
     private async Task<Guid> SeedMetaAttributeAsync(Guid metaTableId, Guid dbmsId)
     {
-        var pt = await PhysicalTypeClient.CreateAsync(
-            new CreatePhysicalTypeRequest(dbmsId, "int_" + Guid.NewGuid().ToString("N")[..8]));
+        var pt = await AsAdminAsync(() => PhysicalTypeClient.CreateAsync(
+            new CreatePhysicalTypeRequest(dbmsId, "int_" + Guid.NewGuid().ToString("N")[..8])));
         var attr = await MetaAttributeClient.CreateAsync(
             new CreateMetaAttributeRequest(metaTableId, pt.Id, "col_" + Guid.NewGuid().ToString("N")[..8], false, false, 1));
         return attr.Id;

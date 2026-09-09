@@ -7,10 +7,7 @@ internal static class SqlTaskErrors
 {
     internal static Error NotFound(Guid id) => DomainErrors<SqlTask>.NotFound(id);
     internal static Error TopicNotFound(Guid id) => DomainErrors<SqlTask>.Conflict($"Тема с id '{id}' не найдена.");
-    internal static Error QueryNotFound(Guid id) => DomainErrors<SqlTask>.Conflict($"SQL-запрос с id '{id}' не найден.");
     internal static Error HasAttempts(Guid id) => DomainErrors<SqlTask>.Conflict($"Задание '{id}' имеет попытки выполнения и не может быть удалено.");
-    internal static Error InitialStatusMustBeDraft =>
-        DomainErrors<SqlTask>.Validation("Новое задание можно создать только в статусе Draft. Используйте отдельную операцию публикации.");
     internal static Error PublishRequiresAction =>
         DomainErrors<SqlTask>.Conflict("Переход в Published доступен только через отдельную операцию публикации.");
     internal static Error AlreadyPublished(Guid id) =>
@@ -27,4 +24,14 @@ internal static class SqlTaskErrors
         DomainErrors<SqlTask>.Conflict($"Связи задания '{id}' можно менять только в статусе Draft.");
     internal static Error LinksChangeBlockedByAttempts(Guid id) =>
         DomainErrors<SqlTask>.Conflict($"Связи задания '{id}' нельзя менять после появления попыток.");
+    internal static Error ReferenceChangeRequiresDraft(Guid id) =>
+        DomainErrors<SqlTask>.Conflict($"Эталон задания '{id}' можно менять только в статусе Draft.");
+    internal static Error ReferenceChangeBlockedByAttempts(Guid id) =>
+        DomainErrors<SqlTask>.Conflict($"Эталон задания '{id}' нельзя менять после появления попыток.");
+    internal static Error ReferenceResultExceedsComparisonLimit(int limit) =>
+        Error.Validation(
+            "ReferenceResultExceedsComparisonLimit",
+            $"Результат эталона превышает лимит сравнения {limit} строк. Измените запрос или уменьшите результат.",
+            "referenceQuery.queryText",
+            limit);
 }

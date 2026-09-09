@@ -12,6 +12,7 @@ internal sealed class TargetDbConfiguration : IEntityTypeConfiguration<TargetDb>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.DbName).IsRequired().HasMaxLength(200);
         builder.Property(x => x.Description).HasMaxLength(1000);
+        builder.Property(x => x.SchemaVersion).IsConcurrencyToken();
         builder.ConfigureAudit();
 
         builder.HasIndex(x => new { x.DbmsId, x.DbName }).IsUnique();

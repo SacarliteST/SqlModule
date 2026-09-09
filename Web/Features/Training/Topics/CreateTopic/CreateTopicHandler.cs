@@ -7,7 +7,7 @@ using SQLModule.Web.Common.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Topics;
 
-internal record CreateTopicCommand(string TopicName, Guid? ParentTopicId)
+internal record CreateTopicCommand(string TopicName, Guid? ParentTopicId, string? Description)
     : IRequest<Result<TopicResponse>>;
 
 internal sealed class CreateTopicHandler(AppDbContext db)
@@ -21,7 +21,7 @@ internal sealed class CreateTopicHandler(AppDbContext db)
             return Result<TopicResponse>.Fail(TopicErrors.ParentNotFound(command.ParentTopicId.Value));
         }
 
-        var entity = Topic.Create(command.TopicName, command.ParentTopicId);
+        var entity = Topic.Create(command.TopicName, command.ParentTopicId, description: command.Description);
         db.Topics.Add(entity);
         await db.SaveChangesAsync(ct);
         return TopicMappings.ToResponse(entity);

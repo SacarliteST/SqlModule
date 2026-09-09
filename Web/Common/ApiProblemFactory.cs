@@ -1,3 +1,4 @@
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,7 +11,10 @@ internal static class ApiProblemFactory
         string title,
         string detail,
         string code,
-        IDictionary<string, string[]>? errors = null)
+        IDictionary<string, string[]>? errors = null,
+        long? affectedRows = null,
+        string severity = "Error",
+        long? limit = null)
     {
         var problem = new ProblemDetails
         {
@@ -20,7 +24,19 @@ internal static class ApiProblemFactory
         };
 
         problem.Extensions["code"] = code;
+        problem.Extensions["traceId"] = Activity.Current?.Id ?? String.Empty;
         problem.Extensions["errors"] = errors ?? new Dictionary<string, string[]>();
+        problem.Extensions["violations"] = (errors ?? new Dictionary<string, string[]>())
+            .SelectMany(pair => pair.Value.Select(message => new
+            {
+                path = pair.Key,
+                code,
+                message,
+                severity,
+                affectedRows,
+                limit
+            }))
+            .ToArray();
         return problem;
     }
 
@@ -29,6 +45,9 @@ internal static class ApiProblemFactory
         string title,
         string detail,
         string code,
-        IDictionary<string, string[]>? errors = null)
-        => TypedResults.Problem(Create(status, title, detail, code, errors));
+        IDictionary<string, string[]>? errors = null,
+        long? affectedRows = null,
+        string severity = "Error",
+        long? limit = null)
+        => TypedResults.Problem(Create(status, title, detail, code, errors, affectedRows, severity, limit));
 }

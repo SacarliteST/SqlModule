@@ -45,6 +45,12 @@ public sealed class TargetDbTests : ApiTestBase
         response.DbName.ShouldBe("HappyDB");
         response.IsReadOnly.ShouldBeFalse();
         response.DbmsId.ShouldBe(dbmsId);
+        response.CreatedAt.ShouldBeGreaterThan(DateTimeOffset.UnixEpoch);
+        response.UpdatedAt.ShouldBeGreaterThanOrEqualTo(response.CreatedAt);
+        response.CreatedById.ShouldNotBe(Guid.Empty);
+        response.UpdatedById.ShouldNotBe(Guid.Empty);
+        response.CreatedByName.ShouldBe("Test Teacher");
+        response.UpdatedByName.ShouldBe("Test Teacher");
     }
 
     [Fact(DisplayName = "Create с несуществующим DbmsId → ConflictException (409)")]
@@ -101,7 +107,7 @@ public sealed class TargetDbTests : ApiTestBase
         var created = await CreateTargetDbAsync(dbmsId);
 
         // Act
-        var page = await TargetDbClient.GetAllAsync(0, 50);
+        var page = await TargetDbClient.GetAllAsync(0, 100);
 
         // Assert
         page.Items.ShouldContain(x => x.Id == created.Id);

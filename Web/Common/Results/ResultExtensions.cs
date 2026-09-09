@@ -35,14 +35,20 @@ public static class ResultExtensions
         {
             ErrorType.Validation => StatusCodes.Status422UnprocessableEntity,
             ErrorType.NotFound => StatusCodes.Status404NotFound,
+            ErrorType.Forbidden => StatusCodes.Status403Forbidden,
             ErrorType.Conflict => StatusCodes.Status409Conflict,
+            ErrorType.PreconditionFailed => StatusCodes.Status412PreconditionFailed,
+            ErrorType.Unavailable => StatusCodes.Status503ServiceUnavailable,
             _ => StatusCodes.Status500InternalServerError
         };
         var title = error.Type switch
         {
             ErrorType.Validation => "Ошибка бизнес-валидации",
             ErrorType.NotFound => "Ресурс не найден",
+            ErrorType.Forbidden => "Доступ запрещён",
             ErrorType.Conflict => "Конфликт состояния",
+            ErrorType.PreconditionFailed => "Условие обновления не выполнено",
+            ErrorType.Unavailable => "Сервис временно недоступен",
             _ => "Внутренняя ошибка"
         };
 
@@ -50,6 +56,10 @@ public static class ResultExtensions
             statusCode,
             title,
             error.Message,
-            error.Code);
+            error.Code,
+            error.Path is null ? null : new Dictionary<string, string[]> { [error.Path] = [error.Message] },
+            error.AffectedRows,
+            error.Severity,
+            error.Limit);
     }
 }

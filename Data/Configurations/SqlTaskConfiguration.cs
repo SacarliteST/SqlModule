@@ -16,8 +16,8 @@ internal sealed class SqlTaskConfiguration : IEntityTypeConfiguration<SqlTask>
         builder.ConfigureAudit();
 
         builder.HasOne(x => x.SqlQuery)
-               .WithMany()
-               .HasForeignKey(x => x.SqlQueryId)
+               .WithOne(x => x.Task)
+               .HasForeignKey<SqlTask>(x => x.SqlQueryId)
                .OnDelete(DeleteBehavior.Restrict);
     }
 }

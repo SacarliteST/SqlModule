@@ -97,17 +97,43 @@ public abstract class ApiTestBase
     /// <summary>Переключает контекст на пользователя с ролью Admin.</summary>
     protected void AsAdmin(Guid? userId = null) => SetUser(userId, Roles.Admin);
 
+    /// <summary>
+    /// Выполняет административный шаг полного API-сценария и гарантированно
+    /// восстанавливает исходного тестового пользователя после завершения.
+    /// </summary>
+    protected async Task<T> AsAdminAsync<T>(Func<Task<T>> action)
+    {
+        var previousUserId = App.UserContext.UserId;
+        var previousRoles = App.UserContext.Roles;
+        var previousDisplayName = App.UserContext.DisplayName;
+
+        AsAdmin();
+        try
+        {
+            return await action();
+        }
+        finally
+        {
+            SetUser(previousUserId, previousRoles, previousDisplayName);
+        }
+    }
+
     private void SetUser(Guid? userId, string role)
     {
         var id = (userId ?? Guid.NewGuid()).ToString();
-        App.UserContext.UserId = id;
-        App.UserContext.Roles = role;
-        App.UserContext.DisplayName = $"Test {role}";
+        SetUser(id, role, $"Test {role}");
+    }
+
+    private void SetUser(string userId, string roles, string displayName)
+    {
+        App.UserContext.UserId = userId;
+        App.UserContext.Roles = roles;
+        App.UserContext.DisplayName = displayName;
         HttpClient.DefaultRequestHeaders.Remove("X-Test-UserId");
         HttpClient.DefaultRequestHeaders.Remove("X-Test-Roles");
         HttpClient.DefaultRequestHeaders.Remove("X-Test-DisplayName");
-        HttpClient.DefaultRequestHeaders.Add("X-Test-UserId", id);
-        HttpClient.DefaultRequestHeaders.Add("X-Test-Roles", role);
-        HttpClient.DefaultRequestHeaders.Add("X-Test-DisplayName", App.UserContext.DisplayName);
+        HttpClient.DefaultRequestHeaders.Add("X-Test-UserId", userId);
+        HttpClient.DefaultRequestHeaders.Add("X-Test-Roles", roles);
+        HttpClient.DefaultRequestHeaders.Add("X-Test-DisplayName", displayName);
     }
 }

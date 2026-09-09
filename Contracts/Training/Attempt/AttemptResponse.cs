@@ -20,4 +20,17 @@ public record AttemptResponse(
     Guid CreatedById,
     DateTimeOffset CreatedAt,
     Guid UpdatedById,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    AttemptResultSnapshotState ResultSnapshotState,
+    string? TaskName = null,
+    string? TopicName = null,
+    string? PublicError = null,
+    string? CreatedByName = null,
+    string? UpdatedByName = null,
+    IReadOnlyList<string>? ActualColumns = null,
+    IReadOnlyList<IReadOnlyList<string?>>? ActualRows = null,
+    int? ReturnedRowCount = null,
+    bool IsResultTruncated = false,
+    int? ResultRowLimit = null,
+    DateTimeOffset? ResultSnapshotCreatedAt = null,
+    DateTimeOffset? ResultSnapshotExpiresAt = null);

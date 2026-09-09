@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
@@ -19,10 +19,13 @@ public sealed class CreateSqlTaskEndpoint : IEndpoint
             .WithTags("Training")
             .WithSummary("Создать SQL-задание")
             .WithDescription(
-                "Создаёт новое задание тренажёра в статусе Draft. Для публикации используйте отдельную операцию. " +
+                "Проверяет и создаёт эталонное решение вместе с новым заданием в статусе Draft. " +
+                "Эталон, превышающий серверный лимит сравнения, отклоняется с кодом " +
+                "ReferenceResultExceedsComparisonLimit. " +
+                "Для публикации используйте отдельную операцию. " +
                 "Возвращает 201 Created с телом ответа. " +
                 "422 — не прошла бизнес-валидация. " +
-                "409 — TargetDb, тема или SQL-запрос не найдены.")
+                "409 — тема или учебная база не найдены.")
             .Produces<SqlTaskResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)

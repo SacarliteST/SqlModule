@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlQuery;
+﻿namespace SQLModule.Contracts.Training.SqlQuery;
 
 /// <summary>Результат успешной проверки эталонного SQL без сохранения.</summary>
 /// <param name="IsValid">Признак успешного выполнения запроса.</param>

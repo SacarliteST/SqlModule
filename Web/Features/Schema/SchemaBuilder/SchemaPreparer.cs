@@ -53,13 +53,27 @@ internal sealed class SchemaPreparer(
             }
         }
 
+        var domainValidation = ValidateDraft(request, physicalTypesById);
+        if (domainValidation is not null)
+        {
+            return Result<PreparedSchema>.Fail(domainValidation);
+        }
+
         var syntax = syntaxFactory.For(dbms.DbmsSystemName);
         if (syntax is null)
         {
             return Result<PreparedSchema>.Fail(SchemaErrors.UnsupportedDbms(dbms.DbmsSystemName));
         }
 
-        var spec = SchemaRequestMapper.ToSchemaSpec(request, physicalTypesById);
+        SchemaSpec spec;
+        try
+        {
+            spec = SchemaRequestMapper.ToSchemaSpec(request, physicalTypesById);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Result<PreparedSchema>.Fail(SchemaErrors.InvalidTypeParameter(exception.Message));
+        }
         var ddl = generator.GenerateDdl(syntax, spec);
 
         var sandboxResult = await executor.ValidateSetupAsync(dbms.ToSandboxSpec(), new SandboxSetup(ddl), ct);
@@ -69,5 +83,70 @@ internal sealed class SchemaPreparer(
         }
 
         return Result<PreparedSchema>.Success(new PreparedSchema(dbms, physicalTypesById, spec, ddl));
+    }
+
+    private static Error? ValidateDraft(
+        CreateSchemaRequest request,
+        IReadOnlyDictionary<Guid, Domain.DbmsCatalog.PhysicalType> physicalTypes)
+    {
+        if (request.Tables.Count > 100 || request.Tables.Any(x => x.Columns.Count > 200) || request.Relationships.Count > 500)
+        {
+            return SchemaErrors.SchemaLimitExceeded;
+        }
+
+        foreach (var table in request.Tables)
+        {
+            foreach (var column in table.Columns)
+            {
+                var type = physicalTypes[column.PhysicalTypeId];
+                var definitions = type.ParameterDefinitions.ToDictionary(x => x.Id);
+                if (column.Parameters.Select(x => x.ParameterDefinitionId).Distinct().Count() != column.Parameters.Count ||
+                    column.Parameters.Any(x => !definitions.ContainsKey(x.ParameterDefinitionId)))
+                {
+                    return SchemaErrors.InvalidTypeParameter($"Колонка '{column.Name}' содержит лишний или повторяющийся параметр типа.");
+                }
+
+                foreach (var definition in definitions.Values.Where(x => x.IsRequired && String.IsNullOrWhiteSpace(x.DefaultValue)))
+                {
+                    if (!column.Parameters.Any(x => x.ParameterDefinitionId == definition.Id && !String.IsNullOrWhiteSpace(x.Value)))
+                    {
+                        return SchemaErrors.InvalidTypeParameter($"Параметр '{definition.DisplayName}' колонки '{column.Name}' обязателен.");
+                    }
+                }
+            }
+        }
+
+        var allColumns = request.Tables.SelectMany(x => x.Columns).ToList();
+        if (allColumns.GroupBy(x => x.TempId, StringComparer.OrdinalIgnoreCase).Any(x => x.Count() > 1))
+        {
+            return Error.Validation("DuplicateObjectName", "Идентификаторы колонок внутри снимка должны быть уникальны.");
+        }
+
+        var columns = allColumns.ToDictionary(x => x.TempId, StringComparer.OrdinalIgnoreCase);
+        foreach (var relationship in request.Relationships)
+        {
+            if (!columns.TryGetValue(relationship.SourceColumnTempId, out var source) ||
+                !columns.TryGetValue(relationship.TargetColumnTempId, out var target))
+            {
+                return SchemaErrors.InvalidRelationship("Связь ссылается на неизвестную колонку.");
+            }
+
+            if (source.PhysicalTypeId != target.PhysicalTypeId)
+            {
+                return SchemaErrors.InvalidRelationship($"Типы колонок связи '{relationship.Name}' несовместимы.");
+            }
+
+            if (!target.IsPrimaryKey)
+            {
+                return SchemaErrors.InvalidRelationship($"Целевая колонка связи '{relationship.Name}' должна входить в первичный ключ.");
+            }
+
+            if (String.Equals(relationship.DeleteRule, "SET NULL", StringComparison.OrdinalIgnoreCase) && source.IsRequired)
+            {
+                return SchemaErrors.InvalidRelationship($"SET NULL запрещён для обязательной колонки '{source.Name}'.");
+            }
+        }
+
+        return null;
     }
 }

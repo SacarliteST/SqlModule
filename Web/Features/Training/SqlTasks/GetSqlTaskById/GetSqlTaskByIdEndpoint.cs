@@ -14,6 +14,7 @@ public sealed class GetSqlTaskByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Training.SqlTasks.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetSqlTaskById")
             .WithTags("Training")
             .WithSummary("Получить SQL-задание по Id")

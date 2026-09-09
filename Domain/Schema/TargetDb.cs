@@ -10,6 +10,7 @@ public sealed class TargetDb : AuditableEntity
     public string DbName { get; private set; }
     public string? Description { get; private set; }
     public bool IsReadOnly { get; private set; }
+    public long SchemaVersion { get; private set; }
 
     public DbmsDictionary Dbms { get; private set; } = default!;
 
@@ -22,6 +23,7 @@ public sealed class TargetDb : AuditableEntity
         DbName = dbName;
         Description = description;
         IsReadOnly = isReadOnly;
+        SchemaVersion = 0;
     }
 
     public static TargetDb Create(Guid dbmsId, string dbName, string? description, bool isReadOnly, Guid? id = null)
@@ -33,4 +35,6 @@ public sealed class TargetDb : AuditableEntity
         Description = description;
         IsReadOnly = isReadOnly;
     }
+
+    public void IncrementSchemaVersion() => SchemaVersion++;
 }

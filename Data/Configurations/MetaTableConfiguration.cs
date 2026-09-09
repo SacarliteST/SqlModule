@@ -12,6 +12,7 @@ internal sealed class MetaTableConfiguration : IEntityTypeConfiguration<MetaTabl
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TableName).IsRequired().HasMaxLength(200);
         builder.Property(x => x.Description).HasMaxLength(1000);
+        builder.Property(x => x.SortOrder).IsRequired();
         builder.ConfigureAudit();
 
         builder.HasMany(x => x.Attributes)

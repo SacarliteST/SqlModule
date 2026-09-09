@@ -10,6 +10,12 @@ public record SubmitAttemptResponse(
     CheckReason Reason,
     int? RowCount,
     long? DurationMs,
-    string? ErrorMessage,
-    IReadOnlyList<string> ActualColumns,
-    IReadOnlyList<IReadOnlyList<string?>> ActualRows);
+    string? PublicError,
+    IReadOnlyList<string>? ActualColumns,
+    IReadOnlyList<IReadOnlyList<string?>>? ActualRows,
+    bool IsResultTruncated,
+    AttemptResultSnapshotState ResultSnapshotState,
+    int? ReturnedRowCount = null,
+    int? ResultRowLimit = null,
+    DateTimeOffset? ResultSnapshotCreatedAt = null,
+    DateTimeOffset? ResultSnapshotExpiresAt = null);

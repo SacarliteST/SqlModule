@@ -5,7 +5,7 @@ using SQLModule.Web.Common.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Topics;
 
-internal record UpdateTopicCommand(Guid Id, string TopicName) : IRequest<Result>;
+internal record UpdateTopicCommand(Guid Id, string TopicName, string? Description) : IRequest<Result>;
 
 internal sealed class UpdateTopicHandler(AppDbContext db)
     : IRequestHandler<UpdateTopicCommand, Result>
@@ -18,7 +18,7 @@ internal sealed class UpdateTopicHandler(AppDbContext db)
             return Result.Fail(TopicErrors.NotFound(command.Id));
         }
 
-        entity.Update(command.TopicName);
+        entity.Update(command.TopicName, command.Description);
         await db.SaveChangesAsync(ct);
         return Result.Success();
     }

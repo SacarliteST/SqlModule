@@ -21,4 +21,13 @@ internal static class SchemaErrors
 
     internal static Error AlreadyExists(string name) =>
         DomainErrors<DomainTargetDb>.Conflict($"Схема с именем '{name}' уже существует для этой СУБД.");
+
+    internal static Error InvalidTypeParameter(string message) =>
+        Error.Validation("InvalidTypeParameter", message);
+
+    internal static Error InvalidRelationship(string message) =>
+        Error.Validation("InvalidRelationship", message);
+
+    internal static Error SchemaLimitExceeded =>
+        Error.Validation("SchemaValidationFailed", "Превышен допустимый размер схемы.");
 }

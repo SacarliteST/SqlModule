@@ -13,6 +13,9 @@ public sealed class SqlQuery : AuditableEntity
     /// <summary>Золотой результат в формате JSON (колонки + строки). Null до первого вычисления.</summary>
     public string? ExpectedResult { get; private set; }
 
+    /// <summary>Задание, которому принадлежит эталонный запрос.</summary>
+    public SqlTask? Task { get; private set; }
+
     private SqlQuery(Guid id, Guid targetDbId, string queryText, bool strictColumnOrder, bool strictRowOrder)
         : base(id)
     {
@@ -30,8 +33,13 @@ public sealed class SqlQuery : AuditableEntity
         Guid? id = null)
         => new(id ?? Guid.NewGuid(), targetDbId, queryText, strictColumnOrder, strictRowOrder);
 
-    public void Update(string queryText, bool strictColumnOrder, bool strictRowOrder)
+    public void Update(
+        Guid targetDbId,
+        string queryText,
+        bool strictColumnOrder,
+        bool strictRowOrder)
     {
+        TargetDbId = targetDbId;
         QueryText = queryText;
         StrictColumnOrder = strictColumnOrder;
         StrictRowOrder = strictRowOrder;

@@ -34,6 +34,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("DbmsName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -92,6 +96,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.HasKey("Id");
 
                     b.ToTable("DbmsDictionaries");
@@ -108,6 +116,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("DefaultValue")
                         .HasMaxLength(500)
@@ -152,6 +164,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("ValuePrefix")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -179,6 +195,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<Guid>("DbmsId")
                         .HasColumnType("uuid");
 
@@ -193,11 +213,129 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DbmsId");
 
                     b.ToTable("PhysicalTypes");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.ModuleIntegration.ModuleSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("SessionId");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReturnUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("SessionKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<string>("TaskRef")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Status", "ExpiresAt");
+
+                    b.ToTable("ModuleSessions", (string)null);
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.ModuleIntegration.PendingPublish", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Attempts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeadLetterAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeduplicationKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("MessageJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeduplicationKey")
+                        .IsUnique();
+
+                    b.HasIndex("SessionId");
+
+                    b.HasIndex("SentAt", "DeadLetterAt", "NextAttemptAt");
+
+                    b.ToTable("PendingPublishes", (string)null);
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Schema.AttributeParameterValue", b =>
@@ -211,6 +349,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<Guid>("MetaAttributeId")
                         .HasColumnType("uuid");
@@ -228,6 +370,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -250,6 +396,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<Guid>("DataRecordId")
                         .HasColumnType("uuid");
 
@@ -265,6 +415,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -287,6 +441,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<Guid>("MetaTableId")
                         .HasColumnType("uuid");
 
@@ -298,6 +456,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -323,6 +485,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<bool>("IsPrimaryKey")
                         .HasColumnType("boolean");
 
@@ -344,6 +510,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("MetaTableId");
@@ -364,6 +534,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("DeleteRule")
                         .HasMaxLength(50)
@@ -390,6 +564,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SourceAttributeId");
@@ -411,9 +589,16 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<short>("SortOrder")
+                        .HasColumnType("smallint");
 
                     b.Property<string>("TableName")
                         .IsRequired()
@@ -429,11 +614,51 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("TargetDbId");
 
                     b.ToTable("MetaTables");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Schema.MutationReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("PayloadHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ResponseJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Scope", "IdempotencyKey")
+                        .IsUnique();
+
+                    b.ToTable("MutationReceipts");
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Schema.TargetDb", b =>
@@ -447,6 +672,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("DbName")
                         .IsRequired()
@@ -463,11 +692,19 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<bool>("IsReadOnly")
                         .HasColumnType("boolean");
 
+                    b.Property<long>("SchemaVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -483,11 +720,21 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ActualColumnsJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ActualRowsJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<long?>("DurationMs")
                         .HasColumnType("bigint");
@@ -502,9 +749,31 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<bool>("IsCorrect")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsResultTruncated")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("ModuleSessionId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("ResultRowLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ResultSnapshotCreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ResultSnapshotExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResultSnapshotState")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ReturnedRowCount")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("RowCount")
                         .HasColumnType("integer");
@@ -515,6 +784,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("StudentEmail")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
 
                     b.Property<string>("StudentName")
                         .IsRequired()
@@ -534,10 +807,16 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ModuleSessionId");
 
                     b.HasIndex("TaskId");
 
@@ -555,6 +834,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("ExpectedResult")
                         .HasColumnType("jsonb");
@@ -578,6 +861,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("TargetDbId");
@@ -596,6 +883,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<short>("DifficultyLevel")
                         .HasColumnType("smallint");
@@ -625,9 +916,14 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("SqlQueryId");
+                    b.HasIndex("SqlQueryId")
+                        .IsUnique();
 
                     b.HasIndex("TopicId");
 
@@ -646,6 +942,14 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("CreatedById")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.Property<Guid?>("ParentTopicId")
                         .HasColumnType("uuid");
 
@@ -659,6 +963,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("UpdatedById")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -800,6 +1108,11 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
             modelBuilder.Entity("SQLModule.Domain.Training.Attempt", b =>
                 {
+                    b.HasOne("SQLModule.Domain.ModuleIntegration.ModuleSession", null)
+                        .WithMany()
+                        .HasForeignKey("ModuleSessionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("SQLModule.Domain.Training.SqlTask", null)
                         .WithMany()
                         .HasForeignKey("TaskId")
@@ -819,8 +1132,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
             modelBuilder.Entity("SQLModule.Domain.Training.SqlTask", b =>
                 {
                     b.HasOne("SQLModule.Domain.Training.SqlQuery", "SqlQuery")
-                        .WithMany()
-                        .HasForeignKey("SqlQueryId")
+                        .WithOne("Task")
+                        .HasForeignKey("SQLModule.Domain.Training.SqlTask", "SqlQueryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -880,6 +1193,11 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
             modelBuilder.Entity("SQLModule.Domain.Schema.TargetDb", b =>
                 {
                     b.Navigation("MetaTables");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>
+                {
+                    b.Navigation("Task");
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.Topic", b =>

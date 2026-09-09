@@ -8,6 +8,8 @@ internal static class AuditEntityTypeBuilderExtensions
 {
     internal static void ConfigureAudit<T>(this EntityTypeBuilder<T> builder) where T : AuditableEntity
     {
+        builder.Property(x => x.CreatedByName).HasMaxLength(200);
+        builder.Property(x => x.UpdatedByName).HasMaxLength(200);
         builder.Property(x => x.CreatedById).IsRequired();
         builder.Property(x => x.CreatedAt).IsRequired();
         builder.Property(x => x.UpdatedById).IsRequired();

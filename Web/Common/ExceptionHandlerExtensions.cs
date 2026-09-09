@@ -56,7 +56,7 @@ internal static class ExceptionHandlerExtensions
                 await context.Response.WriteAsJsonAsync(ApiProblemFactory.Create(
                     statusCode,
                     GetTitle(statusCode),
-                    exception?.Message ?? "Неизвестная ошибка.",
+                    GetSafeDetail(statusCode),
                     GetCode(statusCode)));
             });
         });
@@ -76,5 +76,12 @@ internal static class ExceptionHandlerExtensions
         StatusCodes.Status404NotFound => "Unhandled.NotFound",
         StatusCodes.Status400BadRequest => "Unhandled.BadRequest",
         _ => "Unhandled.InternalServerError"
+    };
+
+    internal static string GetSafeDetail(int statusCode) => statusCode switch
+    {
+        StatusCodes.Status404NotFound => "Запрошенный ресурс не найден.",
+        StatusCodes.Status400BadRequest => "Запрос содержит некорректные данные.",
+        _ => "При обработке запроса произошла внутренняя ошибка."
     };
 }

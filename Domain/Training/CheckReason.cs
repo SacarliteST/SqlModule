@@ -8,5 +8,6 @@ public enum CheckReason
     ValueMismatch = 3,
     SqlError = 4,
     Timeout = 5,
-    NotRun = 6
+    NotRun = 6,
+    ResultLimitExceeded = 7
 }

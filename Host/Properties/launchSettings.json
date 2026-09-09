@@ -30,6 +30,22 @@
         "SeedDemoData": "false",
         "DevTools__Enabled": "false"
       }
+    },
+    "Platform": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "http://localhost:5202",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Platform",
+        "UseRobotAuth": "false",
+        "UseFakeSandbox": "false",
+        "UseAllowAllCors": "true",
+        "SeedDemoData": "false",
+        "SeedSmokeData": "true",
+        "DevTools__Enabled": "false"
+      }
     }
   }
 }

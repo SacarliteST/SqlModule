@@ -6,6 +6,19 @@ public static class ApiRoutes
     /// <summary>Общий префикс Api v1.</summary>
     public const string PrefixV1 = "api/v1";
 
+    /// <summary>Маршруты интеграции с основной платформой.</summary>
+    public static class ModuleIntegration
+    {
+        /// <summary>Каталог опубликованных заданий SQL-модуля.</summary>
+        public const string TasksCatalog = PrefixV1 + "/module-integration/tasks-catalog";
+
+        /// <summary>Платформенные сессии SQL-модуля.</summary>
+        public const string Sessions = PrefixV1 + "/module-integration/sessions";
+
+        /// <summary>Текущая платформенная сессия из JWT.</summary>
+        public const string CurrentSession = Sessions + "/current";
+    }
+
     /// <summary>Маршруты контекста СУБД-справочника.</summary>
     public static class DbmsCatalog
     {
@@ -83,8 +96,32 @@ public static class ApiRoutes
             /// <summary>Элемент по Id.</summary>
             public const string ById = Collection + "/{id}";
 
+            /// <summary>Агрегированная схема учебной базы.</summary>
+            public const string Schema = ById + "/schema";
+
+            /// <summary>Проверка желаемой схемы существующей учебной базы.</summary>
+            public const string ValidateSchema = Schema + "/validate";
+
+            /// <summary>Строки конкретной таблицы учебной базы.</summary>
+            public const string TableRows = ById + "/tables/{tableId}/rows";
+
+            /// <summary>Проверка пользовательского DDL без сохранения.</summary>
+            public const string ValidateDdl = Collection + "/ddl/validate";
+
+            /// <summary>Создание учебной базы из пользовательского DDL.</summary>
+            public const string FromDdl = Collection + "/from-ddl";
+
             /// <inheritdoc cref="ForId"/>
             public static string ForId(Guid id) => $"{Collection}/{id}";
+
+            /// <inheritdoc cref="ForSchema"/>
+            public static string ForSchema(Guid id) => $"{Collection}/{id}/schema";
+
+            /// <inheritdoc cref="ForValidateSchema"/>
+            public static string ForValidateSchema(Guid id) => $"{Collection}/{id}/schema/validate";
+
+            /// <inheritdoc cref="ForTableRows"/>
+            public static string ForTableRows(Guid id, Guid tableId) => $"{Collection}/{id}/tables/{tableId}/rows";
 
             /// <inheritdoc cref="ForPagination"/>
             public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
@@ -190,6 +227,25 @@ public static class ApiRoutes
     /// <summary>Маршруты контекста тренажёра.</summary>
     public static class Training
     {
+        /// <summary>Безопасный публичный контур студента.</summary>
+        public static class Student
+        {
+            public const string Topics = PrefixV1 + "/student/topics";
+            public const string Tasks = PrefixV1 + "/student/tasks";
+            public const string TaskById = Tasks + "/{taskId}";
+            public const string TaskSchema = TaskById + "/schema";
+            public const string Attempts = PrefixV1 + "/student/attempts";
+            public const string AttemptById = Attempts + "/{attemptId}";
+
+            public static string ForTask(Guid taskId) => $"{Tasks}/{taskId}";
+            public static string ForTaskSchema(Guid taskId) => $"{ForTask(taskId)}/schema";
+            public static string ForAttempt(Guid attemptId) => $"{Attempts}/{attemptId}";
+            public static string ForTasksPage(int offset, int limit) =>
+                $"{Tasks}?offset={offset}&limit={limit}";
+            public static string ForAttemptsPage(int offset, int limit) =>
+                $"{Attempts}?offset={offset}&limit={limit}";
+        }
+
         /// <summary>Темы.</summary>
         public static class Topics
         {
@@ -243,11 +299,23 @@ public static class ApiRoutes
             /// <summary>Публикация задания.</summary>
             public const string Publish = ById + "/publish";
 
+            /// <summary>Архивирование задания.</summary>
+            public const string Archive = ById + "/archive";
+
+            /// <summary>Эталонное решение текущего задания.</summary>
+            public const string ReferenceQuery = ById + "/reference-query";
+
             /// <inheritdoc cref="ForId"/>
             public static string ForId(Guid id) => $"{Collection}/{id}";
 
             /// <inheritdoc cref="ForPublish"/>
             public static string ForPublish(Guid id) => $"{Collection}/{id}/publish";
+
+            /// <inheritdoc cref="ForArchive"/>
+            public static string ForArchive(Guid id) => $"{Collection}/{id}/archive";
+
+            /// <inheritdoc cref="ForReferenceQuery"/>
+            public static string ForReferenceQuery(Guid id) => $"{Collection}/{id}/reference-query";
 
             /// <inheritdoc cref="ForPagination"/>
             public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
@@ -271,6 +339,12 @@ public static class ApiRoutes
 
             /// <summary>Элемент по Id.</summary>
             public const string ById = Collection + "/{id}";
+
+            /// <summary>Справочники фильтров преподавательского журнала.</summary>
+            public const string FilterOptions = Collection + "/filter-options";
+            public const string StudentFilterOptions = FilterOptions + "/students";
+            public const string TopicFilterOptions = FilterOptions + "/topics";
+            public const string TaskFilterOptions = FilterOptions + "/tasks";
 
             /// <inheritdoc cref="ForId"/>
             public static string ForId(Guid id) => $"{Collection}/{id}";

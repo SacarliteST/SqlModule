@@ -8,7 +8,10 @@ namespace SQLModule.Web.Features.Training.Attempts;
 
 internal record GetAttemptByIdQuery(Guid Id) : IRequest<Result<AttemptResponse>>;
 
-internal sealed class GetAttemptByIdHandler(AppDbContext db)
+internal sealed class GetAttemptByIdHandler(
+    AppDbContext db,
+    IAttemptResultSnapshotService snapshotService,
+    TimeProvider timeProvider)
     : IRequestHandler<GetAttemptByIdQuery, Result<AttemptResponse>>
 {
     public async Task<Result<AttemptResponse>> Handle(GetAttemptByIdQuery query, CancellationToken ct)
@@ -21,6 +24,7 @@ internal sealed class GetAttemptByIdHandler(AppDbContext db)
             return Result<AttemptResponse>.Fail(AttemptErrors.NotFound(query.Id));
         }
 
-        return AttemptMappings.ToResponse(entity);
+        var snapshot = snapshotService.Read(entity, timeProvider.GetUtcNow());
+        return AttemptMappings.ToResponse(entity, snapshot);
     }
 }

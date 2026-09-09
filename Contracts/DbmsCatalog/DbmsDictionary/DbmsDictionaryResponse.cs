@@ -15,4 +15,8 @@ public record DbmsDictionaryResponse(
     Guid CreatedById,
     DateTimeOffset CreatedAt,
     Guid UpdatedById,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    bool IsActive = true,
+    bool IsAvailable = true,
+    string? UnavailableReason = null,
+    bool CanManageCatalog = false);

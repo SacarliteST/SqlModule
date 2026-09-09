@@ -1,7 +1,8 @@
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Sandbox;
+using SQLModule.Web.Features.Training.SqlTasks;
 
 namespace SQLModule.Web.Features.Training.SqlQueries;
 
@@ -31,10 +32,11 @@ internal sealed class SqlQueryValidationRunner(
         }
 
         var options = sandboxOptions.Value;
+        var comparisonRowLimit = Math.Max(1, options.ComparisonMaxRows);
         var run = await executor.RunAsync(
             materialized.Value!.Dbms.ToSandboxSpec(),
             materialized.Value.Setup,
-            new SandboxQuery(queryText, options.DefaultQueryTimeoutSeconds, options.MaxRows),
+            new SandboxQuery(queryText, options.DefaultQueryTimeoutSeconds, comparisonRowLimit),
             ct);
 
         if (!run.IsSuccess)
@@ -45,7 +47,13 @@ internal sealed class SqlQueryValidationRunner(
         if (!run.Value!.Succeeded)
         {
             return Result<QueryResultSet>.Fail(
-                SqlQueryErrors.ReferenceInvalid(run.Value.Error ?? string.Empty));
+                SqlQueryErrors.ReferenceInvalid(run.Value.Error ?? String.Empty));
+        }
+
+        if (run.Value.IsTruncated)
+        {
+            return Result<QueryResultSet>.Fail(
+                SqlTaskErrors.ReferenceResultExceedsComparisonLimit(comparisonRowLimit));
         }
 
         return run;

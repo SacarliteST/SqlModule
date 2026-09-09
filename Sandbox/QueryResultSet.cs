@@ -7,4 +7,5 @@ public sealed record QueryResultSet(
     IReadOnlyList<string> Columns,
     IReadOnlyList<IReadOnlyList<string?>> Rows,
     int RowCount,
-    long DurationMs);
+    long DurationMs,
+    bool IsTruncated = false);

@@ -10,6 +10,8 @@
 /// <param name="CreatedAt">Дата и время создания записи (UTC).</param>
 /// <param name="UpdatedById">Идентификатор пользователя, последним изменившего запись.</param>
 /// <param name="UpdatedAt">Дата и время последнего изменения записи (UTC).</param>
+/// <param name="CreatedByName">Отображаемое имя автора на момент создания.</param>
+/// <param name="UpdatedByName">Отображаемое имя последнего редактора.</param>
 public record TargetDbResponse(
     Guid Id,
     Guid DbmsId,
@@ -19,4 +21,6 @@ public record TargetDbResponse(
     Guid CreatedById,
     DateTimeOffset CreatedAt,
     Guid UpdatedById,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? CreatedByName = null,
+    string? UpdatedByName = null);

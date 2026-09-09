@@ -14,4 +14,10 @@ public static class IsolatedKeys
 
     /// <summary>Засеять демо-данные при старте (идемпотентно, только в изолированном режиме).</summary>
     public const string SeedDemoData = nameof(SeedDemoData);
+
+    /// <summary>Создать стабильный минимальный набор для platform smoke-теста.</summary>
+    public const string SeedSmokeData = nameof(SeedSmokeData);
+
+    /// <summary>Пропустить миграции при запуске tooling, которому нужен только граф сервисов (например, Swagger CLI).</summary>
+    public const string SkipDatabaseInitialization = nameof(SkipDatabaseInitialization);
 }

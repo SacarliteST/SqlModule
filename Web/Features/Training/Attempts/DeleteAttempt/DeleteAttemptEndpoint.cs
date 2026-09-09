@@ -13,6 +13,7 @@ public sealed class DeleteAttemptEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapDelete(ApiRoutes.Training.Attempts.ById, Handle)
+            .RequireAuthorization(Policies.Admin)
             .WithName("DeleteAttempt")
             .WithTags("Training")
             .WithSummary("Удалить попытку")
@@ -21,6 +22,8 @@ public sealed class DeleteAttemptEndpoint : IEndpoint
                 "Возвращает 204 No Content. " +
                 "404 — попытка не найдена.")
             .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
