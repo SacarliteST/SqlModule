@@ -14,6 +14,7 @@ internal sealed class GetAllMetaAttributesEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.MetaAttributes.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllMetaAttributes")
             .WithTags("Schema")
             .WithSummary("Получить список мета-атрибутов")

@@ -14,6 +14,7 @@ internal sealed class GetDataRecordByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.DataRecords.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetDataRecordById")
             .WithTags("Schema")
             .WithSummary("Получить строку данных по Id")

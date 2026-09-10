@@ -14,6 +14,7 @@ internal sealed class GetAllCellValuesEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.CellValues.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllCellValues")
             .WithTags("Schema")
             .WithSummary("Получить список значений ячеек")

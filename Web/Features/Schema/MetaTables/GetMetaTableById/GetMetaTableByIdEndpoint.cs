@@ -14,6 +14,7 @@ public sealed class GetMetaTableByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.MetaTables.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetMetaTableById")
             .WithTags("Schema")
             .WithSummary("Получить мета-таблицу по Id")

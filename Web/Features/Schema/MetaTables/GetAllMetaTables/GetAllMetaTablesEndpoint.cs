@@ -14,6 +14,7 @@ public sealed class GetAllMetaTablesEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.MetaTables.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllMetaTables")
             .WithTags("Schema")
             .WithSummary("Список мета-таблиц с пагинацией")
