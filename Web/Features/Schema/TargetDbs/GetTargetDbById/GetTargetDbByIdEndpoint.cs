@@ -14,6 +14,7 @@ public sealed class GetTargetDbByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.TargetDbs.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetTargetDbById")
             .WithTags("Schema")
             .WithSummary("Получить целевую БД по Id")

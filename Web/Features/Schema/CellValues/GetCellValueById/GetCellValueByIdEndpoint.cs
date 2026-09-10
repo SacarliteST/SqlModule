@@ -14,6 +14,7 @@ internal sealed class GetCellValueByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.CellValues.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetCellValueById")
             .WithTags("Schema")
             .WithSummary("Получить значение ячейки по Id")

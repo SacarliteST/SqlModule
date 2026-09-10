@@ -14,6 +14,7 @@ internal sealed class GetAllAttributeParameterValuesEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.AttributeParameterValues.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllAttributeParameterValues")
             .WithTags("Schema")
             .WithSummary("Получить список значений параметров атрибутов")

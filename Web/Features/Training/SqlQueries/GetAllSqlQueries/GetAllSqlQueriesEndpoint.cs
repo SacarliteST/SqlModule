@@ -14,6 +14,7 @@ public sealed class GetAllSqlQueriesEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Training.SqlQueries.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllSqlQueries")
             .WithTags("Training")
             .WithSummary("Список SQL-запросов с пагинацией")

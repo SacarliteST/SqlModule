@@ -14,6 +14,7 @@ public sealed class GetSqlQueryByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Training.SqlQueries.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetSqlQueryById")
             .WithTags("Training")
             .WithSummary("Получить SQL-запрос по Id")

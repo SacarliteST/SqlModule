@@ -14,6 +14,7 @@ internal sealed class GetAllParameterDefinitionsEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.DbmsCatalog.ParameterDefinitions.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllParameterDefinitions")
             .WithTags("DbmsCatalog")
             .WithSummary("Получить список определений параметров")

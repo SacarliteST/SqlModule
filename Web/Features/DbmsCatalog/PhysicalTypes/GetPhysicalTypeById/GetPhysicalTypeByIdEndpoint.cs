@@ -14,6 +14,7 @@ internal sealed class GetPhysicalTypeByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.DbmsCatalog.PhysicalTypes.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetPhysicalTypeById")
             .WithTags("DbmsCatalog")
             .WithSummary("Получить физический тип данных по Id")
