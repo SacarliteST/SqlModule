@@ -1,8 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
+using SQLModule.PlatformIntegration.Abstractions;
+using SQLModule.PlatformIntegration.Contracts;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 
@@ -37,7 +40,11 @@ internal sealed class PendingPublishProcessor(
             {
                 if (message.Kind == PendingPublishKind.Event)
                 {
-                    await publisher.PublishAsync(message.SessionId, message.MessageJson, ct);
+                    var request = JsonSerializer.Deserialize<PracticeEventMessage>(
+                        message.MessageJson,
+                        PlatformIntegrationJson.Default) ?? throw new JsonException(
+                        "Outbox-сообщение события платформенной сессии не содержит тела запроса.");
+                    await publisher.PublishAsync(request, ct);
                     message.MarkSent(timeProvider.GetUtcNow());
                     ModuleIntegrationTelemetry.RecordPublish(
                         message.Kind,
@@ -52,7 +59,7 @@ internal sealed class PendingPublishProcessor(
             {
                 throw;
             }
-            catch (Exception)
+            catch (Exception exception)
             {
                 var failedAt = timeProvider.GetUtcNow();
                 var deliveryOptions = GetDeliveryOptions(message.Kind);
@@ -75,12 +82,13 @@ internal sealed class PendingPublishProcessor(
                         ? ModuleIntegrationTelemetryOutcomes.DeadLetter
                         : ModuleIntegrationTelemetryOutcomes.Retry);
                 logger.LogWarning(
-                    "Не удалось отправить platform message {MessageId} типа {Kind} сессии {SessionId}; попытка {Attempt} из {MaxAttempts}.",
+                    "Не удалось отправить сообщение платформы {MessageId} типа {Kind} для сессии {SessionId}; попытка {Attempt} из {MaxAttempts}; тип ошибки {ExceptionType}",
                     message.Id,
                     message.Kind,
                     message.SessionId,
                     message.Attempts,
-                    deliveryOptions.MaxAttempts);
+                    deliveryOptions.MaxAttempts,
+                    exception.GetType().Name);
             }
 
             await db.SaveChangesAsync(ct);
@@ -99,7 +107,11 @@ internal sealed class PendingPublishProcessor(
     private async Task ProcessGradeAsync(PendingPublish message, CancellationToken ct)
     {
         var deliveredAt = timeProvider.GetUtcNow();
-        var result = await completionClient.CompleteAsync(message.SessionId, message.MessageJson, ct);
+        var request = JsonSerializer.Deserialize<PracticeCompletionRequest>(
+            message.MessageJson,
+            PlatformIntegrationJson.Default) ?? throw new JsonException(
+            "Outbox-сообщение завершения платформенной сессии не содержит тела запроса.");
+        var result = await completionClient.CompleteAsync(message.SessionId, request, ct);
         if (result is EducationCompletionDeliveryResult.Accepted or
             EducationCompletionDeliveryResult.TerminalConflict)
         {
