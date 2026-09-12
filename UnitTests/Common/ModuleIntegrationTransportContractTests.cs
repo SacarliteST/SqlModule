@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using Shouldly;
-using SQLModule.Web.Features.ModuleIntegration;
+using SQLModule.PlatformIntegration.Contracts;
 
 namespace SQLModule.UnitTests.Common;
 

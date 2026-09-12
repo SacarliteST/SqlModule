@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SQLModule.Education.Client;
+using SQLModule.Kafka.Publisher;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 
@@ -82,14 +84,8 @@ internal static class ModuleIntegrationExtensions
         if (section.GetValue<bool>(nameof(ModuleIntegrationOptions.Enabled)) &&
             section.GetValue("Kafka:PublisherEnabled", true))
         {
-            services.AddSingleton<IPracticeEventPublisher, KafkaPracticeEventPublisher>();
-            services.AddHttpClient<IEducationCompletionClient, EducationCompletionClient>((sp, client) =>
-            {
-                var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ModuleIntegrationOptions>>();
-                client.BaseAddress = new Uri(options.Value.EducationBaseUrl.TrimEnd('/') + "/");
-                client.Timeout = TimeSpan.FromSeconds(
-                    options.Value.EducationCompletion.RequestTimeoutSeconds);
-            });
+            services.AddEducationCompletionClient(section);
+            services.AddPracticeEventPublisher(section.GetSection("Kafka"));
             services.AddScoped<PendingPublishProcessor>();
             services.AddHostedService<PendingPublishWorker>();
         }
