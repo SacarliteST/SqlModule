@@ -98,7 +98,6 @@ public static class WebExtensions
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton(TimeProvider.System);
-        services.Configure<SandboxOptions>(configuration.GetSection(SandboxOptions.SectionKey));
         services.Configure<AttemptResultSnapshotsOptions>(
             configuration.GetSection(AttemptResultSnapshotsOptions.SectionKey));
         services.AddData(configuration);
