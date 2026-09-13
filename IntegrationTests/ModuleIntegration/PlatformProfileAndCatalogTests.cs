@@ -832,7 +832,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
                     BatchSize = 100
                 }
             }),
-            TimeProvider.System);
+            TimeProvider.System,
+            NullLogger<ModuleSessionCleanupProcessor>.Instance);
 
         var removed = await processor.CleanupAsync(CancellationToken.None);
 
