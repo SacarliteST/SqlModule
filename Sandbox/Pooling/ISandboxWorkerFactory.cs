@@ -11,4 +11,8 @@ internal interface ISandboxWorkerFactory
     ValueTask<Result> DeleteAsync(
         SandboxWorker worker,
         CancellationToken cancellationToken);
+
+    ValueTask<bool> IsHealthyAsync(
+        SandboxWorker worker,
+        CancellationToken cancellationToken);
 }

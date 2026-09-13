@@ -146,6 +146,75 @@ public sealed class LocalSandboxLeaseManagerTests
         await waiter.Value!.DisposeAsync();
     }
 
+    [Fact(DisplayName = "Pool lifecycle: прогревает профиль до MinSize без аренды")]
+    public async Task MaintainAsync_PrewarmsProfileToMinSize()
+    {
+        var factory = new LifecycleWorkerFactory();
+        var manager = CreateManager(factory);
+        var profile = CreateProfile(minSize: 2, maxSize: 3);
+
+        var maintained = await manager.MaintainAsync([profile], CancellationToken.None);
+        var first = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+        var second = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+
+        maintained.ShouldBeTrue();
+        factory.Created.Count.ShouldBe(2);
+        first.Worker.ShouldNotBeSameAs(second.Worker);
+        await first.DisposeAsync();
+        await second.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "Pool lifecycle: unhealthy worker удаляется и заменяется до MinSize")]
+    public async Task MaintainAsync_ReplacesUnhealthyWorker()
+    {
+        var factory = new LifecycleWorkerFactory();
+        var manager = CreateManager(factory);
+        var profile = CreateProfile(minSize: 1, maxSize: 1);
+        (await manager.MaintainAsync([profile], CancellationToken.None)).ShouldBeTrue();
+        var unhealthy = factory.Created.Single();
+        factory.UnhealthyWorkers.TryAdd(unhealthy.WorkerId, 0).ShouldBeTrue();
+
+        var maintained = await manager.MaintainAsync([profile], CancellationToken.None);
+
+        maintained.ShouldBeFalse();
+        factory.Deleted.ShouldContain(unhealthy);
+        factory.Created.Count.ShouldBe(2);
+        var replacement = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+        replacement.Worker.WorkerId.ShouldNotBe(unhealthy.WorkerId);
+        await replacement.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "Pool lifecycle: drain запрещает новые аренды и удаляет возвращённый worker")]
+    public async Task DrainAsync_StopsAcquisitionAndDeletesWorkers()
+    {
+        var factory = new LifecycleWorkerFactory();
+        var manager = CreateManager(factory);
+        var profile = CreateProfile(minSize: 1, maxSize: 1);
+        await manager.MaintainAsync([profile], CancellationToken.None);
+        var lease = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+
+        var drain = manager.DrainAsync(CancellationToken.None).AsTask();
+        await Task.Yield();
+        var rejected = await manager.AcquireAsync(profile, CancellationToken.None);
+        await lease.DisposeAsync();
+        await drain;
+
+        rejected.IsSuccess.ShouldBeFalse();
+        rejected.Error!.Code.ShouldBe("Sandbox.PoolIsStopping");
+        factory.Deleted.ShouldContain(lease.Worker);
+        lease.Worker.State.ShouldBe(SandboxWorkerState.Disposed);
+    }
+
+    [Fact(DisplayName = "Pool lifecycle: restart backoff ограничен настроенным максимумом")]
+    public void RestartBackoff_IsBounded()
+    {
+        var first = SandboxPoolHostedService.CalculateRestartDelay(1, 60);
+        var repeated = SandboxPoolHostedService.CalculateRestartDelay(20, 60);
+
+        first.ShouldBeInRange(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1.2));
+        repeated.ShouldBeLessThanOrEqualTo(TimeSpan.FromSeconds(60));
+    }
+
     private static LocalSandboxLeaseManager CreateManager(
         ISandboxWorkerFactory factory,
         TimeSpan? timeout = null) =>
@@ -159,6 +228,7 @@ public sealed class LocalSandboxLeaseManagerTests
         string systemName = "postgres",
         string dockerImage = "postgres:17-alpine",
         int port = 5432,
+        int minSize = 0,
         int maxSize = 1) =>
         new(
             new SandboxDbmsSpec(
@@ -172,7 +242,38 @@ public sealed class LocalSandboxLeaseManagerTests
                 $"{systemName}_DATABASE",
                 "training",
                 null),
-            new SandboxPoolProfileOptions { MinSize = 0, MaxSize = maxSize });
+            new SandboxPoolProfileOptions { MinSize = minSize, MaxSize = maxSize });
+
+    private sealed class LifecycleWorkerFactory : ISandboxWorkerFactory
+    {
+        internal ConcurrentBag<SandboxWorker> Created { get; } = [];
+        internal ConcurrentBag<SandboxWorker> Deleted { get; } = [];
+        internal ConcurrentDictionary<Guid, byte> UnhealthyWorkers { get; } = new();
+
+        public ValueTask<Result<SandboxWorker>> CreateAsync(
+            SandboxWorkerProfile profile,
+            CancellationToken cancellationToken)
+        {
+            var worker = new SandboxWorker(
+                profile,
+                $"lifecycle-{Guid.NewGuid():N}",
+                "127.0.0.1",
+                profile.Dbms.DefaultPort + Created.Count + 1);
+            Created.Add(worker);
+            return ValueTask.FromResult(Result<SandboxWorker>.Success(worker));
+        }
+
+        public ValueTask<Result> DeleteAsync(SandboxWorker worker, CancellationToken cancellationToken)
+        {
+            Deleted.Add(worker);
+            return ValueTask.FromResult(Result.Success());
+        }
+
+        public ValueTask<bool> IsHealthyAsync(
+            SandboxWorker worker,
+            CancellationToken cancellationToken) =>
+            ValueTask.FromResult(!UnhealthyWorkers.ContainsKey(worker.WorkerId));
+    }
 
     private sealed class FakeWorkerFactory : ISandboxWorkerFactory
     {
@@ -198,6 +299,10 @@ public sealed class LocalSandboxLeaseManagerTests
             Deleted.Add(worker);
             return ValueTask.FromResult(Result.Success());
         }
+
+        public ValueTask<bool> IsHealthyAsync(
+            SandboxWorker worker,
+            CancellationToken cancellationToken) => ValueTask.FromResult(true);
     }
 
     private sealed class FailFirstWorkerFactory : ISandboxWorkerFactory
@@ -228,5 +333,9 @@ public sealed class LocalSandboxLeaseManagerTests
 
         public ValueTask<Result> DeleteAsync(SandboxWorker worker, CancellationToken cancellationToken) =>
             ValueTask.FromResult(Result.Success());
+
+        public ValueTask<bool> IsHealthyAsync(
+            SandboxWorker worker,
+            CancellationToken cancellationToken) => ValueTask.FromResult(true);
     }
 }

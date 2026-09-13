@@ -21,4 +21,18 @@ internal static class SandboxErrors
 
     internal static Error PoolWorkerCreationFailed() =>
         Error.Unavailable("Sandbox.PoolWorkerCreationFailed", "Sandbox worker could not be created.");
+
+    internal static Error PoolIsStopping() =>
+        Error.Unavailable("Sandbox.PoolIsStopping", "Sandbox pool is stopping and does not accept new leases.");
+
+    internal static Error PoolProfileNotConfigured(string systemName) =>
+        Error.Unavailable(
+            "Sandbox.PoolProfileNotConfigured",
+            $"Sandbox pool profile for DBMS '{systemName}' is not configured.");
+
+    internal static Error IsolationPreparationFailed() =>
+        Error.Unavailable("Sandbox.IsolationPreparationFailed", "Sandbox isolation could not be prepared.");
+
+    internal static Error IsolationCleanupFailed() =>
+        Error.Unavailable("Sandbox.IsolationCleanupFailed", "Sandbox isolation could not be cleaned up safely.");
 }
