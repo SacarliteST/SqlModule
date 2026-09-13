@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using Shouldly;
 using SQLModule.Common.Results;
 using SQLModule.Sandbox;
@@ -19,7 +20,6 @@ public sealed class LocalSandboxLeaseManagerTests
         var first = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
 
         var secondTask = manager.AcquireAsync(profile, CancellationToken.None).AsTask();
-        await Task.Delay(30);
         secondTask.IsCompleted.ShouldBeFalse();
 
         await first.DisposeAsync();
@@ -40,8 +40,6 @@ public sealed class LocalSandboxLeaseManagerTests
         var second = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
 
         var thirdTask = manager.AcquireAsync(profile, CancellationToken.None).AsTask();
-        await Task.Delay(30);
-
         factory.Created.Count.ShouldBe(2);
         thirdTask.IsCompleted.ShouldBeFalse();
         first.Worker.ShouldNotBeSameAs(second.Worker);
@@ -54,15 +52,98 @@ public sealed class LocalSandboxLeaseManagerTests
         await third.DisposeAsync();
     }
 
-    [Fact(DisplayName = "Pool coordinator: timeout не теряет ёмкость очереди")]
-    public async Task AcquireAsync_AfterTimeoutCanLeaseReturnedWorker()
+    [Fact(DisplayName = "Pool coordinator: ожидающие аренды обслуживаются в порядке FIFO")]
+    public async Task AcquireAsync_QueuedWaitersAreServedInOrder()
     {
         var factory = new FakeWorkerFactory();
-        var manager = CreateManager(factory, TimeSpan.FromMilliseconds(50));
+        var manager = CreateManager(factory);
+        var profile = CreateProfile(maxSize: 1);
+        var held = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+        var secondTask = manager.AcquireAsync(profile, CancellationToken.None).AsTask();
+        var thirdTask = manager.AcquireAsync(profile, CancellationToken.None).AsTask();
+
+        await held.DisposeAsync();
+        var second = (await secondTask).Value.ShouldNotBeNull();
+
+        thirdTask.IsCompleted.ShouldBeFalse();
+        await second.DisposeAsync();
+        var third = (await thirdTask).Value.ShouldNotBeNull();
+        third.Worker.ShouldBeSameAs(held.Worker);
+        await third.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "Pool coordinator: серия отмен не теряет permit и не создаёт лишний worker")]
+    public async Task AcquireAsync_RepeatedCancellationDoesNotLeakCapacity()
+    {
+        var factory = new FakeWorkerFactory();
+        var manager = CreateManager(factory, TimeSpan.FromMinutes(1));
         var profile = CreateProfile(maxSize: 1);
         var held = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
 
-        var timedOut = await manager.AcquireAsync(profile, CancellationToken.None);
+        for (var index = 0; index < 25; index++)
+        {
+            using var cancellation = new CancellationTokenSource();
+            var canceledTask = manager.AcquireAsync(profile, cancellation.Token).AsTask();
+            cancellation.Cancel();
+            await Should.ThrowAsync<OperationCanceledException>(async () => await canceledTask);
+        }
+
+        await held.DisposeAsync();
+        var next = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+
+        next.Worker.ShouldBeSameAs(held.Worker);
+        factory.Created.Count.ShouldBe(1);
+        await next.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "Pool coordinator: очередь под нагрузкой не выдаёт worker одновременно")]
+    public async Task AcquireAsync_BurstKeepsEveryWorkerExclusive()
+    {
+        const int maxSize = 3;
+        const int waitingCount = 30;
+        var factory = new FakeWorkerFactory();
+        var manager = CreateManager(factory);
+        var profile = CreateProfile(maxSize: maxSize);
+        var active = new List<SandboxLease>();
+        for (var index = 0; index < maxSize; index++)
+        {
+            active.Add((await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull());
+        }
+
+        var waiting = Enumerable.Range(0, waitingCount)
+            .Select(_ => manager.AcquireAsync(profile, CancellationToken.None).AsTask())
+            .ToArray();
+        for (var index = 0; index < waiting.Length; index++)
+        {
+            var released = active[0];
+            active.RemoveAt(0);
+            await released.DisposeAsync();
+            var acquired = (await waiting[index]).Value.ShouldNotBeNull();
+
+            active.Select(lease => lease.Worker.WorkerId).ShouldNotContain(acquired.Worker.WorkerId);
+            active.Add(acquired);
+        }
+
+        active.Select(lease => lease.Worker.WorkerId).Distinct().Count().ShouldBe(maxSize);
+        factory.Created.Count.ShouldBe(maxSize);
+        foreach (var lease in active)
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Fact(DisplayName = "Pool coordinator: timeout не теряет ёмкость очереди")]
+    public async Task AcquireAsync_AfterTimeoutCanLeaseReturnedWorker()
+    {
+        var clock = new FakeTimeProvider();
+        var factory = new FakeWorkerFactory();
+        var manager = CreateManager(factory, TimeSpan.FromSeconds(5), clock);
+        var profile = CreateProfile(maxSize: 1);
+        var held = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+
+        var timedOutTask = manager.AcquireAsync(profile, CancellationToken.None).AsTask();
+        clock.Advance(TimeSpan.FromSeconds(5));
+        var timedOut = await timedOutTask;
 
         timedOut.IsSuccess.ShouldBeFalse();
         timedOut.Error!.Code.ShouldBe("Sandbox.PoolAcquireTimeout");
@@ -80,10 +161,13 @@ public sealed class LocalSandboxLeaseManagerTests
         var manager = CreateManager(factory, TimeSpan.FromSeconds(5));
         var profile = CreateProfile(maxSize: 1);
         var held = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(30));
+        using var cancellation = new CancellationTokenSource();
+
+        var canceledTask = manager.AcquireAsync(profile, cancellation.Token).AsTask();
+        cancellation.Cancel();
 
         await Should.ThrowAsync<OperationCanceledException>(async () =>
-            await manager.AcquireAsync(profile, cancellation.Token));
+            await canceledTask);
 
         await held.DisposeAsync();
         var next = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
@@ -211,22 +295,43 @@ public sealed class LocalSandboxLeaseManagerTests
     [Fact(DisplayName = "Pool lifecycle: drain запрещает новые аренды и удаляет возвращённый worker")]
     public async Task DrainAsync_StopsAcquisitionAndDeletesWorkers()
     {
+        var clock = new FakeTimeProvider();
         var factory = new LifecycleWorkerFactory();
-        var manager = CreateManager(factory);
+        var manager = CreateManager(factory, timeProvider: clock);
         var profile = CreateProfile(minSize: 1, maxSize: 1);
         await manager.MaintainAsync([profile], CancellationToken.None);
         var lease = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
 
         var drain = manager.DrainAsync(CancellationToken.None).AsTask();
-        await Task.Yield();
         var rejected = await manager.AcquireAsync(profile, CancellationToken.None);
         await lease.DisposeAsync();
+        clock.Advance(TimeSpan.FromMilliseconds(25));
         await drain;
 
         rejected.IsSuccess.ShouldBeFalse();
         rejected.Error!.Code.ShouldBe("Sandbox.PoolIsStopping");
         factory.Deleted.ShouldContain(lease.Worker);
         lease.Worker.State.ShouldBe(SandboxWorkerState.Disposed);
+    }
+
+    [Fact(DisplayName = "Pool lifecycle: shutdown-timeout принудительно удаляет активный worker")]
+    public async Task DrainAsync_CancellationForcesActiveWorkerDeletion()
+    {
+        var clock = new FakeTimeProvider();
+        var factory = new LifecycleWorkerFactory();
+        var manager = CreateManager(factory, timeProvider: clock);
+        var profile = CreateProfile(minSize: 1, maxSize: 1);
+        await manager.MaintainAsync([profile], CancellationToken.None);
+        var lease = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+        using var shutdown = new CancellationTokenSource();
+
+        var drain = manager.DrainAsync(shutdown.Token).AsTask();
+        shutdown.Cancel();
+        await drain;
+
+        factory.Deleted.ShouldContain(lease.Worker);
+        lease.Worker.State.ShouldBe(SandboxWorkerState.Disposed);
+        await lease.DisposeAsync();
     }
 
     [Fact(DisplayName = "Pool lifecycle: restart backoff ограничен настроенным максимумом")]
@@ -241,12 +346,14 @@ public sealed class LocalSandboxLeaseManagerTests
 
     private static LocalSandboxLeaseManager CreateManager(
         ISandboxWorkerFactory factory,
-        TimeSpan? timeout = null) =>
+        TimeSpan? timeout = null,
+        TimeProvider? timeProvider = null) =>
         new(
             factory,
             Options.Create(new SandboxOptions()),
             NullLogger<LocalSandboxLeaseManager>.Instance,
-            timeout ?? TimeSpan.FromSeconds(1));
+            timeout ?? TimeSpan.FromSeconds(1),
+            timeProvider: timeProvider);
 
     private static SandboxWorkerProfile CreateProfile(
         string systemName = "postgres",

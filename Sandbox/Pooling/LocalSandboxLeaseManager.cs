@@ -17,6 +17,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
     private readonly ILogger<LocalSandboxLeaseManager> logger;
     private readonly SandboxPoolHealthMonitor healthMonitor;
     private readonly TimeSpan acquireTimeout;
+    private readonly TimeProvider timeProvider;
     private readonly CancellationTokenSource draining = new();
     private int isDraining;
 
@@ -25,13 +26,15 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         IOptions<SandboxOptions> options,
         ILogger<LocalSandboxLeaseManager> logger,
         TimeSpan? acquireTimeout = null,
-        SandboxPoolHealthMonitor? healthMonitor = null)
+        SandboxPoolHealthMonitor? healthMonitor = null,
+        TimeProvider? timeProvider = null)
     {
         this.workerFactory = workerFactory;
         this.logger = logger;
         this.healthMonitor = healthMonitor ?? new SandboxPoolHealthMonitor(options);
         this.acquireTimeout = acquireTimeout ??
             TimeSpan.FromSeconds(options.Value.Pool.AcquireTimeoutSeconds);
+        this.timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public async ValueTask<Result<SandboxLease>> AcquireAsync(
@@ -56,7 +59,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         }
 
         var startedAt = Stopwatch.GetTimestamp();
-        using var timeoutSource = new CancellationTokenSource(acquireTimeout);
+        using var timeoutSource = new CancellationTokenSource(acquireTimeout, timeProvider);
         using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             draining.Token,
@@ -184,7 +187,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         {
             while (pools.Values.Any(pool => pool.HasActiveLease))
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(25), cancellationToken);
+                await Task.Delay(TimeSpan.FromMilliseconds(25), timeProvider, cancellationToken);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
