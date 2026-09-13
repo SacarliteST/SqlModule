@@ -131,6 +131,72 @@ public sealed class SandboxOptionsTests
         provider.GetRequiredService<ISandboxExecutor>().ShouldBeOfType<TestcontainersSandboxExecutor>();
     }
 
+    [Fact(DisplayName = "Pool options: включённый feature flag выбирает pooled executor")]
+    public void EnabledPool_UsesPooledExecutor()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["Sandbox:Pool:Enabled"] = "true",
+            ["Sandbox:Pool:Profiles:postgres:MinSize"] = "0",
+            ["Sandbox:Pool:Profiles:postgres:MaxSize"] = "1",
+        });
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddSandbox();
+        using var provider = services.BuildServiceProvider();
+
+        provider.GetRequiredService<ISandboxExecutor>().ShouldBeOfType<PooledSandboxExecutor>();
+    }
+
+    [Fact(DisplayName = "Pool options: MariaDB использует границы профиля MySQL")]
+    public void MariaDb_UsesMySqlPoolLimits()
+    {
+        var options = new SandboxPoolOptions();
+        var mysql = new SandboxPoolProfileOptions { MinSize = 1, MaxSize = 2 };
+        options.Profiles.Add("mysql", mysql);
+
+        var resolved = SQLModule.Sandbox.Pooling.SandboxPoolProfileResolver.Find(options, "MaRiAdB");
+
+        resolved.ShouldBeSameAs(mysql);
+    }
+
+    [Fact(DisplayName = "Pool executor: ненастроенный профиль не обходит пул через one-shot")]
+    public async Task EnabledPool_MissingProfileReturnsErrorWithoutFallback()
+    {
+        var configuration = BuildConfiguration(new Dictionary<string, string?>
+        {
+            ["Sandbox:Pool:Enabled"] = "true",
+            ["Sandbox:Pool:Profiles:postgres:MinSize"] = "0",
+            ["Sandbox:Pool:Profiles:postgres:MaxSize"] = "1",
+        });
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddSandbox();
+        using var provider = services.BuildServiceProvider();
+        var executor = provider.GetRequiredService<ISandboxExecutor>();
+        var mysql = new SandboxDbmsSpec(
+            "mysql",
+            "mysql:8.0",
+            3306,
+            "MYSQL_USER",
+            "sandbox",
+            "MYSQL_PASSWORD",
+            "password",
+            "MYSQL_DATABASE",
+            "training",
+            "MYSQL_ROOT_PASSWORD=root-password");
+
+        var result = await executor.ValidateSetupAsync(
+            mysql,
+            new SandboxSetup([]),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.Error!.Code.ShouldBe("Sandbox.PoolProfileNotConfigured");
+    }
+
     private static IConfiguration BuildConfiguration(Dictionary<string, string?> values) =>
         new ConfigurationBuilder().AddInMemoryCollection(values).Build();
 }

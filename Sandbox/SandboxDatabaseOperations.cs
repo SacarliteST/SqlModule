@@ -1,0 +1,213 @@
+using System.Data.Common;
+using System.Diagnostics;
+using SQLModule.Common.Results;
+using SQLModule.Sandbox.Dialects;
+
+namespace SQLModule.Sandbox;
+
+internal static class SandboxDatabaseOperations
+{
+    internal static async Task<Result> ApplySetupAsync(
+        DbConnection connection,
+        SandboxSetup setup,
+        int commandTimeoutSeconds,
+        CancellationToken ct)
+    {
+        foreach (var statement in setup.Statements)
+        {
+            try
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText = statement;
+                command.CommandTimeout = commandTimeoutSeconds;
+                await command.ExecuteNonQueryAsync(ct);
+            }
+            catch (Exception exception)
+            {
+                return Result.Fail(SandboxErrors.SetupFailed(exception.Message));
+            }
+        }
+
+        return Result.Success();
+    }
+
+    internal static async Task<Result<QueryResultSet>> ExecuteQueryAsync(
+        ISqlDialect dialect,
+        DbConnection connection,
+        SandboxQuery query,
+        CancellationToken ct)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            await dialect.BeginReadOnlyAsync(connection, ct);
+            await using var command = connection.CreateCommand();
+            command.CommandText = query.Sql;
+            command.CommandTimeout = query.TimeoutSeconds;
+
+            await using var reader = await command.ExecuteReaderAsync(ct);
+            var columns = Enumerable.Range(0, reader.FieldCount)
+                .Select(reader.GetName)
+                .ToList();
+            var rows = new List<IReadOnlyList<string?>>();
+            var isTruncated = false;
+            while (await reader.ReadAsync(ct))
+            {
+                if (rows.Count >= query.MaxRows)
+                {
+                    isTruncated = true;
+                    break;
+                }
+
+                var row = new string?[reader.FieldCount];
+                for (var index = 0; index < reader.FieldCount; index++)
+                {
+                    row[index] = reader.IsDBNull(index)
+                        ? null
+                        : Convert.ToString(
+                            reader.GetValue(index),
+                            System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                rows.Add(row);
+            }
+
+            stopwatch.Stop();
+            return Result<QueryResultSet>.Success(new QueryResultSet(
+                true,
+                null,
+                columns,
+                rows,
+                rows.Count,
+                stopwatch.ElapsedMilliseconds,
+                isTruncated));
+        }
+        catch (Exception exception)
+        {
+            stopwatch.Stop();
+            return Result<QueryResultSet>.Success(new QueryResultSet(
+                false,
+                exception.Message,
+                [],
+                [],
+                0,
+                stopwatch.ElapsedMilliseconds));
+        }
+        finally
+        {
+            try
+            {
+                await using var rollback = connection.CreateCommand();
+                rollback.CommandText = "ROLLBACK";
+                await rollback.ExecuteNonQueryAsync(CancellationToken.None);
+            }
+            catch
+            {
+                // Ошибка отката не меняет уже сформированный результат запроса.
+            }
+        }
+    }
+
+    internal static async Task<Result<InspectedSchema>> InspectCatalogAsync(
+        DbConnection connection,
+        string systemName,
+        CancellationToken ct)
+    {
+        var mysql = systemName.Equals("mysql", StringComparison.OrdinalIgnoreCase) ||
+                    systemName.Equals("mariadb", StringComparison.OrdinalIgnoreCase);
+        var columnsSql = mysql
+            ? """
+              SELECT c.table_name, c.column_name, c.data_type, c.is_nullable,
+                     c.ordinal_position, c.character_maximum_length, c.numeric_precision,
+                     c.numeric_scale, CASE WHEN c.column_key = 'PRI' THEN 1 ELSE 0 END
+              FROM information_schema.columns c WHERE c.table_schema = DATABASE()
+              ORDER BY c.table_name, c.ordinal_position
+              """
+            : """
+              SELECT c.table_name, c.column_name, c.data_type, c.is_nullable,
+                     c.ordinal_position, c.character_maximum_length, c.numeric_precision,
+                     c.numeric_scale, CASE WHEN EXISTS (
+                       SELECT 1 FROM information_schema.table_constraints tc
+                       JOIN information_schema.key_column_usage pk
+                         ON pk.constraint_schema = tc.constraint_schema AND pk.constraint_name = tc.constraint_name
+                       WHERE tc.constraint_type = 'PRIMARY KEY' AND tc.table_schema = c.table_schema
+                         AND tc.table_name = c.table_name AND pk.column_name = c.column_name
+                     ) THEN 1 ELSE 0 END
+              FROM information_schema.columns c
+              WHERE c.table_schema = current_schema()
+              ORDER BY c.table_name, c.ordinal_position
+              """;
+        var relationshipsSql = mysql
+            ? """
+              SELECT rc.constraint_name, kcu.table_name, kcu.column_name,
+                     kcu.referenced_table_name, kcu.referenced_column_name, rc.delete_rule, rc.update_rule
+              FROM information_schema.referential_constraints rc
+              JOIN information_schema.key_column_usage kcu
+                ON kcu.constraint_schema = rc.constraint_schema AND kcu.constraint_name = rc.constraint_name
+              WHERE rc.constraint_schema = DATABASE()
+              ORDER BY rc.constraint_name, kcu.ordinal_position
+              """
+            : """
+              SELECT tc.constraint_name, kcu.table_name, kcu.column_name,
+                     ukcu.table_name, ukcu.column_name, rc.delete_rule, rc.update_rule
+              FROM information_schema.table_constraints tc
+              JOIN information_schema.key_column_usage kcu
+                ON kcu.constraint_schema = tc.constraint_schema AND kcu.constraint_name = tc.constraint_name
+              JOIN information_schema.referential_constraints rc
+                ON rc.constraint_schema = tc.constraint_schema AND rc.constraint_name = tc.constraint_name
+              JOIN information_schema.key_column_usage ukcu
+                ON ukcu.constraint_schema = rc.unique_constraint_schema
+               AND ukcu.constraint_name = rc.unique_constraint_name
+               AND ukcu.ordinal_position = kcu.position_in_unique_constraint
+              WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = current_schema()
+              ORDER BY tc.constraint_name, kcu.ordinal_position
+              """;
+
+        try
+        {
+            var tableColumns = new Dictionary<string, List<InspectedColumn>>(StringComparer.OrdinalIgnoreCase);
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = columnsSql;
+                await using var reader = await command.ExecuteReaderAsync(ct);
+                while (await reader.ReadAsync(ct))
+                {
+                    var tableName = reader.GetString(0);
+                    if (!tableColumns.TryGetValue(tableName, out var columns))
+                    {
+                        columns = [];
+                        tableColumns[tableName] = columns;
+                    }
+
+                    columns.Add(new InspectedColumn(
+                        reader.GetString(1), reader.GetString(2), reader.GetString(3) == "YES",
+                        Convert.ToInt32(reader.GetValue(8)) == 1, Convert.ToInt32(reader.GetValue(4)) - 1,
+                        reader.IsDBNull(5) ? null : Convert.ToInt32(reader.GetValue(5)),
+                        reader.IsDBNull(6) ? null : Convert.ToInt32(reader.GetValue(6)),
+                        reader.IsDBNull(7) ? null : Convert.ToInt32(reader.GetValue(7))));
+                }
+            }
+
+            var relationships = new List<InspectedRelationship>();
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = relationshipsSql;
+                await using var reader = await command.ExecuteReaderAsync(ct);
+                while (await reader.ReadAsync(ct))
+                {
+                    relationships.Add(new InspectedRelationship(
+                        reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3),
+                        reader.GetString(4), reader.GetString(5), reader.GetString(6)));
+                }
+            }
+
+            return Result<InspectedSchema>.Success(new InspectedSchema(
+                tableColumns.Select(pair => new InspectedTable(pair.Key, pair.Value)).ToList(),
+                relationships));
+        }
+        catch (Exception exception)
+        {
+            return Result<InspectedSchema>.Fail(SandboxErrors.SetupFailed(exception.Message));
+        }
+    }
+}

@@ -10,12 +10,14 @@ namespace SQLModule.Sandbox.Pooling;
 /// Локальный координатор эксклюзивных аренд. Каждый профиль имеет собственную очередь и лимит.
 /// Контейнерный lifecycle подключается отдельно через <see cref="ISandboxWorkerFactory"/>.
 /// </summary>
-internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
+internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxPoolLifecycle
 {
     private readonly ConcurrentDictionary<SandboxProfileKey, ProfilePool> pools = new();
     private readonly ISandboxWorkerFactory workerFactory;
     private readonly ILogger<LocalSandboxLeaseManager> logger;
     private readonly TimeSpan acquireTimeout;
+    private readonly CancellationTokenSource draining = new();
+    private int isDraining;
 
     internal LocalSandboxLeaseManager(
         ISandboxWorkerFactory workerFactory,
@@ -34,6 +36,10 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(profile);
+        if (Volatile.Read(ref isDraining) != 0)
+        {
+            return Result<SandboxLease>.Fail(SandboxErrors.PoolIsStopping());
+        }
 
         var pool = pools.GetOrAdd(profile.Key, _ => new ProfilePool(profile));
         if (!pool.HasLimits(profile))
@@ -50,6 +56,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
         using var timeoutSource = new CancellationTokenSource(acquireTimeout);
         using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
+            draining.Token,
             timeoutSource.Token);
 
         try
@@ -98,12 +105,91 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
+            if (draining.IsCancellationRequested)
+            {
+                return Result<SandboxLease>.Fail(SandboxErrors.PoolIsStopping());
+            }
+
             logger.LogWarning(
                 "Истекло время ожидания аренды sandbox для профиля {Profile}; ожидание {ElapsedMs} мс",
                 profile.Key,
                 Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
             return Result<SandboxLease>.Fail(SandboxErrors.PoolAcquireTimeout());
         }
+    }
+
+    public async ValueTask<bool> MaintainAsync(
+        IReadOnlyCollection<SandboxWorkerProfile> profiles,
+        CancellationToken cancellationToken)
+    {
+        if (Volatile.Read(ref isDraining) != 0)
+        {
+            return false;
+        }
+
+        var succeeded = true;
+        foreach (var profile in profiles)
+        {
+            var pool = pools.GetOrAdd(profile.Key, _ => new ProfilePool(profile));
+            if (!pool.HasLimits(profile))
+            {
+                logger.LogError(
+                    "Конфликт конфигурации профиля пула {Profile}; переданы границы {MinSize}..{MaxSize}",
+                    profile.Key,
+                    profile.MinSize,
+                    profile.MaxSize);
+                succeeded = false;
+                continue;
+            }
+
+            succeeded &= await CheckReadyWorkersAsync(pool, cancellationToken);
+            while (pool.Allocated < pool.MinSize && pool.TryReserveSlot())
+            {
+                var creation = await CreateWorkerAsync(pool, profile, cancellationToken);
+                if (!creation.IsSuccess)
+                {
+                    succeeded = false;
+                    break;
+                }
+
+                pool.ReturnReady(creation.Value!);
+            }
+        }
+
+        return succeeded;
+    }
+
+    public async ValueTask DrainAsync(CancellationToken cancellationToken)
+    {
+        if (Interlocked.Exchange(ref isDraining, 1) == 0)
+        {
+            logger.LogInformation("Остановлена выдача новых аренд sandbox; начинается опустошение пула");
+            await draining.CancelAsync();
+        }
+
+        try
+        {
+            while (pools.Values.Any(pool => pool.HasActiveLease))
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(25), cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning(
+                "Истекло время ожидания активных аренд sandbox; оставшиеся воркеры будут удалены принудительно");
+        }
+
+        foreach (var pool in pools.Values)
+        {
+            foreach (var worker in pool.SnapshotWorkers())
+            {
+                worker.TryMarkUnhealthy();
+                await DeleteTrackedWorkerAsync(pool, worker, null, CancellationToken.None);
+            }
+        }
+
+        logger.LogInformation("Опустошение локального пула sandbox завершено");
     }
 
     private Result<SandboxLease> CreateLease(
@@ -197,7 +283,8 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
     private async ValueTask ReleaseAsync(ProfilePool pool, SandboxLease lease)
     {
         var worker = lease.Worker;
-        if (lease.Disposition == SandboxLeaseDisposition.Recycle)
+        if (lease.Disposition == SandboxLeaseDisposition.Recycle &&
+            Volatile.Read(ref isDraining) == 0)
         {
             if (!worker.TryBeginRecycling(lease.Generation))
             {
@@ -236,6 +323,51 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
         await DeleteTrackedWorkerAsync(pool, worker, lease.LeaseId);
     }
 
+    private async ValueTask<bool> CheckReadyWorkersAsync(
+        ProfilePool pool,
+        CancellationToken cancellationToken)
+    {
+        var succeeded = true;
+        foreach (var worker in pool.TakeReadySnapshot())
+        {
+            bool healthy;
+            try
+            {
+                healthy = await workerFactory.IsHealthyAsync(worker, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                pool.ReturnReady(worker);
+                throw;
+            }
+            catch (Exception exception)
+            {
+                logger.LogWarning(
+                    "Проверка здоровья sandbox-воркера {WorkerId} профиля {Profile} завершилась сбоем типа {FailureType}",
+                    worker.WorkerId,
+                    worker.Profile.Key,
+                    exception.GetType().Name);
+                healthy = false;
+            }
+
+            if (healthy)
+            {
+                pool.ReturnReady(worker);
+                continue;
+            }
+
+            succeeded = false;
+            worker.TryMarkUnhealthy();
+            logger.LogWarning(
+                "Sandbox-воркер {WorkerId} профиля {Profile} не прошёл проверку здоровья и будет заменён",
+                worker.WorkerId,
+                worker.Profile.Key);
+            await DeleteTrackedWorkerAsync(pool, worker, null, cancellationToken);
+        }
+
+        return succeeded;
+    }
+
     private async ValueTask RetireUnexpectedWorkerAsync(ProfilePool pool, SandboxWorker worker)
     {
         worker.TryMarkUnhealthy();
@@ -247,9 +379,13 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
         await DeleteTrackedWorkerAsync(pool, worker, null);
     }
 
-    private async ValueTask DeleteTrackedWorkerAsync(ProfilePool pool, SandboxWorker worker, Guid? leaseId)
+    private async ValueTask DeleteTrackedWorkerAsync(
+        ProfilePool pool,
+        SandboxWorker worker,
+        Guid? leaseId,
+        CancellationToken cancellationToken = default)
     {
-        var deletion = await DeleteWorkerSafelyAsync(worker);
+        var deletion = await DeleteWorkerSafelyAsync(worker, cancellationToken);
         if (deletion.IsSuccess)
         {
             worker.TryMarkDisposed();
@@ -273,11 +409,13 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
         return deletion;
     }
 
-    private async ValueTask<Result> DeleteWorkerSafelyAsync(SandboxWorker worker)
+    private async ValueTask<Result> DeleteWorkerSafelyAsync(
+        SandboxWorker worker,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            var deletion = await workerFactory.DeleteAsync(worker, CancellationToken.None);
+            var deletion = await workerFactory.DeleteAsync(worker, cancellationToken);
             if (!deletion.IsSuccess)
             {
                 logger.LogError(
@@ -305,7 +443,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
         private readonly object sync = new();
         private readonly ConcurrentQueue<SandboxWorker> ready = new();
         private readonly SemaphoreSlim changed = new(0);
-        private readonly HashSet<Guid> workers = [];
+        private readonly Dictionary<Guid, SandboxWorker> workers = [];
         private int allocated;
 
         internal ProfilePool(SandboxWorkerProfile profile)
@@ -349,7 +487,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
         {
             lock (sync)
             {
-                if (!workers.Add(worker.WorkerId))
+                if (!workers.TryAdd(worker.WorkerId, worker))
                 {
                     throw new InvalidOperationException("Worker уже зарегистрирован в пуле.");
                 }
@@ -379,7 +517,16 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
             changed.Release();
         }
 
-        internal bool TryTakeReady(out SandboxWorker worker) => ready.TryDequeue(out worker!);
+        internal bool TryTakeReady(out SandboxWorker worker)
+        {
+            if (!ready.TryDequeue(out worker!))
+            {
+                return false;
+            }
+
+            changed.Wait(0);
+            return true;
+        }
 
         internal void ReturnReady(SandboxWorker worker)
         {
@@ -389,5 +536,28 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager
 
         internal Task WaitForChangeAsync(CancellationToken cancellationToken) =>
             changed.WaitAsync(cancellationToken);
+
+        internal bool HasActiveLease => SnapshotWorkers().Any(worker =>
+            worker.State is SandboxWorkerState.Leased or SandboxWorkerState.Recycling);
+
+        internal IReadOnlyCollection<SandboxWorker> SnapshotWorkers()
+        {
+            lock (sync)
+            {
+                return workers.Values.ToArray();
+            }
+        }
+
+        internal IReadOnlyCollection<SandboxWorker> TakeReadySnapshot()
+        {
+            var result = new List<SandboxWorker>();
+            while (ready.TryDequeue(out var worker))
+            {
+                changed.Wait(0);
+                result.Add(worker);
+            }
+
+            return result;
+        }
     }
 }

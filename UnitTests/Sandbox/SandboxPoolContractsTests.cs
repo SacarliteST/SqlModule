@@ -1,6 +1,9 @@
 ﻿using Shouldly;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Sandbox;
+using SQLModule.Sandbox.Dialects;
 using SQLModule.Sandbox.Pooling;
 
 namespace SQLModule.UnitTests.Sandbox;
@@ -143,6 +146,69 @@ public sealed class SandboxPoolContractsTests
         factory.DeletedWorkers.ShouldBe([worker]);
     }
 
+    [Fact(DisplayName = "Isolation namespace: имена и секреты уникальны")]
+    public void IsolationNamespace_IsUniqueAndSafeForServerIdentifiers()
+    {
+        var first = SandboxIsolationNamespace.Create();
+        var second = SandboxIsolationNamespace.Create();
+
+        first.DatabaseName.ShouldMatch("^sqlm_[0-9a-f]{32}$");
+        first.SetupUsername.ShouldMatch("^sqlm_setup_[0-9a-f]{20}$");
+        first.RunnerUsername.ShouldMatch("^sqlm_runner_[0-9a-f]{20}$");
+        first.DatabaseName.ShouldNotBe(second.DatabaseName);
+        first.SetupPassword.ShouldNotBe(second.SetupPassword);
+        first.RunnerPassword.ShouldNotBe(second.RunnerPassword);
+        first.SetupPassword.Length.ShouldBe(64);
+        first.RunnerPassword.Length.ShouldBe(64);
+    }
+
+    [Fact(DisplayName = "Isolation namespace: диагностика не раскрывает временные учётные данные")]
+    public void IsolationNamespace_DiagnosticsDoNotExposeCredentials()
+    {
+        var sandboxNamespace = SandboxIsolationNamespace.Create();
+        var diagnostics = sandboxNamespace.ToString();
+
+        diagnostics.ShouldNotContain(sandboxNamespace.SetupUsername);
+        diagnostics.ShouldNotContain(sandboxNamespace.RunnerUsername);
+        diagnostics.ShouldNotContain(sandboxNamespace.SetupPassword);
+        diagnostics.ShouldNotContain(sandboxNamespace.RunnerPassword);
+    }
+
+    [Fact(DisplayName = "MySQL isolation: control-admin использует root password из environment")]
+    public void MySqlControlConnection_UsesRootCredentials()
+    {
+        var dialect = new MySqlDialect();
+        var dbms = CreateProfile(
+            systemName: "mysql",
+            extraEnv: "TZ=UTC;MYSQL_ROOT_PASSWORD=root-secret").Dbms;
+
+        var connectionString = dialect.BuildControlConnectionString("localhost", 3306, dbms);
+
+        connectionString.ShouldContain("User=root");
+        connectionString.ShouldContain("Password=root-secret");
+        connectionString.ShouldNotContain(dbms.DefaultPassword);
+    }
+
+    [Fact(DisplayName = "Isolation cleanup: неизвестный диалект выбраковывает worker")]
+    public async Task IsolationCleanup_WhenDialectIsUnavailable_DiscardsLease()
+    {
+        var worker = CreateReadyWorker(CreateProfile(systemName: "unsupported"));
+        worker.TryLease(out var generation).ShouldBeTrue();
+        var lease = new SandboxLease(worker, generation, _ => ValueTask.CompletedTask);
+        var manager = new SandboxIsolationManager(
+            new SqlDialectFactory([]),
+            Options.Create(new SandboxOptions()),
+            NullLogger<SandboxIsolationManager>.Instance);
+
+        var result = await manager.CleanupAsync(
+            lease,
+            SandboxIsolationNamespace.Create(),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeFalse();
+        lease.Disposition.ShouldBe(SandboxLeaseDisposition.Discard);
+    }
+
     private static SandboxWorkerProfile CreateProfile(
         string systemName = "postgres",
         string dockerImage = "postgres:17-alpine",
@@ -190,5 +256,9 @@ public sealed class SandboxPoolContractsTests
             worker.TryMarkDisposed();
             return ValueTask.FromResult(Result.Success());
         }
+
+        public ValueTask<bool> IsHealthyAsync(
+            SandboxWorker worker,
+            CancellationToken cancellationToken) => ValueTask.FromResult(true);
     }
 }
