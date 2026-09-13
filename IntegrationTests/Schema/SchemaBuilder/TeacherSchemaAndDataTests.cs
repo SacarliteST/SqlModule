@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
+using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Data.Core;
@@ -452,6 +453,109 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
         (await SchemaBuilderClient.GetTableRowsAsync(fixture.TargetDbId, table.Id, 0, 50))!.Count.ShouldBe(1);
     }
 
+    [Fact(DisplayName = "Teacher data: физическая ошибка отклоняет весь batch без раскрытия ошибки СУБД")]
+    public async Task RowsBatch_PhysicalConstraintViolation_RollsBackWithSafeError()
+    {
+        var fixture = await CreateFixtureAsync();
+        var applied = await SchemaBuilderClient.ApplyTargetDbSchemaAsync(
+            fixture.TargetDbId, SchemaRequest("0", fixture.PhysicalTypeId));
+        var table = applied.Tables.ShouldHaveSingleItem();
+        var column = table.Columns.ShouldHaveSingleItem();
+        var fake = App.Services.GetRequiredService<ISandboxExecutor>().ShouldBeOfType<FakeSandboxExecutor>();
+        fake.ResetValidateSetup();
+        fake.OverrideSetup = Result.Fail(Error.Validation(
+            "Sandbox.SetupFailed",
+            "секретный текст ошибки PostgreSQL"));
+
+        try
+        {
+            var exception = await Should.ThrowAsync<ValidationException>(() =>
+                SchemaBuilderClient.SaveTableRowsAsync(
+                    fixture.TargetDbId,
+                    table.Id,
+                    "physical-validation-failed",
+                    new BatchTableRowsRequest
+                    {
+                        SchemaVersion = applied.Version,
+                        Changes =
+                        [
+                            new TableRowChange
+                            {
+                                Operation = TableRowOperation.Create,
+                                TempId = "invalid-row",
+                                SortOrder = 0,
+                                Cells = new Dictionary<Guid, TableCellRequest>
+                                {
+                                    [column.Id] = new() { Value = "invalid", IsNull = false }
+                                }
+                            }
+                        ]
+                    }));
+
+            exception.Problem!.Code.ShouldBe("TargetDbData.ConstraintViolation");
+            exception.Problem.Detail!.ShouldNotContain("PostgreSQL");
+            fake.ValidateSetupCallCount.ShouldBe(1);
+            fake.LastSetup.ShouldNotBeNull();
+            fake.LastSetup.Statements.ShouldContain(x => x.Contains("invalid", StringComparison.Ordinal));
+            (await SchemaBuilderClient.GetTableRowsAsync(
+                fixture.TargetDbId,
+                table.Id,
+                0,
+                50))!.Count.ShouldBe(0);
+        }
+        finally
+        {
+            fake.ResetValidateSetup();
+        }
+    }
+
+    [Fact(DisplayName = "Teacher data: FK проверяется атомарно с числовой семантикой и допускает NULL")]
+    public async Task RowsBatch_ForeignKeyValidation_RejectsMissingAndAcceptsEquivalentNumberAndNull()
+    {
+        var fixture = await CreateFixtureAsync("INTEGER");
+        var schema = await SchemaBuilderClient.ApplyTargetDbSchemaAsync(
+            fixture.TargetDbId,
+            RelatedTablesSchemaRequest("0", fixture.PhysicalTypeId));
+        var parent = schema.Tables.Single(table => table.Name == "courses");
+        var child = schema.Tables.Single(table => table.Name == "enrollments");
+        var parentId = parent.Columns.Single(column => column.Name == "id");
+        var childId = child.Columns.Single(column => column.Name == "id");
+        var courseId = child.Columns.Single(column => column.Name == "course_id");
+
+        var missingReference = await Should.ThrowAsync<ValidationException>(() =>
+            SchemaBuilderClient.SaveTableRowsAsync(
+                fixture.TargetDbId,
+                child.Id,
+                "missing-course",
+                CreateRowsRequest(schema.Version, childId.Id, courseId.Id, "1", "5")));
+
+        missingReference.Problem!.Code.ShouldBe("TargetDbData.ReferenceNotFound");
+        missingReference.Problem.Detail!.ShouldContain("course_id");
+        missingReference.Problem.Detail!.ShouldContain("courses");
+        missingReference.Problem.Detail!.ShouldContain("5");
+        (await SchemaBuilderClient.GetTableRowsAsync(
+            fixture.TargetDbId, child.Id, 0, 50))!.Count.ShouldBe(0);
+
+        await SchemaBuilderClient.SaveTableRowsAsync(
+            fixture.TargetDbId,
+            parent.Id,
+            "create-course",
+            CreateRowsRequest(schema.Version, parentId.Id, null, "5", null));
+        await SchemaBuilderClient.SaveTableRowsAsync(
+            fixture.TargetDbId,
+            child.Id,
+            "equivalent-course-id",
+            CreateRowsRequest(schema.Version, childId.Id, courseId.Id, "2", "05"));
+        await SchemaBuilderClient.SaveTableRowsAsync(
+            fixture.TargetDbId,
+            child.Id,
+            "null-course-id",
+            CreateRowsRequest(schema.Version, childId.Id, courseId.Id, "3", null));
+
+        (await SchemaBuilderClient.GetTableRowsAsync(
+            fixture.TargetDbId, child.Id, 0, 50))!.Count.ShouldBe(2);
+    }
+
     private async Task<IReadOnlyList<Guid>> SeedNullableCellsAsync(
         Guid tableId,
         Guid columnId,
@@ -517,7 +621,8 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
         };
     }
 
-    private async Task<(Guid TargetDbId, Guid PhysicalTypeId, Guid DbmsId)> CreateFixtureAsync()
+    private async Task<(Guid TargetDbId, Guid PhysicalTypeId, Guid DbmsId)> CreateFixtureAsync(
+        string physicalTypeName = "text")
     {
         using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -525,7 +630,7 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
             "Schema_" + Guid.NewGuid(), "postgres", "postgres:latest", 5432,
             "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", null,
             "testdb", "user", "pass");
-        var physicalType = PhysicalType.Create(dbms.Id, "text");
+        var physicalType = PhysicalType.Create(dbms.Id, physicalTypeName);
         var target = Domain.Schema.TargetDb.Create(dbms.Id, "Target_" + Guid.NewGuid(), null, false);
         db.AddRange(dbms, physicalType, target);
         await db.SaveChangesAsync();
@@ -568,6 +673,89 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
                 }
             ],
             Relationships = []
+        };
+    }
+
+    private static SchemaUpsertRequest RelatedTablesSchemaRequest(string version, Guid physicalTypeId) => new()
+    {
+        Version = version,
+        Tables =
+        [
+            new SchemaTableDraft
+            {
+                TempId = "courses", Name = "courses", SortOrder = 0,
+                Columns =
+                [
+                    new SchemaColumnDraft
+                    {
+                        TempId = "course-id", Name = "id", PhysicalTypeId = physicalTypeId,
+                        IsPrimaryKey = true, IsRequired = true, SortOrder = 0, Parameters = []
+                    }
+                ]
+            },
+            new SchemaTableDraft
+            {
+                TempId = "enrollments", Name = "enrollments", SortOrder = 1,
+                Columns =
+                [
+                    new SchemaColumnDraft
+                    {
+                        TempId = "enrollment-id", Name = "id", PhysicalTypeId = physicalTypeId,
+                        IsPrimaryKey = true, IsRequired = true, SortOrder = 0, Parameters = []
+                    },
+                    new SchemaColumnDraft
+                    {
+                        TempId = "enrollment-course-id", Name = "course_id", PhysicalTypeId = physicalTypeId,
+                        IsPrimaryKey = false, IsRequired = false, SortOrder = 1, Parameters = []
+                    }
+                ]
+            }
+        ],
+        Relationships =
+        [
+            new SchemaRelationshipDraft
+            {
+                TempId = "fk-enrollments-courses",
+                Name = "fk_enrollments_courses",
+                SourceColumnRef = "enrollment-course-id",
+                TargetColumnRef = "course-id"
+            }
+        ]
+    };
+
+    private static BatchTableRowsRequest CreateRowsRequest(
+        string schemaVersion,
+        Guid idColumnId,
+        Guid? referenceColumnId,
+        string id,
+        string? reference)
+    {
+        var cells = new Dictionary<Guid, TableCellRequest>
+        {
+            [idColumnId] = new() { Value = id, IsNull = false }
+        };
+        if (referenceColumnId.HasValue)
+        {
+            cells[referenceColumnId.Value] = new()
+            {
+                Value = reference,
+                IsNull = reference is null
+            };
+        }
+
+        return new BatchTableRowsRequest
+        {
+            SchemaVersion = schemaVersion,
+            Changes =
+            [
+                new TableRowChange
+                {
+                    Operation = TableRowOperation.Create,
+                    TempId = $"row-{id}",
+                    SortOrder = 0,
+                    Cells = cells
+                }
+            ]
         };
     }
 
