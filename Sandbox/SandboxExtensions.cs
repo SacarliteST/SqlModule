@@ -37,7 +37,8 @@ public static class SandboxExtensions
             sp.GetRequiredService<ISandboxWorkerFactory>(),
             sp.GetRequiredService<IOptions<SandboxOptions>>(),
             sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocalSandboxLeaseManager>>(),
-            healthMonitor: sp.GetRequiredService<SandboxPoolHealthMonitor>()));
+            healthMonitor: sp.GetRequiredService<SandboxPoolHealthMonitor>(),
+            timeProvider: sp.GetRequiredService<TimeProvider>()));
         services.AddSingleton<ISandboxLeaseManager>(sp => sp.GetRequiredService<LocalSandboxLeaseManager>());
         services.AddSingleton<ISandboxPoolLifecycle>(sp => sp.GetRequiredService<LocalSandboxLeaseManager>());
         services.AddSingleton<ISandboxIsolationManager, SandboxIsolationManager>();
