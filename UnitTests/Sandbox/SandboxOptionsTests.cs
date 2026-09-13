@@ -1,8 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Docker.DotNet.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Docker.DotNet.Models;
 using Shouldly;
 using SQLModule.Sandbox;
 using SQLModule.Sandbox.Pooling;
@@ -36,13 +36,14 @@ public sealed class SandboxOptionsTests
                 CleanupTimeoutSeconds = 0,
                 ShutdownTimeoutSeconds = -1,
                 HealthCheckIntervalSeconds = 0,
+                StartupGracePeriodSeconds = 0,
                 RestartBackoffMaxSeconds = -1,
             },
         };
 
         var failures = validator.Validate(null, options).Failures!.ToArray();
 
-        failures.Length.ShouldBe(6);
+        failures.Length.ShouldBe(7);
         failures.ShouldAllBe(message => message.StartsWith("Sandbox:Pool:", StringComparison.Ordinal));
     }
 

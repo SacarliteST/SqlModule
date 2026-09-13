@@ -27,12 +27,17 @@ public static class SandboxExtensions
                 ? provider.GetRequiredService<PooledSandboxExecutor>()
                 : provider.GetRequiredService<TestcontainersSandboxExecutor>());
         services.TryAddSingleton<ISandboxPoolProfileSource, EmptySandboxPoolProfileSource>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<SandboxPoolHealthMonitor>();
+        services.AddSingleton<ISandboxPoolHealthMonitor>(sp =>
+            sp.GetRequiredService<SandboxPoolHealthMonitor>());
         services.AddSingleton<SandboxPoolInstance>();
         services.AddSingleton<ISandboxWorkerFactory, TestcontainersSandboxWorkerFactory>();
         services.AddSingleton(sp => new LocalSandboxLeaseManager(
             sp.GetRequiredService<ISandboxWorkerFactory>(),
             sp.GetRequiredService<IOptions<SandboxOptions>>(),
-            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocalSandboxLeaseManager>>()));
+            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocalSandboxLeaseManager>>(),
+            healthMonitor: sp.GetRequiredService<SandboxPoolHealthMonitor>()));
         services.AddSingleton<ISandboxLeaseManager>(sp => sp.GetRequiredService<LocalSandboxLeaseManager>());
         services.AddSingleton<ISandboxPoolLifecycle>(sp => sp.GetRequiredService<LocalSandboxLeaseManager>());
         services.AddSingleton<ISandboxIsolationManager, SandboxIsolationManager>();

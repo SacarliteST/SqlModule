@@ -1,4 +1,5 @@
-using System.Data.Common;
+﻿using System.Data.Common;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
@@ -25,6 +26,7 @@ internal sealed class PooledSandboxExecutor(
         ct,
         async (lease, sandboxNamespace, dialect) =>
         {
+            var preparationStartedAt = Stopwatch.GetTimestamp();
             using var preparation = CreatePreparationTimeout(ct);
             var setupResult = await ApplySetupAsync(
                 lease,
@@ -33,6 +35,7 @@ internal sealed class PooledSandboxExecutor(
                 preparation.Token);
             if (!setupResult.IsSuccess)
             {
+                RecordPreparation(lease, preparationStartedAt, "failure");
                 return Result<QueryResultSet>.Fail(setupResult.Error!);
             }
 
@@ -42,22 +45,51 @@ internal sealed class PooledSandboxExecutor(
                 preparation.Token);
             if (!grantResult.IsSuccess)
             {
+                RecordPreparation(lease, preparationStartedAt, "failure");
                 return Result<QueryResultSet>.Fail(grantResult.Error!);
             }
 
             var connectionResult = await isolationManager.OpenRunnerConnectionAsync(lease, sandboxNamespace, ct);
             if (!connectionResult.IsSuccess)
             {
+                RecordPreparation(lease, preparationStartedAt, "failure");
                 return Result<QueryResultSet>.Fail(connectionResult.Error!);
             }
 
             await using var runner = connectionResult.Value!;
-            return await SandboxDatabaseOperations.ExecuteQueryAsync(
-                dialect,
-                runner,
-                query,
-                ct,
-                lease.Discard);
+            RecordPreparation(lease, preparationStartedAt, "success");
+            var executionStartedAt = Stopwatch.GetTimestamp();
+            Result<QueryResultSet> result;
+            try
+            {
+                result = await SandboxDatabaseOperations.ExecuteQueryAsync(
+                    dialect,
+                    runner,
+                    query,
+                    ct,
+                    lease.Discard);
+            }
+            catch (OperationCanceledException)
+            {
+                SandboxPoolTelemetry.RecordExecution(
+                    lease.Worker.Profile.Key.SystemName,
+                    Stopwatch.GetElapsedTime(executionStartedAt),
+                    "canceled");
+                throw;
+            }
+
+            SandboxPoolTelemetry.RecordExecution(
+                lease.Worker.Profile.Key.SystemName,
+                Stopwatch.GetElapsedTime(executionStartedAt),
+                result.IsSuccess ? "success" : "failure");
+            logger.LogDebug(
+                "Завершено выполнение SQL в sandbox lease {LeaseId}, worker {WorkerId}, профиль {Profile}; результат {Outcome}, длительность {ElapsedMs} мс",
+                lease.LeaseId,
+                lease.Worker.WorkerId,
+                lease.Worker.Profile.Key,
+                result.IsSuccess ? "успех" : "ошибка",
+                Stopwatch.GetElapsedTime(executionStartedAt).TotalMilliseconds);
+            return result;
         });
 
     public async Task<Result> ValidateSetupAsync(
@@ -70,12 +102,17 @@ internal sealed class PooledSandboxExecutor(
             ct,
             async (lease, sandboxNamespace, _) =>
             {
+                var preparationStartedAt = Stopwatch.GetTimestamp();
                 using var preparation = CreatePreparationTimeout(ct);
                 var setupResult = await ApplySetupAsync(
                     lease,
                     sandboxNamespace,
                     setup,
                     preparation.Token);
+                RecordPreparation(
+                    lease,
+                    preparationStartedAt,
+                    setupResult.IsSuccess ? "success" : "failure");
                 return setupResult.IsSuccess
                     ? Result<bool>.Success(true)
                     : Result<bool>.Fail(setupResult.Error!);
@@ -91,6 +128,7 @@ internal sealed class PooledSandboxExecutor(
         ct,
         async (lease, sandboxNamespace, _) =>
         {
+            var preparationStartedAt = Stopwatch.GetTimestamp();
             using var preparation = CreatePreparationTimeout(ct);
             var connectionResult = await isolationManager.OpenSetupConnectionAsync(
                 lease,
@@ -98,6 +136,7 @@ internal sealed class PooledSandboxExecutor(
                 preparation.Token);
             if (!connectionResult.IsSuccess)
             {
+                RecordPreparation(lease, preparationStartedAt, "failure");
                 return Result<InspectedSchema>.Fail(connectionResult.Error!);
             }
 
@@ -108,13 +147,18 @@ internal sealed class PooledSandboxExecutor(
                 sandboxOptions.DefaultQueryTimeoutSeconds,
                 preparation.Token,
                 lease.Discard);
-            return setupResult.IsSuccess
+            var result = setupResult.IsSuccess
                 ? await SandboxDatabaseOperations.InspectCatalogAsync(
                     setupConnection,
                     dbms.SystemName,
                     preparation.Token,
                     lease.Discard)
                 : Result<InspectedSchema>.Fail(setupResult.Error!);
+            RecordPreparation(
+                lease,
+                preparationStartedAt,
+                result.IsSuccess ? "success" : "failure");
+            return result;
         });
 
     private async Task<Result> ApplySetupAsync(
@@ -146,6 +190,39 @@ internal sealed class PooledSandboxExecutor(
         CancellationToken ct,
         Func<SandboxLease, SandboxIsolationNamespace, ISqlDialect, Task<Result<T>>> operation)
     {
+        var profile = dbms.SystemName.Trim().ToLowerInvariant();
+        var startedAt = Stopwatch.GetTimestamp();
+        SandboxPoolTelemetry.OperationStarted(profile);
+        try
+        {
+            var result = await ExecuteIsolatedCoreAsync(dbms, ct, operation);
+            SandboxPoolTelemetry.RecordCycle(
+                profile,
+                Stopwatch.GetElapsedTime(startedAt),
+                result.IsSuccess ? "success" : "failure");
+            logger.LogDebug(
+                "Завершён полный цикл sandbox профиля {Profile}; результат {Outcome}, длительность {ElapsedMs} мс",
+                profile,
+                result.IsSuccess ? "успех" : "ошибка",
+                Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            SandboxPoolTelemetry.RecordCycle(profile, Stopwatch.GetElapsedTime(startedAt), "canceled");
+            throw;
+        }
+        finally
+        {
+            SandboxPoolTelemetry.OperationFinished(profile);
+        }
+    }
+
+    private async Task<Result<T>> ExecuteIsolatedCoreAsync<T>(
+        SandboxDbmsSpec dbms,
+        CancellationToken ct,
+        Func<SandboxLease, SandboxIsolationNamespace, ISqlDialect, Task<Result<T>>> operation)
+    {
         var dialect = dialectFactory.GetDialectFor(dbms.SystemName);
         if (dialect is null)
         {
@@ -168,17 +245,24 @@ internal sealed class PooledSandboxExecutor(
         Result<SandboxIsolationNamespace> namespaceResult;
         using (var preparation = CreatePreparationTimeout(ct))
         {
+            var preparationStartedAt = Stopwatch.GetTimestamp();
             try
             {
                 namespaceResult = await isolationManager.CreateAsync(lease, preparation.Token);
+                RecordPreparation(
+                    lease,
+                    preparationStartedAt,
+                    namespaceResult.IsSuccess ? "success" : "failure");
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
+                RecordPreparation(lease, preparationStartedAt, "timeout");
                 lease.Discard();
                 return Result<T>.Fail(SandboxErrors.PreparationTimeout());
             }
             catch (OperationCanceledException)
             {
+                RecordPreparation(lease, preparationStartedAt, "canceled");
                 lease.Discard();
                 throw;
             }
@@ -231,5 +315,21 @@ internal sealed class PooledSandboxExecutor(
         var preparation = CancellationTokenSource.CreateLinkedTokenSource(ct);
         preparation.CancelAfter(TimeSpan.FromSeconds(sandboxOptions.Pool.PreparationTimeoutSeconds));
         return preparation;
+    }
+
+    private void RecordPreparation(SandboxLease lease, long startedAt, string outcome)
+    {
+        var elapsed = Stopwatch.GetElapsedTime(startedAt);
+        SandboxPoolTelemetry.RecordPreparation(
+            lease.Worker.Profile.Key.SystemName,
+            elapsed,
+            outcome);
+        logger.LogDebug(
+            "Завершена подготовка sandbox lease {LeaseId}, worker {WorkerId}, профиль {Profile}; результат {Outcome}, длительность {ElapsedMs} мс",
+            lease.LeaseId,
+            lease.Worker.WorkerId,
+            lease.Worker.Profile.Key,
+            outcome,
+            elapsed.TotalMilliseconds);
     }
 }

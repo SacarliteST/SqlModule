@@ -22,6 +22,7 @@ public sealed class SandboxPoolOptions
     public int CleanupTimeoutSeconds { get; init; } = 15;
     public int ShutdownTimeoutSeconds { get; init; } = 30;
     public int HealthCheckIntervalSeconds { get; init; } = 15;
+    public int StartupGracePeriodSeconds { get; init; } = 60;
     public int RestartBackoffMaxSeconds { get; init; } = 60;
     public SandboxPoolResourceOptions Resources { get; init; } = new();
 
