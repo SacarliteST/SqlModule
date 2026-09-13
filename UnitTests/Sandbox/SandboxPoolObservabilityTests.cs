@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Metrics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Shouldly;
@@ -53,7 +54,7 @@ public sealed class SandboxPoolObservabilityTests
     public void Metrics_ExposeOnlyLowCardinalityTags()
     {
         const string profile = "observability-test";
-        var measurements = new List<MeasurementRecord>();
+        var measurements = new ConcurrentQueue<MeasurementRecord>();
         using var listener = new MeterListener
         {
             InstrumentPublished = (instrument, meterListener) =>
@@ -65,9 +66,9 @@ public sealed class SandboxPoolObservabilityTests
             }
         };
         listener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
-            measurements.Add(new MeasurementRecord(instrument.Name, value, ToTags(tags))));
+            measurements.Enqueue(new MeasurementRecord(instrument.Name, value, ToTags(tags))));
         listener.SetMeasurementEventCallback<double>((instrument, value, tags, _) =>
-            measurements.Add(new MeasurementRecord(instrument.Name, value, ToTags(tags))));
+            measurements.Enqueue(new MeasurementRecord(instrument.Name, value, ToTags(tags))));
         listener.Start();
 
         SandboxPoolTelemetry.RecordWorkerStates(profile, [], 1);

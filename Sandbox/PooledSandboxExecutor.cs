@@ -56,7 +56,7 @@ internal sealed class PooledSandboxExecutor(
                 return Result<QueryResultSet>.Fail(connectionResult.Error!);
             }
 
-            await using var runner = connectionResult.Value!;
+            var runner = connectionResult.Value!;
             RecordPreparation(lease, preparationStartedAt, "success");
             var executionStartedAt = Stopwatch.GetTimestamp();
             Result<QueryResultSet> result;
@@ -76,6 +76,10 @@ internal sealed class PooledSandboxExecutor(
                     Stopwatch.GetElapsedTime(executionStartedAt),
                     "canceled");
                 throw;
+            }
+            finally
+            {
+                await DisposeConnectionAsync(runner, lease, "runner");
             }
 
             SandboxPoolTelemetry.RecordExecution(
@@ -140,25 +144,32 @@ internal sealed class PooledSandboxExecutor(
                 return Result<InspectedSchema>.Fail(connectionResult.Error!);
             }
 
-            await using var setupConnection = connectionResult.Value!;
-            var setupResult = await SandboxDatabaseOperations.ApplySetupAsync(
-                setupConnection,
-                new SandboxSetup([ddlScript]),
-                sandboxOptions.DefaultQueryTimeoutSeconds,
-                preparation.Token,
-                lease.Discard);
-            var result = setupResult.IsSuccess
-                ? await SandboxDatabaseOperations.InspectCatalogAsync(
+            var setupConnection = connectionResult.Value!;
+            try
+            {
+                var setupResult = await SandboxDatabaseOperations.ApplySetupAsync(
                     setupConnection,
-                    dbms.SystemName,
+                    new SandboxSetup([ddlScript]),
+                    sandboxOptions.DefaultQueryTimeoutSeconds,
                     preparation.Token,
-                    lease.Discard)
-                : Result<InspectedSchema>.Fail(setupResult.Error!);
-            RecordPreparation(
-                lease,
-                preparationStartedAt,
-                result.IsSuccess ? "success" : "failure");
-            return result;
+                    lease.Discard);
+                var result = setupResult.IsSuccess
+                    ? await SandboxDatabaseOperations.InspectCatalogAsync(
+                        setupConnection,
+                        dbms.SystemName,
+                        preparation.Token,
+                        lease.Discard)
+                    : Result<InspectedSchema>.Fail(setupResult.Error!);
+                RecordPreparation(
+                    lease,
+                    preparationStartedAt,
+                    result.IsSuccess ? "success" : "failure");
+                return result;
+            }
+            finally
+            {
+                await DisposeConnectionAsync(setupConnection, lease, "setup");
+            }
         });
 
     private async Task<Result> ApplySetupAsync(
@@ -176,13 +187,20 @@ internal sealed class PooledSandboxExecutor(
             return Result.Fail(connectionResult.Error!);
         }
 
-        await using var setupConnection = connectionResult.Value!;
-        return await SandboxDatabaseOperations.ApplySetupAsync(
-            setupConnection,
-            setup,
-            sandboxOptions.DefaultQueryTimeoutSeconds,
-            ct,
-            lease.Discard);
+        var setupConnection = connectionResult.Value!;
+        try
+        {
+            return await SandboxDatabaseOperations.ApplySetupAsync(
+                setupConnection,
+                setup,
+                sandboxOptions.DefaultQueryTimeoutSeconds,
+                ct,
+                lease.Discard);
+        }
+        finally
+        {
+            await DisposeConnectionAsync(setupConnection, lease, "setup");
+        }
     }
 
     private async Task<Result<T>> ExecuteIsolatedAsync<T>(
@@ -281,7 +299,6 @@ internal sealed class PooledSandboxExecutor(
         catch (OperationCanceledException)
         {
             lease.Discard();
-            await isolationManager.CleanupAsync(lease, sandboxNamespace, CancellationToken.None);
             if (ct.IsCancellationRequested)
             {
                 throw;
@@ -297,8 +314,12 @@ internal sealed class PooledSandboxExecutor(
                 sandboxNamespace.Id,
                 lease.Worker.WorkerId,
                 exception.GetType().Name);
-            await isolationManager.CleanupAsync(lease, sandboxNamespace, CancellationToken.None);
             return Result<T>.Fail(SandboxErrors.ContainerFailed("Sandbox pooled operation failed."));
+        }
+
+        if (lease.Disposition == SandboxLeaseDisposition.Discard)
+        {
+            return operationResult;
         }
 
         var cleanupResult = await isolationManager.CleanupAsync(
@@ -315,6 +336,27 @@ internal sealed class PooledSandboxExecutor(
         var preparation = CancellationTokenSource.CreateLinkedTokenSource(ct);
         preparation.CancelAfter(TimeSpan.FromSeconds(sandboxOptions.Pool.PreparationTimeoutSeconds));
         return preparation;
+    }
+
+    private async Task DisposeConnectionAsync(
+        DbConnection connection,
+        SandboxLease lease,
+        string connectionKind)
+    {
+        try
+        {
+            await connection.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        catch (Exception exception)
+        {
+            lease.Discard();
+            logger.LogWarning(
+                "Не удалось вовремя закрыть {ConnectionKind}-соединение для sandbox lease {LeaseId}, worker {WorkerId}; контейнер будет заменён, тип сбоя {FailureType}",
+                connectionKind,
+                lease.LeaseId,
+                lease.Worker.WorkerId,
+                exception.GetType().Name);
+        }
     }
 
     private void RecordPreparation(SandboxLease lease, long startedAt, string outcome)

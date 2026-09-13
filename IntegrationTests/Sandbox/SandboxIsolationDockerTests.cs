@@ -1,5 +1,8 @@
 ﻿using System.Data.Common;
+using Docker.DotNet;
+using Docker.DotNet.Models;
 using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Configurations;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Shouldly;
@@ -66,6 +69,11 @@ public sealed class SandboxIsolationDockerTests
                 dbms,
                 new SandboxSetup(["CREATE TABLE validation_table (id INT NOT NULL)"]),
                 CancellationToken.None);
+            var isolationProbe = await executor.RunAsync(
+                dbms,
+                new SandboxSetup([]),
+                new SandboxQuery("SELECT COUNT(*) FROM validation_table", 30, 10),
+                CancellationToken.None);
             var inspection = await executor.InspectDdlAsync(
                 dbms,
                 "CREATE TABLE inspected_table (id INT NOT NULL PRIMARY KEY)",
@@ -80,6 +88,8 @@ public sealed class SandboxIsolationDockerTests
                 CancellationToken.None);
 
             validation.IsSuccess.ShouldBeTrue();
+            isolationProbe.IsSuccess.ShouldBeTrue();
+            isolationProbe.Value!.Succeeded.ShouldBeFalse();
             inspection.IsSuccess.ShouldBeTrue();
             inspection.Value!.Tables.ShouldContain(table => table.Name == "inspected_table");
             execution.IsSuccess.ShouldBeTrue();
@@ -125,8 +135,10 @@ public sealed class SandboxIsolationDockerTests
             await ApplySetupAsync(dialect, host, port, first, 101);
             await ApplySetupAsync(dialect, host, port, second, 202);
 
-            (await ReadValueAsync(dialect, host, port, first)).ShouldBe(101);
-            (await ReadValueAsync(dialect, host, port, second)).ShouldBe(202);
+            var reads = await Task.WhenAll(
+                ReadValueAsync(dialect, host, port, first),
+                ReadValueAsync(dialect, host, port, second));
+            reads.ShouldBe([101, 202]);
             await AssertCommandDeniedAsync(dialect, host, port, first, "INSERT INTO lease_data VALUES (303)");
             await AssertCommandDeniedAsync(dialect, host, port, first, "CREATE TABLE forbidden_table (id INT)");
             await AssertOtherNamespaceDeniedAsync(dialect, host, port, first, second);
@@ -145,10 +157,11 @@ public sealed class SandboxIsolationDockerTests
         }
     }
 
-    [Fact(DisplayName = "Pool recovery: SQL-ошибка сохраняет worker, cancellation заменяет его")]
-    public async Task PooledExecutor_QuarantinesWorkerOnlyAfterUncertainFailure()
+    [Theory(DisplayName = "Pool recovery: SQL-ошибка сохраняет worker, timeout/cancellation заменяют его")]
+    [MemberData(nameof(SupportedDbms))]
+    public async Task PooledExecutor_QuarantinesWorkerOnlyAfterUncertainFailure(string systemName)
     {
-        await using var harness = CreatePooledHarness("postgres");
+        await using var harness = CreatePooledHarness(systemName);
 
         var badSetup = await harness.Executor.ValidateSetupAsync(
             harness.Dbms,
@@ -168,7 +181,7 @@ public sealed class SandboxIsolationDockerTests
         var timedOut = await harness.Executor.RunAsync(
             harness.Dbms,
             new SandboxSetup([]),
-            new SandboxQuery("SELECT pg_sleep(10)", 1, 10),
+            new SandboxQuery(LongRunningQuery(systemName), 1, 10),
             CancellationToken.None);
         var afterTimeout = await harness.Executor.RunAsync(
             harness.Dbms,
@@ -176,7 +189,7 @@ public sealed class SandboxIsolationDockerTests
             new SandboxQuery("SELECT COUNT(*) FROM healthy_after_timeout", 10, 10),
             CancellationToken.None);
 
-        timedOut.IsSuccess.ShouldBeTrue();
+        timedOut.IsSuccess.ShouldBeTrue(timedOut.Error?.ToString());
         timedOut.Value!.Succeeded.ShouldBeFalse();
         afterTimeout.IsSuccess.ShouldBeTrue();
         afterTimeout.Value!.Succeeded.ShouldBeTrue();
@@ -188,7 +201,7 @@ public sealed class SandboxIsolationDockerTests
             await harness.Executor.RunAsync(
                 harness.Dbms,
                 new SandboxSetup([]),
-                new SandboxQuery("SELECT pg_sleep(10)", 15, 10),
+                new SandboxQuery(LongRunningQuery(systemName), 15, 10),
                 cancellation.Token);
         }
         catch (OperationCanceledException)
@@ -207,14 +220,15 @@ public sealed class SandboxIsolationDockerTests
         harness.WorkerFactory.CreateCount.ShouldBe(3);
     }
 
-    [Fact(DisplayName = "Pool recovery: preparation timeout возвращает ошибку и заменяет worker")]
-    public async Task PooledExecutor_PreparationTimeoutReplacesWorker()
+    [Theory(DisplayName = "Pool recovery: preparation timeout возвращает ошибку и заменяет worker")]
+    [MemberData(nameof(SupportedDbms))]
+    public async Task PooledExecutor_PreparationTimeoutReplacesWorker(string systemName)
     {
-        await using var harness = CreatePooledHarness("postgres", preparationTimeoutSeconds: 1);
+        await using var harness = CreatePooledHarness(systemName, preparationTimeoutSeconds: 1);
 
         var timedOut = await harness.Executor.ValidateSetupAsync(
             harness.Dbms,
-            new SandboxSetup(["SELECT pg_sleep(10)"]),
+            new SandboxSetup([LongRunningQuery(systemName)]),
             CancellationToken.None);
         var afterTimeout = await harness.Executor.ValidateSetupAsync(
             harness.Dbms,
@@ -225,6 +239,112 @@ public sealed class SandboxIsolationDockerTests
         timedOut.Error!.Code.ShouldBe("Sandbox.PreparationTimeout");
         afterTimeout.IsSuccess.ShouldBeTrue();
         harness.WorkerFactory.CreateCount.ShouldBe(2);
+    }
+
+    [Theory(DisplayName = "Pool recovery: ошибка cleanup удаляет контейнер и создаёт замену")]
+    [MemberData(nameof(SupportedDbms))]
+    public async Task PooledExecutor_CleanupFailureReplacesContainer(string systemName)
+    {
+        await using var harness = CreatePooledHarness(systemName, failFirstCleanup: true);
+
+        var failed = await harness.Executor.ValidateSetupAsync(
+            harness.Dbms,
+            new SandboxSetup(["CREATE TABLE cleanup_failure_probe (id INT)"]),
+            CancellationToken.None);
+        var recovered = await harness.Executor.ValidateSetupAsync(
+            harness.Dbms,
+            new SandboxSetup(["CREATE TABLE cleanup_recovery_probe (id INT)"]),
+            CancellationToken.None);
+
+        failed.IsSuccess.ShouldBeFalse();
+        failed.Error!.Code.ShouldBe("Sandbox.IsolationCleanupFailed");
+        recovered.IsSuccess.ShouldBeTrue();
+        harness.WorkerFactory.CreateCount.ShouldBe(2);
+        harness.WorkerFactory.DeleteCount.ShouldBeGreaterThanOrEqualTo(1);
+    }
+
+    [Theory(DisplayName = "Pool security: реальный контейнер ограничен и удаляется при drain")]
+    [MemberData(nameof(SupportedDbms))]
+    public async Task PooledContainer_HasSecurityLimitsAndIsRemovedAfterDrain(string systemName)
+    {
+        var harness = CreatePooledHarness(systemName);
+        using var dockerConfiguration = TestcontainersSettings.OS.DockerEndpointAuthConfig
+            .GetDockerClientConfiguration(Guid.NewGuid());
+        using var dockerClient = dockerConfiguration.CreateClient();
+        string containerId;
+        try
+        {
+            var profile = new SandboxWorkerProfile(
+                harness.Dbms,
+                new SandboxPoolProfileOptions { MinSize = 0, MaxSize = 1 });
+            await using var lease = (await harness.LeaseManager.AcquireAsync(profile, CancellationToken.None))
+                .Value.ShouldNotBeNull();
+            containerId = lease.Worker.ContainerId;
+            var inspection = await dockerClient.Containers.InspectContainerAsync(containerId);
+
+            inspection.HostConfig.Privileged.ShouldBeFalse();
+            inspection.HostConfig.NetworkMode.ShouldBe("bridge");
+            inspection.HostConfig.Memory.ShouldBe(512L * 1024 * 1024);
+            inspection.HostConfig.NanoCPUs.ShouldBe(1_000_000_000);
+            inspection.HostConfig.PidsLimit.ShouldBe(256);
+            (inspection.HostConfig.Binds ?? []).ShouldBeEmpty();
+            (inspection.Mounts ?? []).ShouldAllBe(mount =>
+                !String.Equals(mount.Type, "bind", StringComparison.OrdinalIgnoreCase) &&
+                !mount.Source.Contains("docker.sock", StringComparison.OrdinalIgnoreCase) &&
+                !mount.Destination.Contains("docker.sock", StringComparison.OrdinalIgnoreCase));
+            inspection.Config.Labels["sqltren.sqlmodule.sandbox-pool"].ShouldBe("true");
+            inspection.Config.Labels.ShouldContainKey("sqltren.sqlmodule.sandbox-pool.instance");
+            inspection.Config.Labels.ShouldContainKey("sqltren.sqlmodule.sandbox-pool.profile");
+
+            using var cancellation = new CancellationTokenSource();
+            var waiting = harness.LeaseManager.AcquireAsync(profile, cancellation.Token).AsTask();
+            waiting.IsCompleted.ShouldBeFalse();
+            harness.WorkerFactory.CreateCount.ShouldBe(1);
+            cancellation.Cancel();
+            await Should.ThrowAsync<OperationCanceledException>(async () => await waiting);
+        }
+        finally
+        {
+            await harness.DisposeAsync();
+        }
+
+        var remaining = await dockerClient.Containers.ListContainersAsync(new ContainersListParameters
+        {
+            All = true,
+            Filters = new Dictionary<string, IDictionary<string, bool>>
+            {
+                ["id"] = new Dictionary<string, bool> { [containerId] = true },
+            },
+        });
+        remaining.ShouldBeEmpty();
+    }
+
+    [Theory(DisplayName = "One-shot executor: прежний режим выполняет запрос и удаляет контейнер")]
+    [MemberData(nameof(SupportedDbms))]
+    public async Task OneShotExecutor_RemainsCompatible(string systemName)
+    {
+        var (dbms, _) = CreateProfile(systemName);
+        var dialectFactory = new SqlDialectFactory([new PostgresDialect(), new MySqlDialect()]);
+        var executor = new TestcontainersSandboxExecutor(
+            dialectFactory,
+            Options.Create(new SandboxOptions
+            {
+                ContainerStartupTimeoutSeconds = 60,
+                DefaultQueryTimeoutSeconds = 30,
+            }));
+
+        var result = await executor.RunAsync(
+            dbms,
+            new SandboxSetup([
+                "CREATE TABLE one_shot_probe (value INT NOT NULL)",
+                "INSERT INTO one_shot_probe VALUES (42)",
+            ]),
+            new SandboxQuery("SELECT value FROM one_shot_probe", 10, 10),
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        result.Value!.Succeeded.ShouldBeTrue();
+        result.Value.Rows.ShouldBe([["42"]]);
     }
 
     private static async Task ApplySetupAsync(
@@ -347,9 +467,13 @@ public sealed class SandboxIsolationDockerTests
                     "MYSQL_DATABASE", "pool_control", "MYSQL_ROOT_PASSWORD=pool_root_password"),
                 new MySqlDialect());
 
+    private static string LongRunningQuery(string systemName) =>
+        systemName == "postgres" ? "SELECT pg_sleep(10)" : "SELECT SLEEP(10)";
+
     private static PooledHarness CreatePooledHarness(
         string systemName,
-        int preparationTimeoutSeconds = 30)
+        int preparationTimeoutSeconds = 30,
+        bool failFirstCleanup = false)
     {
         var (dbms, _) = CreateProfile(systemName);
         var sandboxOptions = new SandboxOptions
@@ -381,10 +505,14 @@ public sealed class SandboxIsolationDockerTests
             workerFactory,
             options,
             NullLogger<LocalSandboxLeaseManager>.Instance);
-        var isolationManager = new SandboxIsolationManager(
+        ISandboxIsolationManager isolationManager = new SandboxIsolationManager(
             dialectFactory,
             options,
             NullLogger<SandboxIsolationManager>.Instance);
+        if (failFirstCleanup)
+        {
+            isolationManager = new FailFirstCleanupIsolationManager(isolationManager);
+        }
         var executor = new PooledSandboxExecutor(
             dialectFactory,
             leaseManager,
@@ -397,8 +525,10 @@ public sealed class SandboxIsolationDockerTests
     private sealed class TrackingWorkerFactory(ISandboxWorkerFactory inner) : ISandboxWorkerFactory
     {
         private int createCount;
+        private int deleteCount;
 
         internal int CreateCount => Volatile.Read(ref createCount);
+        internal int DeleteCount => Volatile.Read(ref deleteCount);
 
         public async ValueTask<Result<SandboxWorker>> CreateAsync(
             SandboxWorkerProfile profile,
@@ -410,11 +540,53 @@ public sealed class SandboxIsolationDockerTests
 
         public ValueTask<Result> DeleteAsync(
             SandboxWorker worker,
-            CancellationToken cancellationToken) => inner.DeleteAsync(worker, cancellationToken);
+            CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref deleteCount);
+            return inner.DeleteAsync(worker, cancellationToken);
+        }
 
         public ValueTask<bool> IsHealthyAsync(
             SandboxWorker worker,
             CancellationToken cancellationToken) => inner.IsHealthyAsync(worker, cancellationToken);
+    }
+
+    private sealed class FailFirstCleanupIsolationManager(ISandboxIsolationManager inner)
+        : ISandboxIsolationManager
+    {
+        private int cleanupCount;
+
+        public Task<Result<SandboxIsolationNamespace>> CreateAsync(SandboxLease lease, CancellationToken ct) =>
+            inner.CreateAsync(lease, ct);
+
+        public Task<Result<DbConnection>> OpenSetupConnectionAsync(
+            SandboxLease lease,
+            SandboxIsolationNamespace sandboxNamespace,
+            CancellationToken ct) => inner.OpenSetupConnectionAsync(lease, sandboxNamespace, ct);
+
+        public Task<Result> GrantRunnerAccessAsync(
+            SandboxLease lease,
+            SandboxIsolationNamespace sandboxNamespace,
+            CancellationToken ct) => inner.GrantRunnerAccessAsync(lease, sandboxNamespace, ct);
+
+        public Task<Result<DbConnection>> OpenRunnerConnectionAsync(
+            SandboxLease lease,
+            SandboxIsolationNamespace sandboxNamespace,
+            CancellationToken ct) => inner.OpenRunnerConnectionAsync(lease, sandboxNamespace, ct);
+
+        public Task<Result> CleanupAsync(
+            SandboxLease lease,
+            SandboxIsolationNamespace sandboxNamespace,
+            CancellationToken ct)
+        {
+            if (Interlocked.Increment(ref cleanupCount) == 1)
+            {
+                lease.Discard();
+                return Task.FromResult(Result.Fail(SandboxErrors.IsolationCleanupFailed()));
+            }
+
+            return inner.CleanupAsync(lease, sandboxNamespace, ct);
+        }
     }
 
     private sealed class PooledHarness(
@@ -425,9 +597,10 @@ public sealed class SandboxIsolationDockerTests
     {
         internal SandboxDbmsSpec Dbms { get; } = dbms;
         internal PooledSandboxExecutor Executor { get; } = executor;
+        internal LocalSandboxLeaseManager LeaseManager { get; } = leaseManager;
         internal TrackingWorkerFactory WorkerFactory { get; } = workerFactory;
 
         public async ValueTask DisposeAsync() =>
-            await leaseManager.DrainAsync(CancellationToken.None);
+            await LeaseManager.DrainAsync(CancellationToken.None);
     }
 }
