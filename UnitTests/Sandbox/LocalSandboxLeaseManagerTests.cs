@@ -184,6 +184,30 @@ public sealed class LocalSandboxLeaseManagerTests
         await replacement.DisposeAsync();
     }
 
+    [Fact(DisplayName = "Pool lifecycle: повторяет удаление выбракованного worker после сбоя Docker")]
+    public async Task MaintainAsync_RetriesFailedQuarantinedWorkerDeletion()
+    {
+        var factory = new LifecycleWorkerFactory();
+        var manager = CreateManager(factory);
+        var profile = CreateProfile(minSize: 1, maxSize: 1);
+        await manager.MaintainAsync([profile], CancellationToken.None);
+        var discarded = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+        factory.FailNextDeletions(1);
+
+        discarded.Discard();
+        await discarded.DisposeAsync();
+        discarded.Worker.State.ShouldBe(SandboxWorkerState.Unhealthy);
+
+        var maintained = await manager.MaintainAsync([profile], CancellationToken.None);
+
+        maintained.ShouldBeTrue();
+        factory.Deleted.Count(worker => worker == discarded.Worker).ShouldBe(2);
+        factory.Created.Count.ShouldBe(2);
+        var replacement = (await manager.AcquireAsync(profile, CancellationToken.None)).Value.ShouldNotBeNull();
+        replacement.Worker.ShouldNotBeSameAs(discarded.Worker);
+        await replacement.DisposeAsync();
+    }
+
     [Fact(DisplayName = "Pool lifecycle: drain запрещает новые аренды и удаляет возвращённый worker")]
     public async Task DrainAsync_StopsAcquisitionAndDeletesWorkers()
     {
@@ -246,9 +270,13 @@ public sealed class LocalSandboxLeaseManagerTests
 
     private sealed class LifecycleWorkerFactory : ISandboxWorkerFactory
     {
+        private int deleteFailuresRemaining;
         internal ConcurrentBag<SandboxWorker> Created { get; } = [];
         internal ConcurrentBag<SandboxWorker> Deleted { get; } = [];
         internal ConcurrentDictionary<Guid, byte> UnhealthyWorkers { get; } = new();
+
+        internal void FailNextDeletions(int count) =>
+            Interlocked.Exchange(ref deleteFailuresRemaining, count);
 
         public ValueTask<Result<SandboxWorker>> CreateAsync(
             SandboxWorkerProfile profile,
@@ -266,6 +294,12 @@ public sealed class LocalSandboxLeaseManagerTests
         public ValueTask<Result> DeleteAsync(SandboxWorker worker, CancellationToken cancellationToken)
         {
             Deleted.Add(worker);
+            if (Interlocked.Decrement(ref deleteFailuresRemaining) >= 0)
+            {
+                return ValueTask.FromResult(Result.Fail(
+                    SandboxErrors.ContainerFailed("Injected deletion failure.")));
+            }
+
             return ValueTask.FromResult(Result.Success());
         }
 

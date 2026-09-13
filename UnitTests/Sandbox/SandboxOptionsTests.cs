@@ -2,8 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Docker.DotNet.Models;
 using Shouldly;
 using SQLModule.Sandbox;
+using SQLModule.Sandbox.Pooling;
 
 namespace SQLModule.UnitTests.Sandbox;
 
@@ -64,6 +66,62 @@ public sealed class SandboxOptionsTests
         failures.ShouldContain(message => message.Contains("Profiles:postgres:MinSize", StringComparison.Ordinal));
         failures.ShouldContain(message => message.Contains("Profiles:postgres:MaxSize", StringComparison.Ordinal));
         failures.ShouldContain(message => message.Contains("Profiles:mysql:MinSize", StringComparison.Ordinal));
+    }
+
+    [Fact(DisplayName = "Pool options: лимиты ресурсов должны быть положительными")]
+    public void InvalidResourceLimits_ReturnSpecificFailures()
+    {
+        var options = new SandboxOptions
+        {
+            Pool = new SandboxPoolOptions
+            {
+                Resources = new SandboxPoolResourceOptions
+                {
+                    MemoryLimitMegabytes = 0,
+                    CpuLimit = Double.NaN,
+                    PidsLimit = -1,
+                },
+            },
+        };
+
+        var failures = validator.Validate(null, options).Failures!.ToArray();
+
+        failures.ShouldContain(message => message.Contains("MemoryLimitMegabytes", StringComparison.Ordinal));
+        failures.ShouldContain(message => message.Contains("CpuLimit", StringComparison.Ordinal));
+        failures.ShouldContain(message => message.Contains("PidsLimit", StringComparison.Ordinal));
+    }
+
+    [Fact(DisplayName = "Pool container: Docker получает лимиты и безопасный режим")]
+    public void ContainerSecurity_AppliesResourceLimitsWithoutHostAccess()
+    {
+        var parameters = new CreateContainerParameters();
+        var resources = new SandboxPoolResourceOptions
+        {
+            MemoryLimitMegabytes = 384,
+            CpuLimit = 1.5,
+            PidsLimit = 128,
+        };
+
+        SandboxContainerSecurity.Apply(parameters, resources);
+
+        parameters.HostConfig.Memory.ShouldBe(384L * 1024 * 1024);
+        parameters.HostConfig.NanoCPUs.ShouldBe(1_500_000_000);
+        parameters.HostConfig.PidsLimit.ShouldBe(128);
+        parameters.HostConfig.Privileged.ShouldBeFalse();
+        parameters.HostConfig.NetworkMode.ShouldBe("bridge");
+        parameters.HostConfig.Binds.ShouldBeEmpty();
+        parameters.HostConfig.Mounts.ShouldBeEmpty();
+    }
+
+    [Theory(DisplayName = "Pool container: образ должен иметь точный tag или digest")]
+    [InlineData("postgres", false)]
+    [InlineData("postgres:latest", false)]
+    [InlineData("postgres:15-alpine", true)]
+    [InlineData("registry.local:5000/sql/postgres:15.4", true)]
+    [InlineData("postgres@sha256:abcdef", true)]
+    public void ContainerSecurity_ValidatesPinnedImage(string image, bool expected)
+    {
+        SandboxContainerSecurity.IsImagePinned(image).ShouldBe(expected);
     }
 
     [Fact(DisplayName = "Pool options: включённому пулу нужен хотя бы один профиль")]

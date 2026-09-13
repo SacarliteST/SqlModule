@@ -23,10 +23,19 @@ public sealed class SandboxPoolOptions
     public int ShutdownTimeoutSeconds { get; init; } = 30;
     public int HealthCheckIntervalSeconds { get; init; } = 15;
     public int RestartBackoffMaxSeconds { get; init; } = 60;
+    public SandboxPoolResourceOptions Resources { get; init; } = new();
 
     /// <summary>Размеры пула по <c>SystemName</c>; регистр ключа не учитывается.</summary>
     public Dictionary<string, SandboxPoolProfileOptions> Profiles { get; } =
         new(StringComparer.OrdinalIgnoreCase);
+}
+
+/// <summary>Жёсткие ограничения ресурсов одного тёплого sandbox-контейнера.</summary>
+public sealed class SandboxPoolResourceOptions
+{
+    public int MemoryLimitMegabytes { get; init; } = 512;
+    public double CpuLimit { get; init; } = 1;
+    public int PidsLimit { get; init; } = 256;
 }
 
 /// <summary>Минимальный и максимальный размер пула одного профиля СУБД.</summary>

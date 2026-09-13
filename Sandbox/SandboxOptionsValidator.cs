@@ -15,6 +15,15 @@ internal sealed class SandboxOptionsValidator : IValidateOptions<SandboxOptions>
         ValidatePositive(pool.ShutdownTimeoutSeconds, "Sandbox:Pool:ShutdownTimeoutSeconds", failures);
         ValidatePositive(pool.HealthCheckIntervalSeconds, "Sandbox:Pool:HealthCheckIntervalSeconds", failures);
         ValidatePositive(pool.RestartBackoffMaxSeconds, "Sandbox:Pool:RestartBackoffMaxSeconds", failures);
+        ValidatePositive(
+            pool.Resources.MemoryLimitMegabytes,
+            "Sandbox:Pool:Resources:MemoryLimitMegabytes",
+            failures);
+        ValidatePositive(pool.Resources.PidsLimit, "Sandbox:Pool:Resources:PidsLimit", failures);
+        if (!Double.IsFinite(pool.Resources.CpuLimit) || pool.Resources.CpuLimit <= 0)
+        {
+            failures.Add("Sandbox:Pool:Resources:CpuLimit должен быть конечным числом больше нуля.");
+        }
 
         if (pool.Enabled && pool.Profiles.Count == 0)
         {
