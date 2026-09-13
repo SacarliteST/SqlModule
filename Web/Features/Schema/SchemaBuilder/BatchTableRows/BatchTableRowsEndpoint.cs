@@ -24,6 +24,8 @@ internal sealed class BatchTableRowsEndpoint : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status412PreconditionFailed)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
             .AddEndpointFilter<ValidationFilter<BatchTableRowsRequest>>();
     }
 
