@@ -1,4 +1,4 @@
-namespace SQLModule.Sandbox.Pooling;
+﻿namespace SQLModule.Sandbox.Pooling;
 
 internal static class SandboxPoolProfileResolver
 {

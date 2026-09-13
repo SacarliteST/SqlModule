@@ -1,4 +1,4 @@
-using System.Data.Common;
+﻿using System.Data.Common;
 using SQLModule.Common.Results;
 
 namespace SQLModule.Sandbox.Pooling;

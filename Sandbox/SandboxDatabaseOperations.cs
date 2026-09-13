@@ -1,6 +1,6 @@
+﻿using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Data;
 using MySqlConnector;
 using Npgsql;
 using SQLModule.Common.Results;
@@ -24,7 +24,8 @@ internal static class SandboxDatabaseOperations
                 await using var command = connection.CreateCommand();
                 command.CommandText = statement;
                 command.CommandTimeout = commandTimeoutSeconds;
-                await command.ExecuteNonQueryAsync(ct);
+                using var cancellation = CancelCommandOnCancellation(command, ct);
+                await command.ExecuteNonQueryAsync(ct).WaitAsync(ct);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -53,20 +54,25 @@ internal static class SandboxDatabaseOperations
         Action? quarantineWorker = null)
     {
         var stopwatch = Stopwatch.StartNew();
+        var requiresQuarantine = false;
+        using var queryTimeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        queryTimeout.CancelAfter(TimeSpan.FromSeconds(query.TimeoutSeconds));
+        var operationToken = queryTimeout.Token;
         try
         {
-            await dialect.BeginReadOnlyAsync(connection, ct);
+            await dialect.BeginReadOnlyAsync(connection, operationToken);
             await using var command = connection.CreateCommand();
             command.CommandText = query.Sql;
             command.CommandTimeout = query.TimeoutSeconds;
+            using var cancellation = CancelCommandOnCancellation(command, operationToken);
 
-            await using var reader = await command.ExecuteReaderAsync(ct);
+            await using var reader = await command.ExecuteReaderAsync(operationToken).WaitAsync(operationToken);
             var columns = Enumerable.Range(0, reader.FieldCount)
                 .Select(reader.GetName)
                 .ToList();
             var rows = new List<IReadOnlyList<string?>>();
             var isTruncated = false;
-            while (await reader.ReadAsync(ct))
+            while (await reader.ReadAsync(operationToken).WaitAsync(operationToken))
             {
                 if (rows.Count >= query.MaxRows)
                 {
@@ -99,12 +105,27 @@ internal static class SandboxDatabaseOperations
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
+            requiresQuarantine = true;
             quarantineWorker?.Invoke();
             throw;
         }
+        catch (OperationCanceledException)
+        {
+            requiresQuarantine = true;
+            quarantineWorker?.Invoke();
+            stopwatch.Stop();
+            return Result<QueryResultSet>.Success(new QueryResultSet(
+                false,
+                "Query execution timed out.",
+                [],
+                [],
+                0,
+                stopwatch.ElapsedMilliseconds));
+        }
         catch (Exception exception)
         {
-            if (RequiresQuarantine(connection, exception))
+            requiresQuarantine = RequiresQuarantine(connection, exception);
+            if (requiresQuarantine)
             {
                 quarantineWorker?.Invoke();
             }
@@ -120,16 +141,21 @@ internal static class SandboxDatabaseOperations
         }
         finally
         {
-            try
+            if (!requiresQuarantine)
             {
-                await using var rollback = connection.CreateCommand();
-                rollback.CommandText = "ROLLBACK";
-                await rollback.ExecuteNonQueryAsync(CancellationToken.None);
-            }
-            catch
-            {
-                quarantineWorker?.Invoke();
-                // Ошибка отката не меняет уже сформированный результат запроса.
+                try
+                {
+                    using var rollbackTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    await using var rollback = connection.CreateCommand();
+                    rollback.CommandText = "ROLLBACK";
+                    rollback.CommandTimeout = 5;
+                    await rollback.ExecuteNonQueryAsync(rollbackTimeout.Token);
+                }
+                catch
+                {
+                    quarantineWorker?.Invoke();
+                    // Ошибка отката не меняет уже сформированный результат запроса.
+                }
             }
         }
     }
@@ -254,6 +280,22 @@ internal static class SandboxDatabaseOperations
         exception is MySqlException { ErrorCode: MySqlErrorCode.CommandTimeoutExpired } ||
         exception is PostgresException { SqlState: "57014" } ||
         ContainsTimeout(exception);
+
+    private static CancellationTokenRegistration CancelCommandOnCancellation(
+        DbCommand command,
+        CancellationToken cancellationToken) => cancellationToken.Register(
+        static state =>
+        {
+            try
+            {
+                ((DbCommand)state!).Cancel();
+            }
+            catch
+            {
+                // Соединение всё равно будет выбраковано вызывающим кодом.
+            }
+        },
+        command);
 
     private static bool ContainsTimeout(Exception exception)
     {
