@@ -25,13 +25,21 @@ internal sealed class PooledSandboxExecutor(
         ct,
         async (lease, sandboxNamespace, dialect) =>
         {
-            var setupResult = await ApplySetupAsync(lease, sandboxNamespace, setup, ct);
+            using var preparation = CreatePreparationTimeout(ct);
+            var setupResult = await ApplySetupAsync(
+                lease,
+                sandboxNamespace,
+                setup,
+                preparation.Token);
             if (!setupResult.IsSuccess)
             {
                 return Result<QueryResultSet>.Fail(setupResult.Error!);
             }
 
-            var grantResult = await isolationManager.GrantRunnerAccessAsync(lease, sandboxNamespace, ct);
+            var grantResult = await isolationManager.GrantRunnerAccessAsync(
+                lease,
+                sandboxNamespace,
+                preparation.Token);
             if (!grantResult.IsSuccess)
             {
                 return Result<QueryResultSet>.Fail(grantResult.Error!);
@@ -44,7 +52,12 @@ internal sealed class PooledSandboxExecutor(
             }
 
             await using var runner = connectionResult.Value!;
-            return await SandboxDatabaseOperations.ExecuteQueryAsync(dialect, runner, query, ct);
+            return await SandboxDatabaseOperations.ExecuteQueryAsync(
+                dialect,
+                runner,
+                query,
+                ct,
+                lease.Discard);
         });
 
     public async Task<Result> ValidateSetupAsync(
@@ -57,7 +70,12 @@ internal sealed class PooledSandboxExecutor(
             ct,
             async (lease, sandboxNamespace, _) =>
             {
-                var setupResult = await ApplySetupAsync(lease, sandboxNamespace, setup, ct);
+                using var preparation = CreatePreparationTimeout(ct);
+                var setupResult = await ApplySetupAsync(
+                    lease,
+                    sandboxNamespace,
+                    setup,
+                    preparation.Token);
                 return setupResult.IsSuccess
                     ? Result<bool>.Success(true)
                     : Result<bool>.Fail(setupResult.Error!);
@@ -73,8 +91,7 @@ internal sealed class PooledSandboxExecutor(
         ct,
         async (lease, sandboxNamespace, _) =>
         {
-            using var preparation = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            preparation.CancelAfter(TimeSpan.FromSeconds(sandboxOptions.Pool.PreparationTimeoutSeconds));
+            using var preparation = CreatePreparationTimeout(ct);
             var connectionResult = await isolationManager.OpenSetupConnectionAsync(
                 lease,
                 sandboxNamespace,
@@ -89,12 +106,14 @@ internal sealed class PooledSandboxExecutor(
                 setupConnection,
                 new SandboxSetup([ddlScript]),
                 sandboxOptions.DefaultQueryTimeoutSeconds,
-                preparation.Token);
+                preparation.Token,
+                lease.Discard);
             return setupResult.IsSuccess
                 ? await SandboxDatabaseOperations.InspectCatalogAsync(
                     setupConnection,
                     dbms.SystemName,
-                    preparation.Token)
+                    preparation.Token,
+                    lease.Discard)
                 : Result<InspectedSchema>.Fail(setupResult.Error!);
         });
 
@@ -104,12 +123,10 @@ internal sealed class PooledSandboxExecutor(
         SandboxSetup setup,
         CancellationToken ct)
     {
-        using var preparation = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        preparation.CancelAfter(TimeSpan.FromSeconds(sandboxOptions.Pool.PreparationTimeoutSeconds));
         var connectionResult = await isolationManager.OpenSetupConnectionAsync(
             lease,
             sandboxNamespace,
-            preparation.Token);
+            ct);
         if (!connectionResult.IsSuccess)
         {
             return Result.Fail(connectionResult.Error!);
@@ -120,7 +137,8 @@ internal sealed class PooledSandboxExecutor(
             setupConnection,
             setup,
             sandboxOptions.DefaultQueryTimeoutSeconds,
-            preparation.Token);
+            ct,
+            lease.Discard);
     }
 
     private async Task<Result<T>> ExecuteIsolatedAsync<T>(
@@ -147,7 +165,24 @@ internal sealed class PooledSandboxExecutor(
         }
 
         await using var lease = leaseResult.Value!;
-        var namespaceResult = await isolationManager.CreateAsync(lease, ct);
+        Result<SandboxIsolationNamespace> namespaceResult;
+        using (var preparation = CreatePreparationTimeout(ct))
+        {
+            try
+            {
+                namespaceResult = await isolationManager.CreateAsync(lease, preparation.Token);
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                lease.Discard();
+                return Result<T>.Fail(SandboxErrors.PreparationTimeout());
+            }
+            catch (OperationCanceledException)
+            {
+                lease.Discard();
+                throw;
+            }
+        }
         if (!namespaceResult.IsSuccess)
         {
             return Result<T>.Fail(namespaceResult.Error!);
@@ -163,7 +198,12 @@ internal sealed class PooledSandboxExecutor(
         {
             lease.Discard();
             await isolationManager.CleanupAsync(lease, sandboxNamespace, CancellationToken.None);
-            throw;
+            if (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+
+            return Result<T>.Fail(SandboxErrors.PreparationTimeout());
         }
         catch (Exception exception)
         {
@@ -184,5 +224,12 @@ internal sealed class PooledSandboxExecutor(
         return cleanupResult.IsSuccess
             ? operationResult
             : Result<T>.Fail(cleanupResult.Error!);
+    }
+
+    private CancellationTokenSource CreatePreparationTimeout(CancellationToken ct)
+    {
+        var preparation = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        preparation.CancelAfter(TimeSpan.FromSeconds(sandboxOptions.Pool.PreparationTimeoutSeconds));
+        return preparation;
     }
 }

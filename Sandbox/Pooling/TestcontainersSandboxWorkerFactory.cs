@@ -24,6 +24,14 @@ internal sealed class TestcontainersSandboxWorkerFactory(
         CancellationToken cancellationToken)
     {
         var dbms = profile.Dbms;
+        if (!SandboxContainerSecurity.IsImagePinned(dbms.DockerImage))
+        {
+            logger.LogError(
+                "Профиль {Profile} отклонён: образ тёплого sandbox-контейнера должен иметь точный tag или digest",
+                profile.Key);
+            return Result<SandboxWorker>.Fail(SandboxErrors.UnpinnedPoolImage());
+        }
+
         var container = new ContainerBuilder()
             .WithImage(dbms.DockerImage)
             .WithPortBinding(dbms.DefaultPort, true)
@@ -31,6 +39,9 @@ internal sealed class TestcontainersSandboxWorkerFactory(
             .WithLabel(OwnerLabel, Boolean.TrueString.ToLowerInvariant())
             .WithLabel(InstanceLabel, instance.Id)
             .WithLabel(ProfileLabel, profile.Key.ToString())
+            .WithPrivileged(false)
+            .WithCreateParameterModifier(parameters =>
+                SandboxContainerSecurity.Apply(parameters, options.Value.Pool.Resources))
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(dbms.DefaultPort))
             .Build();
 

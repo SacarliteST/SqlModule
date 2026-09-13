@@ -142,6 +142,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
                 continue;
             }
 
+            succeeded &= await RetryUnhealthyWorkerDeletionAsync(pool, cancellationToken);
             succeeded &= await CheckReadyWorkersAsync(pool, cancellationToken);
             while (pool.Allocated < pool.MinSize && pool.TryReserveSlot())
             {
@@ -368,6 +369,24 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         return succeeded;
     }
 
+    private async ValueTask<bool> RetryUnhealthyWorkerDeletionAsync(
+        ProfilePool pool,
+        CancellationToken cancellationToken)
+    {
+        var succeeded = true;
+        foreach (var worker in pool.SnapshotWorkers()
+                     .Where(worker => worker.State == SandboxWorkerState.Unhealthy))
+        {
+            logger.LogWarning(
+                "Повторяется удаление выбракованного sandbox-воркера {WorkerId} профиля {Profile}",
+                worker.WorkerId,
+                worker.Profile.Key);
+            succeeded &= await DeleteTrackedWorkerAsync(pool, worker, null, cancellationToken);
+        }
+
+        return succeeded;
+    }
+
     private async ValueTask RetireUnexpectedWorkerAsync(ProfilePool pool, SandboxWorker worker)
     {
         worker.TryMarkUnhealthy();
@@ -379,7 +398,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         await DeleteTrackedWorkerAsync(pool, worker, null);
     }
 
-    private async ValueTask DeleteTrackedWorkerAsync(
+    private async ValueTask<bool> DeleteTrackedWorkerAsync(
         ProfilePool pool,
         SandboxWorker worker,
         Guid? leaseId,
@@ -396,6 +415,8 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
                 worker.Profile.Key,
                 leaseId);
         }
+
+        return deletion.IsSuccess;
     }
 
     private async ValueTask<Result> DeleteUntrackedWorkerAsync(SandboxWorker worker)

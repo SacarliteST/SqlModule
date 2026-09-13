@@ -145,6 +145,88 @@ public sealed class SandboxIsolationDockerTests
         }
     }
 
+    [Fact(DisplayName = "Pool recovery: SQL-ошибка сохраняет worker, cancellation заменяет его")]
+    public async Task PooledExecutor_QuarantinesWorkerOnlyAfterUncertainFailure()
+    {
+        await using var harness = CreatePooledHarness("postgres");
+
+        var badSetup = await harness.Executor.ValidateSetupAsync(
+            harness.Dbms,
+            new SandboxSetup(["CREATE TABLE broken ("]),
+            CancellationToken.None);
+        var afterBadSetup = await harness.Executor.RunAsync(
+            harness.Dbms,
+            new SandboxSetup(["CREATE TABLE healthy_after_error (id INT)"]),
+            new SandboxQuery("SELECT COUNT(*) FROM healthy_after_error", 10, 10),
+            CancellationToken.None);
+
+        badSetup.IsSuccess.ShouldBeFalse();
+        afterBadSetup.IsSuccess.ShouldBeTrue();
+        afterBadSetup.Value!.Succeeded.ShouldBeTrue();
+        harness.WorkerFactory.CreateCount.ShouldBe(1);
+
+        var timedOut = await harness.Executor.RunAsync(
+            harness.Dbms,
+            new SandboxSetup([]),
+            new SandboxQuery("SELECT pg_sleep(10)", 1, 10),
+            CancellationToken.None);
+        var afterTimeout = await harness.Executor.RunAsync(
+            harness.Dbms,
+            new SandboxSetup(["CREATE TABLE healthy_after_timeout (id INT)"]),
+            new SandboxQuery("SELECT COUNT(*) FROM healthy_after_timeout", 10, 10),
+            CancellationToken.None);
+
+        timedOut.IsSuccess.ShouldBeTrue();
+        timedOut.Value!.Succeeded.ShouldBeFalse();
+        afterTimeout.IsSuccess.ShouldBeTrue();
+        afterTimeout.Value!.Succeeded.ShouldBeTrue();
+        harness.WorkerFactory.CreateCount.ShouldBe(2);
+
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(250));
+        try
+        {
+            await harness.Executor.RunAsync(
+                harness.Dbms,
+                new SandboxSetup([]),
+                new SandboxQuery("SELECT pg_sleep(10)", 15, 10),
+                cancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Ожидаемая реакция провайдера на отмену активного запроса.
+        }
+
+        var afterCancellation = await harness.Executor.RunAsync(
+            harness.Dbms,
+            new SandboxSetup(["CREATE TABLE healthy_after_cancel (id INT)"]),
+            new SandboxQuery("SELECT COUNT(*) FROM healthy_after_cancel", 10, 10),
+            CancellationToken.None);
+
+        afterCancellation.IsSuccess.ShouldBeTrue();
+        afterCancellation.Value!.Succeeded.ShouldBeTrue();
+        harness.WorkerFactory.CreateCount.ShouldBe(3);
+    }
+
+    [Fact(DisplayName = "Pool recovery: preparation timeout возвращает ошибку и заменяет worker")]
+    public async Task PooledExecutor_PreparationTimeoutReplacesWorker()
+    {
+        await using var harness = CreatePooledHarness("postgres", preparationTimeoutSeconds: 1);
+
+        var timedOut = await harness.Executor.ValidateSetupAsync(
+            harness.Dbms,
+            new SandboxSetup(["SELECT pg_sleep(10)"]),
+            CancellationToken.None);
+        var afterTimeout = await harness.Executor.ValidateSetupAsync(
+            harness.Dbms,
+            new SandboxSetup(["CREATE TABLE healthy_after_timeout (id INT)"]),
+            CancellationToken.None);
+
+        timedOut.IsSuccess.ShouldBeFalse();
+        timedOut.Error!.Code.ShouldBe("Sandbox.PreparationTimeout");
+        afterTimeout.IsSuccess.ShouldBeTrue();
+        harness.WorkerFactory.CreateCount.ShouldBe(2);
+    }
+
     private static async Task ApplySetupAsync(
         ISqlDialect dialect,
         string host,
@@ -265,6 +347,53 @@ public sealed class SandboxIsolationDockerTests
                     "MYSQL_DATABASE", "pool_control", "MYSQL_ROOT_PASSWORD=pool_root_password"),
                 new MySqlDialect());
 
+    private static PooledHarness CreatePooledHarness(
+        string systemName,
+        int preparationTimeoutSeconds = 30)
+    {
+        var (dbms, _) = CreateProfile(systemName);
+        var sandboxOptions = new SandboxOptions
+        {
+            DefaultQueryTimeoutSeconds = 30,
+            Pool = new SandboxPoolOptions
+            {
+                Enabled = true,
+                AcquireTimeoutSeconds = 30,
+                PreparationTimeoutSeconds = preparationTimeoutSeconds,
+                CleanupTimeoutSeconds = 30,
+                ShutdownTimeoutSeconds = 30,
+                HealthCheckIntervalSeconds = 30,
+                RestartBackoffMaxSeconds = 30,
+            },
+        };
+        sandboxOptions.Pool.Profiles.Add(
+            systemName,
+            new SandboxPoolProfileOptions { MinSize = 0, MaxSize = 1 });
+        var options = Options.Create(sandboxOptions);
+        var dialectFactory = new SqlDialectFactory([new PostgresDialect(), new MySqlDialect()]);
+        var realFactory = new TestcontainersSandboxWorkerFactory(
+            dialectFactory,
+            options,
+            new SandboxPoolInstance(),
+            NullLogger<TestcontainersSandboxWorkerFactory>.Instance);
+        var workerFactory = new TrackingWorkerFactory(realFactory);
+        var leaseManager = new LocalSandboxLeaseManager(
+            workerFactory,
+            options,
+            NullLogger<LocalSandboxLeaseManager>.Instance);
+        var isolationManager = new SandboxIsolationManager(
+            dialectFactory,
+            options,
+            NullLogger<SandboxIsolationManager>.Instance);
+        var executor = new PooledSandboxExecutor(
+            dialectFactory,
+            leaseManager,
+            isolationManager,
+            options,
+            NullLogger<PooledSandboxExecutor>.Instance);
+        return new PooledHarness(dbms, executor, leaseManager, workerFactory);
+    }
+
     private sealed class TrackingWorkerFactory(ISandboxWorkerFactory inner) : ISandboxWorkerFactory
     {
         private int createCount;
@@ -286,5 +415,19 @@ public sealed class SandboxIsolationDockerTests
         public ValueTask<bool> IsHealthyAsync(
             SandboxWorker worker,
             CancellationToken cancellationToken) => inner.IsHealthyAsync(worker, cancellationToken);
+    }
+
+    private sealed class PooledHarness(
+        SandboxDbmsSpec dbms,
+        PooledSandboxExecutor executor,
+        LocalSandboxLeaseManager leaseManager,
+        TrackingWorkerFactory workerFactory) : IAsyncDisposable
+    {
+        internal SandboxDbmsSpec Dbms { get; } = dbms;
+        internal PooledSandboxExecutor Executor { get; } = executor;
+        internal TrackingWorkerFactory WorkerFactory { get; } = workerFactory;
+
+        public async ValueTask DisposeAsync() =>
+            await leaseManager.DrainAsync(CancellationToken.None);
     }
 }

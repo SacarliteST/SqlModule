@@ -1,5 +1,8 @@
 using System.Data.Common;
 using System.Diagnostics;
+using System.Data;
+using MySqlConnector;
+using Npgsql;
 using SQLModule.Common.Results;
 using SQLModule.Sandbox.Dialects;
 
@@ -11,7 +14,8 @@ internal static class SandboxDatabaseOperations
         DbConnection connection,
         SandboxSetup setup,
         int commandTimeoutSeconds,
-        CancellationToken ct)
+        CancellationToken ct,
+        Action? quarantineWorker = null)
     {
         foreach (var statement in setup.Statements)
         {
@@ -22,8 +26,18 @@ internal static class SandboxDatabaseOperations
                 command.CommandTimeout = commandTimeoutSeconds;
                 await command.ExecuteNonQueryAsync(ct);
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                quarantineWorker?.Invoke();
+                throw;
+            }
             catch (Exception exception)
             {
+                if (RequiresQuarantine(connection, exception))
+                {
+                    quarantineWorker?.Invoke();
+                }
+
                 return Result.Fail(SandboxErrors.SetupFailed(exception.Message));
             }
         }
@@ -35,7 +49,8 @@ internal static class SandboxDatabaseOperations
         ISqlDialect dialect,
         DbConnection connection,
         SandboxQuery query,
-        CancellationToken ct)
+        CancellationToken ct,
+        Action? quarantineWorker = null)
     {
         var stopwatch = Stopwatch.StartNew();
         try
@@ -82,8 +97,18 @@ internal static class SandboxDatabaseOperations
                 stopwatch.ElapsedMilliseconds,
                 isTruncated));
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            quarantineWorker?.Invoke();
+            throw;
+        }
         catch (Exception exception)
         {
+            if (RequiresQuarantine(connection, exception))
+            {
+                quarantineWorker?.Invoke();
+            }
+
             stopwatch.Stop();
             return Result<QueryResultSet>.Success(new QueryResultSet(
                 false,
@@ -103,6 +128,7 @@ internal static class SandboxDatabaseOperations
             }
             catch
             {
+                quarantineWorker?.Invoke();
                 // Ошибка отката не меняет уже сформированный результат запроса.
             }
         }
@@ -111,7 +137,8 @@ internal static class SandboxDatabaseOperations
     internal static async Task<Result<InspectedSchema>> InspectCatalogAsync(
         DbConnection connection,
         string systemName,
-        CancellationToken ct)
+        CancellationToken ct,
+        Action? quarantineWorker = null)
     {
         var mysql = systemName.Equals("mysql", StringComparison.OrdinalIgnoreCase) ||
                     systemName.Equals("mariadb", StringComparison.OrdinalIgnoreCase);
@@ -205,9 +232,44 @@ internal static class SandboxDatabaseOperations
                 tableColumns.Select(pair => new InspectedTable(pair.Key, pair.Value)).ToList(),
                 relationships));
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            quarantineWorker?.Invoke();
+            throw;
+        }
         catch (Exception exception)
         {
+            if (RequiresQuarantine(connection, exception))
+            {
+                quarantineWorker?.Invoke();
+            }
+
             return Result<InspectedSchema>.Fail(SandboxErrors.SetupFailed(exception.Message));
         }
+    }
+
+    private static bool RequiresQuarantine(DbConnection connection, Exception exception) =>
+        connection.State is ConnectionState.Broken or ConnectionState.Closed ||
+        exception is OperationCanceledException ||
+        exception is MySqlException { ErrorCode: MySqlErrorCode.CommandTimeoutExpired } ||
+        exception is PostgresException { SqlState: "57014" } ||
+        ContainsTimeout(exception);
+
+    private static bool ContainsTimeout(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException!)
+        {
+            if (current is TimeoutException)
+            {
+                return true;
+            }
+
+            if (current.InnerException is null)
+            {
+                break;
+            }
+        }
+
+        return false;
     }
 }
