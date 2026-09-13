@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using SQLModule.Data;
 using SQLModule.Data.Core.Migrations;
 using SQLModule.Domain.Common;
@@ -92,6 +93,8 @@ public static class WebExtensions
         services.AddScoped<CourseDataSeeder>();
 
         services.AddEndpointsApiExplorer();
+        services.AddHealthChecks()
+            .AddCheck<SandboxPoolHealthCheck>("sandbox_pool");
         services.ConfigureHttpJsonOptions(options =>
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         services.AddOpenApiDocumentation();
@@ -126,6 +129,7 @@ public static class WebExtensions
 
         app.UseAuthentication();
         app.UseAuthorization();
+        app.MapHealthChecks("/health").AllowAnonymous();
         app.MapEndpoints();
         return app;
     }

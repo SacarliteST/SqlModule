@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.Extensions.Logging;
@@ -23,6 +24,7 @@ internal sealed class TestcontainersSandboxWorkerFactory(
         SandboxWorkerProfile profile,
         CancellationToken cancellationToken)
     {
+        var startedAt = Stopwatch.GetTimestamp();
         var dbms = profile.Dbms;
         if (!SandboxContainerSecurity.IsImagePinned(dbms.DockerImage))
         {
@@ -68,10 +70,11 @@ internal sealed class TestcontainersSandboxWorkerFactory(
             }
 
             logger.LogInformation(
-                "Запущен тёплый sandbox-контейнер {WorkerId} профиля {Profile} экземпляра {InstanceId}",
+                "Запущен тёплый sandbox-контейнер {WorkerId} профиля {Profile} экземпляра {InstanceId}; длительность {ElapsedMs} мс",
                 worker.WorkerId,
                 profile.Key,
-                instance.Id);
+                instance.Id,
+                Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
             return Result<SandboxWorker>.Success(worker);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

@@ -14,6 +14,7 @@ internal sealed class SandboxOptionsValidator : IValidateOptions<SandboxOptions>
         ValidatePositive(pool.CleanupTimeoutSeconds, "Sandbox:Pool:CleanupTimeoutSeconds", failures);
         ValidatePositive(pool.ShutdownTimeoutSeconds, "Sandbox:Pool:ShutdownTimeoutSeconds", failures);
         ValidatePositive(pool.HealthCheckIntervalSeconds, "Sandbox:Pool:HealthCheckIntervalSeconds", failures);
+        ValidatePositive(pool.StartupGracePeriodSeconds, "Sandbox:Pool:StartupGracePeriodSeconds", failures);
         ValidatePositive(pool.RestartBackoffMaxSeconds, "Sandbox:Pool:RestartBackoffMaxSeconds", failures);
         ValidatePositive(
             pool.Resources.MemoryLimitMegabytes,

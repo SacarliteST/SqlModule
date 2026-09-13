@@ -1,4 +1,5 @@
-using System.Data.Common;
+﻿using System.Data.Common;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
@@ -110,10 +111,17 @@ internal sealed class SandboxIsolationManager(
         SandboxIsolationNamespace sandboxNamespace,
         CancellationToken _)
     {
+        var startedAt = Stopwatch.GetTimestamp();
+        var profile = lease.Worker.Profile.Key.SystemName;
         var dialect = GetDialect(lease);
         if (dialect is null)
         {
             lease.Discard();
+            SandboxPoolTelemetry.RecordCleanup(
+                profile,
+                Stopwatch.GetElapsedTime(startedAt),
+                "failure");
+            SandboxPoolTelemetry.RecordCleanupFailure(profile);
             return Result.Fail(SandboxErrors.UnsupportedDbms(lease.Worker.Profile.Dbms.SystemName));
         }
 
@@ -129,20 +137,33 @@ internal sealed class SandboxIsolationManager(
             }
 
             logger.LogInformation(
-                "Очищен изолированный namespace {NamespaceId} на sandbox-воркере {WorkerId} для lease {LeaseId}",
+                "Очищен изолированный namespace {NamespaceId} на sandbox-воркере {WorkerId} профиля {Profile} для lease {LeaseId}; длительность {ElapsedMs} мс",
                 sandboxNamespace.Id,
                 lease.Worker.WorkerId,
-                lease.LeaseId);
+                lease.Worker.Profile.Key,
+                lease.LeaseId,
+                Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
+            SandboxPoolTelemetry.RecordCleanup(
+                profile,
+                Stopwatch.GetElapsedTime(startedAt),
+                "success");
             return Result.Success();
         }
         catch (Exception exception)
         {
             lease.Discard();
+            SandboxPoolTelemetry.RecordCleanup(
+                profile,
+                Stopwatch.GetElapsedTime(startedAt),
+                "failure");
+            SandboxPoolTelemetry.RecordCleanupFailure(profile);
             logger.LogError(
-                "Не удалось гарантированно очистить namespace {NamespaceId} на sandbox-воркере {WorkerId}; воркер будет удалён; тип сбоя {FailureType}",
+                "Не удалось гарантированно очистить namespace {NamespaceId} на sandbox-воркере {WorkerId} профиля {Profile}; воркер будет удалён; тип сбоя {FailureType}, длительность {ElapsedMs} мс",
                 sandboxNamespace.Id,
                 lease.Worker.WorkerId,
-                exception.GetType().Name);
+                lease.Worker.Profile.Key,
+                exception.GetType().Name,
+                Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
             return Result.Fail(SandboxErrors.IsolationCleanupFailed());
         }
     }

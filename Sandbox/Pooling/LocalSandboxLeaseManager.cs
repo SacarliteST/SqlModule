@@ -15,6 +15,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
     private readonly ConcurrentDictionary<SandboxProfileKey, ProfilePool> pools = new();
     private readonly ISandboxWorkerFactory workerFactory;
     private readonly ILogger<LocalSandboxLeaseManager> logger;
+    private readonly SandboxPoolHealthMonitor healthMonitor;
     private readonly TimeSpan acquireTimeout;
     private readonly CancellationTokenSource draining = new();
     private int isDraining;
@@ -23,10 +24,12 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         ISandboxWorkerFactory workerFactory,
         IOptions<SandboxOptions> options,
         ILogger<LocalSandboxLeaseManager> logger,
-        TimeSpan? acquireTimeout = null)
+        TimeSpan? acquireTimeout = null,
+        SandboxPoolHealthMonitor? healthMonitor = null)
     {
         this.workerFactory = workerFactory;
         this.logger = logger;
+        this.healthMonitor = healthMonitor ?? new SandboxPoolHealthMonitor(options);
         this.acquireTimeout = acquireTimeout ??
             TimeSpan.FromSeconds(options.Value.Pool.AcquireTimeoutSeconds);
     }
@@ -78,6 +81,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
 
                 if (pool.TryReserveSlot())
                 {
+                    PublishState(pool, profile.Key.SystemName);
                     var creation = await CreateWorkerAsync(pool, profile, linkedSource.Token);
                     if (!creation.IsSuccess)
                     {
@@ -114,6 +118,11 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
                 "Истекло время ожидания аренды sandbox для профиля {Profile}; ожидание {ElapsedMs} мс",
                 profile.Key,
                 Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
+            SandboxPoolTelemetry.RecordAcquireTimeout(profile.Key.SystemName);
+            SandboxPoolTelemetry.RecordLeaseWait(
+                profile.Key.SystemName,
+                Stopwatch.GetElapsedTime(startedAt),
+                "timeout");
             return Result<SandboxLease>.Fail(SandboxErrors.PoolAcquireTimeout());
         }
     }
@@ -146,6 +155,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
             succeeded &= await CheckReadyWorkersAsync(pool, cancellationToken);
             while (pool.Allocated < pool.MinSize && pool.TryReserveSlot())
             {
+                PublishState(pool, profile.Key.SystemName);
                 var creation = await CreateWorkerAsync(pool, profile, cancellationToken);
                 if (!creation.IsSuccess)
                 {
@@ -155,6 +165,8 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
 
                 pool.ReturnReady(creation.Value!);
             }
+
+            PublishState(pool, profile.Key.SystemName);
         }
 
         return succeeded;
@@ -177,8 +189,11 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            var activeLeases = pools.Values.Sum(pool => pool.ActiveLeaseCount);
+            SandboxPoolTelemetry.RecordForcedShutdown(activeLeases);
             logger.LogWarning(
-                "Истекло время ожидания активных аренд sandbox; оставшиеся воркеры будут удалены принудительно");
+                "Истекло время ожидания активных аренд sandbox; {ActiveLeases} воркеров будут удалены принудительно",
+                activeLeases);
         }
 
         foreach (var pool in pools.Values)
@@ -210,6 +225,11 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
             worker.Profile.Key,
             generation,
             Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
+        SandboxPoolTelemetry.RecordLeaseWait(
+            worker.Profile.Key.SystemName,
+            Stopwatch.GetElapsedTime(startedAt),
+            "success");
+        PublishState(pool, worker.Profile.Key.SystemName);
         return Result<SandboxLease>.Success(lease);
     }
 
@@ -227,11 +247,13 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         catch (OperationCanceledException)
         {
             pool.ReleaseReservation();
+            PublishState(pool, profile.Key.SystemName);
             throw;
         }
         catch (Exception exception)
         {
             pool.ReleaseReservation();
+            PublishState(pool, profile.Key.SystemName);
             logger.LogError(
                 "Не удалось создать sandbox-воркер профиля {Profile}; тип сбоя {FailureType}",
                 profile.Key,
@@ -242,6 +264,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         if (!creation.IsSuccess || creation.Value is null)
         {
             pool.ReleaseReservation();
+            PublishState(pool, profile.Key.SystemName);
             logger.LogWarning(
                 "Создание sandbox-воркера профиля {Profile} отклонено с кодом {ErrorCode}",
                 profile.Key,
@@ -261,6 +284,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
             if (deletion.IsSuccess)
             {
                 pool.ReleaseReservation();
+                PublishState(pool, profile.Key.SystemName);
             }
 
             logger.LogError(
@@ -272,6 +296,8 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         }
 
         pool.Attach(worker);
+        SandboxPoolTelemetry.RecordContainerCreated(profile.Key.SystemName);
+        PublishState(pool, profile.Key.SystemName);
         logger.LogInformation(
             "Sandbox-воркер {WorkerId} готов для профиля {Profile}; занято слотов {Allocated}/{MaxSize}",
             worker.WorkerId,
@@ -301,6 +327,7 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
             if (worker.TryCompleteRecycling(lease.Generation))
             {
                 pool.ReturnReady(worker);
+                PublishState(pool, worker.Profile.Key.SystemName);
                 logger.LogInformation(
                     "Аренда sandbox {LeaseId} вернула воркер {WorkerId} в профиль {Profile}; поколение {Generation}",
                     lease.LeaseId,
@@ -320,6 +347,9 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
                 lease.Generation);
             return;
         }
+
+        SandboxPoolTelemetry.RecordReplacement(worker.Profile.Key.SystemName, "discard");
+        PublishState(pool, worker.Profile.Key.SystemName);
 
         await DeleteTrackedWorkerAsync(pool, worker, lease.LeaseId);
     }
@@ -359,6 +389,8 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
 
             succeeded = false;
             worker.TryMarkUnhealthy();
+            SandboxPoolTelemetry.RecordReplacement(worker.Profile.Key.SystemName, "health");
+            PublishState(pool, worker.Profile.Key.SystemName);
             logger.LogWarning(
                 "Sandbox-воркер {WorkerId} профиля {Profile} не прошёл проверку здоровья и будет заменён",
                 worker.WorkerId,
@@ -409,6 +441,8 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
         {
             worker.TryMarkDisposed();
             pool.Remove(worker);
+            SandboxPoolTelemetry.RecordContainerDeleted(worker.Profile.Key.SystemName);
+            PublishState(pool, worker.Profile.Key.SystemName);
             logger.LogInformation(
                 "Sandbox-воркер {WorkerId} профиля {Profile} удалён после аренды {LeaseId}",
                 worker.WorkerId,
@@ -457,6 +491,21 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
                 exception.GetType().Name);
             return Result.Fail(SandboxErrors.ContainerFailed("Sandbox worker deletion failed."));
         }
+    }
+
+    private void PublishState(ProfilePool pool, string systemName)
+    {
+        var workers = pool.SnapshotWorkers();
+        SandboxPoolTelemetry.RecordWorkerStates(
+            systemName,
+            workers,
+            Math.Max(pool.Allocated - workers.Count, 0));
+        healthMonitor.Report(
+            systemName,
+            workers.Count(worker => worker.State is
+                SandboxWorkerState.Ready or
+                SandboxWorkerState.Leased or
+                SandboxWorkerState.Recycling));
     }
 
     private sealed class ProfilePool
@@ -559,6 +608,9 @@ internal sealed class LocalSandboxLeaseManager : ISandboxLeaseManager, ISandboxP
             changed.WaitAsync(cancellationToken);
 
         internal bool HasActiveLease => SnapshotWorkers().Any(worker =>
+            worker.State is SandboxWorkerState.Leased or SandboxWorkerState.Recycling);
+
+        internal int ActiveLeaseCount => SnapshotWorkers().Count(worker =>
             worker.State is SandboxWorkerState.Leased or SandboxWorkerState.Recycling);
 
         internal IReadOnlyCollection<SandboxWorker> SnapshotWorkers()

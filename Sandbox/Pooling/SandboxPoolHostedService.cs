@@ -9,6 +9,7 @@ internal sealed class SandboxPoolHostedService(
     ISandboxPoolLifecycle lifecycle,
     IServiceScopeFactory scopeFactory,
     IOptions<SandboxOptions> options,
+    SandboxPoolHealthMonitor healthMonitor,
     ILogger<SandboxPoolHostedService> logger) : BackgroundService
 {
     private SandboxPoolOptions? activeOptions;
@@ -98,6 +99,11 @@ internal sealed class SandboxPoolHostedService(
                 .ToArray();
             if (missingRequiredProfiles.Length > 0)
             {
+                foreach (var profile in missingRequiredProfiles)
+                {
+                    healthMonitor.ReportUnavailable(profile);
+                }
+
                 logger.LogWarning(
                     "Не найдены разрешённые конфигурации СУБД для обязательных sandbox-профилей {Profiles}",
                     String.Join(',', missingRequiredProfiles));
