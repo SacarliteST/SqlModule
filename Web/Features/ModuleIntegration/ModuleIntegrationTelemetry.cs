@@ -24,6 +24,8 @@ internal static class ModuleIntegrationTelemetry
         "sqlmodule_integration_session_transitions_total");
     private static readonly Counter<long> ExpiredSessionsCounter = Meter.CreateCounter<long>(
         "sqlmodule_integration_expired_sessions_total");
+    private static readonly Counter<long> ExpiredSessionsWithAttemptsCounter = Meter.CreateCounter<long>(
+        "sqlmodule_integration_expired_sessions_with_attempts_total");
     private static readonly Counter<long> CompletionCounter = Meter.CreateCounter<long>(
         "sqlmodule.module_integration.completion.count");
     private static long EventPending;
@@ -79,6 +81,11 @@ internal static class ModuleIntegrationTelemetry
 
     internal static void RecordExpiredSessions(long count) =>
         ExpiredSessionsCounter.Add(count);
+
+    /// <summary>Сколько истёкших сессий имели хотя бы одну попытку студента —
+    /// то есть потенциальную потерю результата (см. LogExpiredSessionsWithAttemptsAsync).</summary>
+    internal static void RecordExpiredSessionsWithAttempts(long count) =>
+        ExpiredSessionsWithAttemptsCounter.Add(count);
 
     private static IEnumerable<Measurement<long>> ObservePendingMessages()
     {
