@@ -14,6 +14,7 @@ internal sealed class GetMetaAttributeByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.MetaAttributes.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetMetaAttributeById")
             .WithTags("Schema")
             .WithSummary("Получить мета-атрибут по Id")

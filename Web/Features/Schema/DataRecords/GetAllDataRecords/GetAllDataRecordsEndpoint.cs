@@ -14,6 +14,7 @@ internal sealed class GetAllDataRecordsEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.DataRecords.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllDataRecords")
             .WithTags("Schema")
             .WithSummary("Получить список строк данных")

@@ -8,6 +8,7 @@ using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Schema;
 using SQLModule.Web.Common.Cqrs;
+using SQLModule.Web.Common.Sandbox;
 
 namespace SQLModule.Web.Features.Schema.SchemaBuilder.BatchTableRows;
 
@@ -17,7 +18,7 @@ internal sealed record BatchTableRowsCommand(
     string IdempotencyKey,
     BatchTableRowsRequest Request) : IRequest<Result<BatchTableRowsResponse>>;
 
-internal sealed class BatchTableRowsHandler(AppDbContext db)
+internal sealed class BatchTableRowsHandler(AppDbContext db, ITargetDbDataValidator dataValidator)
     : IRequestHandler<BatchTableRowsCommand, Result<BatchTableRowsResponse>>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -110,6 +111,12 @@ internal sealed class BatchTableRowsHandler(AppDbContext db)
         }
 
         await db.SaveChangesAsync(ct);
+        var physicalValidation = await dataValidator.ValidateAsync(command.TargetDbId, ct);
+        if (!physicalValidation.IsSuccess)
+        {
+            return Result<BatchTableRowsResponse>.Fail(physicalValidation.Error!);
+        }
+
         var response = await BuildResponse(actualSchemaVersion, changedIds, createdIds, columns, ct);
         db.MutationReceipts.Add(MutationReceipt.Create(
             scope, command.IdempotencyKey, payloadHash, JsonSerializer.Serialize(response, JsonOptions)));

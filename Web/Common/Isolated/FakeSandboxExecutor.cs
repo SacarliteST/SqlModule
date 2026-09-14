@@ -10,14 +10,25 @@ namespace SQLModule.Web.Common.Isolated;
 public sealed class FakeSandboxExecutor : ISandboxExecutor
 {
     private int runCallCount;
+    private int validateSetupCallCount;
     public int RunCallCount => runCallCount;
+    public int ValidateSetupCallCount => validateSetupCallCount;
     public SandboxQuery? LastQuery { get; private set; }
+    public SandboxSetup? LastSetup { get; private set; }
 
     public void ResetRunCallCount()
     {
         Interlocked.Exchange(ref runCallCount, 0);
         LastQuery = null;
     }
+
+    public void ResetValidateSetup()
+    {
+        Interlocked.Exchange(ref validateSetupCallCount, 0);
+        LastSetup = null;
+        OverrideSetup = null;
+    }
+
     public Result<InspectedSchema>? OverrideInspection { get; set; }
 
     /// <summary>Переопределяет результат RunAsync для тестовых сценариев.</summary>
@@ -36,8 +47,12 @@ public sealed class FakeSandboxExecutor : ISandboxExecutor
     }
 
     public Task<Result> ValidateSetupAsync(
-        SandboxDbmsSpec dbms, SandboxSetup setup, CancellationToken ct) =>
-        Task.FromResult(OverrideSetup ?? Result.Success());
+        SandboxDbmsSpec dbms, SandboxSetup setup, CancellationToken ct)
+    {
+        Interlocked.Increment(ref validateSetupCallCount);
+        LastSetup = setup;
+        return Task.FromResult(OverrideSetup ?? Result.Success());
+    }
 
     public Task<Result<InspectedSchema>> InspectDdlAsync(
         SandboxDbmsSpec dbms, string ddlScript, CancellationToken ct) =>

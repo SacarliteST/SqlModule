@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Sandbox;
+using SQLModule.Sandbox.Pooling;
 using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary;
 using SQLModule.Web.Features.DbmsCatalog.ParameterDefinitions;
@@ -31,7 +32,8 @@ internal static class FeaturesExtensions
 {
     /// <summary>Регистрирует хендлеры всех фич.</summary>
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
-        => s.AddSandbox()
+        => s.AddScoped<ISandboxPoolProfileSource, DbmsSandboxPoolProfileSource>()
+            .AddSandbox()
             .AddTaskMaterializer()
             .AddDbmsDictionaries()
             .AddPhysicalTypes()

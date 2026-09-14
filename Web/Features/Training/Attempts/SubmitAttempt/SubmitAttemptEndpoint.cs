@@ -10,6 +10,7 @@ using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
 using SQLModule.Web.Common.Cqrs;
+using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;
 
@@ -48,7 +49,7 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
         [FromHeader(Name = "Idempotency-Key"), Required, StringLength(128)] string? idempotencyKey,
         ISender sender,
         ICurrentUser currentUser,
-        IOptions<Features.ModuleIntegration.ModuleIntegrationOptions> integrationOptions,
+        IOptions<ModuleIntegrationOptions> integrationOptions,
         CancellationToken ct)
     {
         if (String.IsNullOrWhiteSpace(idempotencyKey) ||

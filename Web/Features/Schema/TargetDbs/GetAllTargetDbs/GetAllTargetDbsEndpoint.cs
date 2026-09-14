@@ -14,6 +14,7 @@ public sealed class GetAllTargetDbsEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.TargetDbs.Collection, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetAllTargetDbs")
             .WithTags("Schema")
             .WithSummary("Список целевых БД с пагинацией")

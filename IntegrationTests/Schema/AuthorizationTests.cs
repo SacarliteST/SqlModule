@@ -26,6 +26,17 @@ public sealed class AuthorizationTests : ApiTestBase
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
+    [Fact(DisplayName = "Health: доступен без авторизации и сообщает healthy при выключенном пуле")]
+    public async Task NoAuth_Health_ReturnsOkWhenPoolIsDisabled()
+    {
+        var anonymousClient = App.CreateClient();
+        anonymousClient.DefaultRequestHeaders.Add("X-Test-Anonymous", "true");
+
+        var response = await anonymousClient.GetAsync("/health");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
     [Fact(DisplayName = "Auth: Student пытается создать схему (ContentAuthor) → 403 Forbidden")]
     public async Task Student_CreateSchema_Returns403()
     {

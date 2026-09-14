@@ -14,6 +14,7 @@ internal sealed class GetDbmsDictionaryByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.DbmsCatalog.DbmsDictionaries.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetDbmsDictionaryById")
             .WithTags("DbmsCatalog")
             .Produces<DbmsDictionaryResponse>()
