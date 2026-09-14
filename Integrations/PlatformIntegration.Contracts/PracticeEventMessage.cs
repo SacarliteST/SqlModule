@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SQLModule.Web.Features.ModuleIntegration;
+namespace SQLModule.PlatformIntegration.Contracts;
 
-internal sealed record PracticeEventMessage(
+public sealed record PracticeEventMessage(
     Guid SessionId,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] string SessionKey,
     Guid EventId,
@@ -10,7 +10,7 @@ internal sealed record PracticeEventMessage(
     DateTimeOffset OccurredAt,
     PracticeEventPayload Payload);
 
-internal sealed record PracticeEventPayload(
+public sealed record PracticeEventPayload(
     string SubmittedSql,
     string Status,
     int? RowCount,

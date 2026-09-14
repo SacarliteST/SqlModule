@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
@@ -9,7 +10,8 @@ namespace SQLModule.Web.Features.ModuleIntegration;
 internal sealed class ModuleSessionCleanupProcessor(
     AppDbContext db,
     IOptions<ModuleIntegrationOptions> options,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider,
+    ILogger<ModuleSessionCleanupProcessor> logger)
 {
     internal async Task<int> CleanupAsync(CancellationToken ct)
     {
@@ -35,6 +37,7 @@ internal sealed class ModuleSessionCleanupProcessor(
         if (expiredSessions.Count > 0)
         {
             await db.SaveChangesAsync(ct);
+            await LogExpiredSessionsWithAttemptsAsync(expiredSessions, ct);
         }
 
         var sessionIds = await db.ModuleSessions
@@ -68,6 +71,55 @@ internal sealed class ModuleSessionCleanupProcessor(
         await transaction.CommitAsync(ct);
         RecordExpirationMetrics(expiredSessions.Count);
         return deleted;
+    }
+
+    /// <summary>
+    /// Помечает попытки без финализации отдельным Warning-логом и метрикой —
+    /// иначе результат студента (успешный или нет) тихо теряется при
+    /// истечении platform-сессии: раньше это вообще нигде не логировалось.
+    /// См. SQLTren/PLATFORM.md, раздел про логирование (L3).
+    /// </summary>
+    private async Task LogExpiredSessionsWithAttemptsAsync(
+        IReadOnlyList<ModuleSession> expiredSessions,
+        CancellationToken ct)
+    {
+        var expiredIds = expiredSessions.Select(session => session.Id).ToList();
+        var attemptStats = await db.Attempts
+            .Where(attempt => attempt.ModuleSessionId != null && expiredIds.Contains(attempt.ModuleSessionId.Value))
+            .GroupBy(attempt => attempt.ModuleSessionId!.Value)
+            .Select(group => new
+            {
+                SessionId = group.Key,
+                AttemptCount = group.Count(),
+                HasCorrectAttempt = group.Any(attempt => attempt.IsCorrect),
+            })
+            .ToListAsync(ct);
+
+        var statsBySessionId = attemptStats.ToDictionary(stat => stat.SessionId);
+        var sessionsWithAttempts = 0;
+
+        foreach (var session in expiredSessions)
+        {
+            if (!statsBySessionId.TryGetValue(session.Id, out var stats))
+            {
+                // Сессию открыли и ни разу не отправили SQL — не результат,
+                // а обычный неиспользованный запуск, отдельного внимания не стоит.
+                continue;
+            }
+
+            sessionsWithAttempts++;
+            logger.LogWarning(
+                "Platform-сессия {SessionId} (студент {UserId}, задание {TaskRef}) истекла без " +
+                "финализации: {AttemptCount} попыток, есть успешная попытка: {HasCorrectAttempt}. " +
+                "Итоговая оценка не будет передана в Education, пока не появится авто-финализация " +
+                "по expiry (Phase 2b).",
+                session.Id, session.UserId, session.TaskRef, stats.AttemptCount, stats.HasCorrectAttempt);
+        }
+
+        if (sessionsWithAttempts > 0)
+        {
+            ModuleIntegrationTelemetry.RecordExpiredSessionsWithAttempts(sessionsWithAttempts);
+        }
     }
 
     private static void RecordExpirationMetrics(int expiredCount)

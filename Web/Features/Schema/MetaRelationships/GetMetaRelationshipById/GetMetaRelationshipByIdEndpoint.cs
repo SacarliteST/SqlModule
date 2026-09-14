@@ -14,6 +14,7 @@ internal sealed class GetMetaRelationshipByIdEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Schema.MetaRelationships.ById, Handle)
+            .RequireAuthorization(Policies.ContentAuthor)
             .WithName("GetMetaRelationshipById")
             .WithTags("Schema")
             .WithSummary("Получить связь по Id")

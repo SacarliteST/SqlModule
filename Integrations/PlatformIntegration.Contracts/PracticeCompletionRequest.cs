@@ -1,11 +1,11 @@
-﻿namespace SQLModule.Web.Features.ModuleIntegration;
+﻿namespace SQLModule.PlatformIntegration.Contracts;
 
-internal sealed record PracticeCompletionRequest(
+public sealed record PracticeCompletionRequest(
     string SessionKey,
     int Grade,
     PracticeCompletionData CompletionData,
     DateTimeOffset CompletedAt);
 
-internal sealed record PracticeCompletionData(
+public sealed record PracticeCompletionData(
     int TotalAttempts,
     Guid CorrectAttemptId);

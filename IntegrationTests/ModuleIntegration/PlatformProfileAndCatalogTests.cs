@@ -19,10 +19,15 @@ using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Host;
 using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.PlatformIntegration.Abstractions;
+using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Isolated;
 using SQLModule.Web.Features.ModuleIntegration;
 using Swashbuckle.AspNetCore.Swagger;
+using EducationClientOptions = SQLModule.Education.Client.EducationClientOptions;
+using EducationCompletionClient = SQLModule.Education.Client.EducationCompletionClient;
+using ServiceKeyDelegatingHandler = SQLModule.Education.Client.ServiceKeyDelegatingHandler;
 
 namespace SQLModule.IntegrationTests.ModuleIntegration;
 
@@ -827,7 +832,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
                     BatchSize = 100
                 }
             }),
-            TimeProvider.System);
+            TimeProvider.System,
+            NullLogger<ModuleSessionCleanupProcessor>.Instance);
 
         var removed = await processor.CleanupAsync(CancellationToken.None);
 
@@ -863,13 +869,15 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         var now = DateTimeOffset.UtcNow.AddSeconds(-1);
         var failedId = Guid.NewGuid();
         var successfulId = Guid.NewGuid();
+        var failedSessionId = Guid.NewGuid();
+        var successfulSessionId = Guid.NewGuid();
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.PendingPublishes.AddRange(
-            PendingPublish.Create(failedId, PendingPublishKind.Event, Guid.NewGuid(),
-                $"event:{failedId}", "{\"result\":\"fail\"}", now),
-            PendingPublish.Create(successfulId, PendingPublishKind.Event, Guid.NewGuid(),
-                $"event:{successfulId}", "{\"result\":\"ok\"}", now));
+            PendingPublish.Create(failedId, PendingPublishKind.Event, failedSessionId,
+                $"event:{failedId}", CreateEventMessageJson(failedSessionId, "fail"), now),
+            PendingPublish.Create(successfulId, PendingPublishKind.Event, successfulSessionId,
+                $"event:{successfulId}", CreateEventMessageJson(successfulSessionId, "ok"), now));
         await db.SaveChangesAsync();
         var publisher = new RecordingEventPublisher("fail");
         var processor = CreatePendingPublishProcessor(db, publisher);
@@ -891,11 +899,12 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
     {
         var now = DateTimeOffset.UtcNow.AddSeconds(-1);
         var messageId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var message = PendingPublish.Create(
-            messageId, PendingPublishKind.Event, Guid.NewGuid(),
-            $"event:{messageId}", "{\"result\":\"fail\"}", now);
+            messageId, PendingPublishKind.Event, sessionId,
+            $"event:{messageId}", CreateEventMessageJson(sessionId, "fail"), now);
         for (var attempt = 0; attempt < 9; attempt++)
         {
             message.RegisterFailure(now, now, false);
@@ -926,7 +935,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             PendingPublishKind.Event,
             Guid.NewGuid(),
             $"event:{messageId}",
-            $"{{\"sessionKey\":\"{secret}\"}}",
+            CreateEventMessageJson(Guid.NewGuid(), secret, secret),
             now));
         await db.SaveChangesAsync();
         var logger = new RecordingLogger<PendingPublishProcessor>();
@@ -1025,7 +1034,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         db.PendingPublishes.AddRange(
             PendingPublish.Create(
                 eventId, PendingPublishKind.Event, sessionId, $"event:{eventId}",
-                "{\"result\":\"fail\"}", now),
+                CreateEventMessageJson(sessionId, "fail"), now),
             PendingPublish.Create(
                 gradeId, PendingPublishKind.Grade, sessionId, $"grade:{sessionId}",
                 "{\"grade\":100}", now));
@@ -1122,7 +1131,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
                     PendingPublishKind.Event,
                     sessionId,
                     $"event:{eventId}",
-                    "{\"result\":\"fail\"}",
+                    CreateEventMessageJson(sessionId, "fail"),
                     now),
                 PendingPublish.Create(
                     gradeId,
@@ -1188,30 +1197,41 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         int expected)
     {
         var handler = new StaticResponseHandler(status);
-        var options = CreateModuleIntegrationOptions();
-        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://education.test/") };
-        var client = new EducationCompletionClient(httpClient, options);
+        using var httpClient = new HttpClient(new ServiceKeyDelegatingHandler(
+            CreateEducationClientOptions())
+        {
+            InnerHandler = handler,
+        })
+        { BaseAddress = new Uri("http://education.test/") };
+        var client = new EducationCompletionClient(
+            httpClient,
+            NullLogger<EducationCompletionClient>.Instance);
         var sessionId = Guid.NewGuid();
+        var request = CreateCompletionRequest();
 
-        var result = await client.CompleteAsync(sessionId, "{\"grade\":100}", CancellationToken.None);
+        var result = await client.CompleteAsync(sessionId, request, CancellationToken.None);
 
         result.ShouldBe((EducationCompletionDeliveryResult)expected);
         handler.RequestPath.ShouldBe($"/api/v1/module-sessions/{sessionId:D}/complete");
         handler.ServiceKey.ShouldBe(ServiceKey);
-        handler.Body.ShouldBe("{\"grade\":100}");
+        handler.Body.ShouldBe(JsonSerializer.Serialize(request, PlatformIntegrationJson.Default));
     }
 
     [Fact(DisplayName = "Education completion client считает 5xx временной ошибкой")]
     public async Task CompletionClient_ThrowsForServerFailure()
     {
-        using var httpClient = new HttpClient(new StaticResponseHandler(HttpStatusCode.ServiceUnavailable))
+        using var httpClient = new HttpClient(new ServiceKeyDelegatingHandler(
+            CreateEducationClientOptions())
         {
-            BaseAddress = new Uri("http://education.test/")
-        };
-        var client = new EducationCompletionClient(httpClient, CreateModuleIntegrationOptions());
+            InnerHandler = new StaticResponseHandler(HttpStatusCode.ServiceUnavailable),
+        })
+        { BaseAddress = new Uri("http://education.test/") };
+        var client = new EducationCompletionClient(
+            httpClient,
+            NullLogger<EducationCompletionClient>.Instance);
 
         await Should.ThrowAsync<HttpRequestException>(() => client.CompleteAsync(
-            Guid.NewGuid(), "{\"grade\":100}", CancellationToken.None));
+            Guid.NewGuid(), CreateCompletionRequest(), CancellationToken.None));
     }
 
     private WebApplicationFactory<IHostMarker> CreatePlatformApplication(
@@ -1398,20 +1418,55 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             }
         });
 
+    private static PracticeCompletionRequest CreateCompletionRequest() =>
+        new(
+            "session-key",
+            100,
+            new PracticeCompletionData(3, Guid.NewGuid()),
+            DateTimeOffset.Parse("2026-09-06T10:40:00Z"));
+
+    private static string CreateEventMessageJson(
+        Guid sessionId,
+        string submittedSql,
+        string sessionKey = "session-key") =>
+        JsonSerializer.Serialize(
+            new PracticeEventMessage(
+                sessionId,
+                sessionKey,
+                Guid.NewGuid(),
+                "AttemptSubmitted",
+                DateTimeOffset.Parse("2026-09-06T10:40:00Z"),
+                new PracticeEventPayload(
+                    submittedSql,
+                    "Rejected",
+                    null,
+                    null,
+                    false,
+                    "test")),
+            PlatformIntegrationJson.Default);
+
+    private static IOptions<EducationClientOptions> CreateEducationClientOptions() =>
+        Options.Create(new EducationClientOptions
+        {
+            ServiceKey = ServiceKey,
+            EducationBaseUrl = "http://education.test",
+        });
+
     private sealed class RecordingEventPublisher(
         string failingMarker,
         string failureMessage = "Simulated broker failure") : IPracticeEventPublisher
     {
         internal List<Guid> PublishedIds { get; } = [];
 
-        public Task PublishAsync(Guid sessionId, string messageJson, CancellationToken ct)
+        public Task PublishAsync(PracticeEventMessage message, CancellationToken ct = default)
         {
+            var messageJson = JsonSerializer.Serialize(message, PlatformIntegrationJson.Default);
             if (messageJson.Contains(failingMarker, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(failureMessage);
             }
 
-            PublishedIds.Add(sessionId);
+            PublishedIds.Add(message.SessionId);
             return Task.CompletedTask;
         }
     }
@@ -1424,8 +1479,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
 
         public Task<EducationCompletionDeliveryResult> CompleteAsync(
             Guid sessionId,
-            string requestJson,
-            CancellationToken ct)
+            PracticeCompletionRequest request,
+            CancellationToken ct = default)
         {
             Calls++;
             return shouldThrow

@@ -9,6 +9,7 @@ using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
+using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Cqrs;
 using SQLModule.Web.Common.Sandbox;
