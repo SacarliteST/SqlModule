@@ -960,7 +960,7 @@
             "description": "OK"
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Неверный X-Service-Key. code: InvalidServiceKey.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -970,7 +970,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Неактивную сессию нельзя обновить. code: ModuleSession.Completed.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -980,7 +980,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Content",
+            "description": "Ошибка полей запроса: sessionId и userId должны быть UUID; sessionKey и taskRef обязательны и ограничены по длине; returnUrl обязателен и должен быть абсолютным HTTP/HTTPS URL; expiresAt, если передан, должен иметь корректный date-time формат.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3411,6 +3411,158 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/target-dbs/{targetDbId}/tables/{tableId}/lookup-values": {
+      "get": {
+        "tags": [
+          "Schema Data"
+        ],
+        "summary": "Получить страницу значений связанной таблицы",
+        "operationId": "GetTargetDbTableLookupValues",
+        "parameters": [
+          {
+            "name": "targetDbId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "valueColumnId",
+            "in": "query",
+            "description": "Колонка, значение которой будет сохранено во внешнем ключе.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "labelColumnId",
+            "in": "query",
+            "description": "Необязательная колонка с понятным пользователю названием.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Подстрока для регистронезависимого поиска по значению и названию.",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Количество пропускаемых строк. По умолчанию 0.",
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Размер страницы. По умолчанию 30.",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookupValuesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -5386,7 +5538,7 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "Сессия принадлежит другому пользователю. code: ModuleSessionForbidden.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5416,7 +5568,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Конфликт состояния платформенной сессии или идемпотентного запроса. Возможные code: ModuleSessionRequired, SessionTaskMismatch, ModuleSessionClosed, IdempotencyKeyPayloadMismatch, IdempotencyRequestInProgress.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7152,6 +7304,59 @@
           }
         },
         "additionalProperties": { }
+      },
+      "LookupValueItemResponse": {
+        "required": [
+          "label",
+          "rowId",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "rowId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Одна строка связанной таблицы, доступная для выбора."
+      },
+      "LookupValuesResponse": {
+        "required": [
+          "count",
+          "items",
+          "limit",
+          "offset"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LookupValueItemResponse"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Страница вариантов значения внешнего ключа."
       },
       "MetaAttributeResponse": {
         "type": "object",

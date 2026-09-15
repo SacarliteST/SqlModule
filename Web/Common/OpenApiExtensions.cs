@@ -25,6 +25,7 @@ internal static class OpenApiExtensions
             c.SchemaFilter<NullableResultRowsSchemaFilter>();
             c.OperationFilter<SubmitAttemptIdempotencyOpenApiFilter>();
             c.OperationFilter<AttemptFilterOptionsOpenApiFilter>();
+            c.OperationFilter<LookupValuesOpenApiFilter>();
             c.OperationFilter<ModuleIntegrationServiceKeyOpenApiFilter>();
             c.OperationFilter<IntegrationErrorCodesOpenApiFilter>();
             c.AddSecurityDefinition(BearerScheme, new OpenApiSecurityScheme

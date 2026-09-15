@@ -23,6 +23,16 @@ public interface ISchemaBuilderClient
     /// <summary>Получить страницу учебных строк таблицы.</summary>
     Task<TableRowsResponse?> GetTableRowsAsync(
         Guid targetDbId, Guid tableId, int offset, int limit, CancellationToken ct = default);
+    /// <summary>Получить страницу значений связанной таблицы для выбора внешнего ключа.</summary>
+    Task<LookupValuesResponse> GetLookupValuesAsync(
+        Guid targetDbId,
+        Guid tableId,
+        Guid valueColumnId,
+        Guid? labelColumnId = null,
+        string? search = null,
+        int offset = 0,
+        int limit = 30,
+        CancellationToken ct = default);
     /// <summary>Атомарно сохранить пакет изменений строк.</summary>
     Task<BatchTableRowsResponse> SaveTableRowsAsync(
         Guid targetDbId, Guid tableId, string idempotencyKey,

@@ -68,4 +68,39 @@ public sealed class AuthorizationTests : ApiTestBase
         var response = await HttpClient.GetAsync(ApiRoutes.Training.TeacherTasks.ForDetails(Guid.NewGuid()));
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
+
+    [Fact(DisplayName = "Lookup values: Teacher/Admin разрешены, Student получает 403, anonymous — 401")]
+    public async Task LookupValues_UsesContentAuthorPolicy()
+    {
+        var path = $"{ApiRoutes.Schema.TargetDbs.ForLookupValues(Guid.NewGuid(), Guid.NewGuid())}" +
+                   $"?valueColumnId={Guid.NewGuid()}";
+
+        AsTeacher();
+        (await HttpClient.GetAsync(path)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        AsAdmin();
+        (await HttpClient.GetAsync(path)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        AsStudent();
+        (await HttpClient.GetAsync(path)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        var anonymousClient = App.CreateClient();
+        anonymousClient.DefaultRequestHeaders.Add("X-Test-Anonymous", "true");
+        (await anonymousClient.GetAsync(path)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact(DisplayName = "Lookup values: некорректные query-параметры возвращают 422")]
+    public async Task LookupValues_InvalidQuery_Returns422()
+    {
+        AsTeacher();
+        var path = ApiRoutes.Schema.TargetDbs.ForLookupValues(Guid.NewGuid(), Guid.NewGuid());
+
+        (await HttpClient.GetAsync(path)).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await HttpClient.GetAsync($"{path}?valueColumnId={Guid.NewGuid()}&offset=-1"))
+            .StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await HttpClient.GetAsync($"{path}?valueColumnId={Guid.NewGuid()}&limit=101"))
+            .StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await HttpClient.GetAsync($"{path}?valueColumnId={Guid.NewGuid()}&search={new string('x', 201)}"))
+            .StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+    }
 }

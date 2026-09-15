@@ -62,6 +62,36 @@ internal sealed class SchemaBuilderClient(HttpClient httpClient) : ISchemaBuilde
         return await ReadAsync<TableRowsResponse>(response, ct);
     }
 
+    public async Task<LookupValuesResponse> GetLookupValuesAsync(
+        Guid targetDbId,
+        Guid tableId,
+        Guid valueColumnId,
+        Guid? labelColumnId = null,
+        string? search = null,
+        int offset = 0,
+        int limit = 30,
+        CancellationToken ct = default)
+    {
+        var query = new List<string>
+        {
+            $"valueColumnId={valueColumnId:D}",
+            $"offset={offset}",
+            $"limit={limit}"
+        };
+        if (labelColumnId.HasValue)
+        {
+            query.Add($"labelColumnId={labelColumnId.Value:D}");
+        }
+
+        if (!String.IsNullOrWhiteSpace(search))
+        {
+            query.Add($"search={Uri.EscapeDataString(search)}");
+        }
+
+        var path = $"{ApiRoutes.Schema.TargetDbs.ForLookupValues(targetDbId, tableId)}?{String.Join('&', query)}";
+        return await ReadAsync<LookupValuesResponse>(await httpClient.GetAsync(path, ct), ct);
+    }
+
     public async Task<BatchTableRowsResponse> SaveTableRowsAsync(
         Guid targetDbId, Guid tableId, string idempotencyKey,
         BatchTableRowsRequest request, CancellationToken ct = default)
