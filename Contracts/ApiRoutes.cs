@@ -17,11 +17,25 @@ public static class ApiRoutes
 
         /// <summary>Текущая платформенная сессия из JWT.</summary>
         public const string CurrentSession = Sessions + "/current";
+
+        /// <summary>Финализация текущей платформенной сессии.</summary>
+        public const string FinalizeCurrentSession = CurrentSession + "/finalize";
     }
 
     /// <summary>Маршруты контекста СУБД-справочника.</summary>
     public static class DbmsCatalog
     {
+        /// <summary>Возможности проверки SQL для конкретной СУБД.</summary>
+        public static class ValidationCapabilities
+        {
+            /// <summary>Возможности по идентификатору СУБД.</summary>
+            public const string ByDbmsId = PrefixV1 + "/dbms/{dbmsId}/validation-capabilities";
+
+            /// <inheritdoc cref="ForDbms"/>
+            public static string ForDbms(Guid dbmsId) =>
+                $"{PrefixV1}/dbms/{dbmsId}/validation-capabilities";
+        }
+
         /// <summary>Справочник СУБД.</summary>
         public static class DbmsDictionaries
         {
@@ -105,6 +119,9 @@ public static class ApiRoutes
             /// <summary>Строки конкретной таблицы учебной базы.</summary>
             public const string TableRows = ById + "/tables/{tableId}/rows";
 
+            /// <summary>Значения таблицы для выбора внешнего ключа.</summary>
+            public const string LookupValues = Collection + "/{targetDbId}/tables/{tableId}/lookup-values";
+
             /// <summary>Проверка пользовательского DDL без сохранения.</summary>
             public const string ValidateDdl = Collection + "/ddl/validate";
 
@@ -122,6 +139,10 @@ public static class ApiRoutes
 
             /// <inheritdoc cref="ForTableRows"/>
             public static string ForTableRows(Guid id, Guid tableId) => $"{Collection}/{id}/tables/{tableId}/rows";
+
+            /// <inheritdoc cref="ForLookupValues"/>
+            public static string ForLookupValues(Guid targetDbId, Guid tableId) =>
+                $"{Collection}/{targetDbId}/tables/{tableId}/lookup-values";
 
             /// <inheritdoc cref="ForPagination"/>
             public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";
@@ -234,11 +255,17 @@ public static class ApiRoutes
             public const string Tasks = PrefixV1 + "/student/tasks";
             public const string TaskById = Tasks + "/{taskId}";
             public const string TaskSchema = TaskById + "/schema";
+            public const string TaskProgress = TaskById + "/progress";
+            public const string TaskProgressRestart = TaskProgress + "/restart";
+            public const string TaskProgressFinalize = TaskProgress + "/finalize";
             public const string Attempts = PrefixV1 + "/student/attempts";
             public const string AttemptById = Attempts + "/{attemptId}";
 
             public static string ForTask(Guid taskId) => $"{Tasks}/{taskId}";
             public static string ForTaskSchema(Guid taskId) => $"{ForTask(taskId)}/schema";
+            public static string ForTaskProgress(Guid taskId) => $"{ForTask(taskId)}/progress";
+            public static string ForTaskProgressRestart(Guid taskId) => $"{ForTaskProgress(taskId)}/restart";
+            public static string ForTaskProgressFinalize(Guid taskId) => $"{ForTaskProgress(taskId)}/finalize";
             public static string ForAttempt(Guid attemptId) => $"{Attempts}/{attemptId}";
             public static string ForTasksPage(int offset, int limit) =>
                 $"{Tasks}?offset={offset}&limit={limit}";
@@ -305,6 +332,15 @@ public static class ApiRoutes
             /// <summary>Эталонное решение текущего задания.</summary>
             public const string ReferenceQuery = ById + "/reference-query";
 
+            /// <summary>Редактируемая конфигурация проверки задания.</summary>
+            public const string Validation = Collection + "/{taskId}/validation";
+
+            /// <summary>Предварительная проверка draft-конфигурации.</summary>
+            public const string ValidationPreview = Validation + "/preview";
+
+            /// <summary>Публикация immutable validation version.</summary>
+            public const string ValidationPublish = Validation + "/publish";
+
             /// <inheritdoc cref="ForId"/>
             public static string ForId(Guid id) => $"{Collection}/{id}";
 
@@ -316,6 +352,15 @@ public static class ApiRoutes
 
             /// <inheritdoc cref="ForReferenceQuery"/>
             public static string ForReferenceQuery(Guid id) => $"{Collection}/{id}/reference-query";
+
+            /// <inheritdoc cref="ForValidation"/>
+            public static string ForValidation(Guid id) => $"{Collection}/{id}/validation";
+
+            /// <inheritdoc cref="ForValidationPreview"/>
+            public static string ForValidationPreview(Guid id) => $"{ForValidation(id)}/preview";
+
+            /// <inheritdoc cref="ForValidationPublish"/>
+            public static string ForValidationPublish(Guid id) => $"{ForValidation(id)}/publish";
 
             /// <inheritdoc cref="ForPagination"/>
             public static string ForPagination(int offset, int limit) => $"{Collection}?offset={offset}&limit={limit}";

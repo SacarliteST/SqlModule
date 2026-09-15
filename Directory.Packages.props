@@ -39,6 +39,7 @@
     <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.50.3" />
     <PackageVersion Include="xunit" Version="2.5.3" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="SqlParserCS" Version="0.6.5" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.5.3" />
     <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.1.0" />

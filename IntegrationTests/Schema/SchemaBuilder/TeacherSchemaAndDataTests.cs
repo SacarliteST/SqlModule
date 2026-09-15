@@ -556,6 +556,101 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
             fixture.TargetDbId, child.Id, 0, 50))!.Count.ShouldBe(2);
     }
 
+    [Fact(DisplayName = "Teacher lookup: фильтрует, пагинирует и не схлопывает одинаковые значения")]
+    public async Task LookupValues_FiltersPaginatesAndKeepsDuplicates()
+    {
+        var fixture = await CreateFixtureAsync("INTEGER");
+        Guid labelTypeId;
+        using (var scope = App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var labelType = PhysicalType.Create(fixture.DbmsId, "TEXT");
+            db.PhysicalTypes.Add(labelType);
+            await db.SaveChangesAsync();
+            labelTypeId = labelType.Id;
+        }
+
+        var schema = await SchemaBuilderClient.ApplyTargetDbSchemaAsync(
+            fixture.TargetDbId,
+            RelatedTablesSchemaRequest("0", fixture.PhysicalTypeId, labelTypeId));
+        var courses = schema.Tables.Single(table => table.Name == "courses");
+        var enrollments = schema.Tables.Single(table => table.Name == "enrollments");
+        var valueColumn = courses.Columns.Single(column => column.Name == "id");
+        var labelColumn = courses.Columns.Single(column => column.Name == "name");
+        var foreignColumn = enrollments.Columns.Single(column => column.Name == "course_id");
+
+        using (var scope = App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            AddLookupRow(db, courses.Id, valueColumn.Id, labelColumn.Id, "2", "Дубликат", 0);
+            AddLookupRow(db, courses.Id, valueColumn.Id, labelColumn.Id, null, "Без значения", 1);
+            AddLookupRow(db, courses.Id, valueColumn.Id, labelColumn.Id, "2", "Базы данных", 2);
+            AddLookupRow(db, courses.Id, valueColumn.Id, labelColumn.Id, "3", "Алгоритмы", 3);
+            await db.SaveChangesAsync();
+        }
+
+        var all = await SchemaBuilderClient.GetLookupValuesAsync(
+            fixture.TargetDbId, courses.Id, valueColumn.Id, labelColumn.Id, limit: 2);
+        all.Count.ShouldBe(3);
+        all.Offset.ShouldBe(0);
+        all.Limit.ShouldBe(2);
+        all.Items.Count.ShouldBe(2);
+        all.Items[0].Label.ShouldBe("2 — Дубликат");
+        all.Items[1].Label.ShouldBe("2 — Базы данных");
+
+        var searched = await SchemaBuilderClient.GetLookupValuesAsync(
+            fixture.TargetDbId, courses.Id, valueColumn.Id, labelColumn.Id, "БАЗЫ");
+        searched.Count.ShouldBe(1);
+        searched.Items.ShouldHaveSingleItem().Label.ShouldBe("2 — Базы данных");
+
+        var withoutLabel = await SchemaBuilderClient.GetLookupValuesAsync(
+            fixture.TargetDbId, courses.Id, valueColumn.Id, limit: 100);
+        withoutLabel.Items.ShouldAllBe(item => item.Label == item.Value);
+
+        var wrongTable = await Should.ThrowAsync<ValidationException>(() =>
+            SchemaBuilderClient.GetLookupValuesAsync(
+                fixture.TargetDbId, courses.Id, foreignColumn.Id));
+        wrongTable.Problem!.Code.ShouldBe("LookupColumnDoesNotBelongToTable");
+    }
+
+    [Fact(DisplayName = "Schema FK: целевая колонка обязана быть первичным ключом")]
+    public async Task SchemaRelationship_TargetWithoutUniqueConstraint_IsRejected()
+    {
+        var fixture = await CreateFixtureAsync("INTEGER");
+
+        var exception = await Should.ThrowAsync<ValidationException>(() =>
+            SchemaBuilderClient.ApplyTargetDbSchemaAsync(
+                fixture.TargetDbId,
+                RelatedTablesSchemaRequest("0", fixture.PhysicalTypeId, targetPrimaryKey: false)));
+
+        exception.Problem!.Detail!.ShouldContain("первичный ключ");
+    }
+
+    [Fact(DisplayName = "Schema FK: типы исходной и целевой колонок должны совпадать")]
+    public async Task SchemaRelationship_IncompatibleColumnTypes_AreRejected()
+    {
+        var fixture = await CreateFixtureAsync("INTEGER");
+        Guid incompatibleTypeId;
+        using (var scope = App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var incompatibleType = PhysicalType.Create(fixture.DbmsId, "TEXT");
+            db.PhysicalTypes.Add(incompatibleType);
+            await db.SaveChangesAsync();
+            incompatibleTypeId = incompatibleType.Id;
+        }
+
+        var exception = await Should.ThrowAsync<ValidationException>(() =>
+            SchemaBuilderClient.ApplyTargetDbSchemaAsync(
+                fixture.TargetDbId,
+                RelatedTablesSchemaRequest(
+                    "0",
+                    fixture.PhysicalTypeId,
+                    foreignPhysicalTypeId: incompatibleTypeId)));
+
+        exception.Problem!.Detail!.ShouldContain("несовместимы");
+    }
+
     private async Task<IReadOnlyList<Guid>> SeedNullableCellsAsync(
         Guid tableId,
         Guid columnId,
@@ -580,6 +675,23 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
 
         await db.SaveChangesAsync();
         return recordIds;
+    }
+
+    private static void AddLookupRow(
+        AppDbContext db,
+        Guid tableId,
+        Guid valueColumnId,
+        Guid labelColumnId,
+        string? value,
+        string label,
+        int sortOrder)
+    {
+        var record = global::SQLModule.Domain.Schema.DataRecord.Create(tableId, sortOrder);
+        db.DataRecords.Add(record);
+        db.CellValues.Add(global::SQLModule.Domain.Schema.CellValue.Create(
+            record.Id, valueColumnId, value));
+        db.CellValues.Add(global::SQLModule.Domain.Schema.CellValue.Create(
+            record.Id, labelColumnId, label));
     }
 
     private static SchemaUpsertRequest SetExistingColumnRequired(TargetDbSchemaResponse current)
@@ -676,7 +788,12 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
         };
     }
 
-    private static SchemaUpsertRequest RelatedTablesSchemaRequest(string version, Guid physicalTypeId) => new()
+    private static SchemaUpsertRequest RelatedTablesSchemaRequest(
+        string version,
+        Guid physicalTypeId,
+        Guid? labelPhysicalTypeId = null,
+        bool targetPrimaryKey = true,
+        Guid? foreignPhysicalTypeId = null) => new()
     {
         Version = version,
         Tables =
@@ -689,7 +806,13 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
                     new SchemaColumnDraft
                     {
                         TempId = "course-id", Name = "id", PhysicalTypeId = physicalTypeId,
-                        IsPrimaryKey = true, IsRequired = true, SortOrder = 0, Parameters = []
+                        IsPrimaryKey = targetPrimaryKey, IsRequired = true, SortOrder = 0, Parameters = []
+                    },
+                    new SchemaColumnDraft
+                    {
+                        TempId = "course-name", Name = "name",
+                        PhysicalTypeId = labelPhysicalTypeId ?? physicalTypeId,
+                        IsPrimaryKey = false, IsRequired = false, SortOrder = 1, Parameters = []
                     }
                 ]
             },
@@ -705,7 +828,8 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
                     },
                     new SchemaColumnDraft
                     {
-                        TempId = "enrollment-course-id", Name = "course_id", PhysicalTypeId = physicalTypeId,
+                        TempId = "enrollment-course-id", Name = "course_id",
+                        PhysicalTypeId = foreignPhysicalTypeId ?? physicalTypeId,
                         IsPrimaryKey = false, IsRequired = false, SortOrder = 1, Parameters = []
                     }
                 ]

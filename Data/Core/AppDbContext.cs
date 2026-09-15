@@ -59,6 +59,24 @@ public class AppDbContext : DbContext
     /// <summary>Попытки выполнения заданий</summary>
     public DbSet<Attempt> Attempts { get; set; }
 
+    /// <summary>Редактируемые конфигурации проверки заданий.</summary>
+    public DbSet<TaskValidationConfiguration> TaskValidationConfigurations { get; set; }
+
+    /// <summary>Критерии редактируемых конфигураций.</summary>
+    public DbSet<ValidationCheck> ValidationChecks { get; set; }
+
+    /// <summary>Неизменяемые опубликованные версии проверки.</summary>
+    public DbSet<TaskValidationVersion> TaskValidationVersions { get; set; }
+
+    /// <summary>Прохождения SQL-заданий студентами.</summary>
+    public DbSet<StudentTaskProgress> StudentTaskProgresses { get; set; }
+
+    /// <summary>Резервации номеров попыток.</summary>
+    public DbSet<AttemptReservation> AttemptReservations { get; set; }
+
+    /// <summary>Результаты отдельных критериев попыток.</summary>
+    public DbSet<AttemptCheckResult> AttemptCheckResults { get; set; }
+
     /// <summary>Контексты запусков SQL-модуля из основной платформы.</summary>
     public DbSet<ModuleSession> ModuleSessions { get; set; }
 
