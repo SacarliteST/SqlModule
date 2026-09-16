@@ -74,7 +74,9 @@ internal sealed class GetTeacherTaskDetailsHandler(
                 attempt.IsCorrect,
                 attempt.Status,
                 attempt.DurationMs,
-                attempt.FinishedAt))
+                attempt.FinishedAt,
+                attempt.AttemptNumber,
+                attempt.Score))
             .ToListAsync(ct);
 
         return new TeacherTaskDetailsResponse(

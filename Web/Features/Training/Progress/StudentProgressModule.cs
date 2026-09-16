@@ -15,5 +15,6 @@ internal static class StudentProgressModule
         .AddScoped<IRequestHandler<RestartStudentProgressCommand, Result<StudentTaskProgressResponse>>,
             RestartStudentProgressHandler>()
         .AddScoped<IPlatformProgressService, PlatformProgressService>()
+        .AddScoped<IProgressFinalizationService, ProgressFinalizationService>()
         .AddScoped<IAttemptReservationService, AttemptReservationService>();
 }

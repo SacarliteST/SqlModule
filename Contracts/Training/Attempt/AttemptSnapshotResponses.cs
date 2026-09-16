@@ -36,4 +36,8 @@ public record AttemptListItemResponse(
     string? TopicName = null,
     string? PublicError = null,
     string? CreatedByName = null,
-    string? UpdatedByName = null);
+    string? UpdatedByName = null,
+    Guid? ProgressId = null,
+    Guid? ValidationVersionId = null,
+    int? AttemptNumber = null,
+    int? Score = null);

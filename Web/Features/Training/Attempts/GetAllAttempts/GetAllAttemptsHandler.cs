@@ -10,7 +10,10 @@ namespace SQLModule.Web.Features.Training.Attempts;
 internal record GetAllAttemptsQuery(
     int Offset, int Limit, Guid? TaskId, Guid? UserId, Guid? TopicId,
     Domain.Training.ExecutionStatus? Status, bool? IsCorrect,
-    DateTimeOffset? DateFrom, DateTimeOffset? DateTo)
+    DateTimeOffset? DateFrom, DateTimeOffset? DateTo,
+    Guid? ProgressId, Guid? ValidationVersionId,
+    int? ScoreFrom, int? ScoreTo,
+    Domain.Training.FinalizationReason? FinalizationReason)
     : IRequest<Result<PageResponse<AttemptListItemResponse>>>;
 
 internal sealed class GetAllAttemptsHandler(AppDbContext db)
@@ -56,10 +59,38 @@ internal sealed class GetAllAttemptsHandler(AppDbContext db)
             q = q.Where(x => x.StartedAt <= query.DateTo.Value);
         }
 
+        if (query.ProgressId.HasValue)
+        {
+            q = q.Where(x => x.ProgressId == query.ProgressId.Value);
+        }
+
+        if (query.ValidationVersionId.HasValue)
+        {
+            q = q.Where(x => x.ValidationVersionId == query.ValidationVersionId.Value);
+        }
+
+        if (query.ScoreFrom.HasValue)
+        {
+            q = q.Where(x => x.Score >= query.ScoreFrom.Value);
+        }
+
+        if (query.ScoreTo.HasValue)
+        {
+            q = q.Where(x => x.Score <= query.ScoreTo.Value);
+        }
+
+        if (query.FinalizationReason.HasValue)
+        {
+            q = q.Where(x => x.ProgressId.HasValue && db.StudentTaskProgresses.Any(progress =>
+                progress.Id == x.ProgressId.Value &&
+                progress.FinalizationReason == query.FinalizationReason.Value));
+        }
+
         var total = await q.CountAsync(ct);
 
         var items = await q
             .OrderByDescending(a => a.StartedAt)
+            .ThenByDescending(a => a.Id)
             .Skip(query.Offset)
             .Take(query.Limit)
             .Select(x => new AttemptListItemResponse(
@@ -81,7 +112,11 @@ internal sealed class GetAllAttemptsHandler(AppDbContext db)
                     ? "Не удалось выполнить SQL-запрос."
                     : null,
                 x.CreatedByName ?? x.StudentName,
-                x.UpdatedByName ?? x.StudentName))
+                x.UpdatedByName ?? x.StudentName,
+                x.ProgressId,
+                x.ValidationVersionId,
+                x.AttemptNumber,
+                x.Score))
             .ToListAsync(ct);
 
         return Result<PageResponse<AttemptListItemResponse>>.Success(new PageResponse<AttemptListItemResponse>

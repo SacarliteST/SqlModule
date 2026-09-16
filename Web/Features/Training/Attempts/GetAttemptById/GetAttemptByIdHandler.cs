@@ -11,6 +11,7 @@ internal record GetAttemptByIdQuery(Guid Id) : IRequest<Result<AttemptResponse>>
 internal sealed class GetAttemptByIdHandler(
     AppDbContext db,
     IAttemptResultSnapshotService snapshotService,
+    IAttemptScoringReadService scoringReadService,
     TimeProvider timeProvider)
     : IRequestHandler<GetAttemptByIdQuery, Result<AttemptResponse>>
 {
@@ -25,6 +26,7 @@ internal sealed class GetAttemptByIdHandler(
         }
 
         var snapshot = snapshotService.Read(entity, timeProvider.GetUtcNow());
-        return AttemptMappings.ToResponse(entity, snapshot);
+        var scoring = await scoringReadService.ReadAsync(entity, studentSafe: false, ct);
+        return AttemptMappings.ToResponse(entity, snapshot, scoring);
     }
 }

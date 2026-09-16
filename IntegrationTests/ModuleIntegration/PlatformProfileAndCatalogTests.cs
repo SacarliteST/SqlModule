@@ -24,6 +24,7 @@ using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Isolated;
 using SQLModule.Web.Features.ModuleIntegration;
+using SQLModule.Web.Features.Training.Progress;
 using Swashbuckle.AspNetCore.Swagger;
 using EducationClientOptions = SQLModule.Education.Client.EducationClientOptions;
 using EducationCompletionClient = SQLModule.Education.Client.EducationCompletionClient;
@@ -832,6 +833,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
                     BatchSize = 100
                 }
             }),
+            scope.ServiceProvider.GetRequiredService<IProgressFinalizationService>(),
             TimeProvider.System,
             NullLogger<ModuleSessionCleanupProcessor>.Instance);
 

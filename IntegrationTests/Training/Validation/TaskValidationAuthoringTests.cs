@@ -150,16 +150,23 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         var draft = (await update.Content.ReadFromJsonAsync<TaskValidationConfigurationResponse>(
             ClientJson.Options))!;
         var publishRequest = new PublishTaskValidationRequest(draft.Version);
+        var idempotencyKey = Guid.NewGuid().ToString("D");
 
-        var first = await HttpClient.PostAsJsonAsync(
-            ApiRoutes.Training.SqlTasks.ForValidationPublish(taskId),
-            publishRequest,
-            ClientJson.Options);
+        using var firstRequest = new HttpRequestMessage(
+            HttpMethod.Post, ApiRoutes.Training.SqlTasks.ForValidationPublish(taskId))
+        {
+            Content = JsonContent.Create(publishRequest, options: ClientJson.Options)
+        };
+        firstRequest.Headers.Add("Idempotency-Key", idempotencyKey);
+        var first = await HttpClient.SendAsync(firstRequest);
         var firstBody = await first.Content.ReadFromJsonAsync<TaskValidationConfigurationResponse>(ClientJson.Options);
-        var second = await HttpClient.PostAsJsonAsync(
-            ApiRoutes.Training.SqlTasks.ForValidationPublish(taskId),
-            publishRequest,
-            ClientJson.Options);
+        using var secondRequest = new HttpRequestMessage(
+            HttpMethod.Post, ApiRoutes.Training.SqlTasks.ForValidationPublish(taskId))
+        {
+            Content = JsonContent.Create(publishRequest, options: ClientJson.Options)
+        };
+        secondRequest.Headers.Add("Idempotency-Key", idempotencyKey);
+        var second = await HttpClient.SendAsync(secondRequest);
         var secondBody = await second.Content.ReadFromJsonAsync<TaskValidationConfigurationResponse>(ClientJson.Options);
 
         first.StatusCode.ShouldBe(HttpStatusCode.OK, await first.Content.ReadAsStringAsync());

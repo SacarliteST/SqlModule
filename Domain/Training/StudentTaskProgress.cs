@@ -76,6 +76,11 @@ public sealed class StudentTaskProgress : AuditableEntity
 
     public void BeginFinalization(FinalizationReason reason, DateTimeOffset finalizedAt)
     {
+        if (Status != ProgressStatus.Active)
+        {
+            return;
+        }
+
         FinalScore = BestScore;
         FinalizationReason = reason;
         FinalizedAt = finalizedAt;
@@ -85,6 +90,11 @@ public sealed class StudentTaskProgress : AuditableEntity
 
     public void MarkCompletionPending()
     {
+        if (Status == ProgressStatus.CompletionPending)
+        {
+            return;
+        }
+
         Status = ProgressStatus.CompletionPending;
         Touch();
     }
@@ -97,6 +107,11 @@ public sealed class StudentTaskProgress : AuditableEntity
 
     public void MarkCompleted()
     {
+        if (Status == ProgressStatus.Completed)
+        {
+            return;
+        }
+
         Status = ProgressStatus.Completed;
         Touch();
     }

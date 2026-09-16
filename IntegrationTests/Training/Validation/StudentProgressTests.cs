@@ -4,10 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
+using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Contracts.Schema.TargetDb;
+using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Contracts.Training.SqlTask;
+using SQLModule.Contracts.Training.Student;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Data.Core;
@@ -15,6 +18,8 @@ using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.infrastructure;
 using SQLModule.Web.Features.Training.Progress;
+using SQLModule.Sandbox;
+using SQLModule.Web.Common.Isolated;
 
 namespace SQLModule.IntegrationTests.Training.Validation;
 
@@ -149,6 +154,133 @@ public sealed class StudentProgressTests(TestApplication app) : ApiTestBase(app)
         first.Value.ValidationVersionId.ShouldBe(activeVersionId!.Value);
     }
 
+    [Fact(DisplayName = "Scoring: попытка сохраняет score, breakdown и обновляет progress идемпотентно")]
+    public async Task Submit_SavesCompositeScoreAndUpdatesProgress()
+    {
+        var taskId = await CreatePublishedTaskAsync(2);
+        AsStudent(Guid.NewGuid());
+        await PostAsync(ApiRoutes.Training.Student.ForTaskProgress(taskId), Guid.NewGuid());
+        var executor = App.Services.GetRequiredService<ISandboxExecutor>().ShouldBeOfType<FakeSandboxExecutor>();
+        executor.OverrideRun = Result<QueryResultSet>.Success(new QueryResultSet(true, null, [], [], 0, 1));
+        executor.ResetRunCallCount();
+        var key = Guid.NewGuid();
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.Training.Attempts.Collection)
+        {
+            Content = JsonContent.Create(new SubmitAttemptRequest(taskId, "SELECT 1"), options: ClientJson.Options)
+        };
+        request.Headers.Add("Idempotency-Key", key.ToString("D"));
+        using var response = await HttpClient.SendAsync(request);
+        var body = await response.Content.ReadFromJsonAsync<SubmitAttemptResponse>(ClientJson.Options);
+
+        using var replayRequest = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.Training.Attempts.Collection)
+        {
+            Content = JsonContent.Create(new SubmitAttemptRequest(taskId, "SELECT 1"), options: ClientJson.Options)
+        };
+        replayRequest.Headers.Add("Idempotency-Key", key.ToString("D"));
+        using var replay = await HttpClient.SendAsync(replayRequest);
+        var replayBody = await replay.Content.ReadFromJsonAsync<SubmitAttemptResponse>(ClientJson.Options);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created, await response.Content.ReadAsStringAsync());
+        replay.StatusCode.ShouldBe(HttpStatusCode.Created, await replay.Content.ReadAsStringAsync());
+        body.ShouldNotBeNull();
+        body.Score.ShouldBe(100);
+        body.BestScore.ShouldBe(100);
+        body.AttemptNumber.ShouldBe(1);
+        body.AttemptsUsed.ShouldBe(1);
+        body.Checks!.ShouldHaveSingleItem().Kind.ShouldBe(ValidationCheckKind.MainDatasetResult);
+        replayBody!.AttemptId.ShouldBe(body.AttemptId);
+        executor.RunCallCount.ShouldBe(1);
+
+        var taskDetails = await HttpClient.GetFromJsonAsync<StudentTaskDetailsResponse>(
+            ApiRoutes.Training.Student.ForTask(taskId), ClientJson.Options);
+        taskDetails!.Validation.ShouldNotBeNull();
+        taskDetails.Validation.Progress!.BestScore.ShouldBe(100);
+        taskDetails.Validation.Hints.Groups.ShouldBe([HintGroup.Result]);
+
+        var studentAttempt = await HttpClient.GetFromJsonAsync<StudentAttemptResponse>(
+            ApiRoutes.Training.Student.ForAttempt(body.AttemptId), ClientJson.Options);
+        studentAttempt!.Scoring.ShouldNotBeNull();
+        studentAttempt.Scoring.Checks.ShouldHaveSingleItem();
+        studentAttempt.Scoring.Hints.ShouldBeEmpty();
+
+        var studentHistory = await HttpClient.GetFromJsonAsync<PageResponse<StudentAttemptListItemResponse>>(
+            ApiRoutes.Training.Student.ForAttemptsPage(0, 100), ClientJson.Options);
+        var studentItem = studentHistory!.Items.Single(value => value.Id == body.AttemptId);
+        studentItem.ProgressId.ShouldBe(body.ProgressId);
+        studentItem.ValidationVersionId.ShouldBe(body.ValidationVersionId);
+
+        using var finalize = await PostAsync(
+            ApiRoutes.Training.Student.ForTaskProgressFinalize(taskId), Guid.NewGuid());
+        var finalization = await finalize.Content.ReadFromJsonAsync<ProgressFinalizationResponse>(ClientJson.Options);
+        finalize.StatusCode.ShouldBe(HttpStatusCode.OK, await finalize.Content.ReadAsStringAsync());
+        finalization!.Status.ShouldBe(ProgressStatus.Completed);
+        finalization.FinalScore.ShouldBe(100);
+        finalization.Reason.ShouldBe(FinalizationReason.PerfectScore);
+        finalization.CanReturnToEducation.ShouldBeFalse();
+
+        AsTeacher();
+        var teacherAttempt = await HttpClient.GetFromJsonAsync<AttemptResponse>(
+            ApiRoutes.Training.Attempts.ForId(body.AttemptId), ClientJson.Options);
+        teacherAttempt!.Scoring.ShouldNotBeNull();
+        teacherAttempt.Scoring.Checks.ShouldHaveSingleItem();
+
+        var filtered = await HttpClient.GetFromJsonAsync<PageResponse<AttemptListItemResponse>>(
+            $"{ApiRoutes.Training.Attempts.Collection}?progressId={body.ProgressId:D}" +
+            $"&validationVersionId={body.ValidationVersionId:D}&scoreFrom=100&scoreTo=100" +
+            "&finalizationReason=PerfectScore", ClientJson.Options);
+        filtered!.Count.ShouldBe(1);
+        filtered.Items.ShouldHaveSingleItem().Id.ShouldBe(body.AttemptId);
+        var excluded = await HttpClient.GetFromJsonAsync<PageResponse<AttemptListItemResponse>>(
+            $"{ApiRoutes.Training.Attempts.Collection}?scoreTo=99", ClientJson.Options);
+        excluded!.Items.ShouldNotContain(value => value.Id == body.AttemptId);
+        using var invalidRange = await HttpClient.GetAsync(
+            $"{ApiRoutes.Training.Attempts.Collection}?scoreFrom=90&scoreTo=10");
+        invalidRange.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        (await db.AttemptCheckResults.CountAsync(value => value.AttemptId == body.AttemptId)).ShouldBe(1);
+        (await db.StudentTaskProgresses.AsNoTracking()
+            .SingleAsync(value => value.Id == body.ProgressId)).BestScore.ShouldBe(100);
+    }
+
+    [Fact(DisplayName = "Finalization: standalone фиксирует BestScore и не создаёт platform outbox")]
+    public async Task FinalizeStandalone_IsIdempotentAndDoesNotCreateOutbox()
+    {
+        var taskId = await CreatePublishedTaskAsync(null);
+        AsStudent(Guid.NewGuid());
+        await PostAsync(ApiRoutes.Training.Student.ForTaskProgress(taskId), Guid.NewGuid());
+        var executor = App.Services.GetRequiredService<ISandboxExecutor>().ShouldBeOfType<FakeSandboxExecutor>();
+        executor.OverrideRun = Result<QueryResultSet>.Success(new QueryResultSet(
+            true, null, ["unexpected"], [["value"]], 1, 1));
+
+        using var submit = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.Training.Attempts.Collection)
+        {
+            Content = JsonContent.Create(new SubmitAttemptRequest(taskId, "SELECT 2"), options: ClientJson.Options)
+        };
+        submit.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("D"));
+        using var submitted = await HttpClient.SendAsync(submit);
+        submitted.StatusCode.ShouldBe(HttpStatusCode.Created, await submitted.Content.ReadAsStringAsync());
+
+        var key = Guid.NewGuid();
+        using var first = await PostAsync(ApiRoutes.Training.Student.ForTaskProgressFinalize(taskId), key);
+        using var replay = await PostAsync(ApiRoutes.Training.Student.ForTaskProgressFinalize(taskId), key);
+        var firstBody = await first.Content.ReadFromJsonAsync<ProgressFinalizationResponse>(ClientJson.Options);
+        var replayBody = await replay.Content.ReadFromJsonAsync<ProgressFinalizationResponse>(ClientJson.Options);
+
+        first.StatusCode.ShouldBe(HttpStatusCode.OK, await first.Content.ReadAsStringAsync());
+        replay.StatusCode.ShouldBe(HttpStatusCode.OK, await replay.Content.ReadAsStringAsync());
+        firstBody!.Status.ShouldBe(ProgressStatus.Completed);
+        firstBody.FinalScore.ShouldBe(0);
+        firstBody.Reason.ShouldBe(FinalizationReason.Manual);
+        replayBody.ShouldBe(firstBody);
+
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        (await db.PendingPublishes.CountAsync(value => value.Kind == PendingPublishKind.Grade)).ShouldBe(0);
+    }
+
     private async Task<HttpResponseMessage> PostAsync(string route, Guid key)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, route);
@@ -181,9 +313,14 @@ public sealed class StudentProgressTests(TestApplication app) : ApiTestBase(app)
                     configuration.Checks[0].Id, ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
             ClientJson.Options);
         var updated = (await update.Content.ReadFromJsonAsync<TaskValidationConfigurationResponse>(ClientJson.Options))!;
-        var publish = await HttpClient.PostAsJsonAsync(
-            ApiRoutes.Training.SqlTasks.ForValidationPublish(task.Id),
-            new PublishTaskValidationRequest(updated.Version), ClientJson.Options);
+        using var publishRequest = new HttpRequestMessage(
+            HttpMethod.Post, ApiRoutes.Training.SqlTasks.ForValidationPublish(task.Id))
+        {
+            Content = JsonContent.Create(
+                new PublishTaskValidationRequest(updated.Version), options: ClientJson.Options)
+        };
+        publishRequest.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("D"));
+        var publish = await HttpClient.SendAsync(publishRequest);
         publish.StatusCode.ShouldBe(HttpStatusCode.OK, await publish.Content.ReadAsStringAsync());
         await SqlTaskClient.PublishAsync(task.Id);
         return task.Id;

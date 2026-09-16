@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SQLModule.Common.Results;
@@ -5,12 +8,13 @@ using SQLModule.Contracts.Training.Validation;
 using SQLModule.Data.Core;
 using SQLModule.Domain;
 using SQLModule.Domain.Common;
+using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Web.Common.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Validation.PublishTaskValidation;
 
-internal sealed record PublishTaskValidationCommand(Guid TaskId, Guid Version)
+internal sealed record PublishTaskValidationCommand(Guid TaskId, Guid Version, Guid IdempotencyKey)
     : IRequest<Result<TaskValidationConfigurationResponse>>;
 
 internal sealed class PublishTaskValidationHandler(
@@ -22,10 +26,23 @@ internal sealed class PublishTaskValidationHandler(
     ILogger<PublishTaskValidationHandler> logger)
     : IRequestHandler<PublishTaskValidationCommand, Result<TaskValidationConfigurationResponse>>
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     public async Task<Result<TaskValidationConfigurationResponse>> Handle(
         PublishTaskValidationCommand command,
         CancellationToken ct)
     {
+        var receiptScope = $"validation:{command.TaskId:D}:publish";
+        var receiptKey = command.IdempotencyKey.ToString("D");
+        var payloadHash = Hash(command.TaskId, command.Version);
+        var receipt = await db.MutationReceipts.AsNoTracking()
+            .SingleOrDefaultAsync(value =>
+                value.Scope == receiptScope && value.IdempotencyKey == receiptKey, ct);
+        if (receipt is not null)
+        {
+            return Replay(receipt, payloadHash);
+        }
+
         var task = await db.SqlTasks
             .Include(value => value.ValidationConfiguration)
                 .ThenInclude(configuration => configuration!.Checks)
@@ -52,7 +69,28 @@ internal sealed class PublishTaskValidationHandler(
 
         if (task.ActiveValidationVersion?.ConfigurationVersion == configuration.Version)
         {
-            return await ToResponseAsync(task, configuration, task.ActiveValidationVersion, ct);
+            var existingResponse = await ToResponseAsync(task, configuration, task.ActiveValidationVersion, ct);
+            db.MutationReceipts.Add(MutationReceipt.Create(
+                receiptScope, receiptKey, payloadHash, JsonSerializer.Serialize(existingResponse, JsonOptions)));
+            try
+            {
+                await db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException)
+            {
+                db.ChangeTracker.Clear();
+                var concurrentReceipt = await db.MutationReceipts.AsNoTracking()
+                    .SingleOrDefaultAsync(value =>
+                        value.Scope == receiptScope && value.IdempotencyKey == receiptKey, ct);
+                if (concurrentReceipt is not null)
+                {
+                    return Replay(concurrentReceipt, payloadHash);
+                }
+
+                throw;
+            }
+
+            return existingResponse;
         }
 
         var definition = TaskValidationMappings.ToDefinition(configuration);
@@ -112,6 +150,9 @@ internal sealed class PublishTaskValidationHandler(
             timeProvider.GetUtcNow());
         db.TaskValidationVersions.Add(version);
         task.ActivateValidationVersion(version.Id);
+        var response = await ToResponseAsync(task, configuration, version, ct);
+        db.MutationReceipts.Add(MutationReceipt.Create(
+            receiptScope, receiptKey, payloadHash, JsonSerializer.Serialize(response, JsonOptions)));
 
         try
         {
@@ -144,7 +185,7 @@ internal sealed class PublishTaskValidationHandler(
             "Опубликована версия {VersionNumber} проверки SQL-задания {TaskId}",
             version.VersionNumber,
             command.TaskId);
-        return await ToResponseAsync(task, configuration, version, ct);
+        return response;
     }
 
     private async Task<TaskValidationConfigurationResponse> ToResponseAsync(
@@ -158,5 +199,26 @@ internal sealed class PublishTaskValidationHandler(
             .Where(table => table.TargetDbId == task.SqlQuery.TargetDbId)
             .ToDictionaryAsync(table => table.Id, table => table.TableName, ct);
         return TaskValidationMappings.ToResponse(configuration, version, tableNames);
+    }
+
+    private static string Hash(Guid taskId, Guid version) => Convert.ToHexString(
+        SHA256.HashData(Encoding.UTF8.GetBytes($"{taskId:D}\n{version:D}")));
+
+    private static Result<TaskValidationConfigurationResponse> Replay(
+        MutationReceipt receipt,
+        string payloadHash)
+    {
+        if (receipt.PayloadHash != payloadHash)
+        {
+            return Result<TaskValidationConfigurationResponse>.Fail(
+                SQLModule.Web.Features.Training.Progress.ProgressErrors.IdempotencyPayloadMismatch);
+        }
+
+        var response = JsonSerializer.Deserialize<TaskValidationConfigurationResponse>(
+            receipt.ResponseJson, JsonOptions);
+        return response is null
+            ? Result<TaskValidationConfigurationResponse>.Fail(Error.Conflict(
+                "IdempotencyRequestInProgress", "Запрос с этим Idempotency-Key ещё выполняется."))
+            : response;
     }
 }
