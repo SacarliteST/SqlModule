@@ -24,9 +24,15 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
                 "limit — размер страницы (1–100, по умолчанию 20). " +
                 "taskId — необязательный фильтр по заданию. " +
                 "userId — необязательный фильтр по студенту. " +
-                "400 — невалидные параметры пагинации.")
+                "progressId и validationVersionId — фильтры Phase 2b. " +
+                "scoreFrom/scoreTo — включительный диапазон баллов 0–100. " +
+                "finalizationReason — причина финализации прохождения. " +
+                "422 — некорректные параметры фильтрации или пагинации.")
             .Produces<PageResponse<AttemptListItemResponse>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
             .AddEndpointFilter<ValidationFilter<GetAllAttemptsRequest>>();
     }
 
@@ -37,7 +43,9 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
             new GetAllAttemptsQuery(
                 request.Offset, request.Limit, request.TaskId, request.UserId,
                 request.TopicId, request.Status, request.IsCorrect,
-                request.DateFrom, request.DateTo), ct);
+                request.DateFrom, request.DateTo,
+                request.ProgressId, request.ValidationVersionId,
+                request.ScoreFrom, request.ScoreTo, request.FinalizationReason), ct);
         return result.ToOk();
     }
 }

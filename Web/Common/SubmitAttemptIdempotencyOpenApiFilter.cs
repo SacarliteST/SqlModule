@@ -9,11 +9,23 @@ namespace SQLModule.Web.Common;
 /// </summary>
 internal sealed class SubmitAttemptIdempotencyOpenApiFilter : IOperationFilter
 {
+    private static readonly HashSet<string> IdempotentOperations =
+    [
+        "SubmitAttempt",
+        "StartStudentTaskProgress",
+        "RestartStudentTaskProgress",
+        "FinalizeStudentTaskProgress",
+        "FinalizeCurrentModuleSession",
+        "PublishTaskValidation"
+    ];
+
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        if (context.ApiDescription.ActionDescriptor.EndpointMetadata
-                .OfType<EndpointNameMetadata>()
-                .All(metadata => metadata.EndpointName != "SubmitAttempt"))
+        var endpointName = context.ApiDescription.ActionDescriptor.EndpointMetadata
+            .OfType<EndpointNameMetadata>()
+            .Select(metadata => metadata.EndpointName)
+            .FirstOrDefault();
+        if (endpointName is null || !IdempotentOperations.Contains(endpointName))
         {
             return;
         }
@@ -27,10 +39,9 @@ internal sealed class SubmitAttemptIdempotencyOpenApiFilter : IOperationFilter
 
         parameter.Required = true;
         parameter.Description =
-            "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. " +
-            "Действует 24 часа в пределах текущего студента.";
+            "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.";
         schema.Format = "uuid";
         schema.MinLength = 36;
-        schema.MaxLength = 128;
+        schema.MaxLength = 36;
     }
 }

@@ -14,7 +14,15 @@ internal sealed class StringEnumSchemaFilter : ISchemaFilter
         typeof(PublicationStatus),
         typeof(AttemptResultSnapshotState),
         typeof(SchemaLifecycleState),
-        typeof(TableRowOperation)
+        typeof(TableRowOperation),
+        typeof(FinalizationReason),
+        typeof(HintGroup),
+        typeof(ProgressStatus),
+        typeof(SqlConstruct),
+        typeof(ValidationCheckKind),
+        typeof(ValidationCheckStatus),
+        typeof(ValidationConfigurationState),
+        typeof(SQLModule.Domain.Training.Validation.ValidationViolationSeverity)
     ];
 
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)

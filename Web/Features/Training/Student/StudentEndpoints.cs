@@ -1,16 +1,19 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using System.Text.Json;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Student;
+using SQLModule.Contracts.Training.Validation;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Common;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common;
 using SQLModule.Web.Features.Training.Attempts;
+using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.Web.Features.Training.Student;
 
@@ -136,17 +139,63 @@ public sealed class StudentEndpoints : IEndpoint
     }
 
     private static async Task<IResult> GetStudentTaskById(
-        Guid taskId, AppDbContext db, IOptions<SandboxOptions> options, CancellationToken ct)
+        Guid taskId,
+        AppDbContext db,
+        ICurrentUser currentUser,
+        IOptions<SandboxOptions> options,
+        TimeProvider timeProvider,
+        CancellationToken ct)
     {
         var o = options.Value;
         var item = await db.SqlTasks.AsNoTracking()
             .Where(t => t.Id == taskId && t.PublicationStatus == PublicationStatus.Published)
-            .Select(t => new StudentTaskDetailsResponse(t.Id, t.TopicId, t.Topic.TopicName, t.TaskName,
-                t.TaskText, t.DifficultyLevel,
-                db.TargetDbs.Where(d => d.Id == t.SqlQuery.TargetDbId).Select(d => d.Dbms.DbmsName).First(),
-                new StudentExecutionLimitsResponse(o.DefaultQueryTimeoutSeconds, o.MaxRows, o.MaxSqlLength)))
+            .Select(t => new
+            {
+                t.Id,
+                t.TopicId,
+                t.Topic.TopicName,
+                t.TaskName,
+                t.TaskText,
+                t.DifficultyLevel,
+                t.ActiveValidationVersionId,
+                DbmsName = db.TargetDbs.Where(d => d.Id == t.SqlQuery.TargetDbId)
+                    .Select(d => d.Dbms.DbmsName).First()
+            })
             .FirstOrDefaultAsync(ct);
-        return item is null ? TypedResults.NotFound() : TypedResults.Ok(item);
+        if (item is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        StudentTaskValidationResponse? validation = null;
+        if (item.ActiveValidationVersionId.HasValue)
+        {
+            var version = await db.TaskValidationVersions.AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == item.ActiveValidationVersionId.Value, ct);
+            if (version is not null)
+            {
+                var progress = await db.StudentTaskProgresses.AsNoTracking()
+                    .Where(value => value.TaskId == taskId && value.UserId == currentUser.UserId!.Value)
+                    .OrderByDescending(value => value.CreatedAt)
+                    .FirstOrDefaultAsync(ct);
+                validation = new StudentTaskValidationResponse(
+                    version.PassingScore,
+                    version.MaxAttempts,
+                    progress is null ? null : ProgressMappings.ToResponse(progress, version, timeProvider.GetUtcNow()),
+                    BuildStudentHints(version));
+            }
+        }
+
+        return TypedResults.Ok(new StudentTaskDetailsResponse(
+            item.Id,
+            item.TopicId,
+            item.TopicName,
+            item.TaskName,
+            item.TaskText,
+            item.DifficultyLevel,
+            item.DbmsName,
+            new StudentExecutionLimitsResponse(o.DefaultQueryTimeoutSeconds, o.MaxRows, o.MaxSqlLength),
+            validation));
     }
 
     private static async Task<IResult> GetStudentTaskSchema(
@@ -267,7 +316,8 @@ public sealed class StudentEndpoints : IEndpoint
             db.SqlTasks.Where(t => t.Id == a.TaskId).Select(t => t.TopicId).First(),
             db.SqlTasks.Where(t => t.Id == a.TaskId).Select(t => t.Topic.TopicName).First(),
             a.SubmittedSql, a.Status, a.IsCorrect, a.Reason, a.RowCount, a.DurationMs,
-            a.ErrorMessage == null ? null : "SQL-запрос не удалось выполнить.", a.StartedAt, a.FinishedAt));
+            a.ErrorMessage == null ? null : "SQL-запрос не удалось выполнить.", a.StartedAt, a.FinishedAt,
+            a.AttemptNumber, a.Score, a.ProgressId, a.ValidationVersionId));
 
     private static async Task<IResult> GetStudentAttempts(
         [AsParameters] StudentAttemptsRequest request, ICurrentUser currentUser, AppDbContext db, CancellationToken ct)
@@ -289,6 +339,7 @@ public sealed class StudentEndpoints : IEndpoint
         ICurrentUser currentUser,
         AppDbContext db,
         IAttemptResultSnapshotService snapshotService,
+        IAttemptScoringReadService scoringReadService,
         TimeProvider timeProvider,
         CancellationToken ct)
     {
@@ -304,12 +355,77 @@ public sealed class StudentEndpoints : IEndpoint
             .Select(t => new { t.TaskName, t.TopicId, t.Topic.TopicName })
             .SingleAsync(ct);
         var snapshot = snapshotService.Read(attempt, timeProvider.GetUtcNow());
+        var scoring = await scoringReadService.ReadAsync(attempt, studentSafe: true, ct);
         return TypedResults.Ok(new StudentAttemptResponse(
             attempt.Id, attempt.TaskId, task.TaskName, task.TopicId, task.TopicName,
             attempt.SubmittedSql, attempt.Status, attempt.IsCorrect, attempt.Reason,
             attempt.RowCount, attempt.DurationMs, AttemptMappings.ToPublicError(attempt),
             attempt.StartedAt, attempt.FinishedAt,
             snapshot.State, snapshot.Columns, snapshot.Rows, snapshot.ReturnedRowCount,
-            snapshot.IsTruncated, snapshot.RowLimit, snapshot.CreatedAt, snapshot.ExpiresAt));
+            snapshot.IsTruncated, snapshot.RowLimit, snapshot.CreatedAt, snapshot.ExpiresAt,
+            scoring));
     }
+
+    private static StudentTaskHintsResponse BuildStudentHints(TaskValidationVersion version)
+    {
+        var groups = version.GetVisibleHintGroups();
+        try
+        {
+            var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+            var configuration = JsonSerializer.Deserialize<ValidationConfigurationSnapshot>(
+                version.ValidationConfigurationSnapshotJson, jsonOptions);
+            var schema = JsonSerializer.Deserialize<SchemaSpec>(version.SchemaSnapshotJson, jsonOptions);
+            if (configuration is null || schema is null)
+            {
+                return EmptyHints(groups);
+            }
+
+            var visible = groups.ToHashSet();
+            var requiredConstructs = visible.Contains(HintGroup.RequiredConstructs)
+                ? ParseConstructs(configuration.Checks, ValidationCheckKind.RequiredConstruct)
+                : [];
+            var forbiddenConstructs = visible.Contains(HintGroup.ForbiddenConstructs)
+                ? ParseConstructs(configuration.Checks, ValidationCheckKind.ForbiddenConstruct)
+                : [];
+            var tables = schema.Tables
+                .Where(value => Guid.TryParse(value.Key, out _))
+                .ToDictionary(value => value.Key, value => value.Name);
+            var requiredTables = visible.Contains(HintGroup.RequiredTables)
+                ? ParseTables(configuration.Checks, ValidationCheckKind.RequiredTable, tables)
+                : [];
+            var forbiddenTables = visible.Contains(HintGroup.ForbiddenTables)
+                ? ParseTables(configuration.Checks, ValidationCheckKind.ForbiddenTable, tables)
+                : [];
+            return new StudentTaskHintsResponse(
+                groups, requiredConstructs, forbiddenConstructs, requiredTables, forbiddenTables);
+        }
+        catch (JsonException)
+        {
+            return EmptyHints(groups);
+        }
+    }
+
+    private static IReadOnlyList<SqlConstruct> ParseConstructs(
+        IEnumerable<ValidationCheckSnapshot> checks,
+        ValidationCheckKind kind) =>
+        checks.Where(value => value.Kind == kind)
+            .Select(value => Enum.TryParse<SqlConstruct>(value.Value, out var construct)
+                ? (SqlConstruct?)construct
+                : null)
+            .Where(value => value.HasValue)
+            .Select(value => value!.Value)
+            .Distinct()
+            .ToArray();
+
+    private static IReadOnlyList<StudentHintTableResponse> ParseTables(
+        IEnumerable<ValidationCheckSnapshot> checks,
+        ValidationCheckKind kind,
+        IReadOnlyDictionary<string, string> tables) =>
+        checks.Where(value => value.Kind == kind && value.Value is not null && tables.ContainsKey(value.Value))
+            .Select(value => new StudentHintTableResponse(Guid.Parse(value.Value!), tables[value.Value!]))
+            .DistinctBy(value => value.Id)
+            .ToArray();
+
+    private static StudentTaskHintsResponse EmptyHints(IReadOnlyList<HintGroup> groups) =>
+        new(groups, [], [], [], []);
 }

@@ -4,12 +4,15 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
+using SQLModule.Domain.Training;
+using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 
 internal sealed class ModuleSessionCleanupProcessor(
     AppDbContext db,
     IOptions<ModuleIntegrationOptions> options,
+    IProgressFinalizationService finalizationService,
     TimeProvider timeProvider,
     ILogger<ModuleSessionCleanupProcessor> logger)
 {
@@ -31,13 +34,25 @@ internal sealed class ModuleSessionCleanupProcessor(
             .ToListAsync(ct);
         foreach (var session in expiredSessions)
         {
-            session.MarkExpired(now);
+            var progress = await db.StudentTaskProgresses
+                .Include(value => value.ValidationVersion)
+                .SingleOrDefaultAsync(value => value.ModuleSessionId == session.Id, ct);
+            if (progress is null)
+            {
+                session.MarkExpired(now);
+                continue;
+            }
+
+            await finalizationService.PrepareAsync(
+                progress, session, FinalizationReason.Expired, now, null, ct);
+            logger.LogInformation(
+                "Истёкшее прохождение {ProgressId} сессии {SessionId} финализировано с баллом {FinalScore}",
+                progress.Id, session.Id, progress.FinalScore);
         }
 
         if (expiredSessions.Count > 0)
         {
             await db.SaveChangesAsync(ct);
-            await LogExpiredSessionsWithAttemptsAsync(expiredSessions, ct);
         }
 
         var sessionIds = await db.ModuleSessions

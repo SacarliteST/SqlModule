@@ -22,6 +22,7 @@ internal static class OpenApiExtensions
             c.UseAllOfToExtendReferenceSchemas();
             c.SchemaFilter<ApiProblemSchemaFilter>();
             c.SchemaFilter<StringEnumSchemaFilter>();
+            c.SchemaFilter<Phase2bResponseSchemaFilter>();
             c.SchemaFilter<NullableResultRowsSchemaFilter>();
             c.OperationFilter<SubmitAttemptIdempotencyOpenApiFilter>();
             c.OperationFilter<AttemptFilterOptionsOpenApiFilter>();

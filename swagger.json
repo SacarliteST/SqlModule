@@ -6,6 +6,87 @@
     "version": "v1"
   },
   "paths": {
+    "/api/v1/dbms/{dbmsId}/validation-capabilities": {
+      "get": {
+        "tags": [
+          "DbmsCatalog"
+        ],
+        "operationId": "GetDbmsValidationCapabilities",
+        "parameters": [
+          {
+            "name": "dbmsId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DbmsValidationCapabilitiesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/physical-types": {
       "post": {
         "tags": [
@@ -816,6 +897,92 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/module-integration/sessions/current/finalize": {
+      "post": {
+        "tags": [
+          "Module Integration"
+        ],
+        "summary": "Завершить текущее платформенное прохождение",
+        "description": "Фиксирует фактический BestScore и атомарно ставит один итог в outbox Education.",
+        "operationId": "FinalizeCurrentModuleSession",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
+            "required": true,
+            "schema": {
+              "maxLength": 36,
+              "minLength": 36,
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressFinalizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -4065,6 +4232,287 @@
         }
       }
     },
+    "/api/v1/student/tasks/{taskId}/progress/finalize": {
+      "post": {
+        "tags": [
+          "Student"
+        ],
+        "summary": "Завершить standalone-прохождение",
+        "description": "Фиксирует фактический BestScore. Передать итоговый балл с клиента нельзя.",
+        "operationId": "FinalizeStudentTaskProgress",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
+            "required": true,
+            "schema": {
+              "maxLength": 36,
+              "minLength": 36,
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressFinalizationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks/{taskId}/progress": {
+      "post": {
+        "tags": [
+          "Student"
+        ],
+        "operationId": "StartStudentTaskProgress",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
+            "required": true,
+            "schema": {
+              "maxLength": 36,
+              "minLength": 36,
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentTaskProgressResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks/{taskId}/progress/restart": {
+      "post": {
+        "tags": [
+          "Student"
+        ],
+        "operationId": "RestartStudentTaskProgress",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
+            "required": true,
+            "schema": {
+              "maxLength": 36,
+              "minLength": 36,
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentTaskProgressResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/topics": {
       "post": {
         "tags": [
@@ -5354,7 +5802,7 @@
           "Training"
         ],
         "summary": "Список попыток с пагинацией",
-        "description": "Возвращает 200 OK со страницей попыток, отсортированных по убыванию даты начала. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). taskId — необязательный фильтр по заданию. userId — необязательный фильтр по студенту. 400 — невалидные параметры пагинации.",
+        "description": "Возвращает 200 OK со страницей попыток, отсортированных по убыванию даты начала. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). taskId — необязательный фильтр по заданию. userId — необязательный фильтр по студенту. progressId и validationVersionId — фильтры Phase 2b. scoreFrom/scoreTo — включительный диапазон баллов 0–100. finalizationReason — причина финализации прохождения. 422 — некорректные параметры фильтрации или пагинации.",
         "operationId": "GetAllAttempts",
         "parameters": [
           {
@@ -5445,6 +5893,63 @@
               "type": "string",
               "format": "date-time"
             }
+          },
+          {
+            "name": "ProgressId",
+            "in": "query",
+            "description": "Необязательный фильтр по прохождению.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ValidationVersionId",
+            "in": "query",
+            "description": "Необязательный фильтр по версии проверки.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ScoreFrom",
+            "in": "query",
+            "description": "Минимальный балл включительно, от 0 до 100.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "ScoreTo",
+            "in": "query",
+            "description": "Максимальный балл включительно, от 0 до 100.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "FinalizationReason",
+            "in": "query",
+            "description": "Причина финализации связанного прохождения.",
+            "schema": {
+              "enum": [
+                "Manual",
+                "PerfectScore",
+                "AttemptsExhausted",
+                "Expired",
+                "EducationClosed",
+                "Restarted"
+              ],
+              "type": "string",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/FinalizationReason"
+                }
+              ]
+            }
           }
         ],
         "responses": {
@@ -5458,12 +5963,42 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Unprocessable Content",
             "content": {
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5481,10 +6016,10 @@
           {
             "name": "Idempotency-Key",
             "in": "header",
-            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Действует 24 часа в пределах текущего студента.",
+            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
             "required": true,
             "schema": {
-              "maxLength": 128,
+              "maxLength": 36,
               "minLength": 36,
               "type": "string",
               "format": "uuid"
@@ -5569,6 +6104,16 @@
           },
           "409": {
             "description": "Конфликт состояния платформенной сессии или идемпотентного запроса. Возможные code: ModuleSessionRequired, SessionTaskMismatch, ModuleSessionClosed, IdempotencyKeyPayloadMismatch, IdempotencyRequestInProgress.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5882,11 +6427,541 @@
           }
         }
       }
+    },
+    "/api/v1/sql-tasks/{taskId}/validation": {
+      "put": {
+        "tags": [
+          "TrainingValidation"
+        ],
+        "operationId": "UpdateTaskValidation",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/TaskValidationConfigurationRequest"
+                  }
+                ],
+                "description": "Полная редактируемая конфигурация проверки задания."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskValidationConfigurationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "TrainingValidation"
+        ],
+        "operationId": "GetTaskValidation",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskValidationConfigurationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks/{taskId}/validation/publish": {
+      "post": {
+        "tags": [
+          "TrainingValidation"
+        ],
+        "operationId": "PublishTaskValidation",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
+            "required": true,
+            "schema": {
+              "maxLength": 36,
+              "minLength": 36,
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PublishTaskValidationRequest"
+                  }
+                ],
+                "description": "Запрос публикации проверенной immutable validation version."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskValidationConfigurationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks/{taskId}/validation/preview": {
+      "post": {
+        "tags": [
+          "TrainingValidation"
+        ],
+        "operationId": "PreviewTaskValidation",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/TaskValidationPreviewRequest"
+                  }
+                ],
+                "description": "Draft-конфигурация для проверки эталона без публикации версии."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskValidationPreviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AttemptCheckResultResponse": {
+        "required": [
+          "awardedScore",
+          "kind",
+          "message",
+          "status",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "enum": [
+              "MainDatasetResult",
+              "RequiredConstruct",
+              "ForbiddenConstruct",
+              "RequiredTable",
+              "ForbiddenTable"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationCheckKind"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "Passed",
+              "Failed",
+              "NotEvaluated"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationCheckStatus"
+              }
+            ]
+          },
+          "weight": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "awardedScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Безопасный результат одного критерия в попытке."
+      },
+      "AttemptHintResponse": {
+        "required": [
+          "group",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "group": {
+            "enum": [
+              "Result",
+              "RequiredConstructs",
+              "ForbiddenConstructs",
+              "RequiredTables",
+              "ForbiddenTables"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HintGroup"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Подсказка, разрешённая текущей validation version."
+      },
       "AttemptListItemResponse": {
+        "required": [
+          "attemptNumber",
+          "createdAt",
+          "createdById",
+          "createdByName",
+          "durationMs",
+          "errorMessage",
+          "finishedAt",
+          "id",
+          "isCorrect",
+          "progressId",
+          "publicError",
+          "reason",
+          "rowCount",
+          "score",
+          "startedAt",
+          "status",
+          "studentName",
+          "submittedSql",
+          "taskId",
+          "taskName",
+          "topicName",
+          "updatedAt",
+          "updatedById",
+          "updatedByName",
+          "userId",
+          "validationVersionId"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -5999,6 +7074,26 @@
           "updatedByName": {
             "type": "string",
             "nullable": true
+          },
+          "progressId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "validationVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -6026,7 +7121,37 @@
       },
       "AttemptResponse": {
         "required": [
-          "resultSnapshotState"
+          "actualColumns",
+          "actualRows",
+          "createdAt",
+          "createdById",
+          "createdByName",
+          "durationMs",
+          "errorMessage",
+          "finishedAt",
+          "id",
+          "isCorrect",
+          "isResultTruncated",
+          "publicError",
+          "reason",
+          "resultRowLimit",
+          "resultSnapshotCreatedAt",
+          "resultSnapshotExpiresAt",
+          "resultSnapshotState",
+          "returnedRowCount",
+          "rowCount",
+          "scoring",
+          "startedAt",
+          "status",
+          "studentName",
+          "submittedSql",
+          "taskId",
+          "taskName",
+          "topicName",
+          "updatedAt",
+          "updatedById",
+          "updatedByName",
+          "userId"
         ],
         "type": "object",
         "properties": {
@@ -6195,6 +7320,15 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "scoring": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttemptScoringResponse"
+              }
+            ],
+            "description": "Составная оценка попытки и актуальное состояние progress.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -6208,6 +7342,87 @@
           "Expired"
         ],
         "type": "string"
+      },
+      "AttemptScoringResponse": {
+        "required": [
+          "attemptId",
+          "attemptNumber",
+          "attemptsRemaining",
+          "attemptsUsed",
+          "bestScore",
+          "canFinalize",
+          "canSubmit",
+          "checks",
+          "hints",
+          "isPassed",
+          "passingScore",
+          "progressId",
+          "score",
+          "validationVersionId"
+        ],
+        "type": "object",
+        "properties": {
+          "attemptId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "progressId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "validationVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bestScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "passingScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isPassed": {
+            "type": "boolean"
+          },
+          "attemptsUsed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attemptsRemaining": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canFinalize": {
+            "type": "boolean"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttemptCheckResultResponse"
+            }
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttemptHintResponse"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Составная оценка попытки и актуальное состояние progress."
       },
       "AttemptStudentFilterOptionResponse": {
         "type": "object",
@@ -7231,11 +8446,76 @@
         "additionalProperties": false,
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
       },
+      "DbmsValidationCapabilitiesResponse": {
+        "required": [
+          "analyzerVersion",
+          "dbmsId",
+          "maxAttemptsLimit",
+          "supportedCheckKinds",
+          "supportedConstructs",
+          "supportedHintGroups"
+        ],
+        "type": "object",
+        "properties": {
+          "dbmsId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "supportedCheckKinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationCheckKind"
+            }
+          },
+          "supportedConstructs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SqlConstruct"
+            }
+          },
+          "supportedHintGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HintGroup"
+            }
+          },
+          "maxAttemptsLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "analyzerVersion": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Возможности проверки SQL для конкретной СУБД."
+      },
       "ExecutionStatus": {
         "enum": [
           "Succeeded",
           "Error",
           "TimedOut"
+        ],
+        "type": "string"
+      },
+      "FinalizationReason": {
+        "enum": [
+          "Manual",
+          "PerfectScore",
+          "AttemptsExhausted",
+          "Expired",
+          "EducationClosed",
+          "Restarted"
+        ],
+        "type": "string"
+      },
+      "HintGroup": {
+        "enum": [
+          "Result",
+          "RequiredConstructs",
+          "ForbiddenConstructs",
+          "RequiredTables",
+          "ForbiddenTables"
         ],
         "type": "string"
       },
@@ -7840,6 +9120,93 @@
         },
         "additionalProperties": { }
       },
+      "ProgressFinalizationResponse": {
+        "required": [
+          "bestScore",
+          "canReturnToEducation",
+          "finalizedAt",
+          "finalScore",
+          "isPassed",
+          "progressId",
+          "reason",
+          "returnUrl",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "progressId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "Active",
+              "Finalizing",
+              "CompletionPending",
+              "CompletionFailed",
+              "Completed",
+              "Expired"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProgressStatus"
+              }
+            ]
+          },
+          "bestScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "finalScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isPassed": {
+            "type": "boolean"
+          },
+          "reason": {
+            "enum": [
+              "Manual",
+              "PerfectScore",
+              "AttemptsExhausted",
+              "Expired",
+              "EducationClosed",
+              "Restarted"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinalizationReason"
+              }
+            ]
+          },
+          "finalizedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canReturnToEducation": {
+            "type": "boolean"
+          },
+          "returnUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Результат завершения standalone- или platform-прохождения."
+      },
+      "ProgressStatus": {
+        "enum": [
+          "Active",
+          "Finalizing",
+          "CompletionPending",
+          "CompletionFailed",
+          "Completed",
+          "Expired"
+        ],
+        "type": "string"
+      },
       "PublicationStatus": {
         "enum": [
           "Draft",
@@ -7847,6 +9214,17 @@
           "Archived"
         ],
         "type": "string"
+      },
+      "PublishTaskValidationRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос публикации проверенной immutable validation version."
       },
       "ReferenceQueryRequest": {
         "type": "object",
@@ -8384,6 +9762,22 @@
         },
         "additionalProperties": false
       },
+      "SqlConstruct": {
+        "enum": [
+          "Join",
+          "InnerJoin",
+          "LeftJoin",
+          "RightJoin",
+          "FullJoin",
+          "GroupBy",
+          "Having",
+          "Distinct",
+          "Subquery",
+          "Cte",
+          "WindowFunction"
+        ],
+        "type": "string"
+      },
       "SqlQueryResponse": {
         "type": "object",
         "properties": {
@@ -8596,6 +9990,26 @@
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
       },
       "StudentAttemptListItemResponse": {
+        "required": [
+          "attemptNumber",
+          "durationMs",
+          "finishedAt",
+          "id",
+          "isCorrect",
+          "progressId",
+          "publicError",
+          "reason",
+          "rowCount",
+          "score",
+          "startedAt",
+          "status",
+          "submittedSql",
+          "taskId",
+          "taskName",
+          "topicId",
+          "topicName",
+          "validationVersionId"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8675,6 +10089,26 @@
           "finishedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "progressId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "validationVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -8701,7 +10135,29 @@
       },
       "StudentAttemptResponse": {
         "required": [
-          "resultSnapshotState"
+          "actualColumns",
+          "actualRows",
+          "durationMs",
+          "finishedAt",
+          "id",
+          "isCorrect",
+          "isResultTruncated",
+          "publicError",
+          "reason",
+          "resultRowLimit",
+          "resultSnapshotCreatedAt",
+          "resultSnapshotExpiresAt",
+          "resultSnapshotState",
+          "returnedRowCount",
+          "rowCount",
+          "scoring",
+          "startedAt",
+          "status",
+          "submittedSql",
+          "taskId",
+          "taskName",
+          "topicId",
+          "topicName"
         ],
         "type": "object",
         "properties": {
@@ -8837,11 +10293,25 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "scoring": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttemptScoringResponse"
+              }
+            ],
+            "description": "Составная оценка попытки и актуальное состояние progress.",
+            "nullable": true
           }
         },
         "additionalProperties": false
       },
       "StudentExecutionLimitsResponse": {
+        "required": [
+          "maxRows",
+          "maxSqlLength",
+          "timeoutSeconds"
+        ],
         "type": "object",
         "properties": {
           "timeoutSeconds": {
@@ -8858,6 +10328,24 @@
           }
         },
         "additionalProperties": false
+      },
+      "StudentHintTableResponse": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Таблица, раскрытая студенту как безопасная подсказка."
       },
       "StudentSchemaColumnPairResponse": {
         "type": "object",
@@ -8946,6 +10434,17 @@
         "additionalProperties": false
       },
       "StudentTaskDetailsResponse": {
+        "required": [
+          "dbmsName",
+          "difficultyLevel",
+          "executionLimits",
+          "id",
+          "taskName",
+          "taskText",
+          "topicId",
+          "topicName",
+          "validation"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -8978,9 +10477,167 @@
                 "$ref": "#/components/schemas/StudentExecutionLimitsResponse"
               }
             ]
+          },
+          "validation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentTaskValidationResponse"
+              }
+            ],
+            "description": "Безопасная validation-часть student task details.",
+            "nullable": true
           }
         },
         "additionalProperties": false
+      },
+      "StudentTaskHintsResponse": {
+        "required": [
+          "forbiddenConstructs",
+          "forbiddenTables",
+          "groups",
+          "requiredConstructs",
+          "requiredTables"
+        ],
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HintGroup"
+            }
+          },
+          "requiredConstructs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SqlConstruct"
+            }
+          },
+          "forbiddenConstructs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SqlConstruct"
+            }
+          },
+          "requiredTables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentHintTableResponse"
+            }
+          },
+          "forbiddenTables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentHintTableResponse"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Разрешённые преподавателем подсказки по validation version."
+      },
+      "StudentTaskProgressResponse": {
+        "required": [
+          "attemptsRemaining",
+          "attemptsUsed",
+          "bestScore",
+          "canFinalize",
+          "canSubmit",
+          "expiresAt",
+          "finalizationReason",
+          "finalizedAt",
+          "finalScore",
+          "id",
+          "isPassed",
+          "status",
+          "taskId",
+          "validationVersionId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "Active",
+              "Finalizing",
+              "CompletionPending",
+              "CompletionFailed",
+              "Completed",
+              "Expired"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProgressStatus"
+              }
+            ]
+          },
+          "validationVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bestScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attemptsUsed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attemptsRemaining": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canFinalize": {
+            "type": "boolean"
+          },
+          "isPassed": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "finalScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "finalizationReason": {
+            "enum": [
+              "Manual",
+              "PerfectScore",
+              "AttemptsExhausted",
+              "Expired",
+              "EducationClosed",
+              "Restarted"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinalizationReason"
+              }
+            ],
+            "nullable": true
+          },
+          "finalizedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Текущее прохождение SQL-задания."
       },
       "StudentTaskResponse": {
         "type": "object",
@@ -9057,6 +10714,45 @@
         "additionalProperties": false,
         "description": "Безопасное представление структуры учебной базы для студента."
       },
+      "StudentTaskValidationResponse": {
+        "required": [
+          "hints",
+          "maxAttempts",
+          "passingScore",
+          "progress"
+        ],
+        "type": "object",
+        "properties": {
+          "passingScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "progress": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentTaskProgressResponse"
+              }
+            ],
+            "description": "Текущее прохождение SQL-задания.",
+            "nullable": true
+          },
+          "hints": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentTaskHintsResponse"
+              }
+            ],
+            "description": "Разрешённые преподавателем подсказки по validation version."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Безопасная validation-часть student task details."
+      },
       "StudentTopicResponse": {
         "type": "object",
         "properties": {
@@ -9119,7 +10815,34 @@
       },
       "SubmitAttemptResponse": {
         "required": [
-          "resultSnapshotState"
+          "actualColumns",
+          "actualRows",
+          "attemptId",
+          "attemptNumber",
+          "attemptsRemaining",
+          "attemptsUsed",
+          "bestScore",
+          "canFinalize",
+          "canSubmit",
+          "checks",
+          "durationMs",
+          "hints",
+          "isCorrect",
+          "isPassed",
+          "isResultTruncated",
+          "passingScore",
+          "progressId",
+          "publicError",
+          "reason",
+          "resultRowLimit",
+          "resultSnapshotCreatedAt",
+          "resultSnapshotExpiresAt",
+          "resultSnapshotState",
+          "returnedRowCount",
+          "rowCount",
+          "score",
+          "status",
+          "validationVersionId"
         ],
         "type": "object",
         "properties": {
@@ -9229,6 +10952,72 @@
           "resultSnapshotExpiresAt": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          },
+          "progressId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "validationVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "bestScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "passingScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isPassed": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "attemptsUsed": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "attemptsRemaining": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "canSubmit": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "canFinalize": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttemptCheckResultResponse"
+            },
+            "nullable": true
+          },
+          "hints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttemptHintResponse"
+            },
             "nullable": true
           }
         },
@@ -9576,6 +11365,196 @@
         "additionalProperties": false,
         "description": "Согласованный снимок логической схемы учебной базы."
       },
+      "TaskValidationConfigurationRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "nullable": true
+          },
+          "passingScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "visibleHintGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HintGroup"
+            },
+            "nullable": true
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationCheckRequest"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Полная редактируемая конфигурация проверки задания."
+      },
+      "TaskValidationConfigurationResponse": {
+        "required": [
+          "checks",
+          "createdAt",
+          "hasUnpublishedChanges",
+          "maxAttempts",
+          "passingScore",
+          "publishedAt",
+          "state",
+          "taskId",
+          "updatedAt",
+          "validationVersionId",
+          "validationVersionNumber",
+          "version",
+          "visibleHintGroups"
+        ],
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "string"
+          },
+          "validationVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "validationVersionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "state": {
+            "enum": [
+              "Draft",
+              "Published"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationConfigurationState"
+              }
+            ]
+          },
+          "hasUnpublishedChanges": {
+            "type": "boolean"
+          },
+          "passingScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "visibleHintGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HintGroup"
+            }
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationCheckResponse"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Текущая конфигурация проверки и активная опубликованная версия."
+      },
+      "TaskValidationPreviewRequest": {
+        "type": "object",
+        "properties": {
+          "passingScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "visibleHintGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HintGroup"
+            },
+            "nullable": true
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationCheckPreviewRequest"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Draft-конфигурация для проверки эталона без публикации версии."
+      },
+      "TaskValidationPreviewResponse": {
+        "required": [
+          "analyzerVersion",
+          "checks",
+          "isValid",
+          "referenceScore",
+          "violations"
+        ],
+        "type": "object",
+        "properties": {
+          "isValid": {
+            "type": "boolean"
+          },
+          "referenceScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "analyzerVersion": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationCheckPreviewResponse"
+            }
+          },
+          "violations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationViolationResponse"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Предварительная проверка эталона по draft-конфигурации."
+      },
       "TeacherTaskAttemptResponse": {
         "type": "object",
         "properties": {
@@ -9614,6 +11593,16 @@
           "finishedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -10393,6 +12382,268 @@
           }
         },
         "additionalProperties": false
+      },
+      "ValidationCheckKind": {
+        "enum": [
+          "MainDatasetResult",
+          "RequiredConstruct",
+          "ForbiddenConstruct",
+          "RequiredTable",
+          "ForbiddenTable"
+        ],
+        "type": "string"
+      },
+      "ValidationCheckPreviewRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "clientKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "enum": [
+              "MainDatasetResult",
+              "RequiredConstruct",
+              "ForbiddenConstruct",
+              "RequiredTable",
+              "ForbiddenTable"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationCheckKind"
+              }
+            ]
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "weight": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Критерий для preview с временным идентификатором frontend."
+      },
+      "ValidationCheckPreviewResponse": {
+        "required": [
+          "awardedScore",
+          "checkId",
+          "clientKey",
+          "kind",
+          "message",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "checkId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "clientKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "enum": [
+              "MainDatasetResult",
+              "RequiredConstruct",
+              "ForbiddenConstruct",
+              "RequiredTable",
+              "ForbiddenTable"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationCheckKind"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "Passed",
+              "Failed",
+              "NotEvaluated"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationCheckStatus"
+              }
+            ]
+          },
+          "awardedScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Результат одного критерия при preview."
+      },
+      "ValidationCheckRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "kind": {
+            "enum": [
+              "MainDatasetResult",
+              "RequiredConstruct",
+              "ForbiddenConstruct",
+              "RequiredTable",
+              "ForbiddenTable"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationCheckKind"
+              }
+            ]
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "weight": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Критерий в запросе сохранения конфигурации."
+      },
+      "ValidationCheckResponse": {
+        "required": [
+          "id",
+          "kind",
+          "order",
+          "value",
+          "valueDisplayName",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "enum": [
+              "MainDatasetResult",
+              "RequiredConstruct",
+              "ForbiddenConstruct",
+              "RequiredTable",
+              "ForbiddenTable"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationCheckKind"
+              }
+            ]
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "valueDisplayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "weight": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Сохранённый критерий проверки."
+      },
+      "ValidationCheckStatus": {
+        "enum": [
+          "Passed",
+          "Failed",
+          "NotEvaluated"
+        ],
+        "type": "string"
+      },
+      "ValidationConfigurationState": {
+        "enum": [
+          "Draft",
+          "Published"
+        ],
+        "type": "string"
+      },
+      "ValidationViolationResponse": {
+        "required": [
+          "code",
+          "message",
+          "path",
+          "severity"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "Error",
+              "Warning"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationViolationSeverity"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Безопасное нарушение конфигурации или эталонного решения."
+      },
+      "ValidationViolationSeverity": {
+        "enum": [
+          "Error",
+          "Warning"
+        ],
+        "type": "string"
       }
     },
     "securitySchemes": {
@@ -10430,6 +12681,9 @@
     },
     {
       "name": "Training"
+    },
+    {
+      "name": "TrainingValidation"
     }
   ]
 }

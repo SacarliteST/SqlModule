@@ -127,6 +127,13 @@ internal sealed class PendingPublishProcessor(
                     ModuleSessionStatus.Completed);
             }
 
+            var progress = await db.StudentTaskProgresses.SingleOrDefaultAsync(
+                value => value.ModuleSessionId == message.SessionId, ct);
+            if (progress is not null && progress.Status != Domain.Training.ProgressStatus.Completed)
+            {
+                progress.MarkCompleted();
+            }
+
             if (result == EducationCompletionDeliveryResult.TerminalConflict)
             {
                 logger.LogWarning(
@@ -166,6 +173,13 @@ internal sealed class PendingPublishProcessor(
             ModuleIntegrationTelemetry.RecordSessionTransition(
                 ModuleSessionStatus.CompletionPending,
                 ModuleSessionStatus.CompletionFailed);
+        }
+
+        var progress = await db.StudentTaskProgresses.SingleOrDefaultAsync(
+            value => value.ModuleSessionId == sessionId, ct);
+        if (progress?.Status == Domain.Training.ProgressStatus.CompletionPending)
+        {
+            progress.MarkCompletionFailed();
         }
     }
 
