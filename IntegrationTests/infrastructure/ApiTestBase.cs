@@ -1,4 +1,5 @@
-﻿using SQLModule.Client.Attempt;
+﻿using Microsoft.Extensions.DependencyInjection;
+using SQLModule.Client.Attempt;
 using SQLModule.Client.AttributeParameterValue;
 using SQLModule.Client.DataRecord;
 using SQLModule.Client.DbmsDictionary;
@@ -12,13 +13,15 @@ using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
 using SQLModule.Client.Topic;
+using SQLModule.Sandbox;
 using SQLModule.Web.Common.Auth;
+using SQLModule.Web.Common.Isolated;
 
 namespace SQLModule.IntegrationTests.infrastructure;
 
 /// <summary>Базовый класс интеграционных тестов.</summary>
 [Collection(IntegrationTestCollection.Name)]
-public abstract class ApiTestBase
+public abstract class ApiTestBase : IDisposable
 {
     protected readonly TestApplication App;
 
@@ -135,5 +138,24 @@ public abstract class ApiTestBase
         HttpClient.DefaultRequestHeaders.Add("X-Test-UserId", userId);
         HttpClient.DefaultRequestHeaders.Add("X-Test-Roles", roles);
         HttpClient.DefaultRequestHeaders.Add("X-Test-DisplayName", displayName);
+    }
+
+    /// <summary>
+    /// FakeSandboxExecutor — синглтон на всю тестовую коллекцию (один <see cref="TestApplication"/>
+    /// на все тесты). Тест, забывший сбросить свой <see cref="FakeSandboxExecutor.OverrideRun"/>,
+    /// тихо портит эталонный результат следующего теста, который вычисляет его через ту же
+    /// fake-песочницу при публикации своей версии проверки — сбрасываем централизованно после
+    /// каждого теста, а не полагаемся на try/finally в каждом отдельном тесте.
+    /// </summary>
+    public void Dispose()
+    {
+        if (App.Services.GetService<ISandboxExecutor>() is FakeSandboxExecutor executor)
+        {
+            executor.OverrideRun = null;
+            executor.OverrideSetup = null;
+            executor.ResetRunCallCount();
+        }
+
+        GC.SuppressFinalize(this);
     }
 }
