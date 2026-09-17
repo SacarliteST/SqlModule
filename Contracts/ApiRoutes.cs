@@ -6,6 +6,16 @@ public static class ApiRoutes
     /// <summary>Общий префикс Api v1.</summary>
     public const string PrefixV1 = "api/v1";
 
+    /// <summary>Маршруты аутентификации собственного (standalone) контура SqlModule.</summary>
+    public static class Auth
+    {
+        /// <summary>
+        /// Standalone-вход: логин в IdentityService + обмен токена на audience SqlModule,
+        /// без session_id.
+        /// </summary>
+        public const string Login = PrefixV1 + "/auth/login";
+    }
+
     /// <summary>Маршруты интеграции с основной платформой.</summary>
     public static class ModuleIntegration
     {

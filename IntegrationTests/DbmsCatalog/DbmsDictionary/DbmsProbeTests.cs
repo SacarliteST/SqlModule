@@ -19,12 +19,25 @@ public sealed class DbmsProbeTests
     }
 
     private static DbmsProbeSpec PostgresSpec(string image = "postgres:latest") => new(
+        DbmsSystemName: "postgres",
         DockerImage: image,
         DefaultPort: 5432,
         EnvUserKey: "POSTGRES_USER",
         EnvPasswordKey: "POSTGRES_PASSWORD",
         EnvDatabaseKey: "POSTGRES_DB",
         ExtraEnvConfig: null,
+        DefaultDatabase: "testdb",
+        DefaultUsername: "user",
+        DefaultPassword: "pass");
+
+    private static DbmsProbeSpec MySqlSpec(string image = "mysql:8.0") => new(
+        DbmsSystemName: "mysql",
+        DockerImage: image,
+        DefaultPort: 3306,
+        EnvUserKey: "MYSQL_USER",
+        EnvPasswordKey: "MYSQL_PASSWORD",
+        EnvDatabaseKey: "MYSQL_DATABASE",
+        ExtraEnvConfig: "MYSQL_ROOT_PASSWORD=rootpass",
         DefaultDatabase: "testdb",
         DefaultUsername: "user",
         DefaultPassword: "pass");
@@ -64,6 +77,19 @@ public sealed class DbmsProbeTests
 
         // Act
         var result = await probe.ProbeAsync(PostgresSpec("nonexistent-image-xyz-000:latest"), CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+    }
+
+    [Fact(DisplayName = "ProbeAsync → успех при корректной mysql:8.0 конфигурации (регрессия: не Postgres-протокол)")]
+    public async Task ProbeAsync_ValidMySqlConfig_ReturnsSuccess()
+    {
+        // Arrange
+        var probe = CreateProbe();
+
+        // Act
+        var result = await probe.ProbeAsync(MySqlSpec(), CancellationToken.None);
 
         // Assert
         result.IsSuccess.ShouldBeTrue();
