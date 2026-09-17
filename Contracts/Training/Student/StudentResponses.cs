@@ -45,7 +45,8 @@ public record StudentTaskDetailsResponse(
     string TaskText,
     short DifficultyLevel,
     string DbmsName,
-    StudentExecutionLimitsResponse ExecutionLimits);
+    StudentExecutionLimitsResponse ExecutionLimits,
+    global::SQLModule.Contracts.Training.Validation.StudentTaskValidationResponse? Validation = null);
 
 public record StudentExecutionLimitsResponse(int TimeoutSeconds, int MaxRows, int MaxSqlLength);
 
@@ -63,7 +64,11 @@ public record StudentAttemptListItemResponse(
     long? DurationMs,
     string? PublicError,
     DateTimeOffset StartedAt,
-    DateTimeOffset FinishedAt);
+    DateTimeOffset FinishedAt,
+    int? AttemptNumber = null,
+    int? Score = null,
+    Guid? ProgressId = null,
+    Guid? ValidationVersionId = null);
 
 public record StudentAttemptResponse(
     Guid Id,
@@ -87,4 +92,5 @@ public record StudentAttemptResponse(
     bool IsResultTruncated,
     int? ResultRowLimit,
     DateTimeOffset? ResultSnapshotCreatedAt,
-    DateTimeOffset? ResultSnapshotExpiresAt);
+    DateTimeOffset? ResultSnapshotExpiresAt,
+    global::SQLModule.Contracts.Training.Validation.AttemptScoringResponse? Scoring = null);

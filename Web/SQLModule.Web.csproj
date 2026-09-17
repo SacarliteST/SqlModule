@@ -22,9 +22,11 @@
         <ProjectReference Include="..\Domain\Domain.csproj" />
         <ProjectReference Include="..\Data\Data.csproj" />
         <ProjectReference Include="..\Integrations\Education.Client\Education.Client.csproj" />
+        <ProjectReference Include="..\Integrations\Identity.Client\Identity.Client.csproj" />
         <ProjectReference Include="..\Integrations\Kafka.Publisher\Kafka.Publisher.csproj" />
         <ProjectReference Include="..\Integrations\PlatformIntegration.Abstractions\PlatformIntegration.Abstractions.csproj" />
         <ProjectReference Include="..\Integrations\PlatformIntegration.Contracts\PlatformIntegration.Contracts.csproj" />
         <ProjectReference Include="..\Sandbox\Sandbox.csproj" />
+        <ProjectReference Include="..\SqlAnalysis\SqlAnalysis.csproj" />
     </ItemGroup>
 </Project>

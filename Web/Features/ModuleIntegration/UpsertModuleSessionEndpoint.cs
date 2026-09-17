@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;
 using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Web.Common;
+using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 
@@ -37,6 +39,7 @@ internal sealed class UpsertModuleSessionEndpoint : IModuleIntegrationEndpoint
         UpsertModuleSessionRequest request,
         [FromHeader(Name = "X-Service-Key"), Required] string? serviceKey,
         IOptions<ModuleIntegrationOptions> options,
+        IPlatformProgressService progressService,
         AppDbContext db,
         CancellationToken ct)
     {
@@ -65,6 +68,12 @@ internal sealed class UpsertModuleSessionEndpoint : IModuleIntegrationEndpoint
                 request.ExpiresAt);
             db.ModuleSessions.Add(created);
 
+            var progressResult = await progressService.EnsureCreatedAsync(created, ct);
+            if (!progressResult.IsSuccess && !IsValidationVersionPending(progressResult.Error))
+            {
+                return progressResult.ToOk();
+            }
+
             try
             {
                 await db.SaveChangesAsync(ct);
@@ -75,7 +84,7 @@ internal sealed class UpsertModuleSessionEndpoint : IModuleIntegrationEndpoint
             {
                 // Параллельный повтор того же push мог вставить строку после SELECT.
                 // Если причина другая, повторное чтение не найдёт сессию и исходная ошибка уйдёт выше.
-                db.Entry(created).State = EntityState.Detached;
+                db.ChangeTracker.Clear();
                 session = await db.ModuleSessions.SingleOrDefaultAsync(value => value.Id == sessionId, ct);
                 if (session is null)
                 {
@@ -100,8 +109,16 @@ internal sealed class UpsertModuleSessionEndpoint : IModuleIntegrationEndpoint
             request.TaskRef!,
             request.ReturnUrl!,
             request.ExpiresAt);
+        var existingProgressResult = await progressService.EnsureCreatedAsync(session, ct);
+        if (!existingProgressResult.IsSuccess && !IsValidationVersionPending(existingProgressResult.Error))
+        {
+            return existingProgressResult.ToOk();
+        }
         await db.SaveChangesAsync(ct);
         ModuleIntegrationTelemetry.RecordPush(ModuleIntegrationTelemetryOutcomes.Updated);
         return TypedResults.Ok();
     }
+
+    private static bool IsValidationVersionPending(SQLModule.Common.Results.Error? error) =>
+        error?.Code == "ModuleSession.TaskValidationUnavailable";
 }

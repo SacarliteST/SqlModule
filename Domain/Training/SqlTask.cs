@@ -11,9 +11,12 @@ public sealed class SqlTask : AuditableEntity
     public string TaskText { get; private set; }
     public short DifficultyLevel { get; private set; }
     public PublicationStatus PublicationStatus { get; private set; }
+    public Guid? ActiveValidationVersionId { get; private set; }
 
     public Topic Topic { get; private set; } = null!;
     public SqlQuery SqlQuery { get; private set; } = null!;
+    public TaskValidationConfiguration? ValidationConfiguration { get; private set; }
+    public TaskValidationVersion? ActiveValidationVersion { get; private set; }
 
     private SqlTask(Guid id, Guid topicId, Guid sqlQueryId,
         string taskName, string taskText, short difficultyLevel,
@@ -57,5 +60,10 @@ public sealed class SqlTask : AuditableEntity
     public void ChangeTopic(Guid topicId)
     {
         TopicId = topicId;
+    }
+
+    public void ActivateValidationVersion(Guid validationVersionId)
+    {
+        ActiveValidationVersionId = validationVersionId;
     }
 }

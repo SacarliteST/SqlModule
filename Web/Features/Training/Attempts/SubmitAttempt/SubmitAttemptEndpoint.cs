@@ -40,6 +40,7 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
             .ProducesProblem(StatusCodes.Status500InternalServerError)
             .AddEndpointFilter<ValidationFilter<SubmitAttemptRequest>>();
     }

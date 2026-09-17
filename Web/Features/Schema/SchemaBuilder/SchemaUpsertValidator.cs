@@ -98,5 +98,15 @@ internal sealed class SchemaUpsertValidator : AbstractValidator<SchemaUpsertRequ
                 context.AddFailure($"Relationships[{key}]", "Связь ссылается на неизвестную колонку.");
             }
         }
+
+        foreach (var duplicateSource in request.Relationships
+                     .Where(relationship => !String.IsNullOrWhiteSpace(relationship.SourceColumnRef))
+                     .GroupBy(relationship => relationship.SourceColumnRef!, StringComparer.Ordinal)
+                     .Where(group => group.Count() > 1))
+        {
+            context.AddFailure(
+                "Relationships",
+                $"Исходная колонка '{duplicateSource.Key}' может иметь только одну внешнюю связь.");
+        }
     }
 }
