@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Shouldly;
+using SQLModule.Client;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;
 using SQLModule.Data.Core;
@@ -465,7 +466,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         using var platform = CreatePlatformApplication();
         using var client = platform.CreateClient();
         var userId = Guid.NewGuid();
-        var taskId = await SeedRunnableTaskAsync(platform);
+        var taskId = await SeedValidatedRunnableTaskAsync(platform);
         var sessionId = Guid.NewGuid();
         await SeedModuleSessionAsync(platform, sessionId, userId, taskId, DateTimeOffset.UtcNow.AddMinutes(10));
         var executor = (FakeSandboxExecutor)platform.Services.GetRequiredService<ISandboxExecutor>();
@@ -518,7 +519,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         using var platform = CreatePlatformApplication();
         using var client = platform.CreateClient();
         var userId = Guid.NewGuid();
-        var taskId = await SeedRunnableTaskAsync(platform);
+        var taskId = await SeedValidatedRunnableTaskAsync(platform);
         var sessionId = Guid.NewGuid();
         await SeedModuleSessionAsync(platform, sessionId, userId, taskId, DateTimeOffset.UtcNow.AddMinutes(10));
         var executor = (FakeSandboxExecutor)platform.Services.GetRequiredService<ISandboxExecutor>();
@@ -570,7 +571,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         using var platform = CreatePlatformApplication();
         using var client = platform.CreateClient();
         var userId = Guid.NewGuid();
-        var taskId = await SeedRunnableTaskAsync(platform);
+        var taskId = await SeedValidatedRunnableTaskAsync(platform);
         var sessionId = Guid.NewGuid();
         var idempotencyKey = Guid.NewGuid().ToString();
         await SeedModuleSessionAsync(platform, sessionId, userId, taskId, DateTimeOffset.UtcNow.AddMinutes(10));
@@ -598,7 +599,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         using var platform = CreatePlatformApplication();
         using var client = platform.CreateClient();
         var userId = Guid.NewGuid();
-        var taskId = await SeedRunnableTaskAsync(platform);
+        var taskId = await SeedValidatedRunnableTaskAsync(platform);
         var sessionId = Guid.NewGuid();
         await SeedModuleSessionAsync(platform, sessionId, userId, taskId, DateTimeOffset.UtcNow.AddMinutes(10));
         var executor = (FakeSandboxExecutor)platform.Services.GetRequiredService<ISandboxExecutor>();
@@ -626,7 +627,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         using var firstClient = platform.CreateClient();
         using var secondClient = platform.CreateClient();
         var userId = Guid.NewGuid();
-        var taskId = await SeedRunnableTaskAsync(platform);
+        var taskId = await SeedValidatedRunnableTaskAsync(platform);
         var sessionId = Guid.NewGuid();
         await SeedModuleSessionAsync(platform, sessionId, userId, taskId, DateTimeOffset.UtcNow.AddMinutes(10));
         using var firstRequest = CreateSubmitRequest(taskId, userId, sessionId);
@@ -1372,6 +1373,100 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             publicationStatus: PublicationStatus.Published);
         db.AddRange(dbms, targetDb, topic, query, task);
         await db.SaveChangesAsync();
+        return task.Id;
+    }
+
+    /// <summary>
+    /// Как <see cref="SeedRunnableTaskAsync"/>, но дополнительно публикует Phase 2b
+    /// конфигурацию проверки — начиная с Phase 2b <see cref="PlatformProgressService"/>
+    /// требует опубликованную <c>ActiveValidationVersionId</c> для любого platform-задания,
+    /// иначе submit отвечает 422 <c>ModuleSession.TaskValidationUnavailable</c>.
+    /// </summary>
+    private static async Task<Guid> SeedValidatedRunnableTaskAsync(
+        WebApplicationFactory<IHostMarker> platform)
+    {
+        using var client = platform.CreateClient();
+        var marker = Guid.NewGuid().ToString("N");
+
+        using var dbmsRequest = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.DbmsCatalog.DbmsDictionaries.Collection)
+        {
+            Content = JsonContent.Create(new Contracts.DbmsCatalog.DbmsDictionary.CreateDbmsDictionaryRequest(
+                $"Submit {marker}", "postgres", "postgres:latest", 5432,
+                "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", null,
+                "training", "user", "password"), options: ClientJson.Options)
+        };
+        dbmsRequest.Headers.Add("X-Test-Roles", "Admin");
+        using var dbmsResponse = await client.SendAsync(dbmsRequest);
+        dbmsResponse.StatusCode.ShouldBe(HttpStatusCode.Created, await dbmsResponse.Content.ReadAsStringAsync());
+        var dbms = (await dbmsResponse.Content
+            .ReadFromJsonAsync<Contracts.DbmsCatalog.DbmsDictionary.DbmsDictionaryResponse>(ClientJson.Options))!;
+
+        using var targetDbRequest = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.Schema.TargetDbs.Collection)
+        {
+            Content = JsonContent.Create(new Contracts.Schema.TargetDb.CreateTargetDbRequest(
+                dbms.Id, $"submit_{marker}", null, false), options: ClientJson.Options)
+        };
+        using var targetDbResponse = await client.SendAsync(targetDbRequest);
+        targetDbResponse.StatusCode.ShouldBe(HttpStatusCode.Created, await targetDbResponse.Content.ReadAsStringAsync());
+        var targetDb = (await targetDbResponse.Content
+            .ReadFromJsonAsync<Contracts.Schema.TargetDb.TargetDbResponse>(ClientJson.Options))!;
+
+        using var topicRequest = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.Training.Topics.Collection)
+        {
+            Content = JsonContent.Create(
+                new Contracts.Training.Topic.CreateTopicRequest($"Submit {marker}", null), options: ClientJson.Options)
+        };
+        using var topicResponse = await client.SendAsync(topicRequest);
+        topicResponse.StatusCode.ShouldBe(HttpStatusCode.Created, await topicResponse.Content.ReadAsStringAsync());
+        var topic = (await topicResponse.Content
+            .ReadFromJsonAsync<Contracts.Training.Topic.TopicResponse>(ClientJson.Options))!;
+
+        using var taskRequest = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.Training.SqlTasks.Collection)
+        {
+            Content = JsonContent.Create(new Contracts.Training.SqlTask.CreateSqlTaskRequest(
+                topic.Id, $"Submit {marker}", "Runnable platform task", 1,
+                new Contracts.Training.SqlTask.ReferenceQueryRequest(targetDb.Id, "SELECT 1", false, false)),
+                options: ClientJson.Options)
+        };
+        using var taskResponse = await client.SendAsync(taskRequest);
+        taskResponse.StatusCode.ShouldBe(HttpStatusCode.Created, await taskResponse.Content.ReadAsStringAsync());
+        var task = (await taskResponse.Content
+            .ReadFromJsonAsync<Contracts.Training.SqlTask.SqlTaskResponse>(ClientJson.Options))!;
+
+        var configuration = await client.GetFromJsonAsync<Contracts.Training.Validation.TaskValidationConfigurationResponse>(
+            ApiRoutes.Training.SqlTasks.ForValidation(task.Id), ClientJson.Options);
+        using var updateRequest = new HttpRequestMessage(
+            HttpMethod.Put, ApiRoutes.Training.SqlTasks.ForValidation(task.Id))
+        {
+            Content = JsonContent.Create(new Contracts.Training.Validation.TaskValidationConfigurationRequest(
+                configuration!.Version, 100, null, [HintGroup.Result],
+                [new Contracts.Training.Validation.ValidationCheckRequest(
+                    configuration.Checks[0].Id, ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
+                options: ClientJson.Options)
+        };
+        using var updateResponse = await client.SendAsync(updateRequest);
+        updateResponse.StatusCode.ShouldBe(HttpStatusCode.OK, await updateResponse.Content.ReadAsStringAsync());
+        var updated = (await updateResponse.Content
+            .ReadFromJsonAsync<Contracts.Training.Validation.TaskValidationConfigurationResponse>(ClientJson.Options))!;
+
+        using var publishValidationRequest = new HttpRequestMessage(
+            HttpMethod.Post, ApiRoutes.Training.SqlTasks.ForValidationPublish(task.Id))
+        {
+            Content = JsonContent.Create(
+                new Contracts.Training.Validation.PublishTaskValidationRequest(updated.Version),
+                options: ClientJson.Options)
+        };
+        publishValidationRequest.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("D"));
+        using var publishValidationResponse = await client.SendAsync(publishValidationRequest);
+        publishValidationResponse.StatusCode.ShouldBe(
+            HttpStatusCode.OK, await publishValidationResponse.Content.ReadAsStringAsync());
+
+        using var publishTaskRequest = new HttpRequestMessage(
+            HttpMethod.Post, ApiRoutes.Training.SqlTasks.ForPublish(task.Id));
+        using var publishTaskResponse = await client.SendAsync(publishTaskRequest);
+        publishTaskResponse.StatusCode.ShouldBe(
+            HttpStatusCode.OK, await publishTaskResponse.Content.ReadAsStringAsync());
+
         return task.Id;
     }
 
