@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Auth;
 using SQLModule.Identity.Client;
@@ -33,11 +33,15 @@ internal sealed class StandaloneLoginEndpoint : IEndpoint
     private static async Task<IResult> Handle(
         StandaloneLoginRequest request,
         IIdentityAuthClient identityAuthClient,
-        IOptions<AuthOptions> authOptions,
+        IConfiguration configuration,
         CancellationToken ct)
     {
+        // AuthOptions намеренно не зарегистрирован как IOptions<AuthOptions> — WebExtensions.AddWeb
+        // читает его в локальную переменную только для настройки JwtBearer. Читаем ту же секцию
+        // напрямую, чтобы всегда обменивать на ту же audience, которую сам SqlModule валидирует.
+        var audience = configuration.GetSection(AuthOptions.SectionKey)[nameof(AuthOptions.Audience)] ?? String.Empty;
         var result = await identityAuthClient.LoginAndExchangeAsync(
-            request.Email, request.Password, authOptions.Value.Audience, ct);
+            request.Email, request.Password, audience, ct);
 
         return result.Outcome switch
         {
@@ -45,8 +49,8 @@ internal sealed class StandaloneLoginEndpoint : IEndpoint
                 new StandaloneLoginResponse(result.AccessToken!, result.ExpiresIn)),
             IdentityLoginOutcome.InvalidCredentials => ApiProblemFactory.ToResult(
                 StatusCodes.Status401Unauthorized,
-                "Не удалось войти",
-                "Неверный email или пароль.",
+                String.IsNullOrWhiteSpace(result.ErrorTitle) ? "Не удалось войти" : result.ErrorTitle,
+                String.IsNullOrWhiteSpace(result.ErrorDetail) ? "Неверный email или пароль." : result.ErrorDetail,
                 "Auth.InvalidCredentials"),
             _ => ApiProblemFactory.ToResult(
                 StatusCodes.Status503ServiceUnavailable,

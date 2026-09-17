@@ -70,6 +70,16 @@ internal sealed class Phase2bSubmitAttemptService(
                 .SingleAsync(value => value.Id == created.Value!.Id, ct);
         }
 
+        if (progress is null && moduleSession is null)
+        {
+            // Нет активного standalone-прохождения — но это может быть идемпотентный повтор
+            // запроса, который сам это прохождение завершил (например, сразу набрал 100 баллов).
+            // ReserveAsync ниже уже умеет отвечать replay-ом для существующей резервации вне
+            // зависимости от статуса прохождения — не хватало только найти его без progress.Id,
+            // который standalone-клиент не передаёт явно.
+            progress = await FindProgressByIdempotencyKeyAsync(command, ct);
+        }
+
         if (progress is null)
         {
             return new Phase2bSubmitResult(false, null);
@@ -244,6 +254,28 @@ internal sealed class Phase2bSubmitAttemptService(
 
         return Handled(ToResponse(
             attempt, progress, runtime, checks, snapshot, finishedAt));
+    }
+
+    /// <summary>
+    /// Находит standalone-прохождение по чужой (уже не Active) резервации с тем же
+    /// Idempotency-Key — единственный способ повторно найти прохождение для replay,
+    /// когда клиент не передаёт progress.Id явно (в отличие от platform-flow, где
+    /// прохождение всегда однозначно определяется по moduleSession.Id).
+    /// </summary>
+    private async Task<StudentTaskProgress?> FindProgressByIdempotencyKeyAsync(
+        SubmitAttemptCommand command, CancellationToken ct)
+    {
+        var idempotencyKey = Guid.Parse(command.IdempotencyKey);
+        var reservation = await db.AttemptReservations
+            .Include(value => value.Progress).ThenInclude(value => value.ValidationVersion)
+            .Where(value =>
+                value.IdempotencyKey == idempotencyKey &&
+                value.Progress.UserId == command.UserId &&
+                value.Progress.TaskId == command.TaskId &&
+                value.Progress.ModuleSessionId == null)
+            .OrderByDescending(value => value.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+        return reservation?.Progress;
     }
 
     private async Task LockProgressAsync(Guid progressId, CancellationToken ct)
