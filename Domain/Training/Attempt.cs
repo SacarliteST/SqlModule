@@ -14,6 +14,11 @@ public sealed class Attempt : AuditableEntity
     public Guid TaskId { get; private set; }
     /// <summary>Платформенная сессия запуска; null для standalone-попытки.</summary>
     public Guid? ModuleSessionId { get; private set; }
+    public Guid? ProgressId { get; private set; }
+    public Guid? ValidationVersionId { get; private set; }
+    public int? AttemptNumber { get; private set; }
+    public int? Score { get; private set; }
+    public bool CountsTowardLimit { get; private set; }
     public string SubmittedSql { get; private set; } = String.Empty;
     public ExecutionStatus Status { get; private set; }
     public bool IsCorrect { get; private set; }
@@ -43,6 +48,7 @@ public sealed class Attempt : AuditableEntity
         StudentEmail = NormalizeStudentEmail(studentEmail);
         TaskId = taskId;
         ModuleSessionId = moduleSessionId;
+        CountsTowardLimit = true;
         SubmittedSql = submittedSql;
         Status = status;
         IsCorrect = isCorrect;
@@ -103,5 +109,19 @@ public sealed class Attempt : AuditableEntity
         ResultRowLimit = rowLimit;
         ResultSnapshotCreatedAt = createdAt;
         ResultSnapshotExpiresAt = expiresAt;
+    }
+
+    public void AttachScoring(
+        Guid progressId,
+        Guid validationVersionId,
+        int attemptNumber,
+        int score,
+        bool countsTowardLimit)
+    {
+        ProgressId = progressId;
+        ValidationVersionId = validationVersionId;
+        AttemptNumber = attemptNumber;
+        Score = score;
+        CountsTowardLimit = countsTowardLimit;
     }
 }

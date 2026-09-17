@@ -33,4 +33,5 @@ public record AttemptResponse(
     bool IsResultTruncated = false,
     int? ResultRowLimit = null,
     DateTimeOffset? ResultSnapshotCreatedAt = null,
-    DateTimeOffset? ResultSnapshotExpiresAt = null);
+    DateTimeOffset? ResultSnapshotExpiresAt = null,
+    global::SQLModule.Contracts.Training.Validation.AttemptScoringResponse? Scoring = null);

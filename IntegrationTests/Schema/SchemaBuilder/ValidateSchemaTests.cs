@@ -66,6 +66,33 @@ public sealed class ValidateSchemaTests : ApiTestBase
         ex.Errors.ShouldContainKey("Relationships");
     }
 
+    [Fact(DisplayName = "D5.3a: одна исходная колонка не может иметь два внешних ключа")]
+    public async Task ValidateAsync_DuplicateOutgoingRelationship_Throws422()
+    {
+        var request = new CreateSchemaRequest(
+            Guid.NewGuid(),
+            "s",
+            [
+                new TableDraft("t1", "a",
+                [
+                    new ColumnDraft("source", "target_id", AnyPhysicalTypeId, false, true, 0, []),
+                    new ColumnDraft("target-1", "id_1", AnyPhysicalTypeId, true, true, 1, []),
+                    new ColumnDraft("target-2", "id_2", AnyPhysicalTypeId, true, true, 2, [])
+                ])
+            ],
+            [
+                new RelationshipDraft("fk_1", "source", "target-1", null, null),
+                new RelationshipDraft("fk_2", "source", "target-2", null, null)
+            ]);
+
+        var exception = await Should.ThrowAsync<ValidationException>(() =>
+            SchemaBuilderClient.ValidateAsync(request));
+
+        exception.StatusCode.ShouldBe(422);
+        exception.Errors["Relationships"].ShouldContain(message =>
+            message.Contains("только одну внешнюю связь", StringComparison.Ordinal));
+    }
+
     // ── D5.4: пустые Tables → 400 ───────────────────────────────────────────
 
     [Fact(DisplayName = "D5.4: пустой список таблиц → ValidationException (422)")]

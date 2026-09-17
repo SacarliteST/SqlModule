@@ -7,6 +7,7 @@ using SQLModule.Sandbox;
 using SQLModule.Web.Common.Cqrs;
 using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.Training.SqlQueries;
+using SQLModule.Web.Features.Training.Validation;
 
 namespace SQLModule.Web.Features.Training.SqlTasks;
 
@@ -57,6 +58,7 @@ internal sealed class CreateSqlTaskHandler(
 
         db.SqlQueries.Add(sqlQuery);
         db.SqlTasks.Add(entity);
+        db.TaskValidationConfigurations.Add(TaskValidationDefaults.Create(entity.Id));
         await db.SaveChangesAsync(ct);
         return SqlTaskMappings.ToResponse(entity);
     }

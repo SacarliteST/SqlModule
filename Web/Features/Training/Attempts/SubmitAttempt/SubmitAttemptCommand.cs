@@ -32,6 +32,7 @@ internal sealed class SubmitAttemptHandler(
     ITaskMaterializer materializer,
     ISandboxExecutor executor,
     IResultComparer comparer,
+    IPhase2bSubmitAttemptService phase2bSubmit,
     IAttemptResultSnapshotService snapshotService,
     IOptions<SandboxOptions> sandboxOptions,
     TimeProvider timeProvider,
@@ -103,6 +104,19 @@ internal sealed class SubmitAttemptHandler(
         if (task is null)
         {
             return Result<SubmitAttemptResponse>.Fail(AttemptErrors.TaskNotFound(command.TaskId));
+        }
+
+        var phase2b = await phase2bSubmit.TryHandleAsync(command, moduleSession, ct);
+        if (phase2b.Handled)
+        {
+            return phase2b.Result!;
+        }
+
+        if (task.ActiveValidationVersionId.HasValue)
+        {
+            return Result<SubmitAttemptResponse>.Fail(Error.Conflict(
+                "Progress.NotFound",
+                "Сначала начните прохождение задания."));
         }
 
         var sqlQuery = await db.SqlQueries.AsNoTracking()

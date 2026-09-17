@@ -1,6 +1,7 @@
 ﻿namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 
 internal sealed record DbmsProbeSpec(
+    string DbmsSystemName,
     string DockerImage,
     int DefaultPort,
     string EnvUserKey,

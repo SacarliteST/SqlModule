@@ -14,9 +14,11 @@ using SQLModule.Web.Features.Schema.MetaTables;
 using SQLModule.Web.Features.Schema.SchemaBuilder;
 using SQLModule.Web.Features.Schema.TargetDbs;
 using SQLModule.Web.Features.Training.Attempts;
+using SQLModule.Web.Features.Training.Progress;
 using SQLModule.Web.Features.Training.SqlQueries;
 using SQLModule.Web.Features.Training.SqlTasks;
 using SQLModule.Web.Features.Training.Topics;
+using SQLModule.Web.Features.Training.Validation;
 
 namespace SQLModule.Web.Common;
 
@@ -49,5 +51,7 @@ internal static class FeaturesExtensions
             .AddSqlTasks()
             .AddSqlQueries()
             .AddAttempts()
+            .AddStudentProgress()
+            .AddTaskValidation()
             .AddSchemaBuilder();
 }

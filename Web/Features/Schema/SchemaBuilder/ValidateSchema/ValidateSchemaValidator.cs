@@ -51,6 +51,15 @@ internal sealed class ValidateSchemaValidator : AbstractValidator<CreateSchemaRe
             }
 
             var validKeys = new HashSet<string>(allColIds, StringComparer.Ordinal);
+            foreach (var duplicateSource in req.Relationships
+                         .GroupBy(relationship => relationship.SourceColumnTempId, StringComparer.Ordinal)
+                         .Where(group => group.Count() > 1))
+            {
+                ctx.AddFailure(
+                    "Relationships",
+                    $"Исходная колонка '{duplicateSource.Key}' может иметь только одну внешнюю связь.");
+            }
+
             foreach (var rel in req.Relationships)
             {
                 if (!validKeys.Contains(rel.SourceColumnTempId))

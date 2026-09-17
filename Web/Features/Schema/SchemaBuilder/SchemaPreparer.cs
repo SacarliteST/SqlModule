@@ -123,6 +123,14 @@ internal sealed class SchemaPreparer(
         }
 
         var columns = allColumns.ToDictionary(x => x.TempId, StringComparer.OrdinalIgnoreCase);
+        if (request.Relationships
+            .GroupBy(relationship => relationship.SourceColumnTempId, StringComparer.OrdinalIgnoreCase)
+            .Any(group => group.Count() > 1))
+        {
+            return SchemaErrors.InvalidRelationship(
+                "Одна исходная колонка может иметь только одну внешнюю связь.");
+        }
+
         foreach (var relationship in request.Relationships)
         {
             if (!columns.TryGetValue(relationship.SourceColumnTempId, out var source) ||

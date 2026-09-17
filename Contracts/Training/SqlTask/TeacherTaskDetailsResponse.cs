@@ -77,4 +77,6 @@ public sealed record TeacherTaskAttemptResponse(
     bool IsCorrect,
     ExecutionStatus Status,
     long? DurationMs,
-    DateTimeOffset FinishedAt);
+    DateTimeOffset FinishedAt,
+    int? AttemptNumber = null,
+    int? Score = null);

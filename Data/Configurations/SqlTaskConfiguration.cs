@@ -13,11 +13,17 @@ internal sealed class SqlTaskConfiguration : IEntityTypeConfiguration<SqlTask>
         builder.Property(x => x.TaskName).IsRequired().HasMaxLength(300);
         builder.Property(x => x.TaskText).IsRequired();
         builder.Property(x => x.PublicationStatus).HasConversion<string>().IsRequired();
+        builder.Property(x => x.ActiveValidationVersionId);
         builder.ConfigureAudit();
 
         builder.HasOne(x => x.SqlQuery)
                .WithOne(x => x.Task)
                .HasForeignKey<SqlTask>(x => x.SqlQueryId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.ActiveValidationVersion)
+               .WithMany()
+               .HasForeignKey(x => x.ActiveValidationVersionId)
                .OnDelete(DeleteBehavior.Restrict);
     }
 }

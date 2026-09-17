@@ -1,6 +1,8 @@
-﻿using DotNet.Testcontainers.Builders;
+﻿using System.Data.Common;
+using DotNet.Testcontainers.Builders;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using MySqlConnector;
 using Npgsql;
 using SQLModule.Common.Results;
 
@@ -19,7 +21,8 @@ internal sealed class TestcontainersDbmsProbe(
             return Result.Success();
         }
 
-        var cacheKey = $"probe:{spec.DockerImage}:{spec.DefaultPort}:{spec.DefaultDatabase}:{spec.DefaultUsername}";
+        var cacheKey =
+            $"probe:{spec.DbmsSystemName}:{spec.DockerImage}:{spec.DefaultPort}:{spec.DefaultDatabase}:{spec.DefaultUsername}";
         if (cache.TryGetValue(cacheKey, out _))
         {
             return Result.Success();
@@ -43,12 +46,8 @@ internal sealed class TestcontainersDbmsProbe(
 
             var host = container.Hostname;
             var port = container.GetMappedPublicPort(spec.DefaultPort);
-            var connString =
-                $"Host={host};Port={port};Database={spec.DefaultDatabase};" +
-                $"Username={spec.DefaultUsername};Password={spec.DefaultPassword};" +
-                "Timeout=10;Command Timeout=10";
 
-            await using var conn = new NpgsqlConnection(connString);
+            await using var conn = CreateConnection(spec, host, port);
             await conn.OpenAsync(cts.Token);
             await using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT 1";
@@ -60,6 +59,33 @@ internal sealed class TestcontainersDbmsProbe(
         catch (Exception ex)
         {
             return Result.Fail(DbmsDictionaryErrors.ProbeFailed(ex.Message));
+        }
+    }
+
+    /// <summary>
+    /// Выбирает ADO.NET-драйвер по <see cref="DbmsProbeSpec.DbmsSystemName"/>, а не по порту
+    /// или имени Docker-образа — иначе проба СУБД, отличной от PostgreSQL, шлёт чужой протокол
+    /// (например, Postgres SSLRequest на MySQL) и всегда падает.
+    /// </summary>
+    private static DbConnection CreateConnection(DbmsProbeSpec spec, string host, int port)
+    {
+        switch (spec.DbmsSystemName.Trim().ToLowerInvariant())
+        {
+            case "postgres":
+            case "postgresql":
+                return new NpgsqlConnection(
+                    $"Host={host};Port={port};Database={spec.DefaultDatabase};" +
+                    $"Username={spec.DefaultUsername};Password={spec.DefaultPassword};" +
+                    "Timeout=10;Command Timeout=10");
+            case "mysql":
+            case "mariadb":
+                return new MySqlConnection(
+                    $"Server={host};Port={port};Database={spec.DefaultDatabase};" +
+                    $"User={spec.DefaultUsername};Password={spec.DefaultPassword};" +
+                    "ConnectionTimeout=10;DefaultCommandTimeout=10");
+            default:
+                throw new NotSupportedException(
+                    $"Проба СУБД не поддерживает DbmsSystemName '{spec.DbmsSystemName}'.");
         }
     }
 

@@ -5,7 +5,10 @@ namespace SQLModule.Web.Features.Training.Attempts;
 
 internal static class AttemptMappings
 {
-    internal static AttemptResponse ToResponse(Attempt e, AttemptResultSnapshot snapshot) => new(
+    internal static AttemptResponse ToResponse(
+        Attempt e,
+        AttemptResultSnapshot snapshot,
+        global::SQLModule.Contracts.Training.Validation.AttemptScoringResponse? scoring = null) => new(
         e.Id, e.UserId, e.StudentName, e.TaskId, e.SubmittedSql,
         e.Status, e.IsCorrect, e.Reason,
         e.RowCount, e.DurationMs, ToPublicError(e),
@@ -21,7 +24,8 @@ internal static class AttemptMappings
         IsResultTruncated: snapshot.IsTruncated,
         ResultRowLimit: snapshot.RowLimit,
         ResultSnapshotCreatedAt: snapshot.CreatedAt,
-        ResultSnapshotExpiresAt: snapshot.ExpiresAt);
+        ResultSnapshotExpiresAt: snapshot.ExpiresAt,
+        Scoring: scoring);
 
     internal static string? ToPublicError(Attempt attempt) => attempt.Status switch
     {
