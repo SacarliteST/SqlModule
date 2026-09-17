@@ -182,7 +182,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             await db.SaveChangesAsync();
 
             await new DemoDataSeeder(db).SeedAsync();
-            var seeder = new SmokeDataSeeder(db);
+            var seeder = scope.ServiceProvider.GetRequiredService<SmokeDataSeeder>();
             await seeder.SeedAsync();
             db.ChangeTracker.Clear();
 
@@ -876,6 +876,13 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         var successfulSessionId = Guid.NewGuid();
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        // ProcessBatchAsync забирает все необработанные записи из общей на весь класс тестов
+        // БД (TestApplication — один инстанс на коллекцию) — без этой очистки тест ловит
+        // "хвосты" outbox-сообщений, оставленные другими тестами, и число обработанных
+        // сообщений плывёт в зависимости от порядка запуска.
+        await db.PendingPublishes
+            .Where(value => value.SentAt == null && value.DeadLetterAt == null)
+            .ExecuteDeleteAsync();
         db.PendingPublishes.AddRange(
             PendingPublish.Create(failedId, PendingPublishKind.Event, failedSessionId,
                 $"event:{failedId}", CreateEventMessageJson(failedSessionId, "fail"), now),
@@ -1034,6 +1041,12 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             null);
         session.MarkCompletionPending();
         db.ModuleSessions.Add(session);
+        // Общая на весь класс тестов БД (TestApplication) может содержать необработанные
+        // outbox-записи от других тестов — без очистки ProcessBatchAsync подхватит и их,
+        // и число обработанных сообщений разойдётся с ожидаемым.
+        await db.PendingPublishes
+            .Where(value => value.SentAt == null && value.DeadLetterAt == null)
+            .ExecuteDeleteAsync();
         db.PendingPublishes.AddRange(
             PendingPublish.Create(
                 eventId, PendingPublishKind.Event, sessionId, $"event:{eventId}",
@@ -1128,6 +1141,9 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
                 now.AddHours(1));
             session.MarkCompletionPending();
             db.ModuleSessions.Add(session);
+            await db.PendingPublishes
+                .Where(value => value.SentAt == null && value.DeadLetterAt == null)
+                .ExecuteDeleteAsync();
             db.PendingPublishes.AddRange(
                 PendingPublish.Create(
                     eventId,

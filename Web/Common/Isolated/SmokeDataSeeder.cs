@@ -1,16 +1,24 @@
 ﻿using System.Data;
 using Microsoft.EntityFrameworkCore;
+using SQLModule.Common.Results;
 using SQLModule.Data.Core;
+using SQLModule.Domain.Common;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
+using SQLModule.Domain.Training.Validation;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Sandbox;
+using SQLModule.Web.Features.Training.Validation;
 
 namespace SQLModule.Web.Common.Isolated;
 
 /// <summary>Создаёт стабильное Published-задание для сквозного platform smoke-теста.</summary>
-internal sealed class SmokeDataSeeder(AppDbContext db)
+internal sealed class SmokeDataSeeder(
+    AppDbContext db,
+    ITaskValidationEvaluationService evaluationService,
+    ITaskValidationSnapshotFactory snapshotFactory,
+    TimeProvider timeProvider)
 {
     internal static readonly Guid DbmsId = new("10000000-0000-0000-0000-000000000002");
     internal static readonly Guid IntegerTypeId = new("20000000-0000-0000-0000-000000000007");
@@ -22,6 +30,8 @@ internal sealed class SmokeDataSeeder(AppDbContext db)
     internal static readonly Guid TopicId = new("60000000-0000-0000-0000-000000000002");
     internal static readonly Guid QueryId = new("70000000-0000-0000-0000-000000000002");
     internal static readonly Guid TaskId = new("80000000-0000-0000-0000-000000000002");
+    internal static readonly Guid ValidationConfigurationId = new("90000000-0000-0000-0000-000000000002");
+    internal static readonly Guid ValidationCheckId = new("91000000-0000-0000-0000-000000000002");
 
     internal const string TaskName = "Smoke: выбрать идентификаторы пользователей";
     internal const string TaskText = "Получите идентификаторы всех пользователей из таблицы users.";
@@ -97,7 +107,61 @@ internal sealed class SmokeDataSeeder(AppDbContext db)
         task.Update(TaskName, TaskText, 1, PublicationStatus.Published);
 
         await db.SaveChangesAsync(ct);
+
+        if (!task.ActiveValidationVersionId.HasValue)
+        {
+            // Platform-flow (PlatformProgressService.EnsureCreatedAsync) с Phase 2b требует
+            // опубликованную конфигурацию проверки для любой platform-сессии — без этого
+            // блока задание смоук-теста существовало бы только в "легаси"-режиме и
+            // platform-сабмит отвечал бы 422 ModuleSession.TaskValidationUnavailable.
+            await PublishValidationAsync(task, ct);
+        }
+
         await transaction.CommitAsync(ct);
+    }
+
+    private async Task PublishValidationAsync(SqlTask task, CancellationToken ct)
+    {
+        var configuration = await db.TaskValidationConfigurations
+            .Include(value => value.Checks)
+            .SingleOrDefaultAsync(value => value.TaskId == TaskId, ct);
+        if (configuration is null)
+        {
+            configuration = TaskValidationConfiguration.Create(
+                TaskId, 100, null, [HintGroup.Result], ValidationConfigurationId);
+            db.Add(configuration);
+        }
+
+        configuration.SynchronizeChecks([
+            new ValidationCheckDefinition(ValidationCheckId, ValidationCheckKind.MainDatasetResult, null, 100, 0)
+        ]);
+        await db.SaveChangesAsync(ct);
+
+        var definition = TaskValidationMappings.ToDefinition(configuration);
+        var identities = TaskValidationMappings.ToIdentities(definition);
+        var evaluation = await evaluationService.EvaluateAsync(TaskId, definition, identities, ct);
+        if (!evaluation.IsSuccess || !evaluation.Value!.Response.IsValid || evaluation.Value.ReferenceResult is null)
+        {
+            throw new InvalidOperationException(
+                $"Smoke seed: эталонное решение задания {TaskId:D} не прошло проверку конфигурации " +
+                $"({evaluation.Error?.Message ?? evaluation.Value?.Response.Violations.FirstOrDefault()?.Message}).");
+        }
+
+        var snapshot = await snapshotFactory.CreateAsync(
+            TaskId, configuration, evaluation.Value.ReferenceResult, evaluation.Value.Response.AnalyzerVersion, ct);
+        if (!snapshot.IsSuccess)
+        {
+            throw new InvalidOperationException(
+                $"Smoke seed: не удалось построить snapshot проверки для задания {TaskId:D} ({snapshot.Error!.Message}).");
+        }
+
+        var version = TaskValidationVersion.Publish(
+            TaskId, 1, configuration.Version, configuration.PassingScore, configuration.MaxAttempts,
+            configuration.VisibleHintGroupsMask, snapshot.Value!,
+            SystemUser.Id, "Smoke seed", timeProvider.GetUtcNow());
+        db.Add(version);
+        task.ActivateValidationVersion(version.Id);
+        await db.SaveChangesAsync(ct);
     }
 
     private T Add<T>(T entity) where T : class
