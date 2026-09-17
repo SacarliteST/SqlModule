@@ -91,10 +91,13 @@ internal sealed class SubmitAttemptHandler(
             await db.SaveChangesAsync(ct);
         }
 
-        if (moduleSession is not null &&
-            (moduleSession.Status != ModuleSessionStatus.Active || moduleSession.IsExpired(now)))
+        // Phase2b проверяет закрытие/истечение платформенной сессии до поиска задания —
+        // фейковый/ещё не опубликованный TaskId не должен превращать честный 409
+        // ModuleSessionClosed в 404 TaskNotFound (см. PlatformSubmit_RejectsClosedSessionBeforeSandbox).
+        var phase2b = await phase2bSubmit.TryHandleAsync(command, moduleSession, ct);
+        if (phase2b.Handled)
         {
-            return Result<SubmitAttemptResponse>.Fail(AttemptErrors.ModuleSessionClosed);
+            return phase2b.Result!;
         }
 
         var task = await db.SqlTasks.AsNoTracking()
@@ -104,12 +107,6 @@ internal sealed class SubmitAttemptHandler(
         if (task is null)
         {
             return Result<SubmitAttemptResponse>.Fail(AttemptErrors.TaskNotFound(command.TaskId));
-        }
-
-        var phase2b = await phase2bSubmit.TryHandleAsync(command, moduleSession, ct);
-        if (phase2b.Handled)
-        {
-            return phase2b.Result!;
         }
 
         if (task.ActiveValidationVersionId.HasValue)

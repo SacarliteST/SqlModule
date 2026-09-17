@@ -95,7 +95,13 @@ internal sealed class AttemptReservationService(
             }
             catch (DbUpdateException)
             {
-                db.ChangeTracker.Clear();
+                // Отсоединяем только то, что сами добавили/тронули в этой попытке — НЕ
+                // db.ChangeTracker.Clear() целиком: этот же db используется вызывающим кодом
+                // (Phase2bSubmitAttemptService) для progress/moduleSession, и общая очистка
+                // тихо снимает отслеживание с их изменений (например, moduleSession.
+                // MarkCompletionPending() дальше по коду перестаёт сохраняться).
+                db.Entry(reservation).State = EntityState.Detached;
+                db.Entry(progress).State = EntityState.Detached;
                 if (attempt == MaxConcurrencyRetries)
                 {
                     break;
