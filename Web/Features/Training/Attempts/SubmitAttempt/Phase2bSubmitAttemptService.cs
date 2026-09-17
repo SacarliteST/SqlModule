@@ -59,15 +59,46 @@ internal sealed class Phase2bSubmitAttemptService(
                 .SingleOrDefaultAsync(value => value.ModuleSessionId == moduleSession.Id, ct);
         if (progress is null && moduleSession is not null)
         {
+            // Проверяем закрытие/истечение сессии только когда для неё ещё нет прохождения:
+            // если прохождение уже существует, эту же проверку по статусу прохождения делает
+            // ReserveAsync ниже — но она корректно пропускает идемпотентный повтор (тот же
+            // Idempotency-Key), в отличие от проверки здесь, которая касается только
+            // по-настоящему нового запроса на ещё не начатую платформенную сессию.
+            if (moduleSession.Status != ModuleSessionStatus.Active || moduleSession.IsExpired(timeProvider.GetUtcNow()))
+            {
+                return Handled(Result<SubmitAttemptResponse>.Fail(AttemptErrors.ModuleSessionClosed));
+            }
+
             var created = await platformProgressService.EnsureCreatedAsync(moduleSession, ct);
             if (!created.IsSuccess)
             {
                 return Handled(Result<SubmitAttemptResponse>.Fail(created.Error!));
             }
 
-            await db.SaveChangesAsync(ct);
-            progress = await db.StudentTaskProgresses.Include(value => value.ValidationVersion)
-                .SingleAsync(value => value.Id == created.Value!.Id, ct);
+            try
+            {
+                await db.SaveChangesAsync(ct);
+                progress = await db.StudentTaskProgresses.Include(value => value.ValidationVersion)
+                    .SingleAsync(value => value.Id == created.Value!.Id, ct);
+            }
+            catch (DbUpdateException)
+            {
+                // Конкурентный запрос уже создал прохождение для этой же ModuleSessionId
+                // (уникальный индекс IX_StudentTaskProgresses_ModuleSessionId) — подхватываем
+                // его вместо падения в 500, дальше решает ReserveAsync ниже. Отсоединяем только
+                // неудавшуюся Added-запись, а не весь ChangeTracker.Clear() — иначе заодно
+                // "теряется" отслеживание moduleSession, и его MarkCompletionPending() дальше
+                // по коду молча не сохранится.
+                var failedEntry = db.ChangeTracker.Entries<StudentTaskProgress>()
+                    .FirstOrDefault(entry => entry.State == EntityState.Added);
+                if (failedEntry is not null)
+                {
+                    failedEntry.State = EntityState.Detached;
+                }
+
+                progress = await db.StudentTaskProgresses.Include(value => value.ValidationVersion)
+                    .SingleAsync(value => value.ModuleSessionId == moduleSession.Id, ct);
+            }
         }
 
         if (progress is null && moduleSession is null)
@@ -105,6 +136,15 @@ internal sealed class Phase2bSubmitAttemptService(
 
             return Handled(await ReplayAsync(reservation.AttemptId.Value, ct));
         }
+
+        // ReserveAsync при конкурентной гонке за номер попытки мог внутри своего retry
+        // сделать db.ChangeTracker.Clear() и заново отследить прогресс новым CLR-инстансом —
+        // подхватываем именно его, чтобы не держать вторую, уже отсоединённую ссылку на тот
+        // же Id (иначе db.Entry(progress).ReloadAsync ниже упадёт с "another instance ...
+        // already tracked").
+        progress = db.ChangeTracker.Entries<StudentTaskProgress>()
+            .Select(entry => entry.Entity)
+            .FirstOrDefault(entity => entity.Id == progress.Id) ?? progress;
 
         var runtimeResult = await runtimeReader.ReadAsync(progress.ValidationVersionId, ct);
         if (!runtimeResult.IsSuccess)
@@ -209,6 +249,18 @@ internal sealed class Phase2bSubmitAttemptService(
         {
             await LockProgressAsync(progress.Id, ct);
             await db.Entry(progress).ReloadAsync(ct);
+            if (progress.Status != ProgressStatus.Active)
+            {
+                // Пока эта попытка выполнялась в песочнице, конкурентная попытка уже заняла
+                // последнее место и завершила прохождение (например, тоже набрала 100 баллов) —
+                // ReserveAsync выше не мог это поймать заранее, статус проверяем только теперь,
+                // под блокировкой строки прохождения.
+                await transaction.RollbackAsync(ct);
+                db.ChangeTracker.Clear();
+                await ReleaseReservationSafelyAsync(reservation.Id);
+                return Handled(Result<SubmitAttemptResponse>.Fail(ProgressErrors.Closed));
+            }
+
             progress.RecordCountedAttempt(score);
             FinalizationReason? finalizationReason = null;
             if (score == 100)
@@ -435,12 +487,25 @@ internal sealed class Phase2bSubmitAttemptService(
         var message = new PracticeEventMessage(
             session.Id, session.SessionKey, eventId, "sql_submit", occurredAt,
             new PracticeEventPayload(
-                attempt.SubmittedSql, attempt.Status.ToString().ToUpperInvariant(),
+                attempt.SubmittedSql, ToIntegrationStatus(attempt.Status),
                 attempt.RowCount, attempt.DurationMs, attempt.IsCorrect, attempt.Reason.ToString()));
         db.PendingPublishes.Add(PendingPublish.Create(
             eventId, PendingPublishKind.Event, session.Id, $"event:{attempt.Id:D}",
             JsonSerializer.Serialize(message, JsonOptions), occurredAt));
     }
+
+    /// <summary>
+    /// Тот же формат статуса в outbox-событии, что и у legacy-обработчика
+    /// (<c>SubmitAttemptCommand.ToIntegrationStatus</c>) — потребители события
+    /// (Education) ожидают "SUCCESS"/"ERROR"/"TIMEOUT", а не сырое имя enum.
+    /// </summary>
+    private static string ToIntegrationStatus(ExecutionStatus status) => status switch
+    {
+        ExecutionStatus.Succeeded => "SUCCESS",
+        ExecutionStatus.Error => "ERROR",
+        ExecutionStatus.TimedOut => "TIMEOUT",
+        _ => "UNKNOWN"
+    };
 
     private static HintGroup? ToHint(ValidationCheckKind kind) => kind switch
     {
