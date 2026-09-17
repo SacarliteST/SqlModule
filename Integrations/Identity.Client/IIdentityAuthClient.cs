@@ -16,7 +16,17 @@ public enum IdentityLoginOutcome
 /// <param name="Outcome">Итог операции.</param>
 /// <param name="AccessToken">Токен, уже обменянный на целевой audience. <see langword="null"/> при ошибке.</param>
 /// <param name="ExpiresIn">Время жизни токена в секундах.</param>
-public sealed record IdentityLoginResult(IdentityLoginOutcome Outcome, string? AccessToken, int ExpiresIn);
+/// <param name="ErrorTitle">
+/// Заголовок ошибки IdentityService при <see cref="IdentityLoginOutcome.InvalidCredentials"/> —
+/// например, различает неверный пароль и заблокированную учётную запись.
+/// </param>
+/// <param name="ErrorDetail">Подробное сообщение ошибки IdentityService.</param>
+public sealed record IdentityLoginResult(
+    IdentityLoginOutcome Outcome,
+    string? AccessToken,
+    int ExpiresIn,
+    string? ErrorTitle = null,
+    string? ErrorDetail = null);
 
 /// <summary>
 /// Логинит пользователя в IdentityService по email/паролю и сразу обменивает выданный токен

@@ -26,16 +26,18 @@ internal sealed class IdentityAuthClient(
 
         if (loginBody.Value.Unauthorized)
         {
-            return new IdentityLoginResult(IdentityLoginOutcome.InvalidCredentials, null, 0);
+            return new IdentityLoginResult(
+                IdentityLoginOutcome.InvalidCredentials, null, 0,
+                loginBody.Value.ErrorTitle, loginBody.Value.ErrorDetail);
         }
 
-        if (String.IsNullOrEmpty(loginBody.Value.AccessToken))
+        var subjectToken = loginBody.Value.AccessToken;
+        if (String.IsNullOrEmpty(subjectToken))
         {
             return Unavailable();
         }
 
-        Console.WriteLine($"[DEBUG] subjectToken len={loginBody.Value.AccessToken?.Length}");
-        var exchanged = await ExchangeAsync(loginBody.Value.AccessToken, audience, ct);
+        var exchanged = await ExchangeAsync(subjectToken, audience, ct);
         if (exchanged is null || String.IsNullOrEmpty(exchanged.AccessToken))
         {
             return Unavailable();
@@ -44,7 +46,7 @@ internal sealed class IdentityAuthClient(
         return new IdentityLoginResult(IdentityLoginOutcome.Success, exchanged.AccessToken, exchanged.ExpiresIn);
     }
 
-    private async Task<(bool Unauthorized, string? AccessToken)?> LoginAsync(
+    private async Task<(bool Unauthorized, string? AccessToken, string? ErrorTitle, string? ErrorDetail)?> LoginAsync(
         string email, string password, CancellationToken ct)
     {
         HttpResponseMessage response;
@@ -60,7 +62,10 @@ internal sealed class IdentityAuthClient(
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            return (true, null);
+            // Пробрасываем title/detail как есть — IdentityService по-разному формулирует
+            // неверный пароль и заблокированную учётную запись, фронт различает их по тексту.
+            var problem = await response.Content.ReadFromJsonAsync<ProblemBody>(JsonOptions, ct);
+            return (true, null, problem?.Title, problem?.Detail);
         }
 
         if (!response.IsSuccessStatusCode)
@@ -69,7 +74,7 @@ internal sealed class IdentityAuthClient(
         }
 
         var body = await response.Content.ReadFromJsonAsync<LoginBody>(JsonOptions, ct);
-        return (false, body?.AccessToken);
+        return (false, body?.AccessToken, null, null);
     }
 
     private async Task<ExchangeBody?> ExchangeAsync(string subjectToken, string audience, CancellationToken ct)
@@ -104,4 +109,5 @@ internal sealed class IdentityAuthClient(
 
     private sealed record LoginBody(string AccessToken);
     private sealed record ExchangeBody(string AccessToken, int ExpiresIn);
+    private sealed record ProblemBody(string? Title, string? Detail);
 }
