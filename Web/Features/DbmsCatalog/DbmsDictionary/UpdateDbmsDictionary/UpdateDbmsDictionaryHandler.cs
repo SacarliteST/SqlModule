@@ -40,7 +40,7 @@ internal sealed class UpdateDbmsDictionaryHandler(AppDbContext db, IDbmsProbe pr
         }
 
         var spec = new DbmsProbeSpec(
-            command.DockerImage, command.DefaultPort,
+            command.DbmsSystemName, command.DockerImage, command.DefaultPort,
             command.EnvUserKey, command.EnvPasswordKey, command.EnvDatabaseKey, command.ExtraEnvConfig,
             command.DefaultDatabase, command.DefaultUsername, command.DefaultPassword);
 

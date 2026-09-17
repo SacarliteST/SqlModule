@@ -12,12 +12,12 @@ internal static class DbmsDictionaryMappings
         e.CreatedById, e.CreatedAt, e.UpdatedById, e.UpdatedAt);
 
     internal static DbmsProbeSpec ToProbeSpec(CreateDbmsDictionaryRequest req) => new(
-        req.DockerImage, req.DefaultPort,
+        req.DbmsSystemName, req.DockerImage, req.DefaultPort,
         req.EnvUserKey, req.EnvPasswordKey, req.EnvDatabaseKey, req.ExtraEnvConfig,
         req.DefaultDatabase, req.DefaultUsername, req.DefaultPassword);
 
     internal static DbmsProbeSpec ToProbeSpec(UpdateDbmsDictionaryRequest req) => new(
-        req.DockerImage, req.DefaultPort,
+        req.DbmsSystemName, req.DockerImage, req.DefaultPort,
         req.EnvUserKey, req.EnvPasswordKey, req.EnvDatabaseKey, req.ExtraEnvConfig,
         req.DefaultDatabase, req.DefaultUsername, req.DefaultPassword);
 }

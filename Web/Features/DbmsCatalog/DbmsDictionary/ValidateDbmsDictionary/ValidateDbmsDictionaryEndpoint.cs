@@ -28,7 +28,7 @@ internal sealed class ValidateDbmsDictionaryEndpoint : IEndpoint
     {
         var result = await sender.Send<ValidateDbmsDictionaryCommand, Result>(
             new ValidateDbmsDictionaryCommand(
-                request.DockerImage, request.DefaultPort,
+                request.DbmsSystemName, request.DockerImage, request.DefaultPort,
                 request.EnvUserKey, request.EnvPasswordKey, request.EnvDatabaseKey, request.ExtraEnvConfig,
                 request.DefaultDatabase, request.DefaultUsername, request.DefaultPassword), ct);
         return result.ToNoContent();
