@@ -1,4 +1,4 @@
-namespace SQLModule.Identity.Client;
+﻿namespace SQLModule.Identity.Client;
 
 /// <summary>Итог standalone-логина через IdentityService.</summary>
 public enum IdentityLoginOutcome

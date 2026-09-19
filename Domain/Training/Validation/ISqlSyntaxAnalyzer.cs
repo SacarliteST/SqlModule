@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training.Validation;
+﻿namespace SQLModule.Domain.Training.Validation;
 
 /// <summary>Внутренняя граница многодиалектного AST-анализатора.</summary>
 public interface ISqlSyntaxAnalyzer

@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training;
+﻿namespace SQLModule.Domain.Training;
 
 /// <summary>Канонический материал immutable validation version.</summary>
 public sealed record TaskValidationVersionSnapshot(

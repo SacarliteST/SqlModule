@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using SQLModule.Contracts.Auth;
 
 namespace SQLModule.Web.Features.Auth.StandaloneLogin;

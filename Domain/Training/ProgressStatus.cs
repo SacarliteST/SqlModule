@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training;
+﻿namespace SQLModule.Domain.Training;
 
 /// <summary>Состояние прохождения SQL-задания.</summary>
 public enum ProgressStatus

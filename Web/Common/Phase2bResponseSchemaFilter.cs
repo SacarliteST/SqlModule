@@ -1,4 +1,4 @@
-using Microsoft.OpenApi;
+﻿using Microsoft.OpenApi;
 using SQLModule.Contracts.DbmsCatalog.Validation;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Contracts.Training.SqlTask;

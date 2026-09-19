@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 
 namespace SQLModule.Web.Features.Schema.SchemaBuilder.GetLookupValues;

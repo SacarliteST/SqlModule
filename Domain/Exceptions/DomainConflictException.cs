@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Exceptions;
+﻿namespace SQLModule.Domain.Exceptions;
 
 /// <summary>
 /// Нарушено бизнес-правило состояния, обнаруженное там, где Result недоступен (например, при сохранении).

@@ -1,4 +1,4 @@
-using SQLModule.Common.Results;
+﻿using SQLModule.Common.Results;
 
 namespace SQLModule.Web.Features.Schema.SchemaBuilder.GetLookupValues;
 

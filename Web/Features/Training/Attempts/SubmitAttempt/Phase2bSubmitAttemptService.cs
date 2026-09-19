@@ -1,10 +1,10 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Contracts.Training.Validation;

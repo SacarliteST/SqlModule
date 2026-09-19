@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training.Validation;
+﻿namespace SQLModule.Domain.Training.Validation;
 
 /// <summary>Смысловая ошибка validation-конфигурации.</summary>
 public sealed record ValidationRuleViolation(

@@ -1,4 +1,4 @@
-using SQLModule.Common.Results;
+﻿using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Training;
 using SQLModule.Domain.Training.Validation;

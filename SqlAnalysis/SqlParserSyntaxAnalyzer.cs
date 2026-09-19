@@ -1,8 +1,8 @@
+﻿using SQLModule.Domain.Training;
+using SQLModule.Domain.Training.Validation;
 using SqlParser;
 using SqlParser.Ast;
 using SqlParser.Dialects;
-using SQLModule.Domain.Training;
-using SQLModule.Domain.Training.Validation;
 
 namespace SQLModule.SqlAnalysis;
 
@@ -39,7 +39,7 @@ public sealed class SqlParserSyntaxAnalyzer : ISqlSyntaxAnalyzer
 
     public SqlSyntaxAnalysis Analyze(string sql)
     {
-        if (string.IsNullOrWhiteSpace(sql))
+        if (String.IsNullOrWhiteSpace(sql))
         {
             return Failure(
                 SqlSyntaxAnalysisStatus.InvalidSql,
@@ -179,12 +179,12 @@ public sealed class SqlParserSyntaxAnalyzer : ISqlSyntaxAnalyzer
             }
 
             var schema = identifiers.Length > 1
-                ? string.Join('.', identifiers[..^1])
+                ? String.Join('.', identifiers[..^1])
                 : null;
             var reference = new SqlTableReference(schema, tableName);
             if (!referencedTables.Any(existing =>
-                    string.Equals(existing.Schema, reference.Schema, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(existing.Name, reference.Name, StringComparison.OrdinalIgnoreCase)))
+                    String.Equals(existing.Schema, reference.Schema, StringComparison.OrdinalIgnoreCase) &&
+                    String.Equals(existing.Name, reference.Name, StringComparison.OrdinalIgnoreCase)))
             {
                 referencedTables.Add(reference);
             }

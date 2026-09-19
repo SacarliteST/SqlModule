@@ -1,4 +1,4 @@
-namespace SQLModule.Identity.Client;
+﻿namespace SQLModule.Identity.Client;
 
 /// <summary>
 /// Доверенный клиент SqlModule для standalone-логина: логинит пользователя в IdentityService

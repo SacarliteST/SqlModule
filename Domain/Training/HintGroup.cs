@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training;
+﻿namespace SQLModule.Domain.Training;
 
 /// <summary>Группа диагностики, которую преподаватель может открыть студенту.</summary>
 public enum HintGroup
