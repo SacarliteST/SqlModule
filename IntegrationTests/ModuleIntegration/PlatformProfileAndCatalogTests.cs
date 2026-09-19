@@ -124,11 +124,13 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             .Operations!.Values.Single(operation => operation.OperationId == "UpsertModuleSession");
 
         ((Microsoft.OpenApi.OpenApiResponse)submit.Responses!["403"])
-            .Description!.ShouldContain("ModuleSessionForbidden");
+            .Description!.ShouldContain("PlatformSession.ScopeRestricted");
+        var submitNotFound = ((Microsoft.OpenApi.OpenApiResponse)submit.Responses["404"]).Description!;
+        submitNotFound.ShouldContain("ModuleSession.NotFound");
+        submitNotFound.ShouldContain("PlatformSession.TaskNotFound");
         var submitConflict = ((Microsoft.OpenApi.OpenApiResponse)submit.Responses["409"]).Description!;
-        submitConflict.ShouldContain("ModuleSessionRequired");
-        submitConflict.ShouldContain("SessionTaskMismatch");
-        submitConflict.ShouldContain("ModuleSessionClosed");
+        submitConflict.ShouldContain("ModuleSession.Expired");
+        submitConflict.ShouldContain("ModuleSession.Closed");
         submitConflict.ShouldContain("IdempotencyKeyPayloadMismatch");
         submitConflict.ShouldContain("IdempotencyRequestInProgress");
         ((Microsoft.OpenApi.OpenApiResponse)push.Responses!["401"])
@@ -694,13 +696,15 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         executor.ResetRunCallCount();
         var userId = Guid.NewGuid();
 
+        // Без session_id токен — standalone: неизвестное задание отвечает 404 как раньше в standalone.
         using var missingClaimRequest = CreateSubmitRequest(Guid.NewGuid(), userId, null);
         using var missingClaim = await client.SendAsync(missingClaimRequest);
-        missingClaim.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        missingClaim.StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         using var unknownSessionRequest = CreateSubmitRequest(Guid.NewGuid(), userId, Guid.NewGuid());
         using var unknownSession = await client.SendAsync(unknownSessionRequest);
-        unknownSession.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        unknownSession.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await unknownSession.Content.ReadAsStringAsync()).ShouldContain("ModuleSession.NotFound");
         executor.RunCallCount.ShouldBe(0);
     }
 
@@ -718,11 +722,13 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
 
         using var foreignOwnerRequest = CreateSubmitRequest(taskId, Guid.NewGuid(), sessionId);
         using var foreignOwner = await client.SendAsync(foreignOwnerRequest);
-        foreignOwner.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        foreignOwner.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await foreignOwner.Content.ReadAsStringAsync()).ShouldContain("ModuleSession.NotFound");
 
         using var wrongTaskRequest = CreateSubmitRequest(Guid.NewGuid(), ownerId, sessionId);
         using var wrongTask = await client.SendAsync(wrongTaskRequest);
-        wrongTask.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        wrongTask.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await wrongTask.Content.ReadAsStringAsync()).ShouldContain("PlatformSession.TaskNotFound");
         executor.RunCallCount.ShouldBe(0);
     }
 
@@ -759,18 +765,22 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         using var completedRequest = CreateSubmitRequest(taskId, userId, completedId);
         using var completedResponse = await client.SendAsync(completedRequest);
         completedResponse.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await completedResponse.Content.ReadAsStringAsync()).ShouldContain("ModuleSession.Closed");
 
         using var pendingRequest = CreateSubmitRequest(taskId, userId, pendingId);
         using var pendingResponse = await client.SendAsync(pendingRequest);
         pendingResponse.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await pendingResponse.Content.ReadAsStringAsync()).ShouldContain("ModuleSession.Closed");
 
         using var failedRequest = CreateSubmitRequest(taskId, userId, failedId);
         using var failedResponse = await client.SendAsync(failedRequest);
         failedResponse.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await failedResponse.Content.ReadAsStringAsync()).ShouldContain("ModuleSession.Closed");
 
         using var expiredRequest = CreateSubmitRequest(taskId, userId, expiredId);
         using var expiredResponse = await client.SendAsync(expiredRequest);
         expiredResponse.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await expiredResponse.Content.ReadAsStringAsync()).ShouldContain("ModuleSession.Expired");
         executor.RunCallCount.ShouldBe(0);
     }
 

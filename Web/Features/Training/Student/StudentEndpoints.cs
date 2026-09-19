@@ -12,6 +12,7 @@ using SQLModule.Domain.Common;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common;
+using SQLModule.Web.Features.ModuleIntegration;
 using SQLModule.Web.Features.Training.Attempts;
 using SQLModule.Web.Features.Training.Progress;
 
@@ -22,25 +23,29 @@ public sealed class StudentEndpoints : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
         app.MapGet(ApiRoutes.Training.Student.Topics, GetStudentTopics)
-            .RequireAuthorization(Policies.Student).WithName(nameof(GetStudentTopics)).WithTags("Student")
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
+            .WithName(nameof(GetStudentTopics)).WithTags("Student")
             .Produces<PageResponse<StudentTopicResponse>>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
         app.MapGet(ApiRoutes.Training.Student.Tasks, GetStudentTasks)
-            .RequireAuthorization(Policies.Student).WithName(nameof(GetStudentTasks)).WithTags("Student")
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
+            .WithName(nameof(GetStudentTasks)).WithTags("Student")
             .Produces<PageResponse<StudentTaskResponse>>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
         app.MapGet(ApiRoutes.Training.Student.TaskById, GetStudentTaskById)
-            .RequireAuthorization(Policies.Student).WithName(nameof(GetStudentTaskById)).WithTags("Student")
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<PlatformTaskScopeFilter>()
+            .WithName(nameof(GetStudentTaskById)).WithTags("Student")
             .Produces<StudentTaskDetailsResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
         app.MapGet(ApiRoutes.Training.Student.TaskSchema, GetStudentTaskSchema)
-            .RequireAuthorization(Policies.Student).WithName(nameof(GetStudentTaskSchema)).WithTags("Student")
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<PlatformTaskScopeFilter>()
+            .WithName(nameof(GetStudentTaskSchema)).WithTags("Student")
             .WithSummary("Получить безопасную схему учебной базы задания")
             .WithDescription("Возвращает только структуру базы опубликованного задания: таблицы, колонки и внешние ключи. Закрытые задания скрываются ответом 404.")
             .Produces<StudentTaskSchemaResponse>(StatusCodes.Status200OK)
@@ -50,13 +55,15 @@ public sealed class StudentEndpoints : IEndpoint
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
         app.MapGet(ApiRoutes.Training.Student.Attempts, GetStudentAttempts)
-            .RequireAuthorization(Policies.Student).WithName(nameof(GetStudentAttempts)).WithTags("Student")
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
+            .WithName(nameof(GetStudentAttempts)).WithTags("Student")
             .Produces<PageResponse<StudentAttemptListItemResponse>>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
         app.MapGet(ApiRoutes.Training.Student.AttemptById, GetStudentAttemptById)
-            .RequireAuthorization(Policies.Student).WithName(nameof(GetStudentAttemptById)).WithTags("Student")
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
+            .WithName(nameof(GetStudentAttemptById)).WithTags("Student")
             .Produces<StudentAttemptResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -174,8 +181,10 @@ public sealed class StudentEndpoints : IEndpoint
                 .SingleOrDefaultAsync(value => value.Id == item.ActiveValidationVersionId.Value, ct);
             if (version is not null)
             {
+                var sessionId = currentUser.ModuleSessionId;
                 var progress = await db.StudentTaskProgresses.AsNoTracking()
-                    .Where(value => value.TaskId == taskId && value.UserId == currentUser.UserId!.Value)
+                    .Where(value => value.TaskId == taskId && value.UserId == currentUser.UserId!.Value &&
+                                    value.ModuleSessionId == sessionId)
                     .OrderByDescending(value => value.CreatedAt)
                     .FirstOrDefaultAsync(ct);
                 validation = new StudentTaskValidationResponse(
