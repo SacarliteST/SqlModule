@@ -51,17 +51,36 @@ public sealed class ContentAuthorPolicyAuditTests(TestApplication app)
         }
     }
 
-    [Fact(DisplayName = "TAI-008: ContentAuthor разрешает только Teacher/Admin и не требует session_id")]
-    public async Task ContentAuthorPolicy_RequiresOnlyAuthorRoleAndAuthentication()
+    [Fact(DisplayName = "TAI-008: ContentAuthor разрешает только Teacher/Admin и не требует session_id, но закрыт токену платформенной сессии")]
+    public async Task ContentAuthorPolicy_RequiresAuthorRoleAndForbidsPlatformSession()
     {
         var provider = app.Services.GetRequiredService<IAuthorizationPolicyProvider>();
         var policy = await provider.GetPolicyAsync(Policies.ContentAuthor);
 
         policy.ShouldNotBeNull();
-        policy.Requirements.ShouldHaveSingleItem();
+        policy.Requirements.Count.ShouldBe(2);
         var roles = policy.Requirements.OfType<RolesAuthorizationRequirement>().ShouldHaveSingleItem();
         roles.AllowedRoles.Order().ShouldBe(new[] { Roles.Admin, Roles.Teacher }.Order());
-        policy.Requirements.ShouldNotContain(requirement =>
-            requirement.GetType().Name.Contains("Session", StringComparison.OrdinalIgnoreCase));
+        policy.Requirements.OfType<NoPlatformSessionRequirement>().ShouldHaveSingleItem();
+
+        var authorization = app.Services.GetRequiredService<IAuthorizationService>();
+        (await authorization.AuthorizeAsync(Teacher(withSession: false), null, policy)).Succeeded.ShouldBeTrue();
+        (await authorization.AuthorizeAsync(Teacher(withSession: true), null, policy)).Succeeded.ShouldBeFalse();
+    }
+
+    private static System.Security.Claims.ClaimsPrincipal Teacher(bool withSession)
+    {
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new(System.Security.Claims.ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new(System.Security.Claims.ClaimTypes.Role, Roles.Teacher)
+        };
+        if (withSession)
+        {
+            claims.Add(new System.Security.Claims.Claim("session_id", Guid.NewGuid().ToString()));
+        }
+
+        return new System.Security.Claims.ClaimsPrincipal(
+            new System.Security.Claims.ClaimsIdentity(claims, "test"));
     }
 }

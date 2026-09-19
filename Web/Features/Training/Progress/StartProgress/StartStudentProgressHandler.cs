@@ -1,13 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Web.Common.Cqrs;
-using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Progress.StartProgress;
 
@@ -16,7 +14,6 @@ internal sealed record StartStudentProgressCommand(Guid UserId, Guid TaskId, Gui
 
 internal sealed class StartStudentProgressHandler(
     AppDbContext db,
-    IOptions<ModuleIntegrationOptions> integrationOptions,
     TimeProvider timeProvider,
     ILogger<StartStudentProgressHandler> logger)
     : IRequestHandler<StartStudentProgressCommand, Result<StudentTaskProgressResponse>>
@@ -25,11 +22,6 @@ internal sealed class StartStudentProgressHandler(
         StartStudentProgressCommand command,
         CancellationToken ct)
     {
-        if (integrationOptions.Value.Enabled)
-        {
-            return Result<StudentTaskProgressResponse>.Fail(ProgressErrors.PlatformFlowRequired);
-        }
-
         var scope = $"progress:{command.UserId:D}:start";
         var key = command.IdempotencyKey.ToString("D");
         var hash = ProgressIdempotency.Hash(command.TaskId);

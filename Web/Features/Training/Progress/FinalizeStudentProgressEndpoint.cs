@@ -5,6 +5,7 @@ using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
+using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Progress;
 
@@ -13,6 +14,7 @@ internal sealed class FinalizeStudentProgressEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app) =>
         app.MapPost(ApiRoutes.Training.Student.TaskProgressFinalize, Handle)
             .RequireAuthorization(Policies.Student)
+            .AddEndpointFilter<StandaloneOnlyMutationFilter>()
             .WithName("FinalizeStudentTaskProgress")
             .WithTags("Student")
             .WithSummary("Завершить standalone-прохождение")

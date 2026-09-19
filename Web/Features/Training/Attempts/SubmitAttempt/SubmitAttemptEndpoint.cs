@@ -69,6 +69,12 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
                 });
         }
 
+        var failClosed = PlatformScopeGuard.FailClosed(currentUser, integrationOptions);
+        if (failClosed is not null)
+        {
+            return failClosed;
+        }
+
         var userId = currentUser.UserId!.Value;
         var result = await sender.Send<SubmitAttemptCommand, Result<SubmitAttemptResponse>>(
             new SubmitAttemptCommand(
@@ -78,8 +84,8 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
                 request.TaskId,
                 request.SubmittedSql,
                 parsedKey.ToString("D"),
-                integrationOptions.Value.Enabled,
-                integrationOptions.Value.Enabled ? currentUser.ModuleSessionId : null), ct);
+                currentUser.ModuleSessionId.HasValue,
+                currentUser.ModuleSessionId), ct);
         return result.ToCreated(r => ApiRoutes.Training.Attempts.ForId(r.AttemptId));
     }
 }
