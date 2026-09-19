@@ -15,6 +15,7 @@ using SQLModule.Domain.Training.Validation;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Sandbox;
+using SQLModule.Web.Features.ModuleIntegration;
 using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;
@@ -34,6 +35,7 @@ internal sealed class Phase2bSubmitAttemptService(
     IAttemptReservationService reservationService,
     IProgressFinalizationService finalizationService,
     IPlatformProgressService platformProgressService,
+    IPlatformStudentScope platformScope,
     IPhase2bValidationRuntimeReader runtimeReader,
     ISqlSyntaxAnalyzerResolver analyzerResolver,
     ISandboxExecutor executor,
@@ -64,9 +66,11 @@ internal sealed class Phase2bSubmitAttemptService(
             // ReserveAsync ниже — но она корректно пропускает идемпотентный повтор (тот же
             // Idempotency-Key), в отличие от проверки здесь, которая касается только
             // по-настоящему нового запроса на ещё не начатую платформенную сессию.
-            if (moduleSession.Status != ModuleSessionStatus.Active || moduleSession.IsExpired(timeProvider.GetUtcNow()))
+            var sessionState = await platformScope.ResolveAsync(
+                command.UserId, moduleSession.Id, PlatformScopeMode.Write, ct);
+            if (!sessionState.IsSuccess)
             {
-                return Handled(Result<SubmitAttemptResponse>.Fail(AttemptErrors.ModuleSessionClosed));
+                return Handled(Result<SubmitAttemptResponse>.Fail(sessionState.Error!));
             }
 
             var created = await platformProgressService.EnsureCreatedAsync(moduleSession, ct);
@@ -121,7 +125,20 @@ internal sealed class Phase2bSubmitAttemptService(
             progress.Id, Guid.Parse(command.IdempotencyKey), payloadHash, ct);
         if (!reservationResult.IsSuccess)
         {
-            return Handled(Result<SubmitAttemptResponse>.Fail(reservationResult.Error!));
+            var error = reservationResult.Error!;
+            if (moduleSession is not null && error.Code == ProgressErrors.Closed.Code)
+            {
+                // Прохождение закрыто — отличаем причину на стороне сессии (истекла/завершена);
+                // если сессия сама ещё активна, остаётся Progress.Closed (гонка двух попыток).
+                var sessionState = await platformScope.ResolveAsync(
+                    command.UserId, moduleSession.Id, PlatformScopeMode.Write, ct);
+                if (!sessionState.IsSuccess)
+                {
+                    error = sessionState.Error!;
+                }
+            }
+
+            return Handled(Result<SubmitAttemptResponse>.Fail(error));
         }
 
         var reservation = reservationResult.Value!.Reservation;

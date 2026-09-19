@@ -1,13 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Web.Common.Cqrs;
-using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Progress.RestartProgress;
 
@@ -16,7 +14,6 @@ internal sealed record RestartStudentProgressCommand(Guid UserId, Guid TaskId, G
 
 internal sealed class RestartStudentProgressHandler(
     AppDbContext db,
-    IOptions<ModuleIntegrationOptions> integrationOptions,
     TimeProvider timeProvider,
     ILogger<RestartStudentProgressHandler> logger)
     : IRequestHandler<RestartStudentProgressCommand, Result<StudentTaskProgressResponse>>
@@ -25,11 +22,6 @@ internal sealed class RestartStudentProgressHandler(
         RestartStudentProgressCommand command,
         CancellationToken ct)
     {
-        if (integrationOptions.Value.Enabled)
-        {
-            return Result<StudentTaskProgressResponse>.Fail(ProgressErrors.PlatformFlowRequired);
-        }
-
         var scope = $"progress:{command.UserId:D}:restart";
         var key = command.IdempotencyKey.ToString("D");
         var hash = ProgressIdempotency.Hash(command.TaskId);

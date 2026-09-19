@@ -12,6 +12,7 @@ internal static class ModuleIntegrationExtensions
         IConfiguration configuration)
     {
         var section = configuration.GetSection(ModuleIntegrationOptions.SectionKey);
+        services.AddScoped<IPlatformStudentScope, PlatformStudentScope>();
         services.AddOptions<ModuleIntegrationOptions>()
             .Bind(section)
             .Validate(

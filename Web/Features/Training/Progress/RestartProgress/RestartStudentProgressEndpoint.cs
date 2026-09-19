@@ -6,6 +6,7 @@ using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
 using SQLModule.Web.Common.Cqrs;
+using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Progress.RestartProgress;
 
@@ -14,6 +15,7 @@ internal sealed class RestartStudentProgressEndpoint : IEndpoint
     public void MapEndpoints(IEndpointRouteBuilder app) =>
         app.MapPost(ApiRoutes.Training.Student.TaskProgressRestart, Handle)
             .RequireAuthorization(Policies.Student)
+            .AddEndpointFilter<StandaloneOnlyMutationFilter>()
             .WithName("RestartStudentTaskProgress")
             .WithTags("Student")
             .Produces<StudentTaskProgressResponse>()
