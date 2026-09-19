@@ -33,6 +33,7 @@ public enum ErrorType
 /// <param name="Code">Уникальный код ошибки вида <c>Entity.Reason</c>.</param>
 /// <param name="Message">Читаемое сообщение для клиента.</param>
 /// <param name="Type">Категория ошибки.</param>
+/// <param name="Errors">Дополнительные причины по ключу (например, код) — попадают в поле <c>errors</c> ProblemDetails.</param>
 public record Error(
     string Code,
     string Message,
@@ -40,7 +41,8 @@ public record Error(
     string? Path = null,
     long? AffectedRows = null,
     string Severity = "Error",
-    long? Limit = null)
+    long? Limit = null,
+    IReadOnlyDictionary<string, string[]>? Errors = null)
 {
     /// <summary>Создаёт ошибку нарушения бизнес-правила (422).</summary>
     public static Error Validation(string code, string message) =>

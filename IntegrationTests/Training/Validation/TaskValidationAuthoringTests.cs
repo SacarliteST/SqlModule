@@ -28,7 +28,8 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
 
         response.TaskId.ShouldBe(taskId);
         response.State.ShouldBe(ValidationConfigurationState.Draft);
-        response.HasUnpublishedChanges.ShouldBeTrue();
+        response.ValidationVersionId.ShouldBeNull();
+        response.HasUnpublishedChanges.ShouldBeFalse();
         response.PassingScore.ShouldBe(100);
         response.MaxAttempts.ShouldBeNull();
         response.VisibleHintGroups.ShouldBe([HintGroup.Result]);

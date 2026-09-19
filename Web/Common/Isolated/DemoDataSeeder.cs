@@ -32,6 +32,7 @@ internal sealed class DemoDataSeeder(AppDbContext db)
 
     public async Task SeedAsync(CancellationToken ct = default)
     {
+        using var editBypass = SQLModule.Domain.Common.TargetDbEditBypass.Begin();
         var dbmsExists = await db.DbmsDictionaries.AnyAsync(d => d.Id == DbmsId, ct);
         if (!dbmsExists)
         {

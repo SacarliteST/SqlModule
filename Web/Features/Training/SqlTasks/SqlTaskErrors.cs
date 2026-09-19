@@ -14,12 +14,16 @@ internal static class SqlTaskErrors
         DomainErrors<SqlTask>.Conflict($"Задание '{id}' уже опубликовано.");
     internal static Error ArchivedCannotBePublished(Guid id) =>
         DomainErrors<SqlTask>.Conflict($"Архивное задание '{id}' нельзя опубликовать.");
-    internal static Error ReferenceQueryNotValidated(Guid id) =>
-        DomainErrors<SqlTask>.Validation($"Эталонный SQL-запрос задания '{id}' не прошёл проверку.");
-    internal static Error HasAttemptsOnPublish(Guid id) =>
-        DomainErrors<SqlTask>.Conflict($"Задание '{id}' имеет попытки выполнения и не может быть опубликовано.");
-    internal static Error TrainingDatabaseUnavailable(Guid id) =>
-        DomainErrors<SqlTask>.Conflict($"Учебная база данных задания '{id}' недоступна.");
+    internal static Error ValidationVersionNotPublished =>
+        Error.Conflict("SqlTask.ValidationVersionNotPublished", "Оценка решения не опубликована.");
+    internal static Error ReferenceQueryMissing =>
+        Error.Validation("SqlTask.ReferenceQueryMissing", "Эталонный SQL-запрос не задан.");
+    internal static Error ReferenceQueryNotValidated =>
+        DomainErrors<SqlTask>.Validation("Эталонный SQL-запрос необходимо проверить повторно.");
+    internal static Error HasAttemptsOnPublish =>
+        DomainErrors<SqlTask>.Conflict("Задание уже имеет студенческие попытки.");
+    internal static Error TrainingDatabaseUnavailable =>
+        DomainErrors<SqlTask>.Conflict("Учебная база задания недоступна.");
     internal static Error LinksChangeRequiresDraft(Guid id) =>
         DomainErrors<SqlTask>.Conflict($"Связи задания '{id}' можно менять только в статусе Draft.");
     internal static Error LinksChangeBlockedByAttempts(Guid id) =>

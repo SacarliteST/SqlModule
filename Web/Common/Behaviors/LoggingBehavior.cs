@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using SQLModule.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 using SQLModule.Common.Results;
 using SQLModule.Web.Common.Cqrs;
@@ -32,6 +33,12 @@ internal sealed class LoggingBehavior<TRequest, TResponse>(
             logger.LogInformation("{Request} handled in {Elapsed}ms IsSuccess={Success}",
                 name, sw.ElapsedMilliseconds, isSuccess);
             return response;
+        }
+        catch (DomainConflictException ex)
+        {
+            sw.Stop();
+            logger.LogWarning("{Request} отклонён после {Elapsed}ms: {Code}", name, sw.ElapsedMilliseconds, ex.Code);
+            throw;
         }
         catch (Exception ex)
         {

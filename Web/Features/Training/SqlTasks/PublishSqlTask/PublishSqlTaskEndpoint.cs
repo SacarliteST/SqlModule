@@ -19,15 +19,20 @@ public sealed class PublishSqlTaskEndpoint : IEndpoint
             .WithTags("Training")
             .WithSummary("Опубликовать SQL-задание")
             .WithDescription(
-                "Публикует подготовленное Draft-задание. Эталонный запрос должен иметь проверенный результат, " +
-                "учебная база должна существовать, а у задания не должно быть попыток. " +
-                "Перед публикацией эталон повторно проверяется; превышение лимита сравнения возвращает " +
-                "ReferenceResultExceedsComparisonLimit. " +
+                "Публикует подготовленное Draft-задание только если оно готово к запуску студентом: " +
+                "опубликована оценка решения, эталон задан и проверен (результат актуален для схемы и данных), " +
+                "учебная база существует, у задания нет попыток. Готовность проверяется на backend независимо от клиента; " +
+                "полный список причин — в teacher-details (publishBlockers). " +
+                "При отказе статус задания не меняется. Код и статус ответа определяет первая причина, " +
+                "все причины перечислены в errors. " +
                 "Возвращает 200 OK с обновлённым заданием.")
             .Produces<SqlTaskResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 
     private static async Task<IResult> Handle(Guid id, ISender sender, CancellationToken ct)

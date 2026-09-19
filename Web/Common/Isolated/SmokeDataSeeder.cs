@@ -39,6 +39,7 @@ internal sealed class SmokeDataSeeder(
 
     public async Task SeedAsync(CancellationToken ct = default)
     {
+        using var editBypass = SQLModule.Domain.Common.TargetDbEditBypass.Begin();
         await using var transaction = await db.Database.BeginTransactionAsync(
             IsolationLevel.Serializable,
             ct);

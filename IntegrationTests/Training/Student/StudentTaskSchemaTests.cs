@@ -132,6 +132,8 @@ public sealed class StudentTaskSchemaTests : ApiTestBase
     public async Task EmptySchema_ReturnsOkWithEmptyArrays()
     {
         var fixture = await SeedSchemaAsync();
+        // Тест намеренно опустошает схему базы опубликованного задания — в обход защиты от изменений.
+        using var editBypass = SQLModule.Domain.Common.TargetDbEditBypass.Begin();
         using (var scope = App.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

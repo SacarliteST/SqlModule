@@ -24,6 +24,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<AuditInterceptor>();
+        services.AddSingleton<TargetDbPublishedUsageInterceptor>();
 
         services.AddDbContext<AppDbContext>((sp, options) =>
         {
@@ -38,7 +39,9 @@ public static class ServiceCollectionExtensions
             options.UseNpgsql(connOpts.ConnectionString);
 
 
-            options.AddInterceptors(sp.GetRequiredService<AuditInterceptor>());
+            options.AddInterceptors(
+                sp.GetRequiredService<AuditInterceptor>(),
+                sp.GetRequiredService<TargetDbPublishedUsageInterceptor>());
 
 #if DEBUG
             options.LogTo(Console.WriteLine, LogLevel.Information);

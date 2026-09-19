@@ -318,6 +318,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var task = await CreateSqlTaskAsync(topicId, targetDbId);
+        await PublishValidationAsync(task.Id);
         await SqlTaskClient.PublishAsync(task.Id);
 
         await Should.ThrowAsync<ConflictException>(
@@ -398,6 +399,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var newTopicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        await PublishValidationAsync(task.Id);
         var published = await SqlTaskClient.PublishAsync(task.Id);
 
         // Act + Assert
@@ -500,6 +502,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        await PublishValidationAsync(task.Id);
         await SqlTaskClient.PublishAsync(task.Id);
 
         // Act
@@ -528,9 +531,12 @@ public sealed class SqlTaskTests : ApiTestBase
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var draftTask = await CreateSqlTaskAsync(topicId, sqlQueryId, "Published task");
+        await PublishValidationAsync(draftTask.Id);
         var task = await SqlTaskClient.PublishAsync(draftTask.Id);
 
         var studentId = Guid.NewGuid();
+        // Тест дописывает таблицы в базу уже опубликованного задания — в обход защиты от изменений.
+        using var editBypass = SQLModule.Domain.Common.TargetDbEditBypass.Begin();
         using (var scope = App.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -620,6 +626,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var task = await CreateSqlTaskAsync(topicId, targetDbId);
+        await PublishValidationAsync(task.Id);
         await SqlTaskClient.PublishAsync(task.Id);
 
         var details = await SqlTaskClient.GetTeacherDetailsAsync(task.Id);
@@ -698,6 +705,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
 
         // Act
+        await PublishValidationAsync(task.Id);
         var published = await SqlTaskClient.PublishAsync(task.Id);
 
         // Assert
@@ -716,6 +724,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        await PublishValidationAsync(task.Id);
         await SqlTaskClient.PublishAsync(task.Id);
 
         // Act + Assert
@@ -731,14 +740,16 @@ public sealed class SqlTaskTests : ApiTestBase
         var topicId = await CreateTopicAsync();
         var sqlQueryId = await CreateSqlQueryAsync(targetDbId);
         var task = await CreateSqlTaskAsync(topicId, sqlQueryId);
+        await PublishValidationAsync(task.Id);
         await SeedAttemptAsync(task.Id);
 
         // Act + Assert
-        await Should.ThrowAsync<ConflictException>(() => SqlTaskClient.PublishAsync(task.Id));
+        var ex = await Should.ThrowAsync<ConflictException>(() => SqlTaskClient.PublishAsync(task.Id));
+        ex.Problem!.Code.ShouldBe("SqlTask.HasAttemptsOnPublish");
     }
 
-    [Fact(DisplayName = "Publish задания без проверенного эталона → ValidationException")]
-    public async Task Publish_UnvalidatedReferenceQuery_ThrowsValidationException()
+    [Fact(DisplayName = "Publish задания без версии оценки и проверенного эталона → 409, все причины в errors")]
+    public async Task Publish_UnvalidatedReferenceQuery_ReportsAllBlockers()
     {
         // Arrange
         var dbmsId = await CreateDbmsDictionaryAsync();
@@ -762,7 +773,11 @@ public sealed class SqlTaskTests : ApiTestBase
         }
 
         // Act + Assert
-        await Should.ThrowAsync<ValidationException>(() => SqlTaskClient.PublishAsync(taskId));
+        var ex = await Should.ThrowAsync<ConflictException>(() => SqlTaskClient.PublishAsync(taskId));
+        ex.Problem!.Code.ShouldBe("SqlTask.ValidationVersionNotPublished");
+        ex.Problem.Errors.ShouldNotBeNull().Keys.ShouldBe(
+            ["SqlTask.ValidationVersionNotPublished", "SqlTask.ReferenceQueryNotValidated"]);
+        (await SqlTaskClient.GetByIdAsync(taskId))!.PublicationStatus.ShouldBe(PublicationStatus.Draft);
     }
 
     [Fact(DisplayName = "Delete → задание больше не возвращается GetById")]
@@ -907,6 +922,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var targetDbId = await CreateTargetDbAsync(dbmsId);
         var topicId = await CreateTopicAsync();
         var task = await CreateSqlTaskAsync(topicId, targetDbId, "Legacy oversized");
+        await PublishValidationAsync(task.Id);
         var oversizedRows = Enumerable.Range(1, 10001)
             .Select(value => (IReadOnlyList<string?>)[value.ToString()])
             .ToList();
@@ -925,21 +941,11 @@ public sealed class SqlTaskTests : ApiTestBase
         details.CanPublish.ShouldBeFalse();
         details.LifecycleRestriction.ShouldNotBeNull().ShouldContain("10000");
 
-        var executor = GetFakeExecutor();
-        executor.OverrideRun = Result<QueryResultSet>.Success(
-            new QueryResultSet(true, null, ["id"], oversizedRows.Take(10000).ToList(), 10000, 1,
-                IsTruncated: true));
-        try
-        {
-            var error = await Should.ThrowAsync<ValidationException>(() =>
-                SqlTaskClient.PublishAsync(task.Id));
-            AssertComparisonLimitError(error);
-            executor.LastQuery.ShouldNotBeNull().MaxRows.ShouldBe(10000);
-        }
-        finally
-        {
-            executor.OverrideRun = null;
-        }
+        // Готовность проверяется до запуска sandbox: старый большой эталон отклоняется тем же правилом,
+        // что и в publishBlockers, без повторного выполнения запроса.
+        var error = await Should.ThrowAsync<ValidationException>(() => SqlTaskClient.PublishAsync(task.Id));
+        AssertComparisonLimitError(error);
+        details.PublishBlockers.ShouldContain(blocker => blocker.Code == "ReferenceResultExceedsComparisonLimit");
     }
 
     private static void AssertComparisonLimitError(ValidationException error)

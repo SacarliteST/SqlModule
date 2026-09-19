@@ -93,11 +93,20 @@ public sealed class SqlQueryTests : ApiTestBase
         // Arrange
         var created = await CreateSqlQueryAsync();
 
-        // Act
-        var page = await SqlQueryClient.GetAllAsync(0, 100);
+        // Act — общая БД тестов растёт, поэтому созданный запрос ищем по всем страницам, а не только в первой
+        var found = false;
+        for (var offset = 0; !found; offset += 100)
+        {
+            var page = await SqlQueryClient.GetAllAsync(offset, 100);
+            found = page.Items.Any(q => q.Id == created.Id);
+            if (offset + 100 >= (page.Count ?? 0))
+            {
+                break;
+            }
+        }
 
         // Assert
-        page.Items.ShouldContain(q => q.Id == created.Id);
+        found.ShouldBeTrue();
     }
 
     [Fact(DisplayName = "Update → изменения сохранены в БД")]
