@@ -1,8 +1,6 @@
 ﻿using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using SQLModule.Contracts;
-using SQLModule.Contracts.Training.Validation;
 using SQLModule.Client.Attempt;
 using SQLModule.Client.AttributeParameterValue;
 using SQLModule.Client.DataRecord;
@@ -17,6 +15,8 @@ using SQLModule.Client.SqlQuery;
 using SQLModule.Client.SqlTask;
 using SQLModule.Client.TargetDb;
 using SQLModule.Client.Topic;
+using SQLModule.Contracts;
+using SQLModule.Contracts.Training.Validation;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Auth;
 using SQLModule.Web.Common.Isolated;

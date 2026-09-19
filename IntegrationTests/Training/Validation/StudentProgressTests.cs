@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,9 +17,9 @@ using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.infrastructure;
-using SQLModule.Web.Features.Training.Progress;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Isolated;
+using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.IntegrationTests.Training.Validation;
 

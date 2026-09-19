@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Domain.Training.Validation;
 
 namespace SQLModule.SqlAnalysis;

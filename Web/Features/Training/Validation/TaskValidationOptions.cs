@@ -1,4 +1,4 @@
-namespace SQLModule.Web.Features.Training.Validation;
+﻿namespace SQLModule.Web.Features.Training.Validation;
 
 internal sealed class TaskValidationOptions
 {

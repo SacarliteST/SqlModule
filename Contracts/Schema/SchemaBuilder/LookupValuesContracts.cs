@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Schema.SchemaBuilder;
+﻿namespace SQLModule.Contracts.Schema.SchemaBuilder;
 
 /// <summary>Параметры поиска значений связанной таблицы.</summary>
 public sealed class LookupValuesRequest

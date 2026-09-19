@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training.Validation;
+﻿namespace SQLModule.Domain.Training.Validation;
 
 /// <summary>Нормализованный draft конфигурации для проверки бизнес-инвариантов.</summary>
 public sealed record TaskValidationDefinition(

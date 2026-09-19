@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.PlatformIntegration.Abstractions;

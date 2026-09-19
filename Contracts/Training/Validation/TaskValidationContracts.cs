@@ -1,4 +1,4 @@
-using SQLModule.Domain.Training;
+﻿using SQLModule.Domain.Training;
 using SQLModule.Domain.Training.Validation;
 
 namespace SQLModule.Contracts.Training.Validation;

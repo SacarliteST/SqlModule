@@ -1,4 +1,4 @@
-using Shouldly;
+﻿using Shouldly;
 using SQLModule.Domain.Training;
 
 namespace SQLModule.UnitTests.Training;

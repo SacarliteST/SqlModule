@@ -794,9 +794,9 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
         Guid? labelPhysicalTypeId = null,
         bool targetPrimaryKey = true,
         Guid? foreignPhysicalTypeId = null) => new()
-    {
-        Version = version,
-        Tables =
+        {
+            Version = version,
+            Tables =
         [
             new SchemaTableDraft
             {
@@ -835,7 +835,7 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
                 ]
             }
         ],
-        Relationships =
+            Relationships =
         [
             new SchemaRelationshipDraft
             {
@@ -845,7 +845,7 @@ public sealed class TeacherSchemaAndDataTests(TestApplication app) : ApiTestBase
                 TargetColumnRef = "course-id"
             }
         ]
-    };
+        };
 
     private static BatchTableRowsRequest CreateRowsRequest(
         string schemaVersion,

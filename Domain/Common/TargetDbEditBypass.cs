@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Common;
+﻿namespace SQLModule.Domain.Common;
 
 /// <summary>
 /// Временно отключает защиту учебной базы, используемой опубликованными заданиями. Только для системных

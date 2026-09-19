@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training;
+﻿namespace SQLModule.Domain.Training;
 
 /// <summary>Нормализованная SQL-конструкция, распознаваемая AST-анализатором.</summary>
 public enum SqlConstruct

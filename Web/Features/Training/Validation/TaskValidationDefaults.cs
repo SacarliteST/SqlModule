@@ -1,4 +1,4 @@
-using SQLModule.Domain.Training;
+﻿using SQLModule.Domain.Training;
 using SQLModule.Domain.Training.Validation;
 
 namespace SQLModule.Web.Features.Training.Validation;

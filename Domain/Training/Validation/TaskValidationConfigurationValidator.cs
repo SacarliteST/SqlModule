@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training.Validation;
+﻿namespace SQLModule.Domain.Training.Validation;
 
 /// <summary>Единая реализация правил сохранения, preview и публикации validation-конфигурации.</summary>
 public sealed class TaskValidationConfigurationValidator : ITaskValidationConfigurationValidator

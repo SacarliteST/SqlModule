@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training.Validation;
+﻿namespace SQLModule.Domain.Training.Validation;
 
 /// <summary>Поддерживаемый AST-адаптером SQL-диалект.</summary>
 public enum SqlAnalyzerDialect

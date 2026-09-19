@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Data.Core;
