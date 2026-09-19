@@ -34,6 +34,24 @@ internal static class ExceptionHandlerExtensions
                 var feature = context.Features.Get<IExceptionHandlerFeature>();
                 var exception = feature?.Error;
 
+                if (exception is DomainConflictException conflict)
+                {
+                    context.RequestServices.GetRequiredService<ILogger<IWebMarker>>().LogWarning(
+                        "Конфликт состояния на {Method} {Path}: {Code}",
+                        context.Request.Method,
+                        context.Request.Path,
+                        conflict.Code);
+                    context.Response.StatusCode = StatusCodes.Status409Conflict;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsJsonAsync(ApiProblemFactory.Create(
+                        StatusCodes.Status409Conflict,
+                        "Конфликт состояния",
+                        conflict.Message,
+                        conflict.Code,
+                        conflict.Errors?.ToDictionary(pair => pair.Key, pair => pair.Value)));
+                    return;
+                }
+
                 var statusCode = exception switch
                 {
                     NotFoundException => StatusCodes.Status404NotFound,

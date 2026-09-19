@@ -14,6 +14,7 @@ internal sealed record GetTeacherTaskDetailsQuery(Guid TaskId)
 
 internal sealed class GetTeacherTaskDetailsHandler(
     IOptions<SandboxOptions> sandboxOptions,
+    ISqlTaskPublishReadiness readiness,
     AppDbContext db)
     : IRequestHandler<GetTeacherTaskDetailsQuery, Result<TeacherTaskDetailsResponse>>
 {
@@ -78,6 +79,7 @@ internal sealed class GetTeacherTaskDetailsHandler(
                 attempt.AttemptNumber,
                 attempt.Score))
             .ToListAsync(ct);
+        var blockers = await readiness.EvaluateAsync(query.TaskId, ct);
 
         return new TeacherTaskDetailsResponse(
             task.SqlTask.Id,
@@ -105,9 +107,8 @@ internal sealed class GetTeacherTaskDetailsHandler(
             ReferenceQueryEditRestriction: ReferenceQueryEditPolicy.GetUserMessage(referenceRestriction),
             attemptsCount,
             lastAttempts,
-            CanPublish: task.SqlTask.PublicationStatus == Domain.Training.PublicationStatus.Draft &&
-                        attemptsCount == 0 &&
-                        !referenceExceedsComparisonLimit,
+            blockers.Select(blocker => new PublishBlockerResponse(blocker.Code, blocker.Message)).ToList(),
+            CanPublish: task.SqlTask.PublicationStatus == Domain.Training.PublicationStatus.Draft && blockers.Count == 0,
             CanArchive: task.SqlTask.PublicationStatus != Domain.Training.PublicationStatus.Archived,
             CanDelete: attemptsCount == 0,
             LifecycleRestriction: attemptsCount > 0

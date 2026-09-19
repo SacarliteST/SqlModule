@@ -24,6 +24,7 @@ internal sealed class CourseDataSeeder(
 
     public async Task SeedAsync(CancellationToken ct = default)
     {
+        using var editBypass = SQLModule.Domain.Common.TargetDbEditBypass.Begin();
         var settings = options.Value;
         if (!settings.Enabled)
         {

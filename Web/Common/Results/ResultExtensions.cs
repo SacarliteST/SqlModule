@@ -57,7 +57,9 @@ public static class ResultExtensions
             title,
             error.Message,
             error.Code,
-            error.Path is null ? null : new Dictionary<string, string[]> { [error.Path] = [error.Message] },
+            error.Errors is not null
+                ? error.Errors.ToDictionary(pair => pair.Key, pair => pair.Value)
+                : error.Path is null ? null : new Dictionary<string, string[]> { [error.Path] = [error.Message] },
             error.AffectedRows,
             error.Severity,
             error.Limit);

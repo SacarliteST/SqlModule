@@ -1,4 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Net.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Shouldly;
+using SQLModule.Contracts;
+using SQLModule.Contracts.Training.Validation;
 using SQLModule.Client.Attempt;
 using SQLModule.Client.AttributeParameterValue;
 using SQLModule.Client.DataRecord;
@@ -89,6 +93,27 @@ public abstract class ApiTestBase : IDisposable
         PhysicalTypeClient = testApplication.PhysicalTypeClient;
         ParameterDefinitionClient = testApplication.ParameterDefinitionClient;
         SchemaBuilderClient = testApplication.SchemaBuilderClient;
+    }
+
+
+    /// <summary>
+    /// Публикует активную версию оценки задания (по умолчанию — стандартный черновик). Без неё задание
+    /// нельзя опубликовать: publish отвечает 409 SqlTask.ValidationVersionNotPublished.
+    /// </summary>
+    protected async Task PublishValidationAsync(Guid taskId)
+    {
+        var configuration = await HttpClient.GetFromJsonAsync<TaskValidationConfigurationResponse>(
+            ApiRoutes.Training.SqlTasks.ForValidation(taskId), SQLModule.Client.ClientJson.Options);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post, ApiRoutes.Training.SqlTasks.ForValidationPublish(taskId))
+        {
+            Content = JsonContent.Create(
+                new PublishTaskValidationRequest(configuration!.Version),
+                options: SQLModule.Client.ClientJson.Options)
+        };
+        request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("D"));
+        using var response = await HttpClient.SendAsync(request);
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
     }
 
     /// <summary>Переключает контекст на пользователя с ролью Teacher (ContentAuthor).</summary>

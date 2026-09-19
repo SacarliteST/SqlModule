@@ -67,7 +67,17 @@ internal sealed class PublishTaskValidationHandler(
             return Result<TaskValidationConfigurationResponse>.Fail(TaskValidationErrors.StaleVersion());
         }
 
-        if (task.ActiveValidationVersion?.ConfigurationVersion == configuration.Version)
+        // Активная версия «текущая» только если конфигурация не менялась И схема, данные и эталон
+        // по-прежнему соответствуют её снимку — иначе публикация выпускает новый снимок.
+        if (task.ActiveValidationVersion is { } activeVersion &&
+            activeVersion.ConfigurationVersion == configuration.Version &&
+            await SnapshotFreshness.IsFreshAsync(
+                snapshotFactory,
+                command.TaskId,
+                activeVersion.SchemaSnapshotJson,
+                activeVersion.DatasetSnapshotJson,
+                activeVersion.ReferenceQuerySnapshotJson,
+                ct))
         {
             var existingResponse = await ToResponseAsync(task, configuration, task.ActiveValidationVersion, ct);
             db.MutationReceipts.Add(MutationReceipt.Create(
@@ -135,6 +145,13 @@ internal sealed class PublishTaskValidationHandler(
             .Where(version => version.TaskId == command.TaskId)
             .Select(version => (int?)version.VersionNumber)
             .MaxAsync(ct) + 1 ?? 1;
+        if (task.ActiveValidationVersion?.ConfigurationVersion == configuration.Version)
+        {
+            // Данные или эталон изменились, а конфигурация нет: новая версия требует новой версии конфигурации
+            // (пара задание + версия конфигурации уникальна).
+            configuration.Touch();
+        }
+
         var userId = currentUser.UserId ?? SystemUser.Id;
         var userName = currentUser.DisplayName ?? userId.ToString();
         var version = TaskValidationVersion.Publish(

@@ -13,6 +13,7 @@ internal sealed record PublishSqlTaskCommand(Guid Id)
 
 internal sealed class PublishSqlTaskHandler(
     ISqlQueryValidationRunner validationRunner,
+    ISqlTaskPublishReadiness readiness,
     AppDbContext db)
     : IRequestHandler<PublishSqlTaskCommand, Result<SqlTaskResponse>>
 {
@@ -34,32 +35,23 @@ internal sealed class PublishSqlTaskHandler(
             return Result<SqlTaskResponse>.Fail(SqlTaskErrors.ArchivedCannotBePublished(command.Id));
         }
 
-        if (await db.Attempts.AnyAsync(x => x.TaskId == command.Id, ct))
+        var blockers = await readiness.EvaluateAsync(command.Id, ct);
+        if (blockers.Count > 0)
         {
-            return Result<SqlTaskResponse>.Fail(SqlTaskErrors.HasAttemptsOnPublish(command.Id));
+            // Первая причина определяет code и статус ответа, остальные — в errors.
+            return Result<SqlTaskResponse>.Fail(blockers.Count == 1
+                ? blockers[0]
+                : blockers[0] with
+                {
+                    Errors = blockers.ToDictionary(blocker => blocker.Code, blocker => new[] { blocker.Message })
+                });
         }
 
         var reference = await db.SqlQueries
             .AsNoTracking()
             .Where(x => x.Id == task.SqlQueryId)
-            .Select(x => new
-            {
-                x.ExpectedResult,
-                x.TargetDbId,
-                x.QueryText,
-                TrainingDatabaseExists = db.TargetDbs.Any(targetDb => targetDb.Id == x.TargetDbId)
-            })
-            .FirstOrDefaultAsync(ct);
-
-        if (reference is null || String.IsNullOrWhiteSpace(reference.ExpectedResult))
-        {
-            return Result<SqlTaskResponse>.Fail(SqlTaskErrors.ReferenceQueryNotValidated(command.Id));
-        }
-
-        if (!reference.TrainingDatabaseExists)
-        {
-            return Result<SqlTaskResponse>.Fail(SqlTaskErrors.TrainingDatabaseUnavailable(command.Id));
-        }
+            .Select(x => new { x.TargetDbId, x.QueryText })
+            .FirstAsync(ct);
 
         var validation = await validationRunner.ValidateAsync(
             reference.TargetDbId, reference.QueryText, ct);

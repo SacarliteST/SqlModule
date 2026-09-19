@@ -70,14 +70,18 @@ internal static class TaskValidationMappings
         TaskValidationVersion? activeVersion,
         IReadOnlyDictionary<Guid, string> tableNames)
     {
-        var hasUnpublishedChanges = activeVersion is null ||
+        // Отсутствие опубликованной версии выражается только validationVersionId == null,
+        // а hasUnpublishedChanges означает изменения черновика относительно активной версии.
+        var hasUnpublishedChanges = activeVersion is not null &&
                                     activeVersion.ConfigurationVersion != configuration.Version;
         return new TaskValidationConfigurationResponse(
             configuration.TaskId,
             configuration.Version.ToString("D"),
             activeVersion?.Id,
             activeVersion?.VersionNumber,
-            hasUnpublishedChanges ? ValidationConfigurationState.Draft : ValidationConfigurationState.Published,
+            activeVersion is null || hasUnpublishedChanges
+                ? ValidationConfigurationState.Draft
+                : ValidationConfigurationState.Published,
             hasUnpublishedChanges,
             configuration.PassingScore,
             configuration.MaxAttempts,

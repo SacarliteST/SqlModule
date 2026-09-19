@@ -38,6 +38,25 @@ public sealed record ValidationCheckResponse(
     int Order);
 
 /// <summary>Текущая конфигурация проверки и активная опубликованная версия.</summary>
+/// <param name="TaskId">Идентификатор задания.</param>
+/// <param name="Version">Токен версии черновика; передаётся при сохранении и публикации.</param>
+/// <param name="ValidationVersionId">
+/// Идентификатор активной опубликованной версии. <c>null</c> — версия ни разу не публиковалась
+/// (задание нельзя опубликовать или запустить). Отсутствие версии определяется только этим полем.
+/// </param>
+/// <param name="ValidationVersionNumber">Номер активной версии; <c>null</c>, если версия не публиковалась.</param>
+/// <param name="State">Состояние: <c>Draft</c> — версии нет или черновик изменён, <c>Published</c> — совпадает с активной.</param>
+/// <param name="HasUnpublishedChanges">
+/// Черновик отличается от активной опубликованной версии. Если версии нет (<c>validationVersionId == null</c>),
+/// значение <c>false</c>: сравнивать не с чем. Поле не означает отсутствие версии.
+/// </param>
+/// <param name="PassingScore">Проходной балл (1–100).</param>
+/// <param name="MaxAttempts">Лимит попыток; <c>null</c> — без ограничения.</param>
+/// <param name="VisibleHintGroups">Группы подсказок, видимые студенту.</param>
+/// <param name="Checks">Критерии оценки.</param>
+/// <param name="CreatedAt">Дата создания конфигурации.</param>
+/// <param name="UpdatedAt">Дата последнего изменения черновика.</param>
+/// <param name="PublishedAt">Дата публикации активной версии; <c>null</c>, если версии нет.</param>
 public sealed record TaskValidationConfigurationResponse(
     Guid TaskId,
     string Version,

@@ -8,6 +8,9 @@ using SQLModule.Web.Common.Sandbox;
 
 namespace SQLModule.Web.Features.Training.Validation;
 
+/// <summary>Живое состояние схемы, данных и эталона задания в том же каноническом виде, что и в версии оценки.</summary>
+internal sealed record LiveTaskSnapshot(string SchemaJson, string DatasetJson, string ReferenceQueryJson);
+
 internal interface ITaskValidationSnapshotFactory
 {
     Task<Result<TaskValidationVersionSnapshot>> CreateAsync(
@@ -16,6 +19,8 @@ internal interface ITaskValidationSnapshotFactory
         QueryResultSet referenceResult,
         string analyzerVersion,
         CancellationToken ct);
+
+    Task<Result<LiveTaskSnapshot>> CreateLiveAsync(Guid taskId, CancellationToken ct);
 }
 
 internal sealed class TaskValidationSnapshotFactory(AppDbContext db) : ITaskValidationSnapshotFactory
@@ -28,6 +33,38 @@ internal sealed class TaskValidationSnapshotFactory(AppDbContext db) : ITaskVali
         QueryResultSet referenceResult,
         string analyzerVersion,
         CancellationToken ct)
+    {
+        var live = await CreateLiveAsync(taskId, ct);
+        if (!live.IsSuccess)
+        {
+            return Result<TaskValidationVersionSnapshot>.Fail(live.Error!);
+        }
+
+        var configurationSnapshot = new
+        {
+            configuration.PassingScore,
+            configuration.MaxAttempts,
+            VisibleHintGroups = configuration.GetVisibleHintGroups(),
+            Checks = configuration.Checks.OrderBy(check => check.Order).Select(check => new
+            {
+                check.Id,
+                check.Kind,
+                check.Value,
+                check.Weight,
+                check.Order
+            })
+        };
+
+        return new TaskValidationVersionSnapshot(
+            live.Value!.SchemaJson,
+            live.Value.DatasetJson,
+            live.Value.ReferenceQueryJson,
+            GoldenResult.Serialize(referenceResult),
+            JsonSerializer.Serialize(configurationSnapshot, JsonOptions),
+            analyzerVersion);
+    }
+
+    public async Task<Result<LiveTaskSnapshot>> CreateLiveAsync(Guid taskId, CancellationToken ct)
     {
         var reference = await db.SqlTasks
             .AsNoTracking()
@@ -53,7 +90,7 @@ internal sealed class TaskValidationSnapshotFactory(AppDbContext db) : ITaskVali
             .SingleOrDefaultAsync(value => value.Id == reference.TargetDbId, ct);
         if (targetDb is null)
         {
-            return Result<TaskValidationVersionSnapshot>.Fail(
+            return Result<LiveTaskSnapshot>.Fail(
                 TaskValidationErrors.ReferenceInvalid(
                     "Validation.TargetDbNotFound",
                     "Учебная база эталонного запроса недоступна.",
@@ -74,20 +111,6 @@ internal sealed class TaskValidationSnapshotFactory(AppDbContext db) : ITaskVali
         var schema = MetaSchemaMapper.ToSchemaSpec(tables, relationships, parameterValues.ToLookup(
             value => value.MetaAttributeId));
         var dataset = MetaSchemaMapper.ToDataSpec(tables);
-        var configurationSnapshot = new
-        {
-            configuration.PassingScore,
-            configuration.MaxAttempts,
-            VisibleHintGroups = configuration.GetVisibleHintGroups(),
-            Checks = configuration.Checks.OrderBy(check => check.Order).Select(check => new
-            {
-                check.Id,
-                check.Kind,
-                check.Value,
-                check.Weight,
-                check.Order
-            })
-        };
         var referenceSnapshot = new
         {
             reference.TargetDbId,
@@ -96,12 +119,9 @@ internal sealed class TaskValidationSnapshotFactory(AppDbContext db) : ITaskVali
             IsRequiredRowOrder = reference.StrictRowOrder
         };
 
-        return new TaskValidationVersionSnapshot(
+        return new LiveTaskSnapshot(
             JsonSerializer.Serialize(schema, JsonOptions),
             JsonSerializer.Serialize(dataset, JsonOptions),
-            JsonSerializer.Serialize(referenceSnapshot, JsonOptions),
-            GoldenResult.Serialize(referenceResult),
-            JsonSerializer.Serialize(configurationSnapshot, JsonOptions),
-            analyzerVersion);
+            JsonSerializer.Serialize(referenceSnapshot, JsonOptions));
     }
 }

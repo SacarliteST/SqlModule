@@ -23,7 +23,13 @@ namespace SQLModule.Contracts.Training.SqlTask;
 /// <param name="ReferenceQueryEditRestriction">Понятная пользователю причина запрета изменения эталона; null, если изменение разрешено.</param>
 /// <param name="AttemptsCount">Общее количество попыток.</param>
 /// <param name="LastAttempts">Последние попытки выполнения.</param>
-/// <param name="CanPublish">Можно ли опубликовать задание сейчас.</param>
+/// <param name="PublishBlockers">
+/// Все причины, мешающие публикации (или запуску уже опубликованного задания), в стабильном порядке.
+/// Пустой список означает готовность. Поля каждого элемента обязательны.
+/// </param>
+/// <param name="CanPublish">
+/// Можно ли опубликовать задание сейчас: <see langword="true"/> только для черновика и при пустом <c>publishBlockers</c>.
+/// </param>
 /// <param name="CanArchive">Можно ли архивировать задание сейчас.</param>
 /// <param name="CanDelete">Можно ли удалить задание сейчас.</param>
 /// <param name="LifecycleRestriction">Причина запрета lifecycle-операции, если она общая.</param>
@@ -46,6 +52,7 @@ public sealed record TeacherTaskDetailsResponse(
     string? ReferenceQueryEditRestriction,
     int AttemptsCount,
     IReadOnlyList<TeacherTaskAttemptResponse> LastAttempts,
+    IReadOnlyList<PublishBlockerResponse> PublishBlockers,
     bool CanPublish = false,
     bool CanArchive = false,
     bool CanDelete = false,
@@ -80,3 +87,8 @@ public sealed record TeacherTaskAttemptResponse(
     DateTimeOffset FinishedAt,
     int? AttemptNumber = null,
     int? Score = null);
+
+/// <summary>Причина, по которой задание нельзя опубликовать или запустить.</summary>
+/// <param name="Code">Стабильный machine-код, например <c>SqlTask.ValidationVersionNotPublished</c>.</param>
+/// <param name="Message">Понятное преподавателю описание.</param>
+public sealed record PublishBlockerResponse(string Code, string Message);

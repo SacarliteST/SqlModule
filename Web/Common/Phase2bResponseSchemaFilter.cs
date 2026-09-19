@@ -1,6 +1,7 @@
 using Microsoft.OpenApi;
 using SQLModule.Contracts.DbmsCatalog.Validation;
 using SQLModule.Contracts.Training.Attempt;
+using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Student;
 using SQLModule.Contracts.Training.Validation;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -32,11 +33,20 @@ internal sealed class Phase2bResponseSchemaFilter : ISchemaFilter
         typeof(ValidationCheckResponse),
         typeof(TaskValidationPreviewResponse),
         typeof(ValidationCheckPreviewResponse),
-        typeof(ValidationViolationResponse)
+        typeof(ValidationViolationResponse),
+        typeof(PublishBlockerResponse)
     ];
 
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {
+        // Остальные поля деталей задания намеренно не трогаем — меняем только новое обязательное поле.
+        if (context.Type == typeof(TeacherTaskDetailsResponse) && schema is OpenApiSchema details &&
+            details.Properties?.ContainsKey("publishBlockers") == true)
+        {
+            details.Required ??= new HashSet<string>();
+            details.Required.Add("publishBlockers");
+        }
+
         if (!ResponseTypes.Contains(context.Type) || schema is not OpenApiSchema response ||
             response.Properties is null)
         {

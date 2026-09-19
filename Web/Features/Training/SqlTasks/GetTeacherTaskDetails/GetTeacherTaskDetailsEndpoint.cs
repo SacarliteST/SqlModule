@@ -21,9 +21,13 @@ public sealed class GetTeacherTaskDetailsEndpoint : IEndpoint
             .WithSummary("Получить агрегированные детали задания для преподавателя")
             .WithDescription(
                 "Возвращает задание, тему, эталонный запрос, учебную базу, состав таблиц, " +
-                "общее число попыток и пять последних попыток.")
+                "общее число попыток, пять последних попыток и причины, мешающие публикации " +
+                "(publishBlockers — тот же набор правил, что использует операция публикации).")
             .Produces<TeacherTaskDetailsResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 
     private static async Task<IResult> Handle(Guid taskId, ISender sender, CancellationToken ct)

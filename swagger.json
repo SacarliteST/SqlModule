@@ -1366,6 +1366,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -1773,7 +1783,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1973,7 +1983,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2079,7 +2089,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2188,6 +2198,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2238,7 +2258,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2335,6 +2355,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2443,6 +2473,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2493,7 +2533,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2599,7 +2639,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2708,6 +2748,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2757,7 +2807,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2853,6 +2903,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2960,6 +3020,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -3009,7 +3079,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3096,6 +3166,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3210,6 +3290,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -3260,7 +3350,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3364,6 +3454,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -3458,6 +3558,16 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3627,7 +3737,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4097,6 +4207,106 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks/{taskId}/tables/{tableId}/rows": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "summary": "Получить страницу учебных данных таблицы задания",
+        "description": "Возвращает только данные таблицы опубликованного задания. Доступ ограничен taskId текущей платформенной сессии.",
+        "operationId": "GetStudentTaskTableRows",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableRowsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -5268,7 +5478,7 @@
           "Training"
         ],
         "summary": "Опубликовать SQL-задание",
-        "description": "Публикует подготовленное Draft-задание. Эталонный запрос должен иметь проверенный результат, учебная база должна существовать, а у задания не должно быть попыток. Перед публикацией эталон повторно проверяется; превышение лимита сравнения возвращает ReferenceResultExceedsComparisonLimit. Возвращает 200 OK с обновлённым заданием.",
+        "description": "Публикует подготовленное Draft-задание только если оно готово к запуску студентом: опубликована оценка решения, эталон задан и проверен (результат актуален для схемы и данных), учебная база существует, у задания нет попыток. Готовность проверяется на backend независимо от клиента; полный список причин — в teacher-details (publishBlockers). При отказе статус задания не меняется. Код и статус ответа определяет первая причина, все причины перечислены в errors. Возвращает 200 OK с обновлённым заданием.",
         "operationId": "PublishSqlTask",
         "parameters": [
           {
@@ -5292,6 +5502,26 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
             "content": {
@@ -5303,7 +5533,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Задание не готово к публикации или уже опубликовано; статус задания не меняется. code и статус определяет первая причина, все причины — в errors. Возможные code: SqlTask.ValidationVersionNotPublished (оценка решения не опубликована), SqlTask.TrainingDatabaseUnavailable, SqlTask.HasAttemptsOnPublish, SqlTask.AlreadyPublished, SqlTask.ArchivedCannotBePublished.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5313,7 +5543,17 @@
             }
           },
           "422": {
-            "description": "Unprocessable Content",
+            "description": "Эталон не задан, не проверен или его результат устарел относительно схемы и данных. Возможные code: SqlTask.ReferenceQueryMissing, SqlTask.ReferenceQueryNotValidated, ReferenceResultExceedsComparisonLimit.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5409,7 +5649,7 @@
           "Training"
         ],
         "summary": "Получить агрегированные детали задания для преподавателя",
-        "description": "Возвращает задание, тему, эталонный запрос, учебную базу, состав таблиц, общее число попыток и пять последних попыток.",
+        "description": "Возвращает задание, тему, эталонный запрос, учебную базу, состав таблиц, общее число попыток, пять последних попыток и причины, мешающие публикации (publishBlockers — тот же набор правил, что использует операция публикации).",
         "operationId": "GetTeacherTaskDetails",
         "parameters": [
           {
@@ -5433,8 +5673,38 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9282,6 +9552,25 @@
         ],
         "type": "string"
       },
+      "PublishBlockerResponse": {
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Стабильный machine-код, например `SqlTask.ValidationVersionNotPublished`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Понятное преподавателю описание."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Причина, по которой задание нельзя опубликовать или запустить."
+      },
       "PublishTaskValidationRequest": {
         "type": "object",
         "properties": {
@@ -11514,18 +11803,22 @@
         "properties": {
           "taskId": {
             "type": "string",
+            "description": "Идентификатор задания.",
             "format": "uuid"
           },
           "version": {
-            "type": "string"
+            "type": "string",
+            "description": "Токен версии черновика; передаётся при сохранении и публикации."
           },
           "validationVersionId": {
             "type": "string",
+            "description": "Идентификатор активной опубликованной версии. `null` — версия ни разу не публиковалась\r\n(задание нельзя опубликовать или запустить). Отсутствие версии определяется только этим полем.",
             "format": "uuid",
             "nullable": true
           },
           "validationVersionNumber": {
             "type": "integer",
+            "description": "Номер активной версии; `null`, если версия не публиковалась.",
             "format": "int32",
             "nullable": true
           },
@@ -11539,17 +11832,21 @@
               {
                 "$ref": "#/components/schemas/ValidationConfigurationState"
               }
-            ]
+            ],
+            "description": "Состояние: `Draft` — версии нет или черновик изменён, `Published` — совпадает с активной."
           },
           "hasUnpublishedChanges": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Черновик отличается от активной опубликованной версии. Если версии нет (`validationVersionId == null`),\r\nзначение `false`: сравнивать не с чем. Поле не означает отсутствие версии."
           },
           "passingScore": {
             "type": "integer",
+            "description": "Проходной балл (1–100).",
             "format": "int32"
           },
           "maxAttempts": {
             "type": "integer",
+            "description": "Лимит попыток; `null` — без ограничения.",
             "format": "int32",
             "nullable": true
           },
@@ -11557,24 +11854,29 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HintGroup"
-            }
+            },
+            "description": "Группы подсказок, видимые студенту."
           },
           "checks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ValidationCheckResponse"
-            }
+            },
+            "description": "Критерии оценки."
           },
           "createdAt": {
             "type": "string",
+            "description": "Дата создания конфигурации.",
             "format": "date-time"
           },
           "updatedAt": {
             "type": "string",
+            "description": "Дата последнего изменения черновика.",
             "format": "date-time"
           },
           "publishedAt": {
             "type": "string",
+            "description": "Дата публикации активной версии; `null`, если версии нет.",
             "format": "date-time",
             "nullable": true
           }
@@ -11703,6 +12005,9 @@
         "description": "Краткая попытка студента."
       },
       "TeacherTaskDetailsResponse": {
+        "required": [
+          "publishBlockers"
+        ],
         "type": "object",
         "properties": {
           "taskId": {
@@ -11802,9 +12107,16 @@
             },
             "description": "Последние попытки выполнения."
           },
+          "publishBlockers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishBlockerResponse"
+            },
+            "description": "Все причины, мешающие публикации (или запуску уже опубликованного задания), в стабильном порядке.\r\nПустой список означает готовность. Поля каждого элемента обязательны."
+          },
           "canPublish": {
             "type": "boolean",
-            "description": "Можно ли опубликовать задание сейчас."
+            "description": "Можно ли опубликовать задание сейчас: true только для черновика и при пустом `publishBlockers`."
           },
           "canArchive": {
             "type": "boolean",
