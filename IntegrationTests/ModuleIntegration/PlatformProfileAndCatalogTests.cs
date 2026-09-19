@@ -1325,7 +1325,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         return message;
     }
 
-    private static HttpRequestMessage CreateSubmitRequest(
+    internal static HttpRequestMessage CreateSubmitRequest(
         Guid taskId,
         Guid userId,
         Guid? sessionId,
@@ -1347,7 +1347,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         return message;
     }
 
-    private static async Task SeedModuleSessionAsync(
+    internal static async Task SeedModuleSessionAsync(
         WebApplicationFactory<IHostMarker> platform,
         Guid sessionId,
         Guid userId,
@@ -1408,7 +1408,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
     /// требует опубликованную <c>ActiveValidationVersionId</c> для любого platform-задания,
     /// иначе submit отвечает 422 <c>ModuleSession.TaskValidationUnavailable</c>.
     /// </summary>
-    private static async Task<Guid> SeedValidatedRunnableTaskAsync(
+    internal static async Task<Guid> SeedValidatedRunnableTaskAsync(
         WebApplicationFactory<IHostMarker> platform)
     {
         using var client = platform.CreateClient();
