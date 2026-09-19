@@ -18,13 +18,16 @@ public sealed class DeleteSqlTaskEndpoint : IEndpoint
             .WithTags("Training")
             .WithSummary("Удалить SQL-задание")
             .WithDescription(
-                "Удаляет задание по Id. " +
-                "Возвращает 204 No Content. " +
-                "404 — задание не найдено. " +
-                "409 — задание имеет попытки выполнения.")
+                "Удаляет задание, которым никто не пользовался: статус Draft или Archived, нет попыток и прохождений " +
+                "студентов (включая платформенные). Одной транзакцией удаляются задание, версии оценки, " +
+                "конфигурация оценки и эталонный запрос. Те же правила видны в teacher-details " +
+                "(canDelete, deleteBlockReasons). Возвращает 204 No Content.")
             .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 
     private static async Task<IResult> Handle(Guid id, ISender sender, CancellationToken ct)

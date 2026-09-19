@@ -7,7 +7,14 @@ internal static class SqlTaskErrors
 {
     internal static Error NotFound(Guid id) => DomainErrors<SqlTask>.NotFound(id);
     internal static Error TopicNotFound(Guid id) => DomainErrors<SqlTask>.Conflict($"Тема с id '{id}' не найдена.");
-    internal static Error HasAttempts(Guid id) => DomainErrors<SqlTask>.Conflict($"Задание '{id}' имеет попытки выполнения и не может быть удалено.");
+    internal static Error HasAttempts =>
+        DomainErrors<SqlTask>.Conflict("Задание имеет попытки выполнения и не может быть удалено.");
+    internal static Error HasStudentProgress =>
+        DomainErrors<SqlTask>.Conflict("У задания есть прохождения студентов, в том числе платформенные, — удалить его нельзя.");
+    internal static Error PublishedCannotBeDeleted =>
+        DomainErrors<SqlTask>.Conflict("Опубликованное задание сначала нужно архивировать.");
+    internal static Error InUse =>
+        DomainErrors<SqlTask>.Conflict("Задание используется другими данными модуля и не может быть удалено.");
     internal static Error PublishRequiresAction =>
         DomainErrors<SqlTask>.Conflict("Переход в Published доступен только через отдельную операцию публикации.");
     internal static Error AlreadyPublished(Guid id) =>

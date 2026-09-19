@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using SQLModule.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 using SQLModule.Common.Results;
 using SQLModule.Web.Common.Cqrs;
@@ -8,7 +7,7 @@ namespace SQLModule.Web.Common.Behaviors;
 
 /// <summary>
 /// Pipeline-поведение, которое логирует имя запроса, время выполнения и признак успеха.
-/// При выбрасывании исключения логирует его на уровне Error и повторно пробрасывает.
+/// При выбрасывании исключения пишет Debug и повторно пробрасывает — ошибку логирует глобальный обработчик.
 /// </summary>
 /// <typeparam name="TRequest">Тип запроса.</typeparam>
 /// <typeparam name="TResponse">Тип ответа.</typeparam>
@@ -34,16 +33,12 @@ internal sealed class LoggingBehavior<TRequest, TResponse>(
                 name, sw.ElapsedMilliseconds, isSuccess);
             return response;
         }
-        catch (DomainConflictException ex)
+        catch (Exception)
         {
+            // Исключение записывает один раз глобальный обработчик (с методом и путём) — здесь только Debug,
+            // иначе одна ошибка попадает в лог несколько раз, а ожидаемые конфликты — ещё и уровнем Error.
             sw.Stop();
-            logger.LogWarning("{Request} отклонён после {Elapsed}ms: {Code}", name, sw.ElapsedMilliseconds, ex.Code);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            sw.Stop();
-            logger.LogError(ex, "{Request} threw after {Elapsed}ms", name, sw.ElapsedMilliseconds);
+            logger.LogDebug("{Request} завершился исключением через {Elapsed}ms", name, sw.ElapsedMilliseconds);
             throw;
         }
     }

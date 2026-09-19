@@ -34,7 +34,8 @@ internal sealed class Phase2bResponseSchemaFilter : ISchemaFilter
         typeof(TaskValidationPreviewResponse),
         typeof(ValidationCheckPreviewResponse),
         typeof(ValidationViolationResponse),
-        typeof(PublishBlockerResponse)
+        typeof(PublishBlockerResponse),
+        typeof(DeleteBlockerResponse)
     ];
 
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
@@ -45,6 +46,7 @@ internal sealed class Phase2bResponseSchemaFilter : ISchemaFilter
         {
             details.Required ??= new HashSet<string>();
             details.Required.Add("publishBlockers");
+            details.Required.Add("deleteBlockReasons");
         }
 
         if (!ResponseTypes.Contains(context.Type) || schema is not OpenApiSchema response ||

@@ -18,6 +18,7 @@ internal static class SqlTasksModule
         services.AddScoped<IRequestHandler<UpdateSqlTaskCommand, Result>, UpdateSqlTaskHandler>();
         services.AddScoped<IRequestHandler<UpdateTaskReferenceQueryCommand, Result<UpdateTaskReferenceQueryResponse>>, UpdateTaskReferenceQueryHandler>();
         services.AddScoped<ISqlTaskPublishReadiness, SqlTaskPublishReadiness>();
+        services.AddScoped<ISqlTaskDeleteRules, SqlTaskDeleteRules>();
         services.AddScoped<IRequestHandler<PublishSqlTaskCommand, Result<SqlTaskResponse>>, PublishSqlTaskHandler>();
         services.AddScoped<IRequestHandler<ArchiveSqlTaskCommand, Result<SqlTaskResponse>>, ArchiveSqlTaskHandler>();
         services.AddScoped<IRequestHandler<DeleteSqlTaskCommand, Result>, DeleteSqlTaskHandler>();

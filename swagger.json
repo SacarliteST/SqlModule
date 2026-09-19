@@ -5322,7 +5322,7 @@
           "Training"
         ],
         "summary": "Удалить SQL-задание",
-        "description": "Удаляет задание по Id. Возвращает 204 No Content. 404 — задание не найдено. 409 — задание имеет попытки выполнения.",
+        "description": "Удаляет задание, которым никто не пользовался: статус Draft или Archived, нет попыток и прохождений студентов (включая платформенные). Одной транзакцией удаляются задание, версии оценки, конфигурация оценки и эталонный запрос. Те же правила видны в teacher-details (canDelete, deleteBlockReasons). Возвращает 204 No Content.",
         "operationId": "DeleteSqlTask",
         "parameters": [
           {
@@ -5339,8 +5339,28 @@
           "204": {
             "description": "No Content"
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not Found",
+            "description": "Задание не найдено (в том числе при повторном удалении).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5350,7 +5370,17 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Задание нельзя удалить. code и статус определяет первая причина, все причины — в errors. Возможные code: SqlTask.PublishedCannotBeDeleted (сначала архивируйте), SqlTask.HasAttempts, SqlTask.HasStudentProgress, SqlTask.InUse (на задание ссылаются данные, не учтённые правилами). Задание при отказе не изменяется.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8827,6 +8857,25 @@
         "additionalProperties": false,
         "description": "Возможности проверки SQL для конкретной СУБД."
       },
+      "DeleteBlockerResponse": {
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Стабильный machine-код, например `SqlTask.HasStudentProgress`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Понятное преподавателю описание."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Причина, по которой задание нельзя удалить."
+      },
       "ExecutionStatus": {
         "enum": [
           "Succeeded",
@@ -12006,6 +12055,7 @@
       },
       "TeacherTaskDetailsResponse": {
         "required": [
+          "deleteBlockReasons",
           "publishBlockers"
         ],
         "type": "object",
@@ -12114,6 +12164,13 @@
             },
             "description": "Все причины, мешающие публикации (или запуску уже опубликованного задания), в стабильном порядке.\r\nПустой список означает готовность. Поля каждого элемента обязательны."
           },
+          "deleteBlockReasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeleteBlockerResponse"
+            },
+            "description": "Все причины, мешающие удалению задания, в стабильном порядке; пустой список — удалять можно.\r\nФорма совпадает с `publishBlockers`. Поля каждого элемента обязательны."
+          },
           "canPublish": {
             "type": "boolean",
             "description": "Можно ли опубликовать задание сейчас: true только для черновика и при пустом `publishBlockers`."
@@ -12124,7 +12181,7 @@
           },
           "canDelete": {
             "type": "boolean",
-            "description": "Можно ли удалить задание сейчас."
+            "description": "Можно ли удалить задание сейчас: true только при пустом `deleteBlockReasons` —\r\nстатус Draft или Archived, нет попыток и прохождений студентов."
           },
           "lifecycleRestriction": {
             "type": "string",
