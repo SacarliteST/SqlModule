@@ -7,6 +7,8 @@ using Microsoft.Extensions.Options;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Student;
 using SQLModule.Contracts.Training.Validation;
+using SQLModule.Contracts.Schema.SchemaBuilder;
+using SQLModule.Common.Results;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Common;
 using SQLModule.Domain.Training;
@@ -15,6 +17,8 @@ using SQLModule.Web.Common;
 using SQLModule.Web.Features.ModuleIntegration;
 using SQLModule.Web.Features.Training.Attempts;
 using SQLModule.Web.Features.Training.Progress;
+using SQLModule.Web.Common.Cqrs;
+using SQLModule.Web.Features.Schema.SchemaBuilder.GetTableRows;
 
 namespace SQLModule.Web.Features.Training.Student;
 
@@ -54,6 +58,16 @@ public sealed class StudentEndpoints : IEndpoint
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
+        app.MapGet(ApiRoutes.Training.Student.TaskTableRows, GetStudentTaskTableRows)
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<PlatformTaskScopeFilter>()
+            .WithName(nameof(GetStudentTaskTableRows)).WithTags("Student")
+            .WithSummary("Получить страницу учебных данных таблицы задания")
+            .WithDescription("Возвращает только данные таблицы опубликованного задания. Доступ ограничен taskId текущей платформенной сессии.")
+            .Produces<TableRowsResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
         app.MapGet(ApiRoutes.Training.Student.Attempts, GetStudentAttempts)
             .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
             .WithName(nameof(GetStudentAttempts)).WithTags("Student")
@@ -279,6 +293,35 @@ public sealed class StudentEndpoints : IEndpoint
 
         return TypedResults.Ok(new StudentTaskSchemaResponse(
             target.DbName, target.DbmsName, tables, foreignKeys));
+    }
+
+    private static async Task<IResult> GetStudentTaskTableRows(
+        Guid taskId,
+        Guid tableId,
+        int offset,
+        int limit,
+        AppDbContext db,
+        ISender sender,
+        CancellationToken ct)
+    {
+        if (InvalidPage(offset, limit))
+        {
+            return InvalidPagination();
+        }
+
+        var targetDbId = await db.SqlTasks.AsNoTracking()
+            .Where(task => task.Id == taskId && task.PublicationStatus == PublicationStatus.Published)
+            .Select(task => (Guid?)task.SqlQuery.TargetDbId)
+            .SingleOrDefaultAsync(ct);
+
+        if (!targetDbId.HasValue)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var result = await sender.Send<GetTableRowsQuery, Result<TableRowsResponse>>(
+            new GetTableRowsQuery(targetDbId.Value, tableId, offset, limit), ct);
+        return result.ToOk();
     }
 
     private static IQueryable<Domain.Training.Attempt> OwnedAttempts(

@@ -265,6 +265,7 @@ public static class ApiRoutes
             public const string Tasks = PrefixV1 + "/student/tasks";
             public const string TaskById = Tasks + "/{taskId}";
             public const string TaskSchema = TaskById + "/schema";
+            public const string TaskTableRows = TaskById + "/tables/{tableId:guid}/rows";
             public const string TaskProgress = TaskById + "/progress";
             public const string TaskProgressRestart = TaskProgress + "/restart";
             public const string TaskProgressFinalize = TaskProgress + "/finalize";
@@ -273,6 +274,8 @@ public static class ApiRoutes
 
             public static string ForTask(Guid taskId) => $"{Tasks}/{taskId}";
             public static string ForTaskSchema(Guid taskId) => $"{ForTask(taskId)}/schema";
+            public static string ForTaskTableRows(Guid taskId, Guid tableId, int offset, int limit) =>
+                $"{ForTask(taskId)}/tables/{tableId}/rows?offset={offset}&limit={limit}";
             public static string ForTaskProgress(Guid taskId) => $"{ForTask(taskId)}/progress";
             public static string ForTaskProgressRestart(Guid taskId) => $"{ForTaskProgress(taskId)}/restart";
             public static string ForTaskProgressFinalize(Guid taskId) => $"{ForTaskProgress(taskId)}/finalize";
