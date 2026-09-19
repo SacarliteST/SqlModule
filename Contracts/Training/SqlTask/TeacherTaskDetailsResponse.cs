@@ -27,11 +27,18 @@ namespace SQLModule.Contracts.Training.SqlTask;
 /// Все причины, мешающие публикации (или запуску уже опубликованного задания), в стабильном порядке.
 /// Пустой список означает готовность. Поля каждого элемента обязательны.
 /// </param>
+/// <param name="DeleteBlockReasons">
+/// Все причины, мешающие удалению задания, в стабильном порядке; пустой список — удалять можно.
+/// Форма совпадает с <c>publishBlockers</c>. Поля каждого элемента обязательны.
+/// </param>
 /// <param name="CanPublish">
 /// Можно ли опубликовать задание сейчас: <see langword="true"/> только для черновика и при пустом <c>publishBlockers</c>.
 /// </param>
 /// <param name="CanArchive">Можно ли архивировать задание сейчас.</param>
-/// <param name="CanDelete">Можно ли удалить задание сейчас.</param>
+/// <param name="CanDelete">
+/// Можно ли удалить задание сейчас: <see langword="true"/> только при пустом <c>deleteBlockReasons</c> —
+/// статус Draft или Archived, нет попыток и прохождений студентов.
+/// </param>
 /// <param name="LifecycleRestriction">Причина запрета lifecycle-операции, если она общая.</param>
 /// <param name="CreatedByName">Отображаемое имя автора на момент создания задания.</param>
 public sealed record TeacherTaskDetailsResponse(
@@ -53,6 +60,7 @@ public sealed record TeacherTaskDetailsResponse(
     int AttemptsCount,
     IReadOnlyList<TeacherTaskAttemptResponse> LastAttempts,
     IReadOnlyList<PublishBlockerResponse> PublishBlockers,
+    IReadOnlyList<DeleteBlockerResponse> DeleteBlockReasons,
     bool CanPublish = false,
     bool CanArchive = false,
     bool CanDelete = false,
@@ -92,3 +100,8 @@ public sealed record TeacherTaskAttemptResponse(
 /// <param name="Code">Стабильный machine-код, например <c>SqlTask.ValidationVersionNotPublished</c>.</param>
 /// <param name="Message">Понятное преподавателю описание.</param>
 public sealed record PublishBlockerResponse(string Code, string Message);
+
+/// <summary>Причина, по которой задание нельзя удалить.</summary>
+/// <param name="Code">Стабильный machine-код, например <c>SqlTask.HasStudentProgress</c>.</param>
+/// <param name="Message">Понятное преподавателю описание.</param>
+public sealed record DeleteBlockerResponse(string Code, string Message);

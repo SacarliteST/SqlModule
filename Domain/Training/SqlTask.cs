@@ -66,4 +66,10 @@ public sealed class SqlTask : AuditableEntity
     {
         ActiveValidationVersionId = validationVersionId;
     }
+
+    /// <summary>Сбрасывает активную версию оценки — нужно перед удалением версий задания (взаимные внешние ключи).</summary>
+    public void ResetActiveValidationVersion()
+    {
+        ActiveValidationVersionId = null;
+    }
 }
