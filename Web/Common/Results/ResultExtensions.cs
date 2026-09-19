@@ -29,7 +29,7 @@ public static class ResultExtensions
     public static IResult ToNoContent(this Result result) =>
         result.IsSuccess ? TypedResults.NoContent() : ToProblem(result.Error!);
 
-    private static IResult ToProblem(Error error)
+    public static IResult ToProblem(this Error error)
     {
         var statusCode = error.Type switch
         {

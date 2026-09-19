@@ -58,10 +58,15 @@ public static class WebExtensions
                 .RequireAuthenticatedUser()
                 .Build();
 
-            o.AddPolicy(Policies.Admin, p => p.RequireRole(Roles.Admin));
-            o.AddPolicy(Policies.ContentAuthor, p => p.RequireRole(Roles.Teacher, Roles.Admin));
+            o.AddPolicy(Policies.Admin, p => p
+                .RequireRole(Roles.Admin)
+                .AddRequirements(new NoPlatformSessionRequirement()));
+            o.AddPolicy(Policies.ContentAuthor, p => p
+                .RequireRole(Roles.Teacher, Roles.Admin)
+                .AddRequirements(new NoPlatformSessionRequirement()));
             o.AddPolicy(Policies.Student, p => p.RequireRole(Roles.Student));
         });
+        services.AddSingleton<IAuthorizationHandler, NoPlatformSessionHandler>();
 
         if (useAllowAllCors)
         {

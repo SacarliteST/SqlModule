@@ -33,6 +33,7 @@ internal sealed class SubmitAttemptHandler(
     ISandboxExecutor executor,
     IResultComparer comparer,
     IPhase2bSubmitAttemptService phase2bSubmit,
+    IPlatformStudentScope platformScope,
     IAttemptResultSnapshotService snapshotService,
     IOptions<SandboxOptions> sandboxOptions,
     TimeProvider timeProvider,
@@ -50,25 +51,27 @@ internal sealed class SubmitAttemptHandler(
         {
             if (!command.ModuleSessionId.HasValue)
             {
-                return Result<SubmitAttemptResponse>.Fail(AttemptErrors.ModuleSessionRequired);
+                return Result<SubmitAttemptResponse>.Fail(PlatformSessionErrors.SessionNotFound);
+            }
+
+            // Владелец и задание проверяются до любых побочных эффектов; закрытие/истечение
+            // сессии решает Phase2b — только там можно отличить идемпотентный replay от нового запроса.
+            var allowed = await platformScope.EnsureTaskAllowedAsync(
+                command.UserId,
+                command.ModuleSessionId.Value,
+                command.TaskId,
+                PlatformScopeMode.Read,
+                ct);
+            if (!allowed.IsSuccess)
+            {
+                return Result<SubmitAttemptResponse>.Fail(allowed.Error!);
             }
 
             moduleSession = await db.ModuleSessions.SingleOrDefaultAsync(
                 value => value.Id == command.ModuleSessionId.Value, ct);
             if (moduleSession is null)
             {
-                return Result<SubmitAttemptResponse>.Fail(AttemptErrors.ModuleSessionRequired);
-            }
-
-            if (moduleSession.UserId != command.UserId)
-            {
-                return Result<SubmitAttemptResponse>.Fail(AttemptErrors.ModuleSessionForbidden);
-            }
-
-            if (!Guid.TryParse(moduleSession.TaskRef, out var sessionTaskId) ||
-                sessionTaskId != command.TaskId)
-            {
-                return Result<SubmitAttemptResponse>.Fail(AttemptErrors.SessionTaskMismatch);
+                return Result<SubmitAttemptResponse>.Fail(PlatformSessionErrors.SessionNotFound);
             }
         }
 
@@ -93,7 +96,7 @@ internal sealed class SubmitAttemptHandler(
 
         // Phase2b проверяет закрытие/истечение платформенной сессии до поиска задания —
         // фейковый/ещё не опубликованный TaskId не должен превращать честный 409
-        // ModuleSessionClosed в 404 TaskNotFound (см. PlatformSubmit_RejectsClosedSessionBeforeSandbox).
+        // ModuleSession.Closed в 404 TaskNotFound.
         var phase2b = await phase2bSubmit.TryHandleAsync(command, moduleSession, ct);
         if (phase2b.Handled)
         {
@@ -287,7 +290,7 @@ internal sealed class SubmitAttemptHandler(
                 value => value.DeduplicationKey == $"grade:{moduleSession.Id:D}", ct);
             if (gradeExists)
             {
-                return Result<SubmitAttemptResponse>.Fail(AttemptErrors.ModuleSessionClosed);
+                return Result<SubmitAttemptResponse>.Fail(PlatformSessionErrors.SessionClosed);
             }
 
             throw;

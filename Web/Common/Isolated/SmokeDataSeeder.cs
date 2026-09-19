@@ -131,10 +131,23 @@ internal sealed class SmokeDataSeeder(
                 TaskId, 100, null, [HintGroup.Result], ValidationConfigurationId);
             db.Add(configuration);
         }
+        else
+        {
+            // Черновик мог остаться от ручного редактирования (например, открыли редактор проверки).
+            configuration.UpdateSettings(100, null, [HintGroup.Result]);
+        }
 
+        var existingCheckIds = configuration.Checks.Select(check => check.Id).ToHashSet();
         configuration.SynchronizeChecks([
             new ValidationCheckDefinition(ValidationCheckId, ValidationCheckKind.MainDatasetResult, null, 100, 0)
         ]);
+        // Новый критерий с заранее заданным Id EF без явного Add трекает как Modified и падает
+        // с DbUpdateConcurrencyException на существующей конфигурации — так же делает UpdateTaskValidationHandler.
+        foreach (var addedCheck in configuration.Checks.Where(check => !existingCheckIds.Contains(check.Id)))
+        {
+            db.ValidationChecks.Add(addedCheck);
+        }
+
         await db.SaveChangesAsync(ct);
 
         var definition = TaskValidationMappings.ToDefinition(configuration);

@@ -10,9 +10,6 @@ internal static class ProgressErrors
         "Progress.ValidationVersionNotPublished",
         "Для задания ещё не опубликована конфигурация проверки.");
 
-    internal static Error PlatformFlowRequired => Error.Conflict(
-        "Progress.PlatformFlowRequired",
-        "В платформенном режиме прохождение создаётся только из сессии Education.");
 
     internal static Error NotFound => Error.Conflict(
         "Progress.NotFound",
