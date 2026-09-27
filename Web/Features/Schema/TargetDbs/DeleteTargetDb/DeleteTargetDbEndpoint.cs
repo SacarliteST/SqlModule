@@ -20,9 +20,11 @@ public sealed class DeleteTargetDbEndpoint : IEndpoint
             .WithDescription(
                 "Удаляет БД-песочницу по Id. " +
                 "Возвращает 204 No Content. " +
-                "404 — запись с указанным id не найдена.")
+                "404 — запись с указанным id не найдена. " +
+                "409 — на базу ссылаются эталонные запросы (TargetDb.InUse).")
             .Produces(StatusCodes.Status204NoContent)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
     }
 
     private static async Task<IResult> Handle(Guid id, ISender sender, CancellationToken ct)
