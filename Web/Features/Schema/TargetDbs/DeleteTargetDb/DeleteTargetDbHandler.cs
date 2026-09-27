@@ -20,6 +20,38 @@ internal sealed class DeleteTargetDbHandler(AppDbContext db)
             return Result.Fail(TargetDbErrors.NotFound(command.Id));
         }
 
+        // SqlQuery -> TargetDb намеренно Restrict (эталонный запрос не должен молча остаться без базы),
+        // поэтому проверяем это явно и отдаём понятный 409, а не падаем на FK-нарушении необработанным 500.
+        var referencingQueries = await db.SqlQueries.AsNoTracking()
+            .Where(x => x.TargetDbId == command.Id)
+            .CountAsync(ct);
+        if (referencingQueries > 0)
+        {
+            return Result.Fail(TargetDbErrors.InUse(command.Id, referencingQueries));
+        }
+
+        // MetaRelationship -> MetaAttribute тоже Restrict (см. MetaRelationshipConfiguration), а каскад
+        // TargetDb -> MetaTable -> MetaAttribute его не подчищает: любая база хотя бы с одной связью
+        // иначе падает на FK-нарушении. Удаляем связи явно, как это уже делает SchemaDiffApplier.
+        var tableIds = await db.MetaTables.AsNoTracking()
+            .Where(x => x.TargetDbId == command.Id)
+            .Select(x => x.Id)
+            .ToListAsync(ct);
+        if (tableIds.Count > 0)
+        {
+            var columnIds = await db.MetaAttributes.AsNoTracking()
+                .Where(x => tableIds.Contains(x.MetaTableId))
+                .Select(x => x.Id)
+                .ToListAsync(ct);
+            if (columnIds.Count > 0)
+            {
+                var relationships = await db.MetaRelationships
+                    .Where(x => columnIds.Contains(x.SourceAttributeId) || columnIds.Contains(x.TargetAttributeId))
+                    .ToListAsync(ct);
+                db.MetaRelationships.RemoveRange(relationships);
+            }
+        }
+
         db.TargetDbs.Remove(entity);
         await db.SaveChangesAsync(ct);
         return Result.Success();

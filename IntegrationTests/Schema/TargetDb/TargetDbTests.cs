@@ -1,9 +1,14 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Client;
+using SQLModule.Contracts.DbmsCatalog.PhysicalType;
+using SQLModule.Contracts.Schema.MetaAttribute;
+using SQLModule.Contracts.Schema.MetaRelationship;
+using SQLModule.Contracts.Schema.MetaTable;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
+using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.infrastructure;
 
 namespace SQLModule.IntegrationTests.Schema.TargetDb;
@@ -173,5 +178,55 @@ public sealed class TargetDbTests : ApiTestBase
     {
         // Act + Assert
         await Should.NotThrowAsync(() => TargetDbClient.DeleteAsync(Guid.NewGuid()));
+    }
+
+    [Fact(DisplayName = "Delete базы со связью между колонками → удаляет связь каскадом, без 500")]
+    public async Task Delete_TargetDbWithRelationship_Succeeds()
+    {
+        // Arrange: TargetDb -> MetaTable (x2) -> MetaAttribute (x2) -> MetaRelationship между ними.
+        // MetaRelationship -> MetaAttribute настроен как Restrict, а каскад TargetDb -> MetaTable ->
+        // MetaAttribute его не подчищает — без явной очистки в DeleteTargetDbHandler это падало
+        // необработанным 500 на FK-нарушении.
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDb = await CreateTargetDbAsync(dbmsId, "WithRelationship");
+        var tableA = await MetaTableClient.CreateAsync(
+            new CreateMetaTableRequest(targetDb.Id, "parent_" + Guid.NewGuid().ToString("N")[..8], null));
+        var tableB = await MetaTableClient.CreateAsync(
+            new CreateMetaTableRequest(targetDb.Id, "child_" + Guid.NewGuid().ToString("N")[..8], null));
+        var physicalType = await AsAdminAsync(() => PhysicalTypeClient.CreateAsync(
+            new CreatePhysicalTypeRequest(dbmsId, "int_" + Guid.NewGuid().ToString("N")[..8])));
+        var columnA = await MetaAttributeClient.CreateAsync(
+            new CreateMetaAttributeRequest(tableA.Id, physicalType.Id, "id", true, true, 1));
+        var columnB = await MetaAttributeClient.CreateAsync(
+            new CreateMetaAttributeRequest(tableB.Id, physicalType.Id, "parent_id", false, true, 1));
+        await MetaRelationshipClient.CreateAsync(
+            new CreateMetaRelationshipRequest("fk_parent", columnB.Id, columnA.Id, null, null));
+
+        // Act + Assert
+        await Should.NotThrowAsync(() => TargetDbClient.DeleteAsync(targetDb.Id));
+        var afterDelete = await TargetDbClient.GetByIdAsync(targetDb.Id);
+        afterDelete.ShouldBeNull();
+    }
+
+    [Fact(DisplayName = "Delete базы, на которую ссылается эталонный запрос → 409 TargetDb.InUse")]
+    public async Task Delete_TargetDbReferencedBySqlQuery_ThrowsConflictException()
+    {
+        // Arrange
+        var dbmsId = await CreateDbmsDictionaryAsync();
+        var targetDb = await CreateTargetDbAsync(dbmsId, "InUse");
+        using (var scope = App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.SqlQueries.Add(SqlQuery.Create("SELECT 1", true, true, targetDb.Id));
+            await db.SaveChangesAsync();
+        }
+
+        // Act
+        var ex = await Should.ThrowAsync<ConflictException>(() => TargetDbClient.DeleteAsync(targetDb.Id));
+
+        // Assert
+        ex.Problem?.Code.ShouldBe("TargetDb.InUse");
+        var stillThere = await TargetDbClient.GetByIdAsync(targetDb.Id);
+        stillThere.ShouldNotBeNull();
     }
 }
