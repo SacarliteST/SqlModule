@@ -9,7 +9,7 @@ using SQLModule.Contracts.Training.Student;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Training.Student;
 

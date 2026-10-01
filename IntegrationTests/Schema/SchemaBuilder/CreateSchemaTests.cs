@@ -5,7 +5,7 @@ using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Contracts.DbmsCatalog.PhysicalType;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Data.Core;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Schema.SchemaBuilder;
 

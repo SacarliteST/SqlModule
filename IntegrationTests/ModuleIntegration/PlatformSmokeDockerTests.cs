@@ -14,7 +14,7 @@ using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Host;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Web.Common.Isolated;
 
 namespace SQLModule.IntegrationTests.ModuleIntegration;

@@ -20,34 +20,34 @@ using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;
 
-internal sealed record Phase2bSubmitResult(bool Handled, Result<SubmitAttemptResponse>? Result);
+internal sealed record Phase2BSubmitResult(bool Handled, Result<SubmitAttemptResponse>? Result);
 
-internal interface IPhase2bSubmitAttemptService
+internal interface IPhase2BSubmitAttemptService
 {
-    Task<Phase2bSubmitResult> TryHandleAsync(
+    Task<Phase2BSubmitResult> TryHandleAsync(
         SubmitAttemptCommand command,
         ModuleSession? moduleSession,
         CancellationToken ct);
 }
 
-internal sealed class Phase2bSubmitAttemptService(
+internal sealed class Phase2BSubmitAttemptService(
     AppDbContext db,
     IAttemptReservationService reservationService,
     IProgressFinalizationService finalizationService,
     IPlatformProgressService platformProgressService,
     IPlatformStudentScope platformScope,
-    IPhase2bValidationRuntimeReader runtimeReader,
+    IPhase2BValidationRuntimeReader runtimeReader,
     ISqlSyntaxAnalyzerResolver analyzerResolver,
     ISandboxExecutor executor,
     IResultComparer comparer,
     IAttemptResultSnapshotService snapshotService,
     IOptions<SandboxOptions> sandboxOptions,
     TimeProvider timeProvider,
-    ILogger<Phase2bSubmitAttemptService> logger) : IPhase2bSubmitAttemptService
+    ILogger<Phase2BSubmitAttemptService> logger) : IPhase2BSubmitAttemptService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task<Phase2bSubmitResult> TryHandleAsync(
+    public async Task<Phase2BSubmitResult> TryHandleAsync(
         SubmitAttemptCommand command,
         ModuleSession? moduleSession,
         CancellationToken ct)
@@ -117,7 +117,7 @@ internal sealed class Phase2bSubmitAttemptService(
 
         if (progress is null)
         {
-            return new Phase2bSubmitResult(false, null);
+            return new Phase2BSubmitResult(false, null);
         }
 
         var payloadHash = HashPayload(command.TaskId, command.SubmittedSql);
@@ -402,7 +402,7 @@ internal sealed class Phase2bSubmitAttemptService(
 
     private static MainResult EvaluateMain(
         QueryResultSet result,
-        Phase2bValidationRuntime runtime,
+        Phase2BValidationRuntime runtime,
         IResultComparer comparer,
         int rowLimit)
     {
@@ -429,7 +429,7 @@ internal sealed class Phase2bSubmitAttemptService(
     }
 
     private static IReadOnlyList<EvaluatedCheck> EvaluateChecks(
-        Phase2bValidationRuntime runtime,
+        Phase2BValidationRuntime runtime,
         SqlSyntaxAnalysis analysis,
         bool mainPassed)
     {
@@ -466,7 +466,7 @@ internal sealed class Phase2bSubmitAttemptService(
     private SubmitAttemptResponse ToResponse(
         Attempt attempt,
         StudentTaskProgress progress,
-        Phase2bValidationRuntime runtime,
+        Phase2BValidationRuntime runtime,
         IReadOnlyList<EvaluatedCheck> checks,
         AttemptResultSnapshot snapshot,
         DateTimeOffset now)
@@ -537,7 +537,7 @@ internal sealed class Phase2bSubmitAttemptService(
     private static string HashPayload(Guid taskId, string submittedSql) => Convert.ToHexString(
         SHA256.HashData(Encoding.UTF8.GetBytes($"{taskId:D}\n{submittedSql}")));
 
-    private static Phase2bSubmitResult Handled(Result<SubmitAttemptResponse> result) => new(true, result);
+    private static Phase2BSubmitResult Handled(Result<SubmitAttemptResponse> result) => new(true, result);
 
     private sealed record MainResult(
         ExecutionStatus Status, bool IsCorrect, CheckReason Reason, string? PublicError);

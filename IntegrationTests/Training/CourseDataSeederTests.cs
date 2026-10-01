@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using Shouldly;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Web.Common.Isolated;
 
 namespace SQLModule.IntegrationTests.Training;

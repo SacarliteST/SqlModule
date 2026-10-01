@@ -13,7 +13,7 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 {
     [DbContext(typeof(PostgreSqlDbContext))]
     [Migration("20260915120923_AddPhase2bValidationModel")]
-    partial class AddPhase2bValidationModel
+    partial class AddPhase2BValidationModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

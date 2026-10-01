@@ -9,7 +9,7 @@ using Shouldly;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Host;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Training;
 

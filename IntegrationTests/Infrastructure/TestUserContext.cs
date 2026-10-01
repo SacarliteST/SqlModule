@@ -1,4 +1,4 @@
-﻿namespace SQLModule.IntegrationTests.infrastructure;
+﻿namespace SQLModule.IntegrationTests.Infrastructure;
 
 /// <summary>Контекст текущего тест-пользователя — читается <see cref="TestAuthMessageFilter"/>.</summary>
 public sealed class TestUserContext

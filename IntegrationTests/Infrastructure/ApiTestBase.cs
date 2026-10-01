@@ -21,7 +21,7 @@ using SQLModule.Sandbox;
 using SQLModule.Web.Common.Auth;
 using SQLModule.Web.Common.Isolated;
 
-namespace SQLModule.IntegrationTests.infrastructure;
+namespace SQLModule.IntegrationTests.Infrastructure;
 
 /// <summary>Базовый класс интеграционных тестов.</summary>
 [Collection(IntegrationTestCollection.Name)]

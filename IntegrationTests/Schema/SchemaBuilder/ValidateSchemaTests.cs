@@ -1,7 +1,7 @@
 ﻿using Shouldly;
 using SQLModule.Client;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Schema.SchemaBuilder;
 

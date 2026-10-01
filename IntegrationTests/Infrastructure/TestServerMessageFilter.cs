@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Http;
 using Shouldly;
 
-namespace SQLModule.IntegrationTests.infrastructure;
+namespace SQLModule.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Перехватчик HTTP-запросов типизированного клиента: запросы, адресованные тест-серверу,

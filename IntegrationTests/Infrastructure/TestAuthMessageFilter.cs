@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Http;
 
-namespace SQLModule.IntegrationTests.infrastructure;
+namespace SQLModule.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Фильтр HttpClient-пайплайна: добавляет заголовки X-Test-UserId / X-Test-Roles
