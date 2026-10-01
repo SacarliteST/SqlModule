@@ -9,6 +9,6 @@
         </PackageReference>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\Web\SQLModule.Web.csproj" />
+        <ProjectReference Include="..\Web\Web.csproj" />
     </ItemGroup>
 </Project>
