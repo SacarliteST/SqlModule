@@ -7,7 +7,7 @@ using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Training.Attempt;
 

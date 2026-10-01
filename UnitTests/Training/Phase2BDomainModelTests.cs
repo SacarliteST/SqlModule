@@ -3,7 +3,7 @@ using SQLModule.Domain.Training;
 
 namespace SQLModule.UnitTests.Training;
 
-public sealed class Phase2bDomainModelTests
+public sealed class Phase2BDomainModelTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 15, 12, 0, 0, TimeSpan.Zero);
 
@@ -102,7 +102,7 @@ public sealed class Phase2bDomainModelTests
         reservation.UpdatedAt.ShouldBe(Now.AddSeconds(1));
     }
 
-    [Fact(DisplayName = "Legacy Attempt получает Phase 2b scoring без изменения бинарного результата")]
+    [Fact(DisplayName = "Legacy Attempt получает Phase 2B scoring без изменения бинарного результата")]
     public void Attempt_AttachesScoringWithoutChangingMainResult()
     {
         var attempt = Attempt.Record(

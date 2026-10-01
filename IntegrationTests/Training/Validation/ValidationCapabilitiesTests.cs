@@ -6,7 +6,7 @@ using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Contracts.DbmsCatalog.Validation;
 using SQLModule.Domain.Training;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Training.Validation;
 

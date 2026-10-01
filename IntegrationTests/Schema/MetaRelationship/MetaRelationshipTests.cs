@@ -10,7 +10,7 @@ using SQLModule.Contracts.Schema.MetaTable;
 using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Web.Features.Schema.MetaRelationships;
 
 namespace SQLModule.IntegrationTests.Schema.MetaRelationship;

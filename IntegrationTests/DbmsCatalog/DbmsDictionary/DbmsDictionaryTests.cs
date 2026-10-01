@@ -2,7 +2,7 @@
 using SQLModule.Client;
 using SQLModule.Client.DbmsDictionary;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.DbmsCatalog.DbmsDictionary;
 

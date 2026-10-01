@@ -22,7 +22,7 @@ using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Host;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Web.Common.Auth;
 
 namespace SQLModule.IntegrationTests.ModuleIntegration;

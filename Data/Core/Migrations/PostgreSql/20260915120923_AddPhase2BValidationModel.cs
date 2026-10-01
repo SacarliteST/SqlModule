@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SQLModule.Data.Core.Migrations.PostgreSql
 {
     /// <inheritdoc />
-    public partial class AddPhase2bValidationModel : Migration
+    public partial class AddPhase2BValidationModel : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

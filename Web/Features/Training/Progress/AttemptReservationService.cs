@@ -97,7 +97,7 @@ internal sealed class AttemptReservationService(
             {
                 // Отсоединяем только то, что сами добавили/тронули в этой попытке — НЕ
                 // db.ChangeTracker.Clear() целиком: этот же db используется вызывающим кодом
-                // (Phase2bSubmitAttemptService) для progress/moduleSession, и общая очистка
+                // (Phase2BSubmitAttemptService) для progress/moduleSession, и общая очистка
                 // тихо снимает отслеживание с их изменений (например, moduleSession.
                 // MarkCompletionPending() дальше по коду перестаёт сохраняться).
                 db.Entry(reservation).State = EntityState.Detached;

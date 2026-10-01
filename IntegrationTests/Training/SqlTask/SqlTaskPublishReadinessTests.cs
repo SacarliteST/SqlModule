@@ -14,7 +14,7 @@ using SQLModule.Contracts.Training.Topic;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 using DomainAttempt = SQLModule.Domain.Training.Attempt;
 
 namespace SQLModule.IntegrationTests.Training.SqlTask;

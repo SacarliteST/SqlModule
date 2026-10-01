@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.IntegrationTests.ModuleIntegration;

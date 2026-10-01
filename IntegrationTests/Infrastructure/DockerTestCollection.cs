@@ -1,4 +1,4 @@
-﻿namespace SQLModule.IntegrationTests.infrastructure;
+﻿namespace SQLModule.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// xUnit-коллекция для Docker-тестов с реальным ISandboxExecutor.

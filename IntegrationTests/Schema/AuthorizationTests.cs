@@ -2,7 +2,7 @@
 using System.Net.Http.Json;
 using Shouldly;
 using SQLModule.Contracts;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Schema;
 

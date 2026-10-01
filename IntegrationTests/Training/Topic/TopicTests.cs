@@ -1,7 +1,7 @@
 ﻿using Shouldly;
 using SQLModule.Client;
 using SQLModule.Contracts.Training.Topic;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Training.Topic;
 

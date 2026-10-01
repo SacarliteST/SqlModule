@@ -13,7 +13,7 @@ using SQLModule.Web.Common.Isolated;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 using Testcontainers.PostgreSql;
 
-namespace SQLModule.IntegrationTests.infrastructure;
+namespace SQLModule.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Фабрика тест-приложения для Docker-тестов: использует реальный ISandboxExecutor.

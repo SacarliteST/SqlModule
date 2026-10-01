@@ -10,7 +10,7 @@ using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Isolated;
 using SQLModule.Web.Common.Sandbox;

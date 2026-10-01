@@ -5,7 +5,7 @@ using SQLModule.Domain.Training;
 
 namespace SQLModule.UnitTests.Training;
 
-public sealed class Phase2bContractTests
+public sealed class Phase2BContractTests
 {
     [Fact(DisplayName = "Validation enum имеют зафиксированные публичные имена")]
     public void ValidationEnums_HaveStablePublicNames()
@@ -70,8 +70,8 @@ public sealed class Phase2bContractTests
         publish.Version.ShouldBeNull();
     }
 
-    [Fact(DisplayName = "Маршруты Phase 2b совпадают с публичным контрактом")]
-    public void Phase2bRoutes_MatchPublicContract()
+    [Fact(DisplayName = "Маршруты Phase 2B совпадают с публичным контрактом")]
+    public void Phase2BRoutes_MatchPublicContract()
     {
         var taskId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var dbmsId = Guid.Parse("22222222-2222-2222-2222-222222222222");

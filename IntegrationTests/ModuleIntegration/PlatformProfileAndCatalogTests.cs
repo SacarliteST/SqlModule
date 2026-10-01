@@ -19,7 +19,7 @@ using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Host;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.PlatformIntegration.Abstractions;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
@@ -1403,8 +1403,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
     }
 
     /// <summary>
-    /// Как <see cref="SeedRunnableTaskAsync"/>, но дополнительно публикует Phase 2b
-    /// конфигурацию проверки — начиная с Phase 2b <see cref="PlatformProgressService"/>
+    /// Как <see cref="SeedRunnableTaskAsync"/>, но дополнительно публикует Phase 2B
+    /// конфигурацию проверки — начиная с Phase 2B <see cref="PlatformProgressService"/>
     /// требует опубликованную <c>ActiveValidationVersionId</c> для любого platform-задания,
     /// иначе submit отвечает 422 <c>ModuleSession.TaskValidationUnavailable</c>.
     /// </summary>

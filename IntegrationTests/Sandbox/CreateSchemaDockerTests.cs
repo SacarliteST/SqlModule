@@ -4,7 +4,7 @@ using SQLModule.Client;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Sandbox;
 

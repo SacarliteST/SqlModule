@@ -5,7 +5,7 @@ using SQLModule.Contracts.Schema.TargetDb;
 using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Data.Core;
-using SQLModule.IntegrationTests.infrastructure;
+using SQLModule.IntegrationTests.Infrastructure;
 using DomainSqlTask = SQLModule.Domain.Training.SqlTask;
 
 namespace SQLModule.IntegrationTests.Training.SqlQuery;
