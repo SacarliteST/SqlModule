@@ -6,13 +6,120 @@
     "version": "v1"
   },
   "paths": {
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Standalone-обновление токена",
+        "description": "Тонкий прокси: ротирует refresh-токен в IdentityService и сразу обменивает новый access-токен на audience SqlModule. Refresh-токен одноразовый: в ответе приходит новый, старый больше не действует.",
+        "operationId": "StandaloneRefresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/StandaloneRefreshRequest"
+                  }
+                ],
+                "description": "Refresh-токен, выданный при standalone-входе или предыдущем обновлении."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandaloneLoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Standalone-выход",
+        "description": "Отзывает refresh-токен в IdentityService. Идемпотентно: всегда 204.",
+        "operationId": "StandaloneLogout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/StandaloneRefreshRequest"
+                  }
+                ],
+                "description": "Refresh-токен, выданный при standalone-входе или предыдущем обновлении."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "tags": [
           "Auth"
         ],
         "summary": "Standalone-вход через SqlModule",
-        "description": "Тонкий прокси: логинит пользователя в IdentityService и сразу обменивает полученный токен на audience SqlModule, без session_id. Секрет клиента обмена остаётся на сервере — в браузер попадает только уже готовый обменянный токен.",
+        "description": "Тонкий прокси: логинит пользователя в IdentityService и сразу обменивает полученный токен на audience SqlModule, без session_id. Секрет клиента обмена остаётся на сервере — в браузер попадает только уже готовый обменянный токен и refresh-токен для POST /auth/refresh.",
         "operationId": "StandaloneLogin",
         "requestBody": {
           "content": {
@@ -1340,7 +1447,7 @@
           "Schema"
         ],
         "summary": "Удалить целевую БД",
-        "description": "Удаляет БД-песочницу по Id. Возвращает 204 No Content. 404 — запись с указанным id не найдена.",
+        "description": "Удаляет БД-песочницу по Id. Возвращает 204 No Content. 404 — запись с указанным id не найдена. 409 — на базу ссылаются эталонные запросы (TargetDb.InUse).",
         "operationId": "DeleteTargetDb",
         "parameters": [
           {
@@ -6169,7 +6276,7 @@
           "Training"
         ],
         "summary": "Список попыток с пагинацией",
-        "description": "Возвращает 200 OK со страницей попыток, отсортированных по убыванию даты начала. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). taskId — необязательный фильтр по заданию. userId — необязательный фильтр по студенту. progressId и validationVersionId — фильтры Phase 2b. scoreFrom/scoreTo — включительный диапазон баллов 0–100. finalizationReason — причина финализации прохождения. 422 — некорректные параметры фильтрации или пагинации.",
+        "description": "Возвращает 200 OK со страницей попыток, отсортированных по убыванию даты начала. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). taskId — необязательный фильтр по заданию. userId — необязательный фильтр по студенту. progressId и validationVersionId — фильтры Phase 2B. scoreFrom/scoreTo — включительный диапазон баллов 0–100. finalizationReason — причина финализации прохождения. 422 — некорректные параметры фильтрации или пагинации.",
         "operationId": "GetAllAttempts",
         "parameters": [
           {
@@ -10411,15 +10518,31 @@
         "type": "object",
         "properties": {
           "accessToken": {
-            "type": "string"
+            "type": "string",
+            "description": "Обменянный токен под audience SqlModule."
           },
           "expiresIn": {
             "type": "integer",
+            "description": "Время жизни токена в секундах.",
             "format": "int32"
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh-токен IdentityService для `POST /auth/refresh`; одноразовый, ротируется при каждом обновлении."
           }
         },
         "additionalProperties": false,
         "description": "Токен, уже обменянный на audience SqlModule — готов к использованию против его API."
+      },
+      "StandaloneRefreshRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Refresh-токен, выданный при standalone-входе или предыдущем обновлении."
       },
       "StudentAttemptListItemResponse": {
         "required": [
@@ -13152,4 +13275,4 @@
       "name": "TrainingValidation"
     }
   ]
-}
+}
