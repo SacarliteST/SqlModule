@@ -7,38 +7,36 @@ using SQLModule.Contracts.Auth;
 using SQLModule.Identity.Client;
 using SQLModule.Web.Common;
 
-namespace SQLModule.Web.Features.Auth.StandaloneLogin;
+namespace SQLModule.Web.Features.Auth.StandaloneRefresh;
 
-internal sealed class StandaloneLoginEndpoint : IEndpoint
+internal sealed class StandaloneRefreshEndpoint : IEndpoint
 {
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
-        app.MapPost(ApiRoutes.Auth.Login, Handle)
+        app.MapPost(ApiRoutes.Auth.Refresh, Handle)
             .AllowAnonymous()
-            .WithName("StandaloneLogin")
+            .WithName("StandaloneRefresh")
             .WithTags("Auth")
-            .WithSummary("Standalone-вход через SqlModule")
+            .WithSummary("Standalone-обновление токена")
             .WithDescription(
-                "Тонкий прокси: логинит пользователя в IdentityService и сразу обменивает " +
-                "полученный токен на audience SqlModule, без session_id. Секрет клиента обмена " +
-                "остаётся на сервере — в браузер попадает только уже готовый обменянный токен " +
-                "и refresh-токен для POST /auth/refresh.")
+                "Тонкий прокси: ротирует refresh-токен в IdentityService и сразу обменивает новый " +
+                "access-токен на audience SqlModule. Refresh-токен одноразовый: в ответе приходит новый, " +
+                "старый больше не действует.")
             .Produces<StandaloneLoginResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
-            .AddEndpointFilter<ValidationFilter<StandaloneLoginRequest>>();
+            .AddEndpointFilter<ValidationFilter<StandaloneRefreshRequest>>();
     }
 
     private static async Task<IResult> Handle(
-        StandaloneLoginRequest request,
+        StandaloneRefreshRequest request,
         IIdentityAuthClient identityAuthClient,
         IConfiguration configuration,
         CancellationToken ct)
     {
-        var audience = StandaloneAuthAudience.Resolve(configuration);
-        var result = await identityAuthClient.LoginAndExchangeAsync(
-            request.Email, request.Password, audience, ct);
+        var result = await identityAuthClient.RefreshAndExchangeAsync(
+            request.RefreshToken, StandaloneAuthAudience.Resolve(configuration), ct);
 
         return result.Outcome switch
         {
@@ -46,9 +44,9 @@ internal sealed class StandaloneLoginEndpoint : IEndpoint
                 new StandaloneLoginResponse(result.AccessToken!, result.ExpiresIn, result.RefreshToken ?? String.Empty)),
             IdentityLoginOutcome.InvalidCredentials => ApiProblemFactory.ToResult(
                 StatusCodes.Status401Unauthorized,
-                String.IsNullOrWhiteSpace(result.ErrorTitle) ? "Не удалось войти" : result.ErrorTitle,
-                String.IsNullOrWhiteSpace(result.ErrorDetail) ? "Неверный email или пароль." : result.ErrorDetail,
-                "Auth.InvalidCredentials"),
+                "Сессия истекла",
+                "Refresh-токен недействителен или истёк. Войдите заново.",
+                "Auth.InvalidRefreshToken"),
             _ => ApiProblemFactory.ToResult(
                 StatusCodes.Status503ServiceUnavailable,
                 "Сервис временно недоступен",

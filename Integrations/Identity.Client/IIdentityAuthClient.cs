@@ -16,6 +16,7 @@ public enum IdentityLoginOutcome
 /// <param name="Outcome">Итог операции.</param>
 /// <param name="AccessToken">Токен, уже обменянный на целевой audience. <see langword="null"/> при ошибке.</param>
 /// <param name="ExpiresIn">Время жизни токена в секундах.</param>
+/// <param name="RefreshToken">Refresh-токен IdentityService (ротированный при обновлении). <see langword="null"/> при ошибке.</param>
 /// <param name="ErrorTitle">
 /// Заголовок ошибки IdentityService при <see cref="IdentityLoginOutcome.InvalidCredentials"/> —
 /// например, различает неверный пароль и заблокированную учётную запись.
@@ -25,6 +26,7 @@ public sealed record IdentityLoginResult(
     IdentityLoginOutcome Outcome,
     string? AccessToken,
     int ExpiresIn,
+    string? RefreshToken = null,
     string? ErrorTitle = null,
     string? ErrorDetail = null);
 
@@ -40,4 +42,16 @@ public interface IIdentityAuthClient
         string password,
         string audience,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Ротирует refresh-токен в IdentityService и обменивает новый access-токен на целевую audience.
+    /// <see cref="IdentityLoginOutcome.InvalidCredentials"/> — refresh-токен отклонён (истёк, отозван).
+    /// </summary>
+    Task<IdentityLoginResult> RefreshAndExchangeAsync(
+        string refreshToken,
+        string audience,
+        CancellationToken ct = default);
+
+    /// <summary>Отзывает refresh-токен в IdentityService. Идемпотентно; сбой IdentityService не пробрасывается.</summary>
+    Task LogoutAsync(string refreshToken, CancellationToken ct = default);
 }

@@ -27,7 +27,7 @@ internal sealed class IdentityAuthClient(
         if (loginBody.Value.Unauthorized)
         {
             return new IdentityLoginResult(
-                IdentityLoginOutcome.InvalidCredentials, null, 0,
+                IdentityLoginOutcome.InvalidCredentials, null, 0, null,
                 loginBody.Value.ErrorTitle, loginBody.Value.ErrorDetail);
         }
 
@@ -43,10 +43,66 @@ internal sealed class IdentityAuthClient(
             return Unavailable();
         }
 
-        return new IdentityLoginResult(IdentityLoginOutcome.Success, exchanged.AccessToken, exchanged.ExpiresIn);
+        return new IdentityLoginResult(
+            IdentityLoginOutcome.Success, exchanged.AccessToken, exchanged.ExpiresIn, loginBody.Value.RefreshToken);
     }
 
-    private async Task<(bool Unauthorized, string? AccessToken, string? ErrorTitle, string? ErrorDetail)?> LoginAsync(
+    public async Task<IdentityLoginResult> RefreshAndExchangeAsync(
+        string refreshToken, string audience, CancellationToken ct = default)
+    {
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.PostAsJsonAsync("api/v1/auth/refresh", new { refreshToken }, JsonOptions, ct);
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            return Unavailable();
+        }
+
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.UnprocessableEntity)
+        {
+            var problem = await response.Content.ReadFromJsonAsync<ProblemBody>(JsonOptions, ct);
+            return new IdentityLoginResult(
+                IdentityLoginOutcome.InvalidCredentials, null, 0, null, problem?.Title, problem?.Detail);
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return Unavailable();
+        }
+
+        var body = await response.Content.ReadFromJsonAsync<LoginBody>(JsonOptions, ct);
+        if (String.IsNullOrEmpty(body?.AccessToken) || String.IsNullOrEmpty(body.RefreshToken))
+        {
+            return Unavailable();
+        }
+
+        // Refresh-токен уже ротирован: если обмен не удастся, клиент получит 503 и войдёт заново.
+        var exchanged = await ExchangeAsync(body.AccessToken, audience, ct);
+        if (exchanged is null || String.IsNullOrEmpty(exchanged.AccessToken))
+        {
+            return Unavailable();
+        }
+
+        return new IdentityLoginResult(
+            IdentityLoginOutcome.Success, exchanged.AccessToken, exchanged.ExpiresIn, body.RefreshToken);
+    }
+
+    public async Task LogoutAsync(string refreshToken, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await httpClient.PostAsJsonAsync(
+                "api/v1/auth/logout", new { refreshToken }, JsonOptions, ct);
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            // Выход не должен падать из-за недоступного IdentityService.
+        }
+    }
+
+    private async Task<(bool Unauthorized, string? AccessToken, string? RefreshToken, string? ErrorTitle, string? ErrorDetail)?> LoginAsync(
         string email, string password, CancellationToken ct)
     {
         HttpResponseMessage response;
@@ -65,7 +121,7 @@ internal sealed class IdentityAuthClient(
             // Пробрасываем title/detail как есть — IdentityService по-разному формулирует
             // неверный пароль и заблокированную учётную запись, фронт различает их по тексту.
             var problem = await response.Content.ReadFromJsonAsync<ProblemBody>(JsonOptions, ct);
-            return (true, null, problem?.Title, problem?.Detail);
+            return (true, null, null, problem?.Title, problem?.Detail);
         }
 
         if (!response.IsSuccessStatusCode)
@@ -74,7 +130,7 @@ internal sealed class IdentityAuthClient(
         }
 
         var body = await response.Content.ReadFromJsonAsync<LoginBody>(JsonOptions, ct);
-        return (false, body?.AccessToken, null, null);
+        return (false, body?.AccessToken, body?.RefreshToken, null, null);
     }
 
     private async Task<ExchangeBody?> ExchangeAsync(string subjectToken, string audience, CancellationToken ct)
@@ -107,7 +163,7 @@ internal sealed class IdentityAuthClient(
     private static IdentityLoginResult Unavailable() =>
         new(IdentityLoginOutcome.Unavailable, null, 0);
 
-    private sealed record LoginBody(string AccessToken);
+    private sealed record LoginBody(string AccessToken, string? RefreshToken);
     private sealed record ExchangeBody(string AccessToken, int ExpiresIn);
     private sealed record ProblemBody(string? Title, string? Detail);
 }

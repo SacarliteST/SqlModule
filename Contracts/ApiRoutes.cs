@@ -14,6 +14,12 @@ public static class ApiRoutes
         /// без session_id.
         /// </summary>
         public const string Login = PrefixV1 + "/auth/login";
+
+        /// <summary>Standalone-обновление: ротация refresh-токена в IdentityService + новый обмен токена.</summary>
+        public const string Refresh = PrefixV1 + "/auth/refresh";
+
+        /// <summary>Standalone-выход: отзыв refresh-токена в IdentityService.</summary>
+        public const string Logout = PrefixV1 + "/auth/logout";
     }
 
     /// <summary>Маршруты интеграции с основной платформой.</summary>
