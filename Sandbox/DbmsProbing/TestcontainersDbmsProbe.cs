@@ -4,28 +4,27 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using MySqlConnector;
 using Npgsql;
-using SQLModule.Common.Results;
 
-namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+namespace SQLModule.Sandbox.DbmsProbing;
 
-internal sealed class TestcontainersDbmsProbe(
+public sealed class TestcontainersDbmsProbe(
     IOptions<DbmsCatalogOptions> optionsAccessor,
     IMemoryCache cache) : IDbmsProbe
 {
     private readonly DbmsCatalogOptions opts = optionsAccessor.Value;
 
-    public async Task<Result> ProbeAsync(DbmsProbeSpec spec, CancellationToken ct)
+    public async Task<DbmsProbeResult> ProbeAsync(DbmsProbeSpec spec, CancellationToken ct)
     {
         if (!opts.ProbeEnabled)
         {
-            return Result.Success();
+            return DbmsProbeResult.Success();
         }
 
         var cacheKey =
             $"probe:{spec.DbmsSystemName}:{spec.DockerImage}:{spec.DefaultPort}:{spec.DefaultDatabase}:{spec.DefaultUsername}";
         if (cache.TryGetValue(cacheKey, out _))
         {
-            return Result.Success();
+            return DbmsProbeResult.Success();
         }
 
         try
@@ -54,11 +53,11 @@ internal sealed class TestcontainersDbmsProbe(
             await cmd.ExecuteScalarAsync(cts.Token);
 
             cache.Set(cacheKey, true, opts.ProbeCacheTtl);
-            return Result.Success();
+            return DbmsProbeResult.Success();
         }
         catch (Exception ex)
         {
-            return Result.Fail(DbmsDictionaryErrors.ProbeFailed(ex.Message));
+            return DbmsProbeResult.Failure(ex.Message);
         }
     }
 

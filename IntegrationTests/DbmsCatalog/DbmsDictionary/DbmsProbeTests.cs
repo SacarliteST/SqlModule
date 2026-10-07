@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Shouldly;
-using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.IntegrationTests.DbmsCatalog.DbmsDictionary;
 
@@ -66,7 +66,7 @@ public sealed class DbmsProbeTests
 
         // Assert
         result.IsSuccess.ShouldBeFalse();
-        result.Error!.Code.ShouldContain("ProbeFailed");
+        result.ErrorMessage.ShouldNotBeNullOrWhiteSpace();
     }
 
     [Fact(DisplayName = "ProbeAsync при ProbeEnabled=false → успех без запуска контейнера")]

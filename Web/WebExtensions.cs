@@ -11,7 +11,7 @@ using SQLModule.Web.Common;
 using SQLModule.Web.Common.Auth;
 using SQLModule.Web.Common.Auth.Isolated;
 using SQLModule.Web.Common.Isolated;
-using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Sandbox.DbmsProbing;
 using SQLModule.Web.Features.ModuleIntegration;
 using SQLModule.Web.Features.Training.Attempts;
 

@@ -1,5 +1,5 @@
 ﻿using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
-using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary;
 

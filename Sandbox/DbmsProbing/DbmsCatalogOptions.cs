@@ -1,6 +1,6 @@
-﻿namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+﻿namespace SQLModule.Sandbox.DbmsProbing;
 
-internal sealed class DbmsCatalogOptions
+public sealed class DbmsCatalogOptions
 {
     public const string SectionKey = "DbmsCatalog";
 

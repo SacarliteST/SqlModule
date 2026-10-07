@@ -1,7 +1,7 @@
 ﻿using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Web.Common.Cqrs;
-using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.ValidateDbmsDictionary;
 
@@ -27,6 +27,10 @@ internal sealed class ValidateDbmsDictionaryHandler(IDbmsProbe probe)
             command.EnvUserKey, command.EnvPasswordKey, command.EnvDatabaseKey, command.ExtraEnvConfig,
             command.DefaultDatabase, command.DefaultUsername, command.DefaultPassword);
 
-        return await probe.ProbeAsync(spec, ct);
+        var probeResult = await probe.ProbeAsync(spec, ct);
+
+        return probeResult.IsSuccess
+            ? Result.Success()
+            : Result.Fail(DbmsDictionaryErrors.ProbeFailed(probeResult.ErrorMessage!));
     }
 }

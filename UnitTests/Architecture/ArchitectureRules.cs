@@ -92,8 +92,6 @@ internal static class ArchitectureRules
     public static IReadOnlyDictionary<string, string> KnownPackageViolations { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["Web -> Testcontainers"] = "REF-003: TestcontainersDbmsProbe переезжает в Sandbox.",
-            ["Web -> Npgsql"] = "REF-003/004: PostgresException переводится в Data.",
             ["Web -> Microsoft.EntityFrameworkCore"] = "REF-004/005: handlers используют EF Core, пока не вынесены в Application.",
         };
 
