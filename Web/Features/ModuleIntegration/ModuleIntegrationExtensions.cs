@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SQLModule.Education.Client;
-using SQLModule.Kafka.Publisher;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 
@@ -85,8 +83,6 @@ internal static class ModuleIntegrationExtensions
         if (section.GetValue<bool>(nameof(ModuleIntegrationOptions.Enabled)) &&
             section.GetValue("Kafka:PublisherEnabled", true))
         {
-            services.AddEducationCompletionClient(section);
-            services.AddPracticeEventPublisher(section.GetSection("Kafka"));
             services.AddScoped<PendingPublishProcessor>();
             services.AddHostedService<PendingPublishWorker>();
         }

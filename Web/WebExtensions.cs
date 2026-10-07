@@ -4,10 +4,8 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using SQLModule.Data;
 using SQLModule.Data.Core.Migrations;
 using SQLModule.Domain.Common;
-using SQLModule.Identity.Client;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common;
 using SQLModule.Web.Common.Auth;
@@ -109,9 +107,7 @@ public static class WebExtensions
         services.AddSingleton(TimeProvider.System);
         services.Configure<AttemptResultSnapshotsOptions>(
             configuration.GetSection(AttemptResultSnapshotsOptions.SectionKey));
-        services.AddData(configuration);
         services.AddModuleIntegration(configuration);
-        services.AddIdentityAuthClient(configuration);
         services.AddEndpoints(configuration);
         services.AddValidatorsFromAssemblyContaining<IWebMarker>(includeInternalTypes: true);
         services.AddCqrs();
