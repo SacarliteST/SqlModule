@@ -61,14 +61,13 @@ internal sealed class DeleteSqlTaskHandler(
             await transaction.CommitAsync(ct);
             return Result.Success();
         }
-        catch (DbUpdateException exception) when (
-            exception.InnerException is PostgresException { SqlState: ForeignKeyViolation })
+        catch (DbUpdateException exception) when (exception.IsForeignKeyViolation(out var constraint))
         {
             // Страховка: на задание появилась ссылка, о которой правила не знают, — ожидаемый конфликт, а не 500.
             logger.LogWarning(
                 "Удаление задания {TaskId} отклонено внешним ключом: {Constraint}",
                 command.Id,
-                ((PostgresException)exception.InnerException).ConstraintName);
+                constraint);
             db.ChangeTracker.Clear();
             return Result.Fail(SqlTaskErrors.InUse);
         }

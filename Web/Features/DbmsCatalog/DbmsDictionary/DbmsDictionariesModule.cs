@@ -8,7 +8,6 @@ using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.CreateDbmsDictionary;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.DeleteDbmsDictionary;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionaries;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.GetDbmsDictionaryById;
-using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.UpdateDbmsDictionary;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.ValidateDbmsDictionary;
 
@@ -18,9 +17,6 @@ internal static class DbmsDictionariesModule
 {
     internal static IServiceCollection AddDbmsDictionaries(this IServiceCollection services)
     {
-        services.AddOptions<DbmsCatalogOptions>().BindConfiguration(DbmsCatalogOptions.SectionKey);
-        services.AddMemoryCache();
-        services.AddSingleton<IDbmsProbe, TestcontainersDbmsProbe>();
 
         services.AddScoped<IRequestHandler<CreateDbmsDictionaryCommand, Result<DbmsDictionaryResponse>>, CreateDbmsDictionaryHandler>();
         services.AddScoped<IRequestHandler<ValidateDbmsDictionaryCommand, Result>, ValidateDbmsDictionaryHandler>();

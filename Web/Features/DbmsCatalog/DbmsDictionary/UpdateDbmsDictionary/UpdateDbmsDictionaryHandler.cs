@@ -3,7 +3,7 @@ using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Data.Core;
 using SQLModule.Web.Common.Cqrs;
-using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.UpdateDbmsDictionary;
 
@@ -47,7 +47,7 @@ internal sealed class UpdateDbmsDictionaryHandler(AppDbContext db, IDbmsProbe pr
         var probeResult = await probe.ProbeAsync(spec, ct);
         if (!probeResult.IsSuccess)
         {
-            return Result<DbmsDictionaryResponse>.Fail(probeResult.Error!);
+            return Result<DbmsDictionaryResponse>.Fail(DbmsDictionaryErrors.ProbeFailed(probeResult.ErrorMessage!));
         }
 
         entity.Update(
