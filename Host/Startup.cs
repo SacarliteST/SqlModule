@@ -1,20 +1,17 @@
-﻿using SQLModule.Web;
+using SQLModule.Web;
 
 namespace SQLModule.Host;
 
 internal static class Startup
 {
     public static void ConfigureServices(WebApplicationBuilder builder) =>
-        builder.Services.AddWeb(builder.Configuration);
+        builder.Services.AddApplicationComposition(builder.Configuration);
 
-    public static ILogger CreateLogger()
-    {
-        using var factory = LoggerFactory.Create(options => options
+    /// <summary>Bootstrap-фабрика логирования; владелец обязан освободить её по завершении работы.</summary>
+    public static ILoggerFactory CreateLoggerFactory() =>
+        LoggerFactory.Create(options => options
             .AddConsole()
             .SetMinimumLevel(LogLevel.Trace));
-
-        return factory.CreateLogger<Program>();
-    }
 
     public static void ConfigureApp(WebApplication app)
     {
