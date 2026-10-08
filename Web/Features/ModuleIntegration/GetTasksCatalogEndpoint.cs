@@ -4,19 +4,17 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Cqrs;
+using SQLModule.Common.Results;
 using Microsoft.Extensions.Options;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;
-using SQLModule.Data.Core;
-using SQLModule.Domain.Training;
 using SQLModule.Web.Common;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 
 internal sealed class GetTasksCatalogEndpoint : IModuleIntegrationEndpoint
 {
-    private const int DescriptionMaxLength = 200;
 
     public void MapEndpoints(IEndpointRouteBuilder app)
     {
@@ -35,7 +33,7 @@ internal sealed class GetTasksCatalogEndpoint : IModuleIntegrationEndpoint
     private static async Task<IResult> Handle(
         [FromHeader(Name = "X-Service-Key"), Required] string? serviceKey,
         IOptions<ModuleIntegrationOptions> options,
-        AppDbContext db,
+        ISender sender,
         CancellationToken ct)
     {
         if (!ServiceKeyValidator.IsValid(serviceKey, options.Value.ServiceKey))
@@ -47,18 +45,8 @@ internal sealed class GetTasksCatalogEndpoint : IModuleIntegrationEndpoint
                 "InvalidServiceKey");
         }
 
-        var items = await db.SqlTasks.AsNoTracking()
-            .Where(task => task.PublicationStatus == PublicationStatus.Published)
-            .OrderBy(task => task.TaskName)
-            .ThenBy(task => task.Id)
-            .Select(task => new ModuleTaskCatalogItemResponse(
-                task.Id.ToString(),
-                task.TaskName,
-                task.TaskText.Length <= DescriptionMaxLength
-                    ? task.TaskText
-                    : task.TaskText.Substring(0, DescriptionMaxLength)))
-            .ToListAsync(ct);
-
-        return TypedResults.Ok<IReadOnlyList<ModuleTaskCatalogItemResponse>>(items);
+        var result = await sender.Send<GetModuleTasksCatalogQuery, Result<IReadOnlyList<ModuleTaskCatalogItemResponse>>>(
+            new GetModuleTasksCatalogQuery(), ct);
+        return result.ToOk();
     }
 }
