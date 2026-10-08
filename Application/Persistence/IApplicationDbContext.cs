@@ -63,6 +63,9 @@ public interface IApplicationDbContext
     /// <summary>Доступ к транзакциям и подключению.</summary>
     DatabaseFacade Database { get; }
 
+    /// <summary>Доступ к состоянию отслеживаемой сущности.</summary>
+    EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
+
     /// <summary>Отслеживание изменений.</summary>
     ChangeTracker ChangeTracker { get; }
 

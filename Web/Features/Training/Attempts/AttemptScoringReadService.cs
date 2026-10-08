@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Progress;
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Data.Core;

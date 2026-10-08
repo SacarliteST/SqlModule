@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Progress;
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

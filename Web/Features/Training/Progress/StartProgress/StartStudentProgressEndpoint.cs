@@ -1,3 +1,5 @@
+using SQLModule.Application.Training.Progress;
+using SQLModule.Application.Training.Progress.StartProgress;
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using SQLModule.Common.Results;
