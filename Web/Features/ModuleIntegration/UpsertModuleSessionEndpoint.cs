@@ -1,19 +1,15 @@
 using SQLModule.Application.ModuleIntegration;
-using SQLModule.Application.Training.Progress;
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Cqrs;
 using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;
-using SQLModule.Data.Core;
-using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Web.Common;
-using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 
@@ -41,8 +37,7 @@ internal sealed class UpsertModuleSessionEndpoint : IModuleIntegrationEndpoint
         UpsertModuleSessionRequest request,
         [FromHeader(Name = "X-Service-Key"), Required] string? serviceKey,
         IOptions<ModuleIntegrationOptions> options,
-        IPlatformProgressService progressService,
-        AppDbContext db,
+        ISender sender,
         CancellationToken ct)
     {
         using var activity = ModuleIntegrationTelemetry.StartActivity("module-session.push");
@@ -56,71 +51,16 @@ internal sealed class UpsertModuleSessionEndpoint : IModuleIntegrationEndpoint
                 "InvalidServiceKey");
         }
 
-        var sessionId = request.SessionId!.Value;
-        var session = await db.ModuleSessions.SingleOrDefaultAsync(value => value.Id == sessionId, ct);
-
-        if (session is null)
+        var result = await sender.Send<UpsertModuleSessionCommand, Result>(new UpsertModuleSessionCommand(request), ct);
+        if (result.Error?.Code == ModuleSessionErrors.CompletedCode)
         {
-            var created = ModuleSession.Create(
-                sessionId,
-                request.SessionKey!,
-                request.UserId!.Value,
-                request.TaskRef!,
-                request.ReturnUrl!,
-                request.ExpiresAt);
-            db.ModuleSessions.Add(created);
-
-            var progressResult = await progressService.EnsureCreatedAsync(created, ct);
-            if (!progressResult.IsSuccess && !IsValidationVersionPending(progressResult.Error))
-            {
-                return progressResult.ToOk();
-            }
-
-            try
-            {
-                await db.SaveChangesAsync(ct);
-                ModuleIntegrationTelemetry.RecordPush(ModuleIntegrationTelemetryOutcomes.Created);
-                return TypedResults.Ok();
-            }
-            catch (DbUpdateException)
-            {
-                // Параллельный повтор того же push мог вставить строку после SELECT.
-                // Если причина другая, повторное чтение не найдёт сессию и исходная ошибка уйдёт выше.
-                db.ChangeTracker.Clear();
-                session = await db.ModuleSessions.SingleOrDefaultAsync(value => value.Id == sessionId, ct);
-                if (session is null)
-                {
-                    throw;
-                }
-            }
-        }
-
-        if (session.Status != ModuleSessionStatus.Active)
-        {
-            ModuleIntegrationTelemetry.RecordPush(ModuleIntegrationTelemetryOutcomes.Conflict);
             return ApiProblemFactory.ToResult(
                 StatusCodes.Status409Conflict,
                 "Конфликт состояния",
                 "Неактивную платформенную сессию нельзя обновить.",
-                "ModuleSession.Completed");
+                ModuleSessionErrors.CompletedCode);
         }
 
-        session.Synchronize(
-            request.SessionKey!,
-            request.UserId!.Value,
-            request.TaskRef!,
-            request.ReturnUrl!,
-            request.ExpiresAt);
-        var existingProgressResult = await progressService.EnsureCreatedAsync(session, ct);
-        if (!existingProgressResult.IsSuccess && !IsValidationVersionPending(existingProgressResult.Error))
-        {
-            return existingProgressResult.ToOk();
-        }
-        await db.SaveChangesAsync(ct);
-        ModuleIntegrationTelemetry.RecordPush(ModuleIntegrationTelemetryOutcomes.Updated);
-        return TypedResults.Ok();
+        return result.IsSuccess ? TypedResults.Ok() : result.ToOk();
     }
-
-    private static bool IsValidationVersionPending(SQLModule.Common.Results.Error? error) =>
-        error?.Code == "ModuleSession.TaskValidationUnavailable";
 }

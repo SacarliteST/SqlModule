@@ -122,9 +122,6 @@ internal static class ArchitectureRules
     public static IReadOnlyDictionary<string, string> KnownEndpointViolations { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["GetCurrentModuleSessionEndpoint"] = "REF-005: читает AppDbContext напрямую — вынести запрос в Application.",
-            ["GetTasksCatalogEndpoint"] = "REF-005: читает AppDbContext напрямую — вынести запрос в Application.",
-            ["UpsertModuleSessionEndpoint"] = "REF-005: пишет через AppDbContext напрямую — вынести команду в Application.",
             ["StudentEndpoints"] = "REF-005: читает AppDbContext напрямую — вынести запросы в Application.",
             ["StandaloneLoginEndpoint"] = "REF-005: вызывает IIdentityAuthClient напрямую — вынести команду в Application.",
             ["StandaloneLogoutEndpoint"] = "REF-005: вызывает IIdentityAuthClient напрямую — вынести команду в Application.",

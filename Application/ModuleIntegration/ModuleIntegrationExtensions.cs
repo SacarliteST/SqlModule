@@ -1,4 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
+using SQLModule.Application.Cqrs;
+using SQLModule.Common.Results;
+using SQLModule.Contracts.ModuleIntegration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace SQLModule.Application.ModuleIntegration;
@@ -11,6 +14,9 @@ public static class ModuleIntegrationExtensions
     {
         var section = configuration.GetSection(ModuleIntegrationOptions.SectionKey);
         services.AddScoped<IPlatformStudentScope, PlatformStudentScope>();
+        services.AddScoped<IRequestHandler<GetCurrentModuleSessionQuery, Result<CurrentModuleSessionResponse>>, GetCurrentModuleSessionHandler>();
+        services.AddScoped<IRequestHandler<GetModuleTasksCatalogQuery, Result<IReadOnlyList<ModuleTaskCatalogItemResponse>>>, GetModuleTasksCatalogHandler>();
+        services.AddScoped<IRequestHandler<UpsertModuleSessionCommand, Result>, UpsertModuleSessionHandler>();
         services.AddOptions<ModuleIntegrationOptions>()
             .Bind(section)
             .Validate(
