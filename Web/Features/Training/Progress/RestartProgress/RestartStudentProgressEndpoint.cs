@@ -1,3 +1,4 @@
+using SQLModule.Application.ModuleIntegration;
 using SQLModule.Application.Training.Progress;
 using SQLModule.Application.Training.Progress.RestartProgress;
 ﻿using System.ComponentModel.DataAnnotations;

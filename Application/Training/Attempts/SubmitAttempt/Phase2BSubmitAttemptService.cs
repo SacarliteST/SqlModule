@@ -10,20 +10,19 @@ using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Contracts.Training.Validation;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
 using SQLModule.Domain.Training.Validation;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
-using SQLModule.Web.Features.ModuleIntegration;
-using SQLModule.Web.Features.Training.Progress;
+using SQLModule.Application.ModuleIntegration;
 
-namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;
+namespace SQLModule.Application.Training.Attempts.SubmitAttempt;
 
-internal sealed record Phase2BSubmitResult(bool Handled, Result<SubmitAttemptResponse>? Result);
+public sealed record Phase2BSubmitResult(bool Handled, Result<SubmitAttemptResponse>? Result);
 
-internal interface IPhase2BSubmitAttemptService
+public interface IPhase2BSubmitAttemptService
 {
     Task<Phase2BSubmitResult> TryHandleAsync(
         SubmitAttemptCommand command,
@@ -31,8 +30,8 @@ internal interface IPhase2BSubmitAttemptService
         CancellationToken ct);
 }
 
-internal sealed class Phase2BSubmitAttemptService(
-    AppDbContext db,
+public sealed class Phase2BSubmitAttemptService(
+    IApplicationDbContext db,
     IAttemptReservationService reservationService,
     IProgressFinalizationService finalizationService,
     IPlatformProgressService platformProgressService,

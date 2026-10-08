@@ -3,13 +3,14 @@ using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Application.Cqrs;
-using SQLModule.Web.Features.Training.Attempts.SubmitAttempt;
+using SQLModule.Application.Training.Attempts.GetAttemptFilterOptions;
+using SQLModule.Application.Training.Attempts.SubmitAttempt;
 
-namespace SQLModule.Web.Features.Training.Attempts;
+namespace SQLModule.Application.Training.Attempts;
 
-internal static class AttemptsModule
+public static class AttemptsModule
 {
-    internal static IServiceCollection AddAttempts(this IServiceCollection services)
+    public static IServiceCollection AddAttempts(this IServiceCollection services)
     {
         services.AddScoped<IResultComparer, StrictResultComparer>();
         services.AddScoped<IAttemptResultSnapshotService, AttemptResultSnapshotService>();
@@ -20,6 +21,9 @@ internal static class AttemptsModule
         services.AddScoped<IRequestHandler<GetAttemptByIdQuery, Result<AttemptResponse>>, GetAttemptByIdHandler>();
         services.AddScoped<IRequestHandler<GetAllAttemptsQuery, Result<PageResponse<AttemptListItemResponse>>>, GetAllAttemptsHandler>();
         services.AddScoped<IRequestHandler<DeleteAttemptCommand, Result>, DeleteAttemptHandler>();
+        services.AddScoped<IRequestHandler<GetAttemptStudentFilterOptionsQuery, Result<PageResponse<AttemptStudentFilterOptionResponse>>>, GetAttemptStudentFilterOptionsHandler>();
+        services.AddScoped<IRequestHandler<GetAttemptTopicFilterOptionsQuery, Result<PageResponse<AttemptTopicFilterOptionResponse>>>, GetAttemptTopicFilterOptionsHandler>();
+        services.AddScoped<IRequestHandler<GetAttemptTaskFilterOptionsQuery, Result<PageResponse<AttemptTaskFilterOptionResponse>>>, GetAttemptTaskFilterOptionsHandler>();
         return services;
     }
 }

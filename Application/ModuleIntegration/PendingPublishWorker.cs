@@ -3,30 +3,24 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace SQLModule.Web.Features.ModuleIntegration;
+namespace SQLModule.Application.ModuleIntegration;
 
-internal sealed class ModuleSessionCleanupWorker(
+public sealed class PendingPublishWorker(
     IServiceScopeFactory scopeFactory,
     IOptions<ModuleIntegrationOptions> options,
-    ILogger<ModuleSessionCleanupWorker> logger) : BackgroundService
+    ILogger<PendingPublishWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(
-            TimeSpan.FromMinutes(options.Value.Lifecycle.CleanupIntervalMinutes));
+            TimeSpan.FromSeconds(options.Value.Publisher.PollIntervalSeconds));
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 using var scope = scopeFactory.CreateScope();
-                var processor = scope.ServiceProvider.GetRequiredService<ModuleSessionCleanupProcessor>();
-                var removed = await processor.CleanupAsync(stoppingToken);
-                if (removed > 0)
-                {
-                    logger.LogInformation(
-                        "Удалено устаревших platform-сессий: {RemovedCount}.",
-                        removed);
-                }
+                var processor = scope.ServiceProvider.GetRequiredService<PendingPublishProcessor>();
+                await processor.ProcessBatchAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -34,7 +28,7 @@ internal sealed class ModuleSessionCleanupWorker(
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "Ошибка очистки устаревших platform-сессий.");
+                logger.LogError(exception, "Ошибка цикла публикации platform outbox.");
             }
 
             await timer.WaitForNextTickAsync(stoppingToken);

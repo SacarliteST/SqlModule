@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.ModuleIntegration;
 
-namespace SQLModule.Web.Features.ModuleIntegration;
+namespace SQLModule.Application.ModuleIntegration;
 
 /// <summary>Что должна допускать платформенная сессия для конкретной операции.</summary>
-internal enum PlatformScopeMode
+public enum PlatformScopeMode
 {
     /// <summary>Чтение состояния: закрытая и истёкшая сессия не отказывает — студент видит итог.</summary>
     Read,
@@ -15,38 +15,38 @@ internal enum PlatformScopeMode
     Write
 }
 
-internal sealed record PlatformStudentContext(
+public sealed record PlatformStudentContext(
     Guid SessionId,
     Guid UserId,
     Guid TaskId,
     DateTimeOffset? ExpiresAt,
     ModuleSessionStatus Status);
 
-internal static class PlatformSessionErrors
+public static class PlatformSessionErrors
 {
-    internal static Error SessionNotFound => new(
+    public static Error SessionNotFound => new(
         "ModuleSession.NotFound",
         "Платформенная сессия не найдена или недоступна.",
         ErrorType.NotFound);
 
-    internal static Error TaskNotFound => new(
+    public static Error TaskNotFound => new(
         "PlatformSession.TaskNotFound",
         "Задание не найдено или недоступно в текущей платформенной сессии.",
         ErrorType.NotFound);
 
-    internal static Error SessionExpired => Error.Conflict(
+    public static Error SessionExpired => Error.Conflict(
         "ModuleSession.Expired",
         "Срок платформенной сессии истёк.");
 
-    internal static Error SessionClosed => Error.Conflict(
+    public static Error SessionClosed => Error.Conflict(
         "ModuleSession.Closed",
         "Платформенная сессия уже завершена.");
 
-    internal static Error ScopeRestricted => Error.Forbidden(
+    public static Error ScopeRestricted => Error.Forbidden(
         "PlatformSession.ScopeRestricted",
         "Платформенная сессия предоставляет доступ только к назначенному заданию.");
 
-    internal static Error StandaloneOperationForbidden => Error.Forbidden(
+    public static Error StandaloneOperationForbidden => Error.Forbidden(
         "PlatformSession.StandaloneOperationForbidden",
         "Операция недоступна в платформенной сессии.");
 }
@@ -55,7 +55,7 @@ internal static class PlatformSessionErrors
 /// Единая проверка контекста платформенного студента: сессия из доверенного JWT
 /// определяет единственное разрешённое задание.
 /// </summary>
-internal interface IPlatformStudentScope
+public interface IPlatformStudentScope
 {
     Task<Result<PlatformStudentContext>> ResolveAsync(
         Guid userId,
@@ -71,7 +71,7 @@ internal interface IPlatformStudentScope
         CancellationToken cancellationToken);
 }
 
-internal sealed class PlatformStudentScope(AppDbContext db, TimeProvider timeProvider)
+public sealed class PlatformStudentScope(IApplicationDbContext db, TimeProvider timeProvider)
     : IPlatformStudentScope
 {
     private sealed record SessionSnapshot(

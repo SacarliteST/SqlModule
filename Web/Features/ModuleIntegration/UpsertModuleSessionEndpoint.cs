@@ -1,3 +1,4 @@
+using SQLModule.Application.ModuleIntegration;
 using SQLModule.Application.Training.Progress;
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Builder;

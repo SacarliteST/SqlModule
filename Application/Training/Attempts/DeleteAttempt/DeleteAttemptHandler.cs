@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Training.Attempts;
+namespace SQLModule.Application.Training.Attempts;
 
-internal record DeleteAttemptCommand(Guid Id) : IRequest<Result>;
+public record DeleteAttemptCommand(Guid Id) : IRequest<Result>;
 
-internal sealed class DeleteAttemptHandler(AppDbContext db)
+public sealed class DeleteAttemptHandler(IApplicationDbContext db)
     : IRequestHandler<DeleteAttemptCommand, Result>
 {
     public async Task<Result> Handle(DeleteAttemptCommand command, CancellationToken ct)

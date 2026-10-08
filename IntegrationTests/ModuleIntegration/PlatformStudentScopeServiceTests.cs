@@ -1,3 +1,4 @@
+using SQLModule.Application.ModuleIntegration;
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;

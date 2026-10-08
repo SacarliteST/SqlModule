@@ -1,15 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Attempt;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Training.Attempts;
+namespace SQLModule.Application.Training.Attempts;
 
-internal record GetAttemptByIdQuery(Guid Id) : IRequest<Result<AttemptResponse>>;
+public record GetAttemptByIdQuery(Guid Id) : IRequest<Result<AttemptResponse>>;
 
-internal sealed class GetAttemptByIdHandler(
-    AppDbContext db,
+public sealed class GetAttemptByIdHandler(
+    IApplicationDbContext db,
     IAttemptResultSnapshotService snapshotService,
     IAttemptScoringReadService scoringReadService,
     TimeProvider timeProvider)

@@ -2,12 +2,12 @@
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Attempt;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Training.Attempts;
+namespace SQLModule.Application.Training.Attempts;
 
-internal record GetAllAttemptsQuery(
+public record GetAllAttemptsQuery(
     int Offset, int Limit, Guid? TaskId, Guid? UserId, Guid? TopicId,
     Domain.Training.ExecutionStatus? Status, bool? IsCorrect,
     DateTimeOffset? DateFrom, DateTimeOffset? DateTo,
@@ -16,7 +16,7 @@ internal record GetAllAttemptsQuery(
     Domain.Training.FinalizationReason? FinalizationReason)
     : IRequest<Result<PageResponse<AttemptListItemResponse>>>;
 
-internal sealed class GetAllAttemptsHandler(AppDbContext db)
+public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
     : IRequestHandler<GetAllAttemptsQuery, Result<PageResponse<AttemptListItemResponse>>>
 {
     public async Task<Result<PageResponse<AttemptListItemResponse>>> Handle(

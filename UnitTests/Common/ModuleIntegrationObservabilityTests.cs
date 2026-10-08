@@ -1,3 +1,4 @@
+using SQLModule.Application.ModuleIntegration;
 ﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Http;

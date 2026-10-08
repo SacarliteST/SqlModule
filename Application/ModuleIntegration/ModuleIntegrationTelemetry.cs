@@ -2,11 +2,11 @@
 using System.Diagnostics.Metrics;
 using SQLModule.Domain.ModuleIntegration;
 
-namespace SQLModule.Web.Features.ModuleIntegration;
+namespace SQLModule.Application.ModuleIntegration;
 
-internal static class ModuleIntegrationTelemetry
+public static class ModuleIntegrationTelemetry
 {
-    internal const string InstrumentationName = "SQLModule.ModuleIntegration";
+    public const string InstrumentationName = "SQLModule.ModuleIntegration";
 
     private static readonly ActivitySource ActivitySource = new(InstrumentationName);
     private static readonly Meter Meter = new(InstrumentationName);
@@ -35,16 +35,16 @@ internal static class ModuleIntegrationTelemetry
         "sqlmodule_integration_pending_messages",
         ObservePendingMessages);
 
-    internal static Activity? StartActivity(string name) =>
+    public static Activity? StartActivity(string name) =>
         ActivitySource.StartActivity(name, ActivityKind.Internal);
 
-    internal static void RecordPush(string outcome) =>
+    public static void RecordPush(string outcome) =>
         PushCounter.Add(1, new KeyValuePair<string, object?>("outcome", outcome));
 
-    internal static void RecordCurrent(string outcome) =>
+    public static void RecordCurrent(string outcome) =>
         CurrentCounter.Add(1, new KeyValuePair<string, object?>("outcome", outcome));
 
-    internal static void RecordPublish(PendingPublishKind kind, string outcome)
+    public static void RecordPublish(PendingPublishKind kind, string outcome)
     {
         var kindName = ToMetricName(kind);
         PublishCounter.Add(
@@ -61,16 +61,16 @@ internal static class ModuleIntegrationTelemetry
         }
     }
 
-    internal static void RecordCompletion(string outcome) =>
+    public static void RecordCompletion(string outcome) =>
         CompletionCounter.Add(1, new KeyValuePair<string, object?>("outcome", outcome));
 
-    internal static void RecordPendingMessages(long eventCount, long gradeCount)
+    public static void RecordPendingMessages(long eventCount, long gradeCount)
     {
         Interlocked.Exchange(ref EventPending, eventCount);
         Interlocked.Exchange(ref GradePending, gradeCount);
     }
 
-    internal static void RecordSessionTransition(
+    public static void RecordSessionTransition(
         ModuleSessionStatus from,
         ModuleSessionStatus to,
         long count = 1) =>
@@ -79,12 +79,12 @@ internal static class ModuleIntegrationTelemetry
             new KeyValuePair<string, object?>("from", ToMetricName(from)),
             new KeyValuePair<string, object?>("to", ToMetricName(to)));
 
-    internal static void RecordExpiredSessions(long count) =>
+    public static void RecordExpiredSessions(long count) =>
         ExpiredSessionsCounter.Add(count);
 
     /// <summary>Сколько истёкших сессий имели хотя бы одну попытку студента —
     /// то есть потенциальную потерю результата (см. LogExpiredSessionsWithAttemptsAsync).</summary>
-    internal static void RecordExpiredSessionsWithAttempts(long count) =>
+    public static void RecordExpiredSessionsWithAttempts(long count) =>
         ExpiredSessionsWithAttemptsCounter.Add(count);
 
     private static IEnumerable<Measurement<long>> ObservePendingMessages()
@@ -115,17 +115,17 @@ internal static class ModuleIntegrationTelemetry
     };
 }
 
-internal static class ModuleIntegrationTelemetryOutcomes
+public static class ModuleIntegrationTelemetryOutcomes
 {
-    internal const string Created = "created";
-    internal const string Updated = "updated";
-    internal const string Found = "found";
-    internal const string NotFound = "not_found";
-    internal const string Unauthorized = "unauthorized";
-    internal const string Conflict = "conflict";
-    internal const string Sent = "sent";
-    internal const string Retry = "retry";
-    internal const string DeadLetter = "dead_letter";
-    internal const string Accepted = "accepted";
-    internal const string Rejected = "rejected";
+    public const string Created = "created";
+    public const string Updated = "updated";
+    public const string Found = "found";
+    public const string NotFound = "not_found";
+    public const string Unauthorized = "unauthorized";
+    public const string Conflict = "conflict";
+    public const string Sent = "sent";
+    public const string Retry = "retry";
+    public const string DeadLetter = "dead_letter";
+    public const string Accepted = "accepted";
+    public const string Rejected = "rejected";
 }

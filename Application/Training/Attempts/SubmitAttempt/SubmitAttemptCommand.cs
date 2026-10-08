@@ -6,18 +6,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Attempt;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
 using SQLModule.Application.Cqrs;
-using SQLModule.Web.Features.ModuleIntegration;
+using SQLModule.Application.ModuleIntegration;
 
-namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;
+namespace SQLModule.Application.Training.Attempts.SubmitAttempt;
 
-internal record SubmitAttemptCommand(
+public record SubmitAttemptCommand(
     Guid UserId,
     string StudentName,
     string? StudentEmail,
@@ -28,7 +28,7 @@ internal record SubmitAttemptCommand(
     Guid? ModuleSessionId)
     : IRequest<Result<SubmitAttemptResponse>>;
 
-internal sealed class SubmitAttemptHandler(
+public sealed class SubmitAttemptHandler(
     ITaskMaterializer materializer,
     ISandboxExecutor executor,
     IResultComparer comparer,
@@ -37,7 +37,7 @@ internal sealed class SubmitAttemptHandler(
     IAttemptResultSnapshotService snapshotService,
     IOptions<SandboxOptions> sandboxOptions,
     TimeProvider timeProvider,
-    AppDbContext db)
+    IApplicationDbContext db)
     : IRequestHandler<SubmitAttemptCommand, Result<SubmitAttemptResponse>>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

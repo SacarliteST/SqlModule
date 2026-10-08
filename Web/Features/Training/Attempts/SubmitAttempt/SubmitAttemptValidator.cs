@@ -1,3 +1,5 @@
+using SQLModule.Application.Training.Attempts;
+using SQLModule.Application.Training.Attempts.SubmitAttempt;
 ﻿using FluentValidation;
 using SQLModule.Contracts.Training.Attempt;
 

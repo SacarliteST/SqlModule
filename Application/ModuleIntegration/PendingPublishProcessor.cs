@@ -2,22 +2,22 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.PlatformIntegration.Abstractions;
 using SQLModule.PlatformIntegration.Contracts;
 
-namespace SQLModule.Web.Features.ModuleIntegration;
+namespace SQLModule.Application.ModuleIntegration;
 
-internal sealed class PendingPublishProcessor(
-    AppDbContext db,
+public sealed class PendingPublishProcessor(
+    IApplicationDbContext db,
     IPracticeEventPublisher publisher,
     IEducationCompletionClient completionClient,
     IOptions<ModuleIntegrationOptions> options,
     TimeProvider timeProvider,
     ILogger<PendingPublishProcessor> logger)
 {
-    internal async Task<int> ProcessBatchAsync(CancellationToken ct)
+    public async Task<int> ProcessBatchAsync(CancellationToken ct)
     {
         var publisherOptions = options.Value.Publisher;
         var now = timeProvider.GetUtcNow();

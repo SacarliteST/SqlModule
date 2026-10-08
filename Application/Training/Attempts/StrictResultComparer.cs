@@ -3,9 +3,9 @@ using SQLModule.Application.TaskMaterialization;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Features.Training.Attempts;
+namespace SQLModule.Application.Training.Attempts;
 
-internal sealed class StrictResultComparer : IResultComparer
+public sealed class StrictResultComparer : IResultComparer
 {
     public CheckOutcome Compare(GoldenResult expected, QueryResultSet actual, bool strictRowOrder = true)
     {

@@ -1,19 +1,18 @@
 using SQLModule.Application.Training.Progress;
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts.Training.Validation;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.Training;
-using SQLModule.Web.Features.Training.Progress;
 
-namespace SQLModule.Web.Features.Training.Attempts;
+namespace SQLModule.Application.Training.Attempts;
 
-internal interface IAttemptScoringReadService
+public interface IAttemptScoringReadService
 {
     Task<AttemptScoringResponse?> ReadAsync(Attempt attempt, bool studentSafe, CancellationToken ct);
 }
 
-internal sealed class AttemptScoringReadService(
-    AppDbContext db,
+public sealed class AttemptScoringReadService(
+    IApplicationDbContext db,
     TimeProvider timeProvider) : IAttemptScoringReadService
 {
     public async Task<AttemptScoringResponse?> ReadAsync(
@@ -75,7 +74,7 @@ internal sealed class AttemptScoringReadService(
             hints);
     }
 
-    internal static HintGroup? ToHintGroup(ValidationCheckKind kind) => kind switch
+    public static HintGroup? ToHintGroup(ValidationCheckKind kind) => kind switch
     {
         ValidationCheckKind.MainDatasetResult => HintGroup.Result,
         ValidationCheckKind.RequiredConstruct => HintGroup.RequiredConstructs,

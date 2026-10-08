@@ -1,3 +1,6 @@
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Training.Attempts;
+using SQLModule.Application.Training.Attempts.SubmitAttempt;
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;

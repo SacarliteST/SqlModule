@@ -106,8 +106,6 @@ internal static class ArchitectureRules
     public static IReadOnlyDictionary<string, string> KnownWebBackgroundServices { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["PendingPublishWorker"] = "REF-005: уйдёт вместе с ModuleIntegration в Application/hosting.",
-            ["ModuleSessionCleanupWorker"] = "REF-005: уйдёт вместе с ModuleIntegration в Application/hosting.",
         };
 
     /// <summary>Простые имена типов, которые endpoint-классы не должны получать напрямую.</summary>
@@ -124,7 +122,6 @@ internal static class ArchitectureRules
     public static IReadOnlyDictionary<string, string> KnownEndpointViolations { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["GetAttemptFilterOptionsEndpoint"] = "REF-005: читает AppDbContext напрямую — вынести запрос в Application.",
             ["GetCurrentModuleSessionEndpoint"] = "REF-005: читает AppDbContext напрямую — вынести запрос в Application.",
             ["GetTasksCatalogEndpoint"] = "REF-005: читает AppDbContext напрямую — вынести запрос в Application.",
             ["UpsertModuleSessionEndpoint"] = "REF-005: пишет через AppDbContext напрямую — вынести команду в Application.",
