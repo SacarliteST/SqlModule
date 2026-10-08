@@ -1,3 +1,4 @@
+using SQLModule.Application.Schema.MetaTables;
 ﻿using FluentValidation;
 using SQLModule.Contracts.Schema.MetaTable;
 

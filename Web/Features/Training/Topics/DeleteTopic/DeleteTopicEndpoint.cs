@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Topics;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;

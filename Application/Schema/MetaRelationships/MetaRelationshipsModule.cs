@@ -1,0 +1,20 @@
+﻿using Microsoft.Extensions.DependencyInjection;
+using SQLModule.Common.Results;
+using SQLModule.Contracts;
+using SQLModule.Contracts.Schema.MetaRelationship;
+using SQLModule.Application.Cqrs;
+
+namespace SQLModule.Application.Schema.MetaRelationships;
+
+public static class MetaRelationshipsModule
+{
+    public static IServiceCollection AddMetaRelationships(this IServiceCollection services)
+    {
+        services.AddScoped<IRequestHandler<CreateMetaRelationshipCommand, Result<MetaRelationshipResponse>>, CreateMetaRelationshipHandler>();
+        services.AddScoped<IRequestHandler<GetMetaRelationshipByIdQuery, Result<MetaRelationshipResponse>>, GetMetaRelationshipByIdHandler>();
+        services.AddScoped<IRequestHandler<GetAllMetaRelationshipsQuery, Result<PageResponse<MetaRelationshipResponse>>>, GetAllMetaRelationshipsHandler>();
+        services.AddScoped<IRequestHandler<UpdateMetaRelationshipCommand, Result>, UpdateMetaRelationshipHandler>();
+        services.AddScoped<IRequestHandler<DeleteMetaRelationshipCommand, Result>, DeleteMetaRelationshipHandler>();
+        return services;
+    }
+}

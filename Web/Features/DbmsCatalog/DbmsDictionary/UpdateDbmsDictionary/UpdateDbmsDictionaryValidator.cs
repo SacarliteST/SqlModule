@@ -1,3 +1,5 @@
+using SQLModule.Application.DbmsCatalog.DbmsDictionary;
+using SQLModule.Application.DbmsCatalog.DbmsDictionary.UpdateDbmsDictionary;
 ﻿using FluentValidation;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 
