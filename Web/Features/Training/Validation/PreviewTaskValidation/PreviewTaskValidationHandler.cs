@@ -1,7 +1,7 @@
 ﻿using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Training.Validation;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Validation.PreviewTaskValidation;
 

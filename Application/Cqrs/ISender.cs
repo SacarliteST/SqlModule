@@ -1,4 +1,4 @@
-﻿namespace SQLModule.Web.Common.Cqrs;
+﻿namespace SQLModule.Application.Cqrs;
 
 /// <summary>
 /// Точка входа в CQRS-пайплайн. Используется из эндпоинтов для отправки команд и запросов.

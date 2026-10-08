@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Features.Training.Progress.RestartProgress;
 using SQLModule.Web.Features.Training.Progress.StartProgress;
 

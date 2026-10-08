@@ -3,7 +3,7 @@ using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Data.Core;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.Training.SqlQueries;
 

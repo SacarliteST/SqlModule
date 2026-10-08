@@ -14,7 +14,7 @@ using SQLModule.Domain.Common;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Features.ModuleIntegration;
 using SQLModule.Web.Features.Schema.SchemaBuilder.GetTableRows;
 using SQLModule.Web.Features.Training.Attempts;

@@ -1,4 +1,4 @@
-﻿namespace SQLModule.Web.Common.Cqrs;
+﻿namespace SQLModule.Application.Cqrs;
 
 /// <summary>
 /// Маркерный интерфейс запроса в CQRS-пайплайне.

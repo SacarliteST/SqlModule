@@ -7,7 +7,7 @@ using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Schema;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Common.Sandbox;
 
 namespace SQLModule.Web.Features.Schema.SchemaBuilder.BatchTableRows;

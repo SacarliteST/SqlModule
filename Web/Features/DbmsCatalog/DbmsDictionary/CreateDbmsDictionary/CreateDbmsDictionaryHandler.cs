@@ -2,7 +2,7 @@
 using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Data.Core;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.CreateDbmsDictionary;

@@ -110,7 +110,7 @@ public static class WebExtensions
         services.AddModuleIntegration(configuration);
         services.AddEndpoints(configuration);
         services.AddValidatorsFromAssemblyContaining<IWebMarker>(includeInternalTypes: true);
-        services.AddCqrs();
+        
         services.AddFeatures();
         return services;
     }

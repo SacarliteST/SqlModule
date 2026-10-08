@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace SQLModule.Web.Common.Cqrs;
+namespace SQLModule.Application.Cqrs;
 
 /// <summary>
 /// Реализация <see cref="ISender"/>. Резолвит хендлер и behaviors из DI,

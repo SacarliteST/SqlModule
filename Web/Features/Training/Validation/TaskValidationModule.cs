@@ -5,7 +5,7 @@ using SQLModule.Contracts.DbmsCatalog.Validation;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Training.Validation;
 using SQLModule.SqlAnalysis;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Features.DbmsCatalog.ValidationCapabilities.GetValidationCapabilities;
 using SQLModule.Web.Features.Training.Validation.GetTaskValidation;
 using SQLModule.Web.Features.Training.Validation.PreviewTaskValidation;

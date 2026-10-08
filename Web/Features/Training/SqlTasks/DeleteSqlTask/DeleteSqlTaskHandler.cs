@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 using SQLModule.Common.Results;
 using SQLModule.Data.Core;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.SqlTasks;
 
@@ -15,8 +14,6 @@ internal sealed class DeleteSqlTaskHandler(
     ILogger<DeleteSqlTaskHandler> logger)
     : IRequestHandler<DeleteSqlTaskCommand, Result>
 {
-    private const string ForeignKeyViolation = "23503";
-
     public async Task<Result> Handle(DeleteSqlTaskCommand command, CancellationToken ct)
     {
         var task = await db.SqlTasks.FirstOrDefaultAsync(x => x.Id == command.Id, ct);

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Features.Schema.SchemaBuilder.ApplyTargetDbSchema;
 using SQLModule.Web.Features.Schema.SchemaBuilder.BatchTableRows;
 using SQLModule.Web.Features.Schema.SchemaBuilder.CreateSchema;

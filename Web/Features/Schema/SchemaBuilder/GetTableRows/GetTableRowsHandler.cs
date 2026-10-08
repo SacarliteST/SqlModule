@@ -2,7 +2,7 @@
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Data.Core;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Schema.SchemaBuilder.GetTableRows;
 

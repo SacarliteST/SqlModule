@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.CreateDbmsDictionary;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.DeleteDbmsDictionary;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionaries;
