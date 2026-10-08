@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace SQLModule.Web.Features.ModuleIntegration;
+namespace SQLModule.Application.ModuleIntegration;
 
-internal static class ModuleIntegrationExtensions
+public static class ModuleIntegrationExtensions
 {
-    internal static IServiceCollection AddModuleIntegration(
+    public static IServiceCollection AddModuleIntegration(
         this IServiceCollection services,
         IConfiguration configuration)
     {

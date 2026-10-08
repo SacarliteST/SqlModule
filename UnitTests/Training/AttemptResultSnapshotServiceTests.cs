@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Attempts;
 ﻿using System.Text;
 using Microsoft.Extensions.Options;
 using Shouldly;

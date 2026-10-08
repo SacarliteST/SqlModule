@@ -1,3 +1,4 @@
+using SQLModule.Application.ModuleIntegration;
 ﻿using System.Security.Cryptography;
 using System.Text;
 

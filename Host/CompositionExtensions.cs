@@ -18,7 +18,7 @@ internal static class CompositionExtensions
         this IServiceCollection services,
         IConfiguration configuration) =>
         services
-            .AddApplication()
+            .AddApplication(configuration)
             .AddWeb(configuration)
             .AddData(configuration)
             .AddIdentityAuthClient(configuration)

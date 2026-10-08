@@ -1,11 +1,11 @@
 ﻿using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Domain.Training;
 
-namespace SQLModule.Web.Features.Training.Attempts;
+namespace SQLModule.Application.Training.Attempts;
 
-internal static class AttemptMappings
+public static class AttemptMappings
 {
-    internal static AttemptResponse ToResponse(
+    public static AttemptResponse ToResponse(
         Attempt e,
         AttemptResultSnapshot snapshot,
         global::SQLModule.Contracts.Training.Validation.AttemptScoringResponse? scoring = null) => new(
@@ -27,7 +27,7 @@ internal static class AttemptMappings
         ResultSnapshotExpiresAt: snapshot.ExpiresAt,
         Scoring: scoring);
 
-    internal static string? ToPublicError(Attempt attempt) => attempt.Status switch
+    public static string? ToPublicError(Attempt attempt) => attempt.Status switch
     {
         ExecutionStatus.TimedOut => "Превышено допустимое время выполнения запроса.",
         ExecutionStatus.Error => "SQL-запрос не удалось выполнить. Проверьте синтаксис и повторите попытку.",

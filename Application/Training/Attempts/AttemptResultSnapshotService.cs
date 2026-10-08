@@ -4,9 +4,9 @@ using Microsoft.Extensions.Options;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Features.Training.Attempts;
+namespace SQLModule.Application.Training.Attempts;
 
-internal sealed record AttemptResultSnapshot(
+public sealed record AttemptResultSnapshot(
     AttemptResultSnapshotState State,
     IReadOnlyList<string>? Columns,
     IReadOnlyList<IReadOnlyList<string?>>? Rows,
@@ -18,7 +18,7 @@ internal sealed record AttemptResultSnapshot(
     string? ColumnsJson = null,
     string? RowsJson = null);
 
-internal interface IAttemptResultSnapshotService
+public interface IAttemptResultSnapshotService
 {
     int GetEffectiveRowLimit(int sandboxMaxRows);
     AttemptResultSnapshot Create(QueryResultSet result, int rowLimit, DateTimeOffset now);
@@ -26,7 +26,7 @@ internal interface IAttemptResultSnapshotService
     void Apply(Attempt attempt, AttemptResultSnapshot snapshot);
 }
 
-internal sealed class AttemptResultSnapshotService(IOptions<AttemptResultSnapshotsOptions> options)
+public sealed class AttemptResultSnapshotService(IOptions<AttemptResultSnapshotsOptions> options)
     : IAttemptResultSnapshotService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

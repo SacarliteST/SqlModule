@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Attempts;
 ﻿using Shouldly;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Domain.Training;

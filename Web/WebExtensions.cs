@@ -1,3 +1,5 @@
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Training.Attempts;
 ﻿using System.Security.Claims;
 using System.Text.Json.Serialization;
 using FluentValidation;
@@ -79,13 +81,9 @@ public static class WebExtensions
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddSingleton(TimeProvider.System);
-        services.Configure<AttemptResultSnapshotsOptions>(
-            configuration.GetSection(AttemptResultSnapshotsOptions.SectionKey));
-        services.AddModuleIntegration(configuration);
         services.AddEndpoints(configuration);
         services.AddValidatorsFromAssemblyContaining<IWebMarker>(includeInternalTypes: true);
         
-        services.AddFeatures();
         return services;
     }
 

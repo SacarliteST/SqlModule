@@ -1,9 +1,9 @@
-﻿namespace SQLModule.Web.Features.ModuleIntegration;
+﻿namespace SQLModule.Application.ModuleIntegration;
 
 /// <summary>Настройки платформенного профиля SQL-модуля.</summary>
-internal sealed class ModuleIntegrationOptions
+public sealed class ModuleIntegrationOptions
 {
-    internal const string SectionKey = "ModuleIntegration";
+    public const string SectionKey = "ModuleIntegration";
 
     /// <summary>Включить endpoints и фоновые сервисы интеграционного контура.</summary>
     public bool Enabled { get; init; }
@@ -27,14 +27,14 @@ internal sealed class ModuleIntegrationOptions
     public ModuleSessionLifecycleOptions Lifecycle { get; init; } = new();
 }
 
-internal sealed class ModuleSessionLifecycleOptions
+public sealed class ModuleSessionLifecycleOptions
 {
     public int CleanupIntervalMinutes { get; init; } = 60;
     public int RetentionDays { get; init; } = 7;
     public int BatchSize { get; init; } = 100;
 }
 
-internal sealed class ModuleIntegrationKafkaOptions
+public sealed class ModuleIntegrationKafkaOptions
 {
     public string BootstrapServers { get; init; } = String.Empty;
     public string EventsTopic { get; init; } = "scoodle.practice.events";
@@ -44,14 +44,14 @@ internal sealed class ModuleIntegrationKafkaOptions
     public int MaxRetryDelaySeconds { get; init; } = 60;
 }
 
-internal sealed class ModuleIntegrationPublisherOptions
+public sealed class ModuleIntegrationPublisherOptions
 {
     public int BatchSize { get; init; } = 50;
     public int PollIntervalSeconds { get; init; } = 5;
     public int SentRetentionDays { get; init; } = 14;
 }
 
-internal sealed class ModuleIntegrationEducationCompletionOptions
+public sealed class ModuleIntegrationEducationCompletionOptions
 {
     public int MaxAttempts { get; init; } = 10;
     public int InitialRetryDelaySeconds { get; init; } = 2;

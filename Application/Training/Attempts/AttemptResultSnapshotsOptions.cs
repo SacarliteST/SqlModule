@@ -1,4 +1,4 @@
-﻿namespace SQLModule.Web.Features.Training.Attempts;
+﻿namespace SQLModule.Application.Training.Attempts;
 
 /// <summary>Ограничения безопасного snapshot фактического результата попытки.</summary>
 public sealed class AttemptResultSnapshotsOptions

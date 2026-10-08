@@ -3,21 +3,20 @@ using SQLModule.Application.Training.Progress;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
-using SQLModule.Web.Features.Training.Progress;
 
-namespace SQLModule.Web.Features.ModuleIntegration;
+namespace SQLModule.Application.ModuleIntegration;
 
-internal sealed class ModuleSessionCleanupProcessor(
-    AppDbContext db,
+public sealed class ModuleSessionCleanupProcessor(
+    IApplicationDbContext db,
     IOptions<ModuleIntegrationOptions> options,
     IProgressFinalizationService finalizationService,
     TimeProvider timeProvider,
     ILogger<ModuleSessionCleanupProcessor> logger)
 {
-    internal async Task<int> CleanupAsync(CancellationToken ct)
+    public async Task<int> CleanupAsync(CancellationToken ct)
     {
         var lifecycle = options.Value.Lifecycle;
         var now = timeProvider.GetUtcNow();

@@ -2,29 +2,29 @@
 using SQLModule.Application.TaskMaterialization;
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Features.Training.Attempts;
+namespace SQLModule.Application.Training.Attempts;
 
-internal sealed record ValidationCheckSnapshot(
+public sealed record ValidationCheckSnapshot(
     Guid Id, ValidationCheckKind Kind, string? Value, int Weight, int Order);
 
-internal sealed record ValidationConfigurationSnapshot(
+public sealed record ValidationConfigurationSnapshot(
     int PassingScore,
     int? MaxAttempts,
     IReadOnlyList<HintGroup> VisibleHintGroups,
     IReadOnlyList<ValidationCheckSnapshot> Checks);
 
-internal sealed record ReferenceQuerySnapshot(
+public sealed record ReferenceQuerySnapshot(
     Guid TargetDbId,
     string SqlText,
     bool IsRequiredColumnOrder,
     bool IsRequiredRowOrder);
 
-internal sealed record Phase2BValidationRuntime(
+public sealed record Phase2BValidationRuntime(
     TaskValidationVersion Version,
     DbmsDictionary Dbms,
     SandboxSetup Setup,
@@ -33,13 +33,13 @@ internal sealed record Phase2BValidationRuntime(
     ValidationConfigurationSnapshot Configuration,
     ReferenceQuerySnapshot Reference);
 
-internal interface IPhase2BValidationRuntimeReader
+public interface IPhase2BValidationRuntimeReader
 {
     Task<Result<Phase2BValidationRuntime>> ReadAsync(Guid validationVersionId, CancellationToken ct);
 }
 
-internal sealed class Phase2BValidationRuntimeReader(
-    AppDbContext db,
+public sealed class Phase2BValidationRuntimeReader(
+    IApplicationDbContext db,
     ISqlSyntaxFactory syntaxFactory,
     ISchemaSqlGenerator generator) : IPhase2BValidationRuntimeReader
 {
