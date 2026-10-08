@@ -1,4 +1,5 @@
 ﻿using SQLModule.Common.Results;
+using SQLModule.Application.Training.SqlQueries;
 using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Application.Cqrs;
 

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using Shouldly;
 using SQLModule.Application;
 using SQLModule.Host;
@@ -25,10 +26,10 @@ public sealed class HandlerScannerTests
         services.AddFeatures();
 
         var iRequestOpenType = typeof(IRequest<>);
-        var hostAssembly = typeof(IWebMarker).Assembly;
+        Assembly[] assemblies = [typeof(IWebMarker).Assembly, typeof(ApplicationExtensions).Assembly];
 
         // Act
-        var requestInfos = hostAssembly.GetTypes()
+        var requestInfos = assemblies.SelectMany(assembly => assembly.GetTypes())
             .Where(t => t is { IsAbstract: false, IsInterface: false, IsGenericTypeDefinition: false })
             .SelectMany(t => t.GetInterfaces()
                 .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == iRequestOpenType)

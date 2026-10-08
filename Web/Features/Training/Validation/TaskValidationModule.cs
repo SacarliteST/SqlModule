@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using SQLModule.Application.Training.Validation;
 using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.Validation;
@@ -25,7 +26,6 @@ internal static class TaskValidationModule
 
         services.AddSingleton<ITaskValidationConfigurationValidator, TaskValidationConfigurationValidator>();
         services.AddScoped<ITaskValidationEvaluationService, TaskValidationEvaluationService>();
-        services.AddScoped<ITaskValidationSnapshotFactory, TaskValidationSnapshotFactory>();
         services.AddScoped<
             IRequestHandler<GetValidationCapabilitiesQuery, Result<DbmsValidationCapabilitiesResponse>>,
             GetValidationCapabilitiesHandler>();

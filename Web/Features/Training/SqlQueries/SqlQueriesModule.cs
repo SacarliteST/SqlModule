@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using SQLModule.Application.Training.SqlQueries;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.SqlQuery;
@@ -10,7 +11,6 @@ internal static class SqlQueriesModule
 {
     internal static IServiceCollection AddSqlQueries(this IServiceCollection services)
     {
-        services.AddScoped<ISqlQueryValidationRunner, SqlQueryValidationRunner>();
         services.AddScoped<IRequestHandler<CreateSqlQueryCommand, Result<SqlQueryResponse>>, CreateSqlQueryHandler>();
         services.AddScoped<IRequestHandler<GetSqlQueryByIdQuery, Result<SqlQueryResponse>>, GetSqlQueryByIdHandler>();
         services.AddScoped<IRequestHandler<GetAllSqlQueriesQuery, Result<PageResponse<SqlQueryResponse>>>, GetAllSqlQueriesHandler>();

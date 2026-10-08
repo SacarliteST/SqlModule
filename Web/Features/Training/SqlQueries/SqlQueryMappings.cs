@@ -1,5 +1,6 @@
 ﻿using SQLModule.Contracts.Training.SqlQuery;
-using SQLModule.Web.Common.Sandbox;
+using SQLModule.Application.Training.SqlQueries;
+using SQLModule.Application.TaskMaterialization;
 
 namespace SQLModule.Web.Features.Training.SqlQueries;
 

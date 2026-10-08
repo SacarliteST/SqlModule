@@ -1,4 +1,5 @@
 ﻿using SQLModule.Common.Results;
+using SQLModule.Application.Training.Validation;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Training.Validation;
 using SQLModule.Application.Cqrs;

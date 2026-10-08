@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using SQLModule.Application.TaskMaterialization;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,6 @@ using SQLModule.Domain.Training;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
 using SQLModule.Application.Cqrs;
-using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;

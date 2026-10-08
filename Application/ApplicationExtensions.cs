@@ -1,6 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Application.Behaviors;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.TaskMaterialization;
+using SQLModule.Application.Training.SqlQueries;
+using SQLModule.Application.Training.SqlTasks;
+using SQLModule.Application.Training.Validation;
 
 namespace SQLModule.Application;
 
@@ -12,6 +16,10 @@ public static class ApplicationExtensions
     {
         services.AddScoped<ISender, Sender>();
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-        return services;
+        services.AddScoped<ISqlQueryValidationRunner, SqlQueryValidationRunner>();
+        services.AddScoped<ITaskValidationSnapshotFactory, TaskValidationSnapshotFactory>();
+        return services
+            .AddTaskMaterializer()
+            .AddSqlTasks();
     }
 }

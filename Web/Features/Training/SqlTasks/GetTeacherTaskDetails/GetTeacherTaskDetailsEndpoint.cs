@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using SQLModule.Application.Training.SqlTasks;
+using SQLModule.Application.Training.SqlTasks.GetTeacherTaskDetails;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;

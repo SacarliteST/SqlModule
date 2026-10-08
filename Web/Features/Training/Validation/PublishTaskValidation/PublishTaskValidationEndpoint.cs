@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using SQLModule.Application.Training.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

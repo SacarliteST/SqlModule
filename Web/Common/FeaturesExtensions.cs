@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using SQLModule.Application.Training.Validation;
+using SQLModule.Application.Training.SqlQueries;
+using SQLModule.Application.Training.SqlTasks;
+using SQLModule.Application.TaskMaterialization;
 using SQLModule.Sandbox.Pooling;
-using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary;
 using SQLModule.Web.Features.DbmsCatalog.ParameterDefinitions;
 using SQLModule.Web.Features.DbmsCatalog.PhysicalTypes;
@@ -34,7 +37,6 @@ internal static class FeaturesExtensions
     /// <summary>Регистрирует хендлеры всех фич.</summary>
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
         => s.AddScoped<ISandboxPoolProfileSource, DbmsSandboxPoolProfileSource>()
-            .AddTaskMaterializer()
             .AddDbmsDictionaries()
             .AddPhysicalTypes()
             .AddParameterDefinitions()
@@ -46,7 +48,6 @@ internal static class FeaturesExtensions
             .AddCellValues()
             .AddAttributeParameterValues()
             .AddTopics()
-            .AddSqlTasks()
             .AddSqlQueries()
             .AddAttempts()
             .AddStudentProgress()

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using SQLModule.Application.Training.SqlQueries;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
