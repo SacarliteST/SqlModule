@@ -123,9 +123,6 @@ internal static class ArchitectureRules
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["StudentEndpoints"] = "REF-005: читает AppDbContext напрямую — вынести запросы в Application.",
-            ["StandaloneLoginEndpoint"] = "REF-005: вызывает IIdentityAuthClient напрямую — вынести команду в Application.",
-            ["StandaloneLogoutEndpoint"] = "REF-005: вызывает IIdentityAuthClient напрямую — вынести команду в Application.",
-            ["StandaloneRefreshEndpoint"] = "REF-005: вызывает IIdentityAuthClient напрямую — вынести команду в Application.",
         };
 
     private static List<AssemblyRule> CreateAssemblyRules()

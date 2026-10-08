@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Application.Behaviors;
+using SQLModule.Application.Auth;
+using SQLModule.Common.Results;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.DbmsCatalog.DbmsDictionary;
 using SQLModule.Application.DbmsCatalog.ParameterDefinitions;
@@ -35,6 +37,9 @@ public static class ApplicationExtensions
             configuration.GetSection(AttemptResultSnapshotsOptions.SectionKey));
         services.AddModuleIntegration(configuration);
         services.AddScoped<ISender, Sender>();
+        services.AddScoped<IRequestHandler<StandaloneLoginCommand, Result<StandaloneAuthResult>>, StandaloneLoginHandler>();
+        services.AddScoped<IRequestHandler<StandaloneRefreshCommand, Result<StandaloneAuthResult>>, StandaloneRefreshHandler>();
+        services.AddScoped<IRequestHandler<StandaloneLogoutCommand, Result>, StandaloneLogoutHandler>();
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddScoped<ISqlQueryValidationRunner, SqlQueryValidationRunner>();
         services.AddScoped<ISandboxPoolProfileSource, DbmsSandboxPoolProfileSource>();
