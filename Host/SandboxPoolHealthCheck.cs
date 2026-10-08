@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Common;
+namespace SQLModule.Host;
 
 internal sealed class SandboxPoolHealthCheck(ISandboxPoolHealthMonitor monitor) : IHealthCheck
 {

@@ -26,7 +26,8 @@ internal static class CompositionExtensions
             .AddScoped<IStandaloneAuthGateway, IdentityStandaloneAuthGateway>()
             .AddSeeding(configuration)
             .AddPlatformIntegrations(configuration)
-            .AddSandbox();
+            .AddSandbox()
+            .AddSandboxHealthCheck();
 
     /// <summary>Регистрирует клиентов Education и Kafka, когда включён platform-профиль и публикация событий.</summary>
     private static IServiceCollection AddPlatformIntegrations(

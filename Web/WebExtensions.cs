@@ -73,8 +73,7 @@ public static class WebExtensions
         }
 
         services.AddEndpointsApiExplorer();
-        services.AddHealthChecks()
-            .AddCheck<SandboxPoolHealthCheck>("sandbox_pool");
+        services.AddHealthChecks();
         services.ConfigureHttpJsonOptions(options =>
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
         services.AddOpenApiDocumentation();

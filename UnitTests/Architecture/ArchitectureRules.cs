@@ -61,12 +61,6 @@ internal static class ArchitectureRules
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["Contracts -> Domain"] = "REF-009: Contracts использует доменные enum.",
-            ["Web -> Data"] = "REF-002/004/005: AddData и AppDbContext используются из Web.",
-            ["Web -> Sandbox"] = "REF-003/004: sandbox-код вызывается и регистрируется из Web.",
-            ["Web -> Education.Client"] = "REF-002: регистрация интеграций должна переехать в Host.",
-            ["Web -> Identity.Client"] = "REF-002: регистрация интеграций должна переехать в Host.",
-            ["Web -> Kafka.Publisher"] = "REF-002: регистрация интеграций должна переехать в Host.",
-            ["Web -> SqlAnalysis"] = "REF-004/005: анализ SQL уйдёт в Application вместе со сценариями.",
         };
 
     /// <summary>Запрещённые NuGet-пакеты по проектам.</summary>
@@ -92,7 +86,6 @@ internal static class ArchitectureRules
     public static IReadOnlyDictionary<string, string> KnownPackageViolations { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["Web -> Microsoft.EntityFrameworkCore"] = "REF-004/005: handlers используют EF Core, пока не вынесены в Application.",
         };
 
     /// <summary>Ссылки слоёв на сборки, которых у них быть не должно (проверяется по метаданным).</summary>
