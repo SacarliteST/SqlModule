@@ -6,17 +6,17 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Common.Isolated;
+namespace SQLModule.Application.Seeding;
 
 /// <summary>Идемпотентно импортирует описанный JSON учебный курс в доменную модель.</summary>
-internal sealed class CourseDataSeeder(
-    AppDbContext db,
+public sealed class CourseDataSeeder(
+    IApplicationDbContext db,
     IOptions<CourseSeedOptions> options,
     IHostEnvironment environment)
 {

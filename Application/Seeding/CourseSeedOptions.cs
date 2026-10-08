@@ -1,9 +1,9 @@
-﻿namespace SQLModule.Web.Common.Isolated;
+﻿namespace SQLModule.Application.Seeding;
 
 /// <summary>Настройки импорта учебного курса из JSON при старте приложения.</summary>
-internal sealed class CourseSeedOptions
+public sealed class CourseSeedOptions
 {
-    internal const string SectionKey = "CourseSeed";
+    public const string SectionKey = "CourseSeed";
 
     /// <summary>Включить импорт курса после применения миграций.</summary>
     public bool Enabled { get; init; }

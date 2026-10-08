@@ -1,7 +1,7 @@
 ﻿using SQLModule.Common.Results;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Common.Isolated;
+namespace SQLModule.Sandbox;
 
 /// <summary>
 /// Реализация <see cref="ISandboxExecutor"/> без Docker: возвращает успех с пустым набором строк.

@@ -1,6 +1,6 @@
-﻿namespace SQLModule.Web.Common.Isolated;
+﻿namespace SQLModule.Application.Seeding;
 
-internal sealed class CourseSeedDocument
+public sealed class CourseSeedDocument
 {
     public int FormatVersion { get; init; }
     public required CourseSeedCourse Course { get; init; }
@@ -11,14 +11,14 @@ internal sealed class CourseSeedDocument
     public required List<CourseSeedTask> Tasks { get; init; }
 }
 
-internal sealed class CourseSeedCourse
+public sealed class CourseSeedCourse
 {
     public Guid Id { get; init; }
     public required string Code { get; init; }
     public required string Name { get; init; }
 }
 
-internal sealed class CourseSeedDbms
+public sealed class CourseSeedDbms
 {
     public Guid Id { get; init; }
     public required string DbmsName { get; init; }
@@ -34,14 +34,14 @@ internal sealed class CourseSeedDbms
     public required string DefaultPassword { get; init; }
 }
 
-internal sealed class CourseSeedPhysicalType
+public sealed class CourseSeedPhysicalType
 {
     public Guid Id { get; init; }
     public required string TypeName { get; init; }
     public required List<CourseSeedParameterDefinition> Parameters { get; init; }
 }
 
-internal sealed class CourseSeedParameterDefinition
+public sealed class CourseSeedParameterDefinition
 {
     public Guid Id { get; init; }
     public required string Key { get; init; }
@@ -56,7 +56,7 @@ internal sealed class CourseSeedParameterDefinition
     public string? Separator { get; init; }
 }
 
-internal sealed class CourseSeedDatabase
+public sealed class CourseSeedDatabase
 {
     public Guid Id { get; init; }
     public Guid DbmsId { get; init; }
@@ -67,7 +67,7 @@ internal sealed class CourseSeedDatabase
     public required List<CourseSeedRelationship> Relationships { get; init; }
 }
 
-internal sealed class CourseSeedTable
+public sealed class CourseSeedTable
 {
     public Guid Id { get; init; }
     public required string Name { get; init; }
@@ -77,7 +77,7 @@ internal sealed class CourseSeedTable
     public required List<CourseSeedRow> Rows { get; init; }
 }
 
-internal sealed class CourseSeedColumn
+public sealed class CourseSeedColumn
 {
     public Guid Id { get; init; }
     public required string Name { get; init; }
@@ -88,14 +88,14 @@ internal sealed class CourseSeedColumn
     public required Dictionary<string, string> Parameters { get; init; }
 }
 
-internal sealed class CourseSeedRow
+public sealed class CourseSeedRow
 {
     public Guid Id { get; init; }
     public int? SortOrder { get; init; }
     public required Dictionary<string, string?> Values { get; init; }
 }
 
-internal sealed class CourseSeedRelationship
+public sealed class CourseSeedRelationship
 {
     public Guid Id { get; init; }
     public required string Name { get; init; }
@@ -106,13 +106,13 @@ internal sealed class CourseSeedRelationship
     public string? OnUpdate { get; init; }
 }
 
-internal sealed class CourseSeedColumnPair
+public sealed class CourseSeedColumnPair
 {
     public Guid FromColumnId { get; init; }
     public Guid ToColumnId { get; init; }
 }
 
-internal sealed class CourseSeedTopic
+public sealed class CourseSeedTopic
 {
     public Guid Id { get; init; }
     public required string Name { get; init; }
@@ -120,7 +120,7 @@ internal sealed class CourseSeedTopic
     public Guid? ParentTopicId { get; init; }
 }
 
-internal sealed class CourseSeedTask
+public sealed class CourseSeedTask
 {
     public Guid Id { get; init; }
     public Guid TopicId { get; init; }
@@ -133,7 +133,7 @@ internal sealed class CourseSeedTask
     public required CourseSeedReferenceQuery ReferenceQuery { get; init; }
 }
 
-internal sealed class CourseSeedReferenceQuery
+public sealed class CourseSeedReferenceQuery
 {
     public required string SqlText { get; init; }
     public bool StrictColumnOrder { get; init; }
@@ -141,7 +141,7 @@ internal sealed class CourseSeedReferenceQuery
     public required CourseSeedExpectedResult ExpectedResult { get; init; }
 }
 
-internal sealed class CourseSeedExpectedResult
+public sealed class CourseSeedExpectedResult
 {
     public required List<string> Columns { get; init; }
     public required List<List<string?>> Rows { get; init; }

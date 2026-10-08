@@ -1,17 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.TaskMaterialization;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Common.Isolated;
+namespace SQLModule.Application.Seeding;
 
 /// <summary>
 /// Засевает минимальный демо-набор данных при старте в изолированном режиме (идемпотентно).
 /// </summary>
-internal sealed class DemoDataSeeder(AppDbContext db)
+public sealed class DemoDataSeeder(IApplicationDbContext db)
 {
     private static readonly Guid DbmsId = new("10000000-0000-0000-0000-000000000001");
     private static readonly Guid IntegerTypeId = new("20000000-0000-0000-0000-000000000001");

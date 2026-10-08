@@ -17,7 +17,8 @@ using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Isolated;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox.DbmsProbing;
 using DomainSqlTask = SQLModule.Domain.Training.SqlTask;
 
 namespace SQLModule.IntegrationTests.Training.Attempt;

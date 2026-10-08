@@ -66,6 +66,9 @@ public interface IApplicationDbContext
     /// <summary>Доступ к состоянию отслеживаемой сущности.</summary>
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
 
+    /// <summary>Добавляет сущность в контекст.</summary>
+    EntityEntry<TEntity> Add<TEntity>(TEntity entity) where TEntity : class;
+
     /// <summary>Отслеживание изменений.</summary>
     ChangeTracker ChangeTracker { get; }
 

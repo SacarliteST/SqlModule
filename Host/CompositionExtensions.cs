@@ -22,6 +22,7 @@ internal static class CompositionExtensions
             .AddWeb(configuration)
             .AddData(configuration)
             .AddIdentityAuthClient(configuration)
+            .AddSeeding(configuration)
             .AddPlatformIntegrations(configuration)
             .AddSandbox();
 

@@ -3,40 +3,39 @@ using SQLModule.Application.Training.Validation;
 using SQLModule.Application.TaskMaterialization;
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.Common;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Domain.Training.Validation;
 using SQLModule.Sandbox;
-using SQLModule.Web.Features.Training.Validation;
 
-namespace SQLModule.Web.Common.Isolated;
+namespace SQLModule.Application.Seeding;
 
 /// <summary>Создаёт стабильное Published-задание для сквозного platform smoke-теста.</summary>
-internal sealed class SmokeDataSeeder(
-    AppDbContext db,
+public sealed class SmokeDataSeeder(
+    IApplicationDbContext db,
     ITaskValidationEvaluationService evaluationService,
     ITaskValidationSnapshotFactory snapshotFactory,
     TimeProvider timeProvider)
 {
-    internal static readonly Guid DbmsId = new("10000000-0000-0000-0000-000000000002");
-    internal static readonly Guid IntegerTypeId = new("20000000-0000-0000-0000-000000000007");
-    internal static readonly Guid TargetDbId = new("30000000-0000-0000-0000-000000000002");
-    internal static readonly Guid TableId = new("40000000-0000-0000-0000-000000000002");
-    internal static readonly Guid AttributeId = new("50000000-0000-0000-0000-000000000002");
-    internal static readonly Guid RecordId = new("51000000-0000-0000-0000-000000000002");
-    internal static readonly Guid CellId = new("52000000-0000-0000-0000-000000000002");
-    internal static readonly Guid TopicId = new("60000000-0000-0000-0000-000000000002");
-    internal static readonly Guid QueryId = new("70000000-0000-0000-0000-000000000002");
-    internal static readonly Guid TaskId = new("80000000-0000-0000-0000-000000000002");
-    internal static readonly Guid ValidationConfigurationId = new("90000000-0000-0000-0000-000000000002");
-    internal static readonly Guid ValidationCheckId = new("91000000-0000-0000-0000-000000000002");
+    public static readonly Guid DbmsId = new("10000000-0000-0000-0000-000000000002");
+    public static readonly Guid IntegerTypeId = new("20000000-0000-0000-0000-000000000007");
+    public static readonly Guid TargetDbId = new("30000000-0000-0000-0000-000000000002");
+    public static readonly Guid TableId = new("40000000-0000-0000-0000-000000000002");
+    public static readonly Guid AttributeId = new("50000000-0000-0000-0000-000000000002");
+    public static readonly Guid RecordId = new("51000000-0000-0000-0000-000000000002");
+    public static readonly Guid CellId = new("52000000-0000-0000-0000-000000000002");
+    public static readonly Guid TopicId = new("60000000-0000-0000-0000-000000000002");
+    public static readonly Guid QueryId = new("70000000-0000-0000-0000-000000000002");
+    public static readonly Guid TaskId = new("80000000-0000-0000-0000-000000000002");
+    public static readonly Guid ValidationConfigurationId = new("90000000-0000-0000-0000-000000000002");
+    public static readonly Guid ValidationCheckId = new("91000000-0000-0000-0000-000000000002");
 
-    internal const string TaskName = "Smoke: выбрать идентификаторы пользователей";
-    internal const string TaskText = "Получите идентификаторы всех пользователей из таблицы users.";
-    internal const string ReferenceSql = "SELECT id FROM users ORDER BY id;";
+    public const string TaskName = "Smoke: выбрать идентификаторы пользователей";
+    public const string TaskText = "Получите идентификаторы всех пользователей из таблицы users.";
+    public const string ReferenceSql = "SELECT id FROM users ORDER BY id;";
 
     public async Task SeedAsync(CancellationToken ct = default)
     {

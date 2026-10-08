@@ -19,7 +19,7 @@ internal sealed class Program
 
             Startup.ConfigureApp(app);
 
-            await app.InitializeWebAsync();
+            await app.InitializeDatabaseAsync();
 
             await app.RunAsync();
         }

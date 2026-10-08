@@ -135,7 +135,7 @@ public sealed class SqlQueryTests : ApiTestBase
 
         using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var fakeSandbox = (global::SQLModule.Web.Common.Isolated.FakeSandboxExecutor)
+        var fakeSandbox = (global::SQLModule.Sandbox.FakeSandboxExecutor)
             scope.ServiceProvider.GetRequiredService<global::SQLModule.Sandbox.ISandboxExecutor>();
         var countBefore = db.SqlQueries.Count();
         fakeSandbox.OverrideRun = global::SQLModule.Common.Results.Result<global::SQLModule.Sandbox.QueryResultSet>.Success(
@@ -178,7 +178,7 @@ public sealed class SqlQueryTests : ApiTestBase
         var targetDbId = await SeedTargetDbIdAsync();
         using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var fakeSandbox = (global::SQLModule.Web.Common.Isolated.FakeSandboxExecutor)
+        var fakeSandbox = (global::SQLModule.Sandbox.FakeSandboxExecutor)
             scope.ServiceProvider.GetRequiredService<global::SQLModule.Sandbox.ISandboxExecutor>();
         var countBefore = db.SqlQueries.Count();
         fakeSandbox.OverrideRun = global::SQLModule.Common.Results.Result<global::SQLModule.Sandbox.QueryResultSet>.Success(
