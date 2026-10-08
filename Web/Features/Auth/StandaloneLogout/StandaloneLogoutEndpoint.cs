@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Auth;
-using SQLModule.Identity.Client;
+using SQLModule.Application.Auth;
+using SQLModule.Application.Cqrs;
+using SQLModule.Common.Results;
 using SQLModule.Web.Common;
 using SQLModule.Web.Features.Auth.StandaloneRefresh;
 
@@ -26,10 +28,10 @@ internal sealed class StandaloneLogoutEndpoint : IEndpoint
 
     private static async Task<IResult> Handle(
         StandaloneRefreshRequest request,
-        IIdentityAuthClient identityAuthClient,
+        ISender sender,
         CancellationToken ct)
     {
-        await identityAuthClient.LogoutAsync(request.RefreshToken, ct);
+        await sender.Send<StandaloneLogoutCommand, Result>(new StandaloneLogoutCommand(request.RefreshToken), ct);
         return TypedResults.NoContent();
     }
 }

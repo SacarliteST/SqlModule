@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Auth;
-using SQLModule.Identity.Client;
+using SQLModule.Application.Auth;
+using SQLModule.Application.Cqrs;
+using SQLModule.Common.Results;
 using SQLModule.Web.Common;
 
 namespace SQLModule.Web.Features.Auth.StandaloneRefresh;
@@ -31,18 +33,19 @@ internal sealed class StandaloneRefreshEndpoint : IEndpoint
 
     private static async Task<IResult> Handle(
         StandaloneRefreshRequest request,
-        IIdentityAuthClient identityAuthClient,
+        ISender sender,
         IConfiguration configuration,
         CancellationToken ct)
     {
-        var result = await identityAuthClient.RefreshAndExchangeAsync(
-            request.RefreshToken, StandaloneAuthAudience.Resolve(configuration), ct);
+        var response = await sender.Send<StandaloneRefreshCommand, Result<StandaloneAuthResult>>(
+            new StandaloneRefreshCommand(request.RefreshToken, StandaloneAuthAudience.Resolve(configuration)), ct);
+        var result = response.Value!;
 
         return result.Outcome switch
         {
-            IdentityLoginOutcome.Success => TypedResults.Ok(
+            StandaloneAuthOutcome.Success => TypedResults.Ok(
                 new StandaloneLoginResponse(result.AccessToken!, result.ExpiresIn, result.RefreshToken ?? String.Empty)),
-            IdentityLoginOutcome.InvalidCredentials => ApiProblemFactory.ToResult(
+            StandaloneAuthOutcome.InvalidCredentials => ApiProblemFactory.ToResult(
                 StatusCodes.Status401Unauthorized,
                 "Сессия истекла",
                 "Refresh-токен недействителен или истёк. Войдите заново.",

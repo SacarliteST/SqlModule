@@ -1,4 +1,5 @@
 using SQLModule.Application;
+using SQLModule.Application.Auth;
 using SQLModule.Data;
 using SQLModule.Education.Client;
 using SQLModule.Identity.Client;
@@ -22,6 +23,7 @@ internal static class CompositionExtensions
             .AddWeb(configuration)
             .AddData(configuration)
             .AddIdentityAuthClient(configuration)
+            .AddScoped<IStandaloneAuthGateway, IdentityStandaloneAuthGateway>()
             .AddSeeding(configuration)
             .AddPlatformIntegrations(configuration)
             .AddSandbox();
