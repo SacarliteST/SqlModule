@@ -122,7 +122,6 @@ internal static class ArchitectureRules
     public static IReadOnlyDictionary<string, string> KnownEndpointViolations { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["StudentEndpoints"] = "REF-005: читает AppDbContext напрямую — вынести запросы в Application.",
         };
 
     private static List<AssemblyRule> CreateAssemblyRules()
