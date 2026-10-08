@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Validation.PublishTaskValidation;
 ﻿using System.ComponentModel.DataAnnotations;
 using SQLModule.Application.Training.Validation;
 using Microsoft.AspNetCore.Builder;

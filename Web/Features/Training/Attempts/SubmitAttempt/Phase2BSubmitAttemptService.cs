@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Progress;
 ﻿using System.Security.Cryptography;
 using SQLModule.Application.TaskMaterialization;
 using System.Text;

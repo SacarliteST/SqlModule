@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Progress;
 ﻿using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

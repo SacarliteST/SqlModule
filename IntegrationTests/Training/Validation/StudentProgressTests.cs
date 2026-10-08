@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Progress;
 ﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
