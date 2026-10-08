@@ -1,9 +1,20 @@
 using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Application.Behaviors;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.DbmsCatalog.DbmsDictionary;
+using SQLModule.Application.DbmsCatalog.ParameterDefinitions;
+using SQLModule.Application.DbmsCatalog.PhysicalTypes;
+using SQLModule.Application.Schema.AttributeParameterValues;
+using SQLModule.Application.Schema.CellValues;
+using SQLModule.Application.Schema.DataRecords;
+using SQLModule.Application.Schema.MetaAttributes;
+using SQLModule.Application.Schema.MetaRelationships;
+using SQLModule.Application.Schema.MetaTables;
+using SQLModule.Application.Schema.TargetDbs;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.SqlQueries;
 using SQLModule.Application.Training.SqlTasks;
+using SQLModule.Application.Training.Topics;
 using SQLModule.Application.Training.Validation;
 
 namespace SQLModule.Application;
@@ -20,6 +31,17 @@ public static class ApplicationExtensions
         services.AddScoped<ITaskValidationSnapshotFactory, TaskValidationSnapshotFactory>();
         return services
             .AddTaskMaterializer()
-            .AddSqlTasks();
+            .AddSqlTasks()
+            .AddDbmsDictionaries()
+            .AddPhysicalTypes()
+            .AddParameterDefinitions()
+            .AddTargetDbs()
+            .AddMetaTables()
+            .AddMetaAttributes()
+            .AddMetaRelationships()
+            .AddDataRecords()
+            .AddCellValues()
+            .AddAttributeParameterValues()
+            .AddTopics();
     }
 }

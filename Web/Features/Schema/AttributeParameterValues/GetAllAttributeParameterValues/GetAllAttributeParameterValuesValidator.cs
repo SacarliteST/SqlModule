@@ -1,3 +1,4 @@
+using SQLModule.Application.Schema.AttributeParameterValues;
 ﻿using FluentValidation;
 using SQLModule.Contracts.Schema.AttributeParameterValue;
 

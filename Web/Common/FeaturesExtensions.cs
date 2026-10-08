@@ -1,3 +1,14 @@
+using SQLModule.Application.Schema.MetaRelationships;
+using SQLModule.Application.Training.Topics;
+using SQLModule.Application.Schema.AttributeParameterValues;
+using SQLModule.Application.Schema.MetaAttributes;
+using SQLModule.Application.Schema.TargetDbs;
+using SQLModule.Application.DbmsCatalog.DbmsDictionary;
+using SQLModule.Application.Schema.CellValues;
+using SQLModule.Application.Schema.DataRecords;
+using SQLModule.Application.DbmsCatalog.ParameterDefinitions;
+using SQLModule.Application.DbmsCatalog.PhysicalTypes;
+using SQLModule.Application.Schema.MetaTables;
 ﻿using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Application.Training.Validation;
 using SQLModule.Application.Training.SqlQueries;
@@ -37,17 +48,6 @@ internal static class FeaturesExtensions
     /// <summary>Регистрирует хендлеры всех фич.</summary>
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
         => s.AddScoped<ISandboxPoolProfileSource, DbmsSandboxPoolProfileSource>()
-            .AddDbmsDictionaries()
-            .AddPhysicalTypes()
-            .AddParameterDefinitions()
-            .AddTargetDbs()
-            .AddMetaTables()
-            .AddMetaAttributes()
-            .AddMetaRelationships()
-            .AddDataRecords()
-            .AddCellValues()
-            .AddAttributeParameterValues()
-            .AddTopics()
             .AddSqlQueries()
             .AddAttempts()
             .AddStudentProgress()

@@ -1,3 +1,4 @@
+using SQLModule.Application.Training.Topics;
 ﻿using FluentValidation;
 using SQLModule.Contracts.Training.Topic;
 

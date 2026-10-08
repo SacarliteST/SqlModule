@@ -1,3 +1,4 @@
+using SQLModule.Application.Schema.DataRecords;
 ﻿using FluentValidation;
 using SQLModule.Contracts.Schema.DataRecord;
 
