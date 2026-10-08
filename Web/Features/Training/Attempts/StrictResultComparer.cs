@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
+using SQLModule.Application.TaskMaterialization;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Sandbox;
 
 namespace SQLModule.Web.Features.Training.Attempts;
 

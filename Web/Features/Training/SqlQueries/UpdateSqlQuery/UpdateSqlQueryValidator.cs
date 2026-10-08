@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using SQLModule.Application.Training.SqlQueries;
 using SQLModule.Contracts.Training.SqlQuery;
 
 namespace SQLModule.Web.Features.Training.SqlQueries;

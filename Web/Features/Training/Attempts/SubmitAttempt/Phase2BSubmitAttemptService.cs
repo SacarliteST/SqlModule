@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using SQLModule.Application.TaskMaterialization;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,6 @@ using SQLModule.Domain.Training;
 using SQLModule.Domain.Training.Validation;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.ModuleIntegration;
 using SQLModule.Web.Features.Training.Progress;
 

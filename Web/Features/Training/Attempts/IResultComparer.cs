@@ -1,5 +1,5 @@
 ﻿using SQLModule.Sandbox;
-using SQLModule.Web.Common.Sandbox;
+using SQLModule.Application.TaskMaterialization;
 
 namespace SQLModule.Web.Features.Training.Attempts;
 

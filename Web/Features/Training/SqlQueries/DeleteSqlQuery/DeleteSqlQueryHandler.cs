@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Training.SqlQueries;
 using SQLModule.Common.Results;
 using SQLModule.Data.Core;
 using SQLModule.Application.Cqrs;

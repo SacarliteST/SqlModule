@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Training.Validation;
 using Microsoft.Extensions.Logging;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
