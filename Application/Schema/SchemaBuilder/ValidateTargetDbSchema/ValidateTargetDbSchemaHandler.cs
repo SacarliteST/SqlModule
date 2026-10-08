@@ -1,18 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.ValidateTargetDbSchema;
+namespace SQLModule.Application.Schema.SchemaBuilder.ValidateTargetDbSchema;
 
-internal sealed record ValidateTargetDbSchemaCommand(Guid TargetDbId, SchemaUpsertRequest Request)
+public sealed record ValidateTargetDbSchemaCommand(Guid TargetDbId, SchemaUpsertRequest Request)
     : IRequest<Result<SchemaValidationResponse>>;
 
-internal sealed class ValidateTargetDbSchemaHandler(
+public sealed class ValidateTargetDbSchemaHandler(
     ISchemaPreparer preparer,
     ISchemaDiffPlanner planner,
-    AppDbContext db)
+    IApplicationDbContext db)
     : IRequestHandler<ValidateTargetDbSchemaCommand, Result<SchemaValidationResponse>>
 {
     public async Task<Result<SchemaValidationResponse>> Handle(

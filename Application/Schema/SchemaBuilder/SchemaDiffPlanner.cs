@@ -1,22 +1,22 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder;
+namespace SQLModule.Application.Schema.SchemaBuilder;
 
-internal sealed record SchemaDiffPlan(
+public sealed record SchemaDiffPlan(
     IReadOnlyList<SchemaChangeResponse> Changes,
     IReadOnlyList<SchemaChangeResponse> DestructiveChanges)
 {
     internal bool IsSafe => DestructiveChanges.Count == 0;
 }
 
-internal interface ISchemaDiffPlanner
+public interface ISchemaDiffPlanner
 {
     Task<SchemaDiffPlan> BuildAsync(Guid targetDbId, SchemaUpsertRequest request, CancellationToken ct);
 }
 
-internal sealed class SchemaDiffPlanner(AppDbContext db) : ISchemaDiffPlanner
+public sealed class SchemaDiffPlanner(IApplicationDbContext db) : ISchemaDiffPlanner
 {
     public async Task<SchemaDiffPlan> BuildAsync(
         Guid targetDbId, SchemaUpsertRequest request, CancellationToken ct)

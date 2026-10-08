@@ -3,15 +3,15 @@ using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder;
+namespace SQLModule.Application.Schema.SchemaBuilder;
 
-internal sealed record PreparedSchema(
+public sealed record PreparedSchema(
     DbmsDictionary Dbms,
     IReadOnlyDictionary<Guid, PhysicalType> PhysicalTypes,
     SchemaSpec Spec,
     IReadOnlyList<string> Ddl);
 
-internal interface ISchemaPreparer
+public interface ISchemaPreparer
 {
     Task<Result<PreparedSchema>> PrepareAndValidateAsync(CreateSchemaRequest request, CancellationToken ct);
 }

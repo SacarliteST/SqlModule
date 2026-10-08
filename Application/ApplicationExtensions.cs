@@ -11,6 +11,7 @@ using SQLModule.Application.Schema.MetaAttributes;
 using SQLModule.Application.Schema.MetaRelationships;
 using SQLModule.Application.Schema.MetaTables;
 using SQLModule.Application.Schema.TargetDbs;
+using SQLModule.Application.Schema.SchemaBuilder;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.SqlQueries;
 using SQLModule.Application.Training.Progress;
@@ -46,6 +47,7 @@ public static class ApplicationExtensions
             .AddTopics()
             .AddSqlQueries()
             .AddStudentProgress()
-            .AddTaskValidation();
+            .AddTaskValidation()
+            .AddSchemaBuilder();
     }
 }

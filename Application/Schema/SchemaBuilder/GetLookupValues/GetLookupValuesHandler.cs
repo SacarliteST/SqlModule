@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.GetLookupValues;
+namespace SQLModule.Application.Schema.SchemaBuilder.GetLookupValues;
 
-internal sealed record GetLookupValuesQuery(
+public sealed record GetLookupValuesQuery(
     Guid TargetDbId,
     Guid TableId,
     Guid ValueColumnId,
@@ -15,7 +15,7 @@ internal sealed record GetLookupValuesQuery(
     int Offset,
     int Limit) : IRequest<Result<LookupValuesResponse>>;
 
-internal sealed class GetLookupValuesHandler(AppDbContext db)
+public sealed class GetLookupValuesHandler(IApplicationDbContext db, ITextSearch textSearch)
     : IRequestHandler<GetLookupValuesQuery, Result<LookupValuesResponse>>
 {
     public async Task<Result<LookupValuesResponse>> Handle(GetLookupValuesQuery query, CancellationToken ct)
@@ -95,9 +95,7 @@ internal sealed class GetLookupValuesHandler(AppDbContext db)
         if (!String.IsNullOrWhiteSpace(query.Search))
         {
             var pattern = $"%{EscapeLikePattern(query.Search)}%";
-            rows = rows.Where(row =>
-                EF.Functions.ILike(row.Value!, pattern, "\\") ||
-                row.LabelValue != null && EF.Functions.ILike(row.LabelValue, pattern, "\\"));
+            rows = textSearch.WhereAnyMatchesIgnoreCase(rows, pattern, row => row.Value, row => row.LabelValue);
         }
 
         var count = await rows.CountAsync(ct);

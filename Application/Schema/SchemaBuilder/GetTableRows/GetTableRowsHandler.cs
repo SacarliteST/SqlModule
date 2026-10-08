@@ -1,15 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.GetTableRows;
+namespace SQLModule.Application.Schema.SchemaBuilder.GetTableRows;
 
-internal sealed record GetTableRowsQuery(Guid TargetDbId, Guid TableId, int Offset, int Limit)
+public sealed record GetTableRowsQuery(Guid TargetDbId, Guid TableId, int Offset, int Limit)
     : IRequest<Result<TableRowsResponse>>;
 
-internal sealed class GetTableRowsHandler(AppDbContext db)
+public sealed class GetTableRowsHandler(IApplicationDbContext db)
     : IRequestHandler<GetTableRowsQuery, Result<TableRowsResponse>>
 {
     public async Task<Result<TableRowsResponse>> Handle(GetTableRowsQuery query, CancellationToken ct)

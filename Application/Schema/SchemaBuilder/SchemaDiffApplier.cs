@@ -1,16 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.Schema;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder;
+namespace SQLModule.Application.Schema.SchemaBuilder;
 
-internal interface ISchemaDiffApplier
+public interface ISchemaDiffApplier
 {
     Task ApplyAsync(Guid targetDbId, SchemaUpsertRequest request, CancellationToken ct);
 }
 
-internal sealed class SchemaDiffApplier(AppDbContext db) : ISchemaDiffApplier
+public sealed class SchemaDiffApplier(IApplicationDbContext db) : ISchemaDiffApplier
 {
     public async Task ApplyAsync(Guid targetDbId, SchemaUpsertRequest request, CancellationToken ct)
     {

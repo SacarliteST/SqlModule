@@ -1,10 +1,10 @@
 ﻿using SQLModule.Contracts.Schema.SchemaBuilder;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder;
+namespace SQLModule.Application.Schema.SchemaBuilder;
 
-internal static class SchemaUpsertMapper
+public static class SchemaUpsertMapper
 {
-    internal static CreateSchemaRequest ToCreateRequest(
+    public static CreateSchemaRequest ToCreateRequest(
         Guid dbmsId,
         string schemaName,
         SchemaUpsertRequest request)
@@ -33,7 +33,7 @@ internal static class SchemaUpsertMapper
                 relationship.UpdateRule)).ToList());
     }
 
-    internal static Guid EntityId(Guid? id) => id ?? Guid.NewGuid();
+    public static Guid EntityId(Guid? id) => id ?? Guid.NewGuid();
 
-    internal static string Key(Guid? id, string? tempId) => id?.ToString() ?? tempId!;
+    public static string Key(Guid? id, string? tempId) => id?.ToString() ?? tempId!;
 }

@@ -1,3 +1,5 @@
+using SQLModule.Application.Schema.SchemaBuilder.GetTableRows;
+using SQLModule.Application.Schema.SchemaBuilder;
 using SQLModule.Application.Training.Progress;
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Builder;

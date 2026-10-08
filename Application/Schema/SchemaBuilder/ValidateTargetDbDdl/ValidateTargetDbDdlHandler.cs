@@ -2,12 +2,12 @@
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.ValidateTargetDbDdl;
+namespace SQLModule.Application.Schema.SchemaBuilder.ValidateTargetDbDdl;
 
-internal sealed record ValidateTargetDbDdlCommand(
+public sealed record ValidateTargetDbDdlCommand(
     ValidateTargetDbDdlRequest Request) : IRequest<Result<ValidateTargetDbDdlResponse>>;
 
-internal sealed class ValidateTargetDbDdlHandler(IDdlSchemaService service)
+public sealed class ValidateTargetDbDdlHandler(IDdlSchemaService service)
     : IRequestHandler<ValidateTargetDbDdlCommand, Result<ValidateTargetDbDdlResponse>>
 {
     public async Task<Result<ValidateTargetDbDdlResponse>> Handle(

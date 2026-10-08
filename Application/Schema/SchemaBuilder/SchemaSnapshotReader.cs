@@ -1,15 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder;
+namespace SQLModule.Application.Schema.SchemaBuilder;
 
-internal interface ISchemaSnapshotReader
+public interface ISchemaSnapshotReader
 {
     Task<TargetDbSchemaResponse?> ReadAsync(Guid targetDbId, CancellationToken ct);
 }
 
-internal sealed class SchemaSnapshotReader(AppDbContext db) : ISchemaSnapshotReader
+public sealed class SchemaSnapshotReader(IApplicationDbContext db) : ISchemaSnapshotReader
 {
     public async Task<TargetDbSchemaResponse?> ReadAsync(Guid targetDbId, CancellationToken ct)
     {

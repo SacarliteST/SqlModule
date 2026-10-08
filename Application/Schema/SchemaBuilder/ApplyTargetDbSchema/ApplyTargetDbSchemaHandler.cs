@@ -4,24 +4,24 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.Schema;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.ApplyTargetDbSchema;
+namespace SQLModule.Application.Schema.SchemaBuilder.ApplyTargetDbSchema;
 
-internal sealed record ApplyTargetDbSchemaCommand(
+public sealed record ApplyTargetDbSchemaCommand(
     Guid TargetDbId,
     string? IfMatch,
     string IdempotencyKey,
     SchemaUpsertRequest Request) : IRequest<Result<TargetDbSchemaResponse>>;
 
-internal sealed class ApplyTargetDbSchemaHandler(
+public sealed class ApplyTargetDbSchemaHandler(
     ISchemaPreparer preparer,
     ISchemaDiffPlanner planner,
     ISchemaDiffApplier applier,
     ISchemaSnapshotReader snapshotReader,
-    AppDbContext db)
+    IApplicationDbContext db)
     : IRequestHandler<ApplyTargetDbSchemaCommand, Result<TargetDbSchemaResponse>>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
