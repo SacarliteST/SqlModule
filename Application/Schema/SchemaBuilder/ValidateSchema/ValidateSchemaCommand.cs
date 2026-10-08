@@ -2,11 +2,11 @@
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.ValidateSchema;
+namespace SQLModule.Application.Schema.SchemaBuilder.ValidateSchema;
 
-internal record ValidateSchemaCommand(CreateSchemaRequest Request) : IRequest<Result>;
+public record ValidateSchemaCommand(CreateSchemaRequest Request) : IRequest<Result>;
 
-internal sealed class ValidateSchemaHandler(ISchemaPreparer preparer)
+public sealed class ValidateSchemaHandler(ISchemaPreparer preparer)
     : IRequestHandler<ValidateSchemaCommand, Result>
 {
     public async Task<Result> Handle(ValidateSchemaCommand command, CancellationToken ct)

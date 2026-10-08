@@ -45,6 +45,7 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IMigrationManager, DatabaseMigrationManager>();
+        services.AddSingleton<ITextSearch, PostgresTextSearch>();
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddSingleton<IDbErrorClassifier, PostgresErrorClassifier>();
 

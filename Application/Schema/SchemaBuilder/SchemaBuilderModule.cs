@@ -2,33 +2,28 @@
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Application.Cqrs;
-using SQLModule.Web.Features.Schema.SchemaBuilder.ApplyTargetDbSchema;
-using SQLModule.Web.Features.Schema.SchemaBuilder.BatchTableRows;
-using SQLModule.Web.Features.Schema.SchemaBuilder.CreateSchema;
-using SQLModule.Web.Features.Schema.SchemaBuilder.CreateTargetDbFromDdl;
-using SQLModule.Web.Features.Schema.SchemaBuilder.GetLookupValues;
-using SQLModule.Web.Features.Schema.SchemaBuilder.GetTableRows;
-using SQLModule.Web.Features.Schema.SchemaBuilder.GetTargetDbSchema;
-using SQLModule.Web.Features.Schema.SchemaBuilder.ValidateSchema;
-using SQLModule.Web.Features.Schema.SchemaBuilder.ValidateTargetDbDdl;
-using SQLModule.Web.Features.Schema.SchemaBuilder.ValidateTargetDbSchema;
+using SQLModule.Application.Schema.SchemaBuilder.ApplyTargetDbSchema;
+using SQLModule.Application.Schema.SchemaBuilder.BatchTableRows;
+using SQLModule.Application.Schema.SchemaBuilder.CreateSchema;
+using SQLModule.Application.Schema.SchemaBuilder.CreateTargetDbFromDdl;
+using SQLModule.Application.Schema.SchemaBuilder.GetLookupValues;
+using SQLModule.Application.Schema.SchemaBuilder.GetTableRows;
+using SQLModule.Application.Schema.SchemaBuilder.GetTargetDbSchema;
+using SQLModule.Application.Schema.SchemaBuilder.ValidateSchema;
+using SQLModule.Application.Schema.SchemaBuilder.ValidateTargetDbDdl;
+using SQLModule.Application.Schema.SchemaBuilder.ValidateTargetDbSchema;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder;
+namespace SQLModule.Application.Schema.SchemaBuilder;
 
-internal static class SchemaBuilderModule
+public static class SchemaBuilderModule
 {
-    internal static IServiceCollection AddSchemaBuilder(this IServiceCollection services)
+    public static IServiceCollection AddSchemaBuilder(this IServiceCollection services)
     {
         services.AddScoped<ISchemaPreparer, SchemaPreparer>();
         services.AddScoped<ISchemaSnapshotReader, SchemaSnapshotReader>();
         services.AddScoped<ISchemaDiffPlanner, SchemaDiffPlanner>();
         services.AddScoped<ISchemaDiffApplier, SchemaDiffApplier>();
         services.AddScoped<IDdlSchemaService, DdlSchemaService>();
-        services.AddScoped<FluentValidation.IValidator<SchemaUpsertRequest>, SchemaUpsertValidator>();
-        services.AddScoped<FluentValidation.IValidator<BatchTableRowsRequest>, BatchTableRowsValidator>();
-        services.AddScoped<FluentValidation.IValidator<LookupValuesRequest>, LookupValuesRequestValidator>();
-        services.AddScoped<FluentValidation.IValidator<ValidateTargetDbDdlRequest>, ValidateTargetDbDdlRequestValidator>();
-        services.AddScoped<FluentValidation.IValidator<CreateTargetDbFromDdlRequest>, CreateTargetDbFromDdlRequestValidator>();
         services.AddScoped<IRequestHandler<GetTargetDbSchemaQuery, Result<TargetDbSchemaResponse>>, GetTargetDbSchemaHandler>();
         services.AddScoped<IRequestHandler<ValidateTargetDbSchemaCommand, Result<SchemaValidationResponse>>, ValidateTargetDbSchemaHandler>();
         services.AddScoped<IRequestHandler<ApplyTargetDbSchemaCommand, Result<TargetDbSchemaResponse>>, ApplyTargetDbSchemaHandler>();

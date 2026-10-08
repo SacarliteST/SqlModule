@@ -1,3 +1,4 @@
+using SQLModule.Application.Schema.SchemaBuilder;
 using SQLModule.Application.Training.Progress;
 using SQLModule.Application.Schema.MetaRelationships;
 using SQLModule.Application.Training.Topics;
@@ -49,6 +50,5 @@ internal static class FeaturesExtensions
     /// <summary>Регистрирует хендлеры всех фич.</summary>
     internal static IServiceCollection AddFeatures(this IServiceCollection s)
         => s.AddScoped<ISandboxPoolProfileSource, DbmsSandboxPoolProfileSource>()
-            .AddAttempts()
-            .AddSchemaBuilder();
+            .AddAttempts();
 }

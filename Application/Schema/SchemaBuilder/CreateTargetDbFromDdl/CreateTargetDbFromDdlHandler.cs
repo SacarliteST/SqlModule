@@ -4,22 +4,22 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Sandbox;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.CreateTargetDbFromDdl;
+namespace SQLModule.Application.Schema.SchemaBuilder.CreateTargetDbFromDdl;
 
-internal sealed record CreateTargetDbFromDdlCommand(
+public sealed record CreateTargetDbFromDdlCommand(
     string IdempotencyKey,
     CreateTargetDbFromDdlRequest Request) : IRequest<Result<CreateTargetDbFromDdlResponse>>;
 
-internal sealed class CreateTargetDbFromDdlHandler(
+public sealed class CreateTargetDbFromDdlHandler(
     IDdlSchemaService service,
     ISchemaSnapshotReader snapshotReader,
-    AppDbContext db)
+    IApplicationDbContext db)
     : IRequestHandler<CreateTargetDbFromDdlCommand, Result<CreateTargetDbFromDdlResponse>>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -105,7 +105,7 @@ internal sealed class CreateTargetDbFromDdlHandler(
     }
 
     private static void AddParameters(
-        Guid columnId, PhysicalType physicalType, InspectedColumn column, AppDbContext db)
+        Guid columnId, PhysicalType physicalType, InspectedColumn column, IApplicationDbContext db)
     {
         foreach (var definition in physicalType.ParameterDefinitions)
         {

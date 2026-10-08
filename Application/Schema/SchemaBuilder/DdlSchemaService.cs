@@ -1,23 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Common.Results;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder;
+namespace SQLModule.Application.Schema.SchemaBuilder;
 
-internal sealed record PreparedDdlSchema(
+public sealed record PreparedDdlSchema(
     DbmsDictionary Dbms,
     InspectedSchema Schema,
     IReadOnlyDictionary<string, PhysicalType> PhysicalTypes);
 
-internal interface IDdlSchemaService
+public interface IDdlSchemaService
 {
     Task<Result<PreparedDdlSchema>> ValidateAndInspectAsync(Guid dbmsId, string ddlScript, CancellationToken ct);
 }
 
-internal sealed class DdlSchemaService(AppDbContext db, ISandboxExecutor sandbox) : IDdlSchemaService
+public sealed class DdlSchemaService(IApplicationDbContext db, ISandboxExecutor sandbox) : IDdlSchemaService
 {
     public async Task<Result<PreparedDdlSchema>> ValidateAndInspectAsync(
         Guid dbmsId, string ddlScript, CancellationToken ct)
@@ -97,7 +97,7 @@ internal sealed class DdlSchemaService(AppDbContext db, ISandboxExecutor sandbox
     }
 }
 
-internal static class DdlSafetyPolicy
+public static class DdlSafetyPolicy
 {
     private static readonly HashSet<string> Forbidden = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -106,7 +106,7 @@ internal static class DdlSafetyPolicy
         "DATABASE", "SCHEMA", "EXTENSION", "FUNCTION", "PROCEDURE", "TRIGGER", "OWNER"
     };
 
-    internal static Error? Validate(string sql)
+    public static Error? Validate(string sql)
     {
         var statements = Tokenize(sql).ChunkByStatement();
         if (statements.Count == 0)

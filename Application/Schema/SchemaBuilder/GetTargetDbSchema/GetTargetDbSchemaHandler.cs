@@ -2,12 +2,12 @@
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.GetTargetDbSchema;
+namespace SQLModule.Application.Schema.SchemaBuilder.GetTargetDbSchema;
 
-internal sealed record GetTargetDbSchemaQuery(Guid TargetDbId)
+public sealed record GetTargetDbSchemaQuery(Guid TargetDbId)
     : IRequest<Result<TargetDbSchemaResponse>>;
 
-internal sealed class GetTargetDbSchemaHandler(ISchemaSnapshotReader reader)
+public sealed class GetTargetDbSchemaHandler(ISchemaSnapshotReader reader)
     : IRequestHandler<GetTargetDbSchemaQuery, Result<TargetDbSchemaResponse>>
 {
     public async Task<Result<TargetDbSchemaResponse>> Handle(

@@ -2,13 +2,13 @@
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Sandbox;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder;
+namespace SQLModule.Application.Schema.SchemaBuilder;
 
-internal sealed class SchemaPreparer(
-    AppDbContext db,
+public sealed class SchemaPreparer(
+    IApplicationDbContext db,
     ISandboxExecutor executor,
     ISqlSyntaxFactory syntaxFactory,
     ISchemaSqlGenerator generator)

@@ -1,15 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.Schema;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.CreateSchema;
+namespace SQLModule.Application.Schema.SchemaBuilder.CreateSchema;
 
-internal record CreateSchemaCommand(CreateSchemaRequest Request) : IRequest<Result<CreateSchemaResponse>>;
+public record CreateSchemaCommand(CreateSchemaRequest Request) : IRequest<Result<CreateSchemaResponse>>;
 
-internal sealed class CreateSchemaHandler(ISchemaPreparer preparer, AppDbContext db)
+public sealed class CreateSchemaHandler(ISchemaPreparer preparer, IApplicationDbContext db)
     : IRequestHandler<CreateSchemaCommand, Result<CreateSchemaResponse>>
 {
     public async Task<Result<CreateSchemaResponse>> Handle(CreateSchemaCommand command, CancellationToken ct)

@@ -6,19 +6,19 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Data.Core;
+using SQLModule.Application.Persistence;
 using SQLModule.Domain.Schema;
 using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Features.Schema.SchemaBuilder.BatchTableRows;
+namespace SQLModule.Application.Schema.SchemaBuilder.BatchTableRows;
 
-internal sealed record BatchTableRowsCommand(
+public sealed record BatchTableRowsCommand(
     Guid TargetDbId,
     Guid TableId,
     string IdempotencyKey,
     BatchTableRowsRequest Request) : IRequest<Result<BatchTableRowsResponse>>;
 
-internal sealed class BatchTableRowsHandler(AppDbContext db, ITargetDbDataValidator dataValidator)
+public sealed class BatchTableRowsHandler(IApplicationDbContext db, ITargetDbDataValidator dataValidator)
     : IRequestHandler<BatchTableRowsCommand, Result<BatchTableRowsResponse>>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -214,7 +214,7 @@ internal sealed class BatchTableRowsHandler(AppDbContext db, ITargetDbDataValida
         DataRecord record,
         IReadOnlyDictionary<Guid, TableCellRequest> cells,
         IReadOnlyDictionary<Guid, MetaAttribute> columns,
-        AppDbContext db)
+        IApplicationDbContext db)
     {
         var existing = record.CellValues.ToDictionary(x => x.MetaAttributeId);
         foreach (var (columnId, value) in cells)
