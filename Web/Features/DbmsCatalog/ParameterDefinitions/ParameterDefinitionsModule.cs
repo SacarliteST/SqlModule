@@ -2,7 +2,7 @@
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.ParameterDefinition;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.DbmsCatalog.ParameterDefinitions;
 

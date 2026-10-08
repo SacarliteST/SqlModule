@@ -11,7 +11,7 @@ using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.ModuleIntegration;
 

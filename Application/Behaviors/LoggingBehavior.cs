@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SQLModule.Common.Results;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
-namespace SQLModule.Web.Common.Behaviors;
+namespace SQLModule.Application.Behaviors;
 
 /// <summary>
 /// Pipeline-поведение, которое логирует имя запроса, время выполнения и признак успеха.

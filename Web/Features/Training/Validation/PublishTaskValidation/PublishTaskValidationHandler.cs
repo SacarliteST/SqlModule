@@ -10,7 +10,7 @@ using SQLModule.Domain;
 using SQLModule.Domain.Common;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Validation.PublishTaskValidation;
 

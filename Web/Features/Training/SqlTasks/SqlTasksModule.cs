@@ -2,7 +2,7 @@
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.SqlTask;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Features.Training.SqlTasks.GetTeacherTaskDetails;
 
 namespace SQLModule.Web.Features.Training.SqlTasks;

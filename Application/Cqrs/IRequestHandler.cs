@@ -1,4 +1,4 @@
-﻿namespace SQLModule.Web.Common.Cqrs;
+﻿namespace SQLModule.Application.Cqrs;
 
 /// <summary>
 /// Хендлер запроса. Содержит бизнес-логику обработки одной команды или запроса.

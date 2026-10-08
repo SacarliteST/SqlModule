@@ -3,7 +3,7 @@ using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.SqlQuery;
 using SQLModule.Data.Core;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Common.Sandbox;
 
 namespace SQLModule.Web.Features.Training.SqlQueries;

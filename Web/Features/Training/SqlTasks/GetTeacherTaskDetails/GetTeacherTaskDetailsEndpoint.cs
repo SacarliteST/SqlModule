@@ -6,7 +6,7 @@ using SQLModule.Contracts;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Web.Common;
 using SQLModule.Web.Common.Auth;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.SqlTasks.GetTeacherTaskDetails;
 

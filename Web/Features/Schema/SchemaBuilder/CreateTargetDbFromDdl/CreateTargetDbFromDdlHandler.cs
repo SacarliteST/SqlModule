@@ -8,7 +8,7 @@ using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Schema.SchemaBuilder.CreateTargetDbFromDdl;
 

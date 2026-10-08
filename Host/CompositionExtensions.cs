@@ -1,3 +1,4 @@
+using SQLModule.Application;
 using SQLModule.Data;
 using SQLModule.Education.Client;
 using SQLModule.Identity.Client;
@@ -17,6 +18,7 @@ internal static class CompositionExtensions
         this IServiceCollection services,
         IConfiguration configuration) =>
         services
+            .AddApplication()
             .AddWeb(configuration)
             .AddData(configuration)
             .AddIdentityAuthClient(configuration)

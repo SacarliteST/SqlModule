@@ -1,9 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application;
 using SQLModule.Host;
 using SQLModule.Web;
 using SQLModule.Web.Common;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.IntegrationTests.Cqrs;
 
@@ -20,7 +21,7 @@ public sealed class HandlerScannerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddCqrs();
+        services.AddApplication();
         services.AddFeatures();
 
         var iRequestOpenType = typeof(IRequest<>);

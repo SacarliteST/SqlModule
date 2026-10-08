@@ -2,7 +2,7 @@
 using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.PhysicalType;
 using SQLModule.Data.Core;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.DbmsCatalog.PhysicalTypes;
 
