@@ -12,7 +12,8 @@ using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Host;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Isolated;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.IntegrationTests.ModuleIntegration;
 

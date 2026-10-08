@@ -9,7 +9,8 @@ using SQLModule.Client;
 using SQLModule.Client.SchemaBuilder;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Host;
-using SQLModule.Web.Common.Isolated;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox;
 using SQLModule.Sandbox.DbmsProbing;
 using Testcontainers.PostgreSql;
 

@@ -13,7 +13,8 @@ using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Isolated;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox.DbmsProbing;
 using DomainAttempt = SQLModule.Domain.Training.Attempt;
 
 namespace SQLModule.IntegrationTests.Training.SqlTask;

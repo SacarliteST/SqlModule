@@ -19,7 +19,8 @@ using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Isolated;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox.DbmsProbing;
 using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.IntegrationTests.Training.Validation;
