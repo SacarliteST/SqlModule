@@ -244,7 +244,7 @@ public sealed class SubmitAttemptHandler(
                 finishedAt,
                 new PracticeEventPayload(
                     command.SubmittedSql,
-                    ToIntegrationStatus(status),
+                    PracticeEventMapping.ToIntegrationStatus(status),
                     result.Succeeded ? result.RowCount : null,
                     result.Succeeded ? result.DurationMs : null,
                     isCorrect,
@@ -306,14 +306,6 @@ public sealed class SubmitAttemptHandler(
 
         return response;
     }
-
-    private static string ToIntegrationStatus(ExecutionStatus status) => status switch
-    {
-        ExecutionStatus.Succeeded => "SUCCESS",
-        ExecutionStatus.Error => "ERROR",
-        ExecutionStatus.TimedOut => "TIMEOUT",
-        _ => "UNKNOWN"
-    };
 
     private static string HashPayload(Guid taskId, string submittedSql)
     {

@@ -17,6 +17,9 @@ public static class AttemptsModule
         services.AddScoped<IAttemptScoringReadService, AttemptScoringReadService>();
         services.AddScoped<IPhase2BValidationRuntimeReader, Phase2BValidationRuntimeReader>();
         services.AddScoped<IPhase2BSubmitAttemptService, Phase2BSubmitAttemptService>();
+        services.AddScoped<AttemptEvaluationEngine>();
+        services.AddScoped<IAttemptProgressResolver, AttemptProgressResolver>();
+        services.AddScoped<IAttemptPersistenceService, AttemptPersistenceService>();
         services.AddScoped<IRequestHandler<SubmitAttemptCommand, Result<SubmitAttemptResponse>>, SubmitAttemptHandler>();
         services.AddScoped<IRequestHandler<GetAttemptByIdQuery, Result<AttemptResponse>>, GetAttemptByIdHandler>();
         services.AddScoped<IRequestHandler<GetAllAttemptsQuery, Result<PageResponse<AttemptListItemResponse>>>, GetAllAttemptsHandler>();
