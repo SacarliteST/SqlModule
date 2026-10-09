@@ -117,7 +117,7 @@ public sealed class SqlTaskTests : ApiTestBase
         response.SqlQueryId.ShouldNotBe(Guid.Empty);
         response.TaskName.ShouldBe("My Task");
         response.DifficultyLevel.ShouldBe((short)3);
-        response.PublicationStatus.ShouldBe(PublicationStatus.Draft);
+        response.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Draft);
         response.CreatedAt.ShouldBeGreaterThan(DateTimeOffset.UnixEpoch);
         response.UpdatedAt.ShouldBeGreaterThanOrEqualTo(response.CreatedAt);
         response.CreatedById.ShouldNotBe(Guid.Empty);
@@ -189,7 +189,7 @@ public sealed class SqlTaskTests : ApiTestBase
         var updated = await SqlTaskClient.GetByIdAsync(created.Id);
         updated!.TaskName.ShouldBe("NewName");
         updated.DifficultyLevel.ShouldBe((short)5);
-        updated.PublicationStatus.ShouldBe(PublicationStatus.Draft);
+        updated.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Draft);
     }
 
     [Fact(DisplayName = "Create → атомарно создаёт собственный проверенный эталон")]
@@ -301,7 +301,7 @@ public sealed class SqlTaskTests : ApiTestBase
                     null,
                     null,
                     null,
-                    (PublicationStatus)999,
+                    (SQLModule.Contracts.Training.PublicationStatus)999,
                     Guid.Empty)));
 
         ex.StatusCode.ShouldBe(422);
@@ -356,7 +356,7 @@ public sealed class SqlTaskTests : ApiTestBase
                 task.TaskName,
                 task.TaskText,
                 task.DifficultyLevel,
-                PublicationStatus.Archived));
+                SQLModule.Contracts.Training.PublicationStatus.Archived));
 
         await Should.ThrowAsync<ConflictException>(
             () => SqlTaskClient.UpdateReferenceQueryAsync(
@@ -411,7 +411,7 @@ public sealed class SqlTaskTests : ApiTestBase
                     published.TaskName,
                     published.TaskText,
                     published.DifficultyLevel,
-                    PublicationStatus.Published,
+                    SQLModule.Contracts.Training.PublicationStatus.Published,
                     TopicId: newTopicId)));
 
         ex.Problem!.Title.ShouldBe("Конфликт состояния");
@@ -436,7 +436,7 @@ public sealed class SqlTaskTests : ApiTestBase
                 task.TaskName,
                 task.TaskText,
                 task.DifficultyLevel,
-                PublicationStatus.Archived));
+                SQLModule.Contracts.Training.PublicationStatus.Archived));
 
         // Act + Assert
         await Should.ThrowAsync<ConflictException>(
@@ -446,7 +446,7 @@ public sealed class SqlTaskTests : ApiTestBase
                     task.TaskName,
                     task.TaskText,
                     task.DifficultyLevel,
-                    PublicationStatus.Archived,
+                    SQLModule.Contracts.Training.PublicationStatus.Archived,
                     TopicId: newTopicId)));
     }
 
@@ -513,7 +513,7 @@ public sealed class SqlTaskTests : ApiTestBase
                 "Updated published task",
                 task.TaskText,
                 task.DifficultyLevel,
-                PublicationStatus.Published,
+                SQLModule.Contracts.Training.PublicationStatus.Published,
                 topicId));
 
         // Assert
@@ -571,7 +571,7 @@ public sealed class SqlTaskTests : ApiTestBase
         details.ShouldNotBeNull();
         details.TaskId.ShouldBe(task.Id);
         details.TaskName.ShouldBe("Published task");
-        details.PublicationStatus.ShouldBe(PublicationStatus.Published);
+        details.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Published);
         details.TargetDb.TargetDbId.ShouldBe(targetDbId);
         details.TargetDb.Tables.ShouldHaveSingleItem()
             .ShouldBe(new TeacherTaskTableResponse("employees", 2));
@@ -650,7 +650,7 @@ public sealed class SqlTaskTests : ApiTestBase
                 task.TaskName,
                 task.TaskText,
                 task.DifficultyLevel,
-                PublicationStatus.Archived));
+                SQLModule.Contracts.Training.PublicationStatus.Archived));
 
         var details = await SqlTaskClient.GetTeacherDetailsAsync(task.Id);
 
@@ -692,7 +692,7 @@ public sealed class SqlTaskTests : ApiTestBase
                     task.TaskName,
                     task.TaskText,
                     task.DifficultyLevel,
-                    PublicationStatus.Published)));
+                    SQLModule.Contracts.Training.PublicationStatus.Published)));
     }
 
     [Fact(DisplayName = "Publish валидного Draft → Published")]
@@ -711,9 +711,9 @@ public sealed class SqlTaskTests : ApiTestBase
 
         // Assert
         published.Id.ShouldBe(task.Id);
-        published.PublicationStatus.ShouldBe(PublicationStatus.Published);
+        published.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Published);
         (await SqlTaskClient.GetByIdAsync(task.Id))!.PublicationStatus
-            .ShouldBe(PublicationStatus.Published);
+            .ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Published);
     }
 
     [Fact(DisplayName = "Publish уже опубликованного задания → ConflictException")]
@@ -778,7 +778,7 @@ public sealed class SqlTaskTests : ApiTestBase
         ex.Problem!.Code.ShouldBe("SqlTask.ValidationVersionNotPublished");
         ex.Problem.Errors.ShouldNotBeNull().Keys.ShouldBe(
             ["SqlTask.ValidationVersionNotPublished", "SqlTask.ReferenceQueryNotValidated"]);
-        (await SqlTaskClient.GetByIdAsync(taskId))!.PublicationStatus.ShouldBe(PublicationStatus.Draft);
+        (await SqlTaskClient.GetByIdAsync(taskId))!.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Draft);
     }
 
     [Fact(DisplayName = "Delete → задание больше не возвращается GetById")]

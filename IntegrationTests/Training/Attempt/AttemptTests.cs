@@ -119,9 +119,9 @@ public sealed class AttemptTests : ApiTestBase
 
         // Assert
         response.AttemptId.ShouldNotBe(Guid.Empty);
-        response.Status.ShouldBe(ExecutionStatus.Succeeded);
+        response.Status.ShouldBe(SQLModule.Contracts.Training.ExecutionStatus.Succeeded);
         response.IsCorrect.ShouldBeTrue();
-        response.Reason.ShouldBe(CheckReason.Ok);
+        response.Reason.ShouldBe(SQLModule.Contracts.Training.CheckReason.Ok);
     }
 
     [Fact(DisplayName = "Submit → UserId в сохранённой попытке совпадает с userId текущего студента")]
@@ -159,9 +159,9 @@ public sealed class AttemptTests : ApiTestBase
             new SubmitAttemptRequest(taskId, "INVALID SQL"));
 
         // Assert
-        response.Status.ShouldBe(ExecutionStatus.Error);
+        response.Status.ShouldBe(SQLModule.Contracts.Training.ExecutionStatus.Error);
         response.IsCorrect.ShouldBeFalse();
-        response.Reason.ShouldBe(CheckReason.SqlError);
+        response.Reason.ShouldBe(SQLModule.Contracts.Training.CheckReason.SqlError);
         response.PublicError.ShouldNotBeNullOrWhiteSpace();
         response.PublicError.ShouldNotContain("syntax error");
     }
@@ -181,9 +181,9 @@ public sealed class AttemptTests : ApiTestBase
             new SubmitAttemptRequest(taskId, "SELECT id FROM t"));
 
         // Assert
-        response.Status.ShouldBe(ExecutionStatus.Succeeded);
+        response.Status.ShouldBe(SQLModule.Contracts.Training.ExecutionStatus.Succeeded);
         response.IsCorrect.ShouldBeFalse();
-        response.Reason.ShouldBe(CheckReason.ColumnMismatch);
+        response.Reason.ShouldBe(SQLModule.Contracts.Training.CheckReason.ColumnMismatch);
     }
 
     [Fact(DisplayName = "GetById → возвращает ранее созданную попытку")]
@@ -454,7 +454,7 @@ public sealed class AttemptTests : ApiTestBase
             ApiRoutes.Training.Student.ForAttempt(submitted.AttemptId), ClientJson.Options);
 
         studentDetails.ShouldNotBeNull();
-        studentDetails.ResultSnapshotState.ShouldBe(AttemptResultSnapshotState.Available);
+        studentDetails.ResultSnapshotState.ShouldBe(SQLModule.Contracts.Training.AttemptResultSnapshotState.Available);
         JsonSerializer.Serialize(studentDetails.ActualColumns).ShouldBe(JsonSerializer.Serialize(submitted.ActualColumns));
         JsonSerializer.Serialize(studentDetails.ActualRows).ShouldBe(JsonSerializer.Serialize(submitted.ActualRows));
         studentDetails.ActualRows![1][1].ShouldBeNull();
@@ -513,7 +513,7 @@ public sealed class AttemptTests : ApiTestBase
         var details = await HttpClient.GetFromJsonAsync<StudentAttemptResponse>(
             ApiRoutes.Training.Student.ForAttempt(submitted.AttemptId), ClientJson.Options);
 
-        details!.ResultSnapshotState.ShouldBe(AttemptResultSnapshotState.Available);
+        details!.ResultSnapshotState.ShouldBe(SQLModule.Contracts.Training.AttemptResultSnapshotState.Available);
         details.ActualColumns.ShouldBe(["id"]);
         details.ActualRows.ShouldBeEmpty();
         details.ReturnedRowCount.ShouldBe(0);
@@ -559,7 +559,7 @@ public sealed class AttemptTests : ApiTestBase
             new SubmitAttemptRequest(taskId, "SELECT generate_series(1, 250)"));
 
         matching.IsCorrect.ShouldBeTrue();
-        matching.Reason.ShouldBe(CheckReason.Ok);
+        matching.Reason.ShouldBe(SQLModule.Contracts.Training.CheckReason.Ok);
         matching.RowCount.ShouldBe(250);
         matching.ReturnedRowCount.ShouldBe(200);
         matching.ActualRows!.Count.ShouldBe(200);
@@ -574,7 +574,7 @@ public sealed class AttemptTests : ApiTestBase
         var mismatch = await AttemptClient.SubmitAsync(
             new SubmitAttemptRequest(taskId, "SELECT changed_after_200"));
         mismatch.IsCorrect.ShouldBeFalse();
-        mismatch.Reason.ShouldBe(CheckReason.ValueMismatch);
+        mismatch.Reason.ShouldBe(SQLModule.Contracts.Training.CheckReason.ValueMismatch);
     }
 
     [Fact(DisplayName = "Comparison limit → порядок после snapshot учитывает StrictRowOrder")]
@@ -595,13 +595,13 @@ public sealed class AttemptTests : ApiTestBase
         SetFakeRun(new QueryResultSet(true, null, ["id"], reordered, reordered.Count, 1));
         var strict = await AttemptClient.SubmitAsync(
             new SubmitAttemptRequest(strictTaskId, "SELECT reordered_strict"));
-        strict.Reason.ShouldBe(CheckReason.ValueMismatch);
+        strict.Reason.ShouldBe(SQLModule.Contracts.Training.CheckReason.ValueMismatch);
 
         SetFakeRun(new QueryResultSet(true, null, ["id"], reordered, reordered.Count, 1));
         var unordered = await AttemptClient.SubmitAsync(
             new SubmitAttemptRequest(unorderedTaskId, "SELECT reordered_unordered"));
         unordered.IsCorrect.ShouldBeTrue();
-        unordered.Reason.ShouldBe(CheckReason.Ok);
+        unordered.Reason.ShouldBe(SQLModule.Contracts.Training.CheckReason.Ok);
     }
 
     [Fact(DisplayName = "Comparison limit → превышение студентом возвращает ResultLimitExceeded")]
@@ -619,7 +619,7 @@ public sealed class AttemptTests : ApiTestBase
             new SubmitAttemptRequest(taskId, "SELECT too_many_rows"));
 
         response.IsCorrect.ShouldBeFalse();
-        response.Reason.ShouldBe(CheckReason.ResultLimitExceeded);
+        response.Reason.ShouldBe(SQLModule.Contracts.Training.CheckReason.ResultLimitExceeded);
         response.PublicError.ShouldNotBeNull().ShouldContain("10000");
         response.ReturnedRowCount.ShouldBe(200);
         response.IsResultTruncated.ShouldBeTrue();
@@ -637,7 +637,7 @@ public sealed class AttemptTests : ApiTestBase
         SetFakeRun(new QueryResultSet(false, rawError, [], [], 0, 1));
 
         var submitted = await AttemptClient.SubmitAsync(new SubmitAttemptRequest(taskId, "INVALID"));
-        submitted.ResultSnapshotState.ShouldBe(AttemptResultSnapshotState.NotProduced);
+        submitted.ResultSnapshotState.ShouldBe(SQLModule.Contracts.Training.AttemptResultSnapshotState.NotProduced);
         submitted.ActualColumns.ShouldBeNull();
         submitted.ActualRows.ShouldBeNull();
         submitted.PublicError.ShouldNotBeNull();
@@ -646,7 +646,7 @@ public sealed class AttemptTests : ApiTestBase
 
         var details = await HttpClient.GetFromJsonAsync<StudentAttemptResponse>(
             ApiRoutes.Training.Student.ForAttempt(submitted.AttemptId), ClientJson.Options);
-        details!.ResultSnapshotState.ShouldBe(AttemptResultSnapshotState.NotProduced);
+        details!.ResultSnapshotState.ShouldBe(SQLModule.Contracts.Training.AttemptResultSnapshotState.NotProduced);
         details.ActualRows.ShouldBeNull();
         JsonSerializer.Serialize(details).ShouldNotContain(rawError);
     }
@@ -674,7 +674,7 @@ public sealed class AttemptTests : ApiTestBase
 
         var oldDetails = await HttpClient.GetFromJsonAsync<StudentAttemptResponse>(
             ApiRoutes.Training.Student.ForAttempt(oldAttempt.Id), ClientJson.Options);
-        oldDetails!.ResultSnapshotState.ShouldBe(AttemptResultSnapshotState.NotStored);
+        oldDetails!.ResultSnapshotState.ShouldBe(SQLModule.Contracts.Training.AttemptResultSnapshotState.NotStored);
         GetFakeExecutor().RunCallCount.ShouldBe(0);
 
         SetFakeRun(new QueryResultSet(true, null, ["id"], [["1"]], 1, 1));
@@ -690,7 +690,7 @@ public sealed class AttemptTests : ApiTestBase
 
         var expired = await HttpClient.GetFromJsonAsync<StudentAttemptResponse>(
             ApiRoutes.Training.Student.ForAttempt(submitted.AttemptId), ClientJson.Options);
-        expired!.ResultSnapshotState.ShouldBe(AttemptResultSnapshotState.Expired);
+        expired!.ResultSnapshotState.ShouldBe(SQLModule.Contracts.Training.AttemptResultSnapshotState.Expired);
         expired.ActualColumns.ShouldBeNull();
         expired.ActualRows.ShouldBeNull();
         expired.ResultSnapshotCreatedAt.ShouldNotBeNull();

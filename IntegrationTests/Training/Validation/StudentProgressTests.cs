@@ -190,7 +190,7 @@ public sealed class StudentProgressTests(TestApplication app) : ApiTestBase(app)
         body.BestScore.ShouldBe(100);
         body.AttemptNumber.ShouldBe(1);
         body.AttemptsUsed.ShouldBe(1);
-        body.Checks!.ShouldHaveSingleItem().Kind.ShouldBe(ValidationCheckKind.MainDatasetResult);
+        body.Checks!.ShouldHaveSingleItem().Kind.ShouldBe(SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult);
         replayBody!.AttemptId.ShouldBe(body.AttemptId);
         executor.RunCallCount.ShouldBe(1);
 
@@ -198,7 +198,7 @@ public sealed class StudentProgressTests(TestApplication app) : ApiTestBase(app)
             ApiRoutes.Training.Student.ForTask(taskId), ClientJson.Options);
         taskDetails!.Validation.ShouldNotBeNull();
         taskDetails.Validation.Progress!.BestScore.ShouldBe(100);
-        taskDetails.Validation.Hints.Groups.ShouldBe([HintGroup.Result]);
+        taskDetails.Validation.Hints.Groups.ShouldBe([SQLModule.Contracts.Training.HintGroup.Result]);
 
         var studentAttempt = await HttpClient.GetFromJsonAsync<StudentAttemptResponse>(
             ApiRoutes.Training.Student.ForAttempt(body.AttemptId), ClientJson.Options);
@@ -216,9 +216,9 @@ public sealed class StudentProgressTests(TestApplication app) : ApiTestBase(app)
             ApiRoutes.Training.Student.ForTaskProgressFinalize(taskId), Guid.NewGuid());
         var finalization = await finalize.Content.ReadFromJsonAsync<ProgressFinalizationResponse>(ClientJson.Options);
         finalize.StatusCode.ShouldBe(HttpStatusCode.OK, await finalize.Content.ReadAsStringAsync());
-        finalization!.Status.ShouldBe(ProgressStatus.Completed);
+        finalization!.Status.ShouldBe(SQLModule.Contracts.Training.ProgressStatus.Completed);
         finalization.FinalScore.ShouldBe(100);
-        finalization.Reason.ShouldBe(FinalizationReason.PerfectScore);
+        finalization.Reason.ShouldBe(SQLModule.Contracts.Training.FinalizationReason.PerfectScore);
         finalization.CanReturnToEducation.ShouldBeFalse();
 
         AsTeacher();
@@ -273,9 +273,9 @@ public sealed class StudentProgressTests(TestApplication app) : ApiTestBase(app)
 
         first.StatusCode.ShouldBe(HttpStatusCode.OK, await first.Content.ReadAsStringAsync());
         replay.StatusCode.ShouldBe(HttpStatusCode.OK, await replay.Content.ReadAsStringAsync());
-        firstBody!.Status.ShouldBe(ProgressStatus.Completed);
+        firstBody!.Status.ShouldBe(SQLModule.Contracts.Training.ProgressStatus.Completed);
         firstBody.FinalScore.ShouldBe(0);
-        firstBody.Reason.ShouldBe(FinalizationReason.Manual);
+        firstBody.Reason.ShouldBe(SQLModule.Contracts.Training.FinalizationReason.Manual);
         replayBody.ShouldBe(firstBody);
 
         using var scope = App.Services.CreateScope();
@@ -310,9 +310,9 @@ public sealed class StudentProgressTests(TestApplication app) : ApiTestBase(app)
         var update = await HttpClient.PutAsJsonAsync(
             ApiRoutes.Training.SqlTasks.ForValidation(task.Id),
             new TaskValidationConfigurationRequest(
-                configuration!.Version, 100, maxAttempts, [HintGroup.Result],
+                configuration!.Version, 100, maxAttempts, [SQLModule.Contracts.Training.HintGroup.Result],
                 [new ValidationCheckRequest(
-                    configuration.Checks[0].Id, ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
+                    configuration.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
             ClientJson.Options);
         var updated = (await update.Content.ReadFromJsonAsync<TaskValidationConfigurationResponse>(ClientJson.Options))!;
         using var publishRequest = new HttpRequestMessage(

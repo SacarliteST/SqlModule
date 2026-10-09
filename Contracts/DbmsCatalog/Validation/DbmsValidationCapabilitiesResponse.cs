@@ -1,4 +1,5 @@
-﻿using SQLModule.Domain.Training;
+using SQLModule.Contracts.Training;
+
 
 namespace SQLModule.Contracts.DbmsCatalog.Validation;
 

@@ -28,19 +28,19 @@ public static class SubmitAttemptResponseFactory
             .Select(value => ToHint(value.Check.Kind))
             .Where(group => group.HasValue && visible.Contains(group.Value))
             .Distinct()
-            .Select(group => new AttemptHintResponse(group!.Value, "Проверьте соответствующую часть решения."))
+            .Select(group => new AttemptHintResponse(group!.Value.ToContract(), "Проверьте соответствующую часть решения."))
             .ToArray();
         return new SubmitAttemptResponse(
-            attempt.Id, attempt.Status, attempt.IsCorrect, attempt.Reason,
+            attempt.Id, attempt.Status.ToContract(), attempt.IsCorrect, attempt.Reason.ToContract(),
             attempt.RowCount, attempt.DurationMs, attempt.ErrorMessage,
-            snapshot.Columns, snapshot.Rows, snapshot.IsTruncated, snapshot.State,
+            snapshot.Columns, snapshot.Rows, snapshot.IsTruncated, snapshot.State.ToContract(),
             snapshot.ReturnedRowCount, snapshot.RowLimit, snapshot.CreatedAt, snapshot.ExpiresAt,
             progress.Id, runtime.Version.Id, attempt.AttemptNumber, attempt.Score,
             progress.BestScore, runtime.Version.PassingScore, progressResponse.IsPassed,
             progress.AttemptsUsed, progressResponse.AttemptsRemaining,
             progressResponse.CanSubmit, progressResponse.CanFinalize,
             visibleChecks.Select(value => new AttemptCheckResultResponse(
-                value.Check.Kind, value.Status, value.Check.Weight, value.AwardedScore, value.Message)).ToArray(),
+                value.Check.Kind.ToContract(), value.Status.ToContract(), value.Check.Weight, value.AwardedScore, value.Message)).ToArray(),
             hints);
     }
 

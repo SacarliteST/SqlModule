@@ -154,7 +154,7 @@ public sealed class TaskValidationEvaluationService(
                 new ValidationViolationResponse(
                     "checks",
                     "Validation.ReferenceMustScore100",
-                    ValidationViolationSeverity.Error,
+                    ValidationViolationSeverity.Error.ToContract(),
                     $"Эталонное решение набирает {score} из 100 баллов.")
             };
 
@@ -181,14 +181,14 @@ public sealed class TaskValidationEvaluationService(
                 definition.Checks.Select((check, index) => new ValidationCheckPreviewResponse(
                     identities[index].CheckId,
                     identities[index].ClientKey,
-                    check.Kind,
-                    ValidationCheckStatus.NotEvaluated,
+                    check.Kind.ToContract(),
+                    ValidationCheckStatus.NotEvaluated.ToContract(),
                     0,
                     "Критерий не проверен из-за ошибок конфигурации.")).ToArray(),
                 violations.Select(violation => new ValidationViolationResponse(
                     violation.Path,
                     violation.Code,
-                    violation.Severity,
+                    violation.Severity.ToContract(),
                     violation.Message)).ToArray()),
             null);
 
@@ -211,8 +211,8 @@ public sealed class TaskValidationEvaluationService(
         return new ValidationCheckPreviewResponse(
             identity.CheckId,
             identity.ClientKey,
-            check.Kind,
-            passed ? ValidationCheckStatus.Passed : ValidationCheckStatus.Failed,
+            check.Kind.ToContract(),
+            (passed ? ValidationCheckStatus.Passed : ValidationCheckStatus.Failed).ToContract(),
             passed ? check.Weight : 0,
             passed ? "Критерий выполнен." : "Эталонное решение не выполняет критерий.");
     }

@@ -26,7 +26,7 @@ public record SqlTaskResponse(
     string TaskName,
     string TaskText,
     short DifficultyLevel,
-    SQLModule.Domain.Training.PublicationStatus PublicationStatus,
+    SQLModule.Contracts.Training.PublicationStatus PublicationStatus,
     Guid CreatedById,
     DateTimeOffset CreatedAt,
     Guid UpdatedById,

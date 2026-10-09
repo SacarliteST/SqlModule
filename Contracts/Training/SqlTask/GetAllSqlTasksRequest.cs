@@ -15,4 +15,4 @@ public record GetAllSqlTasksRequest(
     string? Name = null,
     Guid? TargetDbId = null,
     short? DifficultyLevel = null,
-    SQLModule.Domain.Training.PublicationStatus? PublicationStatus = null);
+    SQLModule.Contracts.Training.PublicationStatus? PublicationStatus = null);

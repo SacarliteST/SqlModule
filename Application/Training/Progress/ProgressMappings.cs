@@ -19,7 +19,7 @@ public static class ProgressMappings
         return new StudentTaskProgressResponse(
             progress.Id,
             progress.TaskId,
-            progress.Status,
+            progress.Status.ToContract(),
             progress.ValidationVersionId,
             progress.BestScore,
             progress.AttemptsUsed,
@@ -29,7 +29,7 @@ public static class ProgressMappings
             progress.BestScore >= version.PassingScore,
             progress.ExpiresAt,
             progress.FinalScore,
-            progress.FinalizationReason,
+            progress.FinalizationReason?.ToContract(),
             progress.FinalizedAt);
     }
 }

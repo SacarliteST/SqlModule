@@ -210,11 +210,11 @@ public sealed class ProgressFinalizationService(
         StudentTaskProgress progress,
         ModuleSession? moduleSession) => new(
         progress.Id,
-        progress.Status,
+        progress.Status.ToContract(),
         progress.BestScore,
         progress.FinalScore ?? progress.BestScore,
         progress.FinalScore.GetValueOrDefault(progress.BestScore) >= progress.ValidationVersion.PassingScore,
-        progress.FinalizationReason ?? FinalizationReason.Manual,
+        (progress.FinalizationReason ?? FinalizationReason.Manual).ToContract(),
         progress.FinalizedAt ?? DateTimeOffset.MinValue,
         moduleSession is not null,
         moduleSession?.ReturnUrl);

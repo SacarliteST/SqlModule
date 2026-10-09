@@ -53,7 +53,7 @@ public sealed class GetAllSqlTasksHandler(IApplicationDbContext db)
             .Take(query.Limit)
             .Select(x => new SqlTaskResponse(
                 x.Id, x.TopicId, x.SqlQueryId, x.TaskName, x.TaskText, x.DifficultyLevel,
-                x.PublicationStatus, x.CreatedById, x.CreatedAt, x.UpdatedById, x.UpdatedAt,
+                x.PublicationStatus.ToContract(), x.CreatedById, x.CreatedAt, x.UpdatedById, x.UpdatedAt,
                 x.Topic.TopicName, x.SqlQuery.TargetDbId,
                 db.TargetDbs.Where(target => target.Id == x.SqlQuery.TargetDbId)
                     .Select(target => target.DbName).First(),

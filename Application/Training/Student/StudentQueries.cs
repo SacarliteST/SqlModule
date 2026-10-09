@@ -299,7 +299,8 @@ public sealed class GetStudentAttemptsHandler(IApplicationDbContext db)
 
         if (request.Status.HasValue)
         {
-            query = query.Where(a => a.Status == request.Status);
+            var status = request.Status.Value.ToDomain();
+            query = query.Where(a => a.Status == status);
         }
 
         if (request.IsCorrect.HasValue)
@@ -325,7 +326,7 @@ public sealed class GetStudentAttemptsHandler(IApplicationDbContext db)
             db.SqlTasks.Where(t => t.Id == a.TaskId).Select(t => t.TaskName).First(),
             db.SqlTasks.Where(t => t.Id == a.TaskId).Select(t => t.TopicId).First(),
             db.SqlTasks.Where(t => t.Id == a.TaskId).Select(t => t.Topic.TopicName).First(),
-            a.SubmittedSql, a.Status, a.IsCorrect, a.Reason, a.RowCount, a.DurationMs,
+            a.SubmittedSql, a.Status.ToContract(), a.IsCorrect, a.Reason.ToContract(), a.RowCount, a.DurationMs,
             a.ErrorMessage == null ? null : "SQL-запрос не удалось выполнить.", a.StartedAt, a.FinishedAt,
             a.AttemptNumber, a.Score, a.ProgressId, a.ValidationVersionId));
 }
@@ -354,10 +355,10 @@ public sealed class GetStudentAttemptByIdHandler(
         var scoring = await scoringReadService.ReadAsync(attempt, studentSafe: true, ct);
         return new StudentAttemptResponse(
             attempt.Id, attempt.TaskId, task.TaskName, task.TopicId, task.TopicName,
-            attempt.SubmittedSql, attempt.Status, attempt.IsCorrect, attempt.Reason,
+            attempt.SubmittedSql, attempt.Status.ToContract(), attempt.IsCorrect, attempt.Reason.ToContract(),
             attempt.RowCount, attempt.DurationMs, AttemptMappings.ToPublicError(attempt),
             attempt.StartedAt, attempt.FinishedAt,
-            snapshot.State, snapshot.Columns, snapshot.Rows, snapshot.ReturnedRowCount,
+            snapshot.State.ToContract(), snapshot.Columns, snapshot.Rows, snapshot.ReturnedRowCount,
             snapshot.IsTruncated, snapshot.RowLimit, snapshot.CreatedAt, snapshot.ExpiresAt,
             scoring);
     }
@@ -397,7 +398,8 @@ internal static class StudentHints
                 ? ParseTables(configuration.Checks, ValidationCheckKind.ForbiddenTable, tables)
                 : [];
             return new StudentTaskHintsResponse(
-                groups, requiredConstructs, forbiddenConstructs, requiredTables, forbiddenTables);
+                groups.Select(value => value.ToContract()).ToArray(),
+                requiredConstructs, forbiddenConstructs, requiredTables, forbiddenTables);
         }
         catch (JsonException)
         {
@@ -405,7 +407,7 @@ internal static class StudentHints
         }
     }
 
-    private static IReadOnlyList<SqlConstruct> ParseConstructs(
+    private static IReadOnlyList<Contracts.Training.SqlConstruct> ParseConstructs(
         IEnumerable<ValidationCheckSnapshot> checks,
         ValidationCheckKind kind) =>
         checks.Where(value => value.Kind == kind)
@@ -413,7 +415,7 @@ internal static class StudentHints
                 ? (SqlConstruct?)construct
                 : null)
             .Where(value => value.HasValue)
-            .Select(value => value!.Value)
+            .Select(value => value!.Value.ToContract())
             .Distinct()
             .ToArray();
 
@@ -427,5 +429,5 @@ internal static class StudentHints
             .ToArray();
 
     private static StudentTaskHintsResponse EmptyHints(IReadOnlyList<HintGroup> groups) =>
-        new(groups, [], [], [], []);
+        new(groups.Select(value => value.ToContract()).ToArray(), [], [], [], []);
 }

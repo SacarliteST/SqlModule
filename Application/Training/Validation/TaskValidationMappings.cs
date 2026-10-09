@@ -27,11 +27,11 @@ public static class TaskValidationMappings
         new(
             request.PassingScore!.Value,
             request.MaxAttempts,
-            request.VisibleHintGroups!,
+            request.VisibleHintGroups!.Select(value => value.ToDomain()).ToArray(),
             request.Checks!
                 .Select(check => new ValidationCheckDefinition(
                     check.Id,
-                    check.Kind!.Value,
+                    check.Kind!.Value.ToDomain(),
                     check.Value,
                     check.Weight!.Value,
                     check.Order!.Value))
@@ -42,11 +42,11 @@ public static class TaskValidationMappings
         new(
             request.PassingScore!.Value,
             request.MaxAttempts,
-            request.VisibleHintGroups!,
+            request.VisibleHintGroups!.Select(value => value.ToDomain()).ToArray(),
             request.Checks!
                 .Select(check => new ValidationCheckDefinition(
                     check.Id,
-                    check.Kind!.Value,
+                    check.Kind!.Value.ToDomain(),
                     check.Value,
                     check.Weight!.Value,
                     check.Order!.Value))
@@ -81,17 +81,17 @@ public static class TaskValidationMappings
             activeVersion?.Id,
             activeVersion?.VersionNumber,
             activeVersion is null || hasUnpublishedChanges
-                ? ValidationConfigurationState.Draft
-                : ValidationConfigurationState.Published,
+                ? ValidationConfigurationState.Draft.ToContract()
+                : ValidationConfigurationState.Published.ToContract(),
             hasUnpublishedChanges,
             configuration.PassingScore,
             configuration.MaxAttempts,
-            configuration.GetVisibleHintGroups(),
+            configuration.GetVisibleHintGroups().Select(value => value.ToContract()).ToArray(),
             configuration.Checks
                 .OrderBy(check => check.Order)
                 .Select(check => new ValidationCheckResponse(
                     check.Id,
-                    check.Kind,
+                    check.Kind.ToContract(),
                     check.Value,
                     GetValueDisplayName(check, tableNames),
                     check.Weight,
