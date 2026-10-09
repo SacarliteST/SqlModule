@@ -24,7 +24,7 @@ public sealed record ReferenceQuerySnapshot(
     bool IsRequiredColumnOrder,
     bool IsRequiredRowOrder);
 
-public sealed record Phase2BValidationRuntime(
+public sealed record ValidationRuntime(
     TaskValidationVersion Version,
     DbmsDictionary Dbms,
     SandboxSetup Setup,
@@ -33,19 +33,19 @@ public sealed record Phase2BValidationRuntime(
     ValidationConfigurationSnapshot Configuration,
     ReferenceQuerySnapshot Reference);
 
-public interface IPhase2BValidationRuntimeReader
+public interface IValidationRuntimeReader
 {
-    Task<Result<Phase2BValidationRuntime>> ReadAsync(Guid validationVersionId, CancellationToken ct);
+    Task<Result<ValidationRuntime>> ReadAsync(Guid validationVersionId, CancellationToken ct);
 }
 
-public sealed class Phase2BValidationRuntimeReader(
+public sealed class ValidationRuntimeReader(
     IApplicationDbContext db,
     ISqlSyntaxFactory syntaxFactory,
-    ISchemaSqlGenerator generator) : IPhase2BValidationRuntimeReader
+    ISchemaSqlGenerator generator) : IValidationRuntimeReader
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task<Result<Phase2BValidationRuntime>> ReadAsync(
+    public async Task<Result<ValidationRuntime>> ReadAsync(
         Guid validationVersionId,
         CancellationToken ct)
     {
@@ -53,7 +53,7 @@ public sealed class Phase2BValidationRuntimeReader(
             .SingleOrDefaultAsync(value => value.Id == validationVersionId, ct);
         if (version is null)
         {
-            return Result<Phase2BValidationRuntime>.Fail(Error.Conflict(
+            return Result<ValidationRuntime>.Fail(Error.Conflict(
                 "Progress.ValidationVersionNotFound",
                 "Опубликованная версия проверки прохождения недоступна."));
         }
@@ -74,7 +74,7 @@ public sealed class Phase2BValidationRuntimeReader(
             if (expected is null || dbms is null || schema is null || data is null ||
                 reference is null || configuration is null)
             {
-                return Result<Phase2BValidationRuntime>.Fail(Error.Unavailable(
+                return Result<ValidationRuntime>.Fail(Error.Unavailable(
                     "Validation.SnapshotInvalid",
                     "Снимок опубликованной версии временно недоступен."));
             }
@@ -82,7 +82,7 @@ public sealed class Phase2BValidationRuntimeReader(
             var syntax = syntaxFactory.For(dbms.DbmsSystemName);
             if (syntax is null)
             {
-                return Result<Phase2BValidationRuntime>.Fail(Error.Unavailable(
+                return Result<ValidationRuntime>.Fail(Error.Unavailable(
                     "Validation.RuntimeUnavailable",
                     "Среда выполнения опубликованной версии временно недоступна."));
             }
@@ -91,12 +91,12 @@ public sealed class Phase2BValidationRuntimeReader(
                 .. generator.GenerateDdl(syntax, schema),
                 .. generator.GenerateInserts(syntax, schema, data)
             ]);
-            return new Phase2BValidationRuntime(
+            return new ValidationRuntime(
                 version, dbms, setup, expected, schema, configuration, reference);
         }
         catch (JsonException)
         {
-            return Result<Phase2BValidationRuntime>.Fail(Error.Unavailable(
+            return Result<ValidationRuntime>.Fail(Error.Unavailable(
                 "Validation.SnapshotInvalid",
                 "Снимок опубликованной версии временно недоступен."));
         }

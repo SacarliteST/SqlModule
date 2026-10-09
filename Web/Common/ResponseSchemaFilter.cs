@@ -8,8 +8,8 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace SQLModule.Web.Common;
 
-/// <summary>Уточняет обязательность сериализуемых полей и nullable enum в ответах Phase 2B.</summary>
-internal sealed class Phase2BResponseSchemaFilter : ISchemaFilter
+/// <summary>Уточняет обязательность сериализуемых полей и nullable enum в ответах версионированной проверки.</summary>
+internal sealed class ResponseSchemaFilter : ISchemaFilter
 {
     private static readonly HashSet<Type> ResponseTypes =
     [
