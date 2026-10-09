@@ -1,22 +1,18 @@
-using SQLModule.Application.Training.Progress;
-﻿using System.Security.Cryptography;
-using SQLModule.Application.TaskMaterialization;
+using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Persistence;
+using SQLModule.Application.TaskMaterialization;
+using SQLModule.Application.Training.Progress;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Attempt;
-using SQLModule.Contracts.Training.Validation;
-using SQLModule.Application.Persistence;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
 using SQLModule.Domain.Training.Validation;
-using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
-using SQLModule.Application.ModuleIntegration;
 
 namespace SQLModule.Application.Training.Attempts.SubmitAttempt;
 
@@ -30,91 +26,37 @@ public interface IPhase2BSubmitAttemptService
         CancellationToken ct);
 }
 
+/// <summary>
+/// Оркестратор отправки решения по версии проверки: прохождение → резервация номера → runtime версии →
+/// анализ и выполнение SQL → оценка → атомарное сохранение. Каждый шаг вынесен в отдельный сервис.
+/// </summary>
 public sealed class Phase2BSubmitAttemptService(
     IApplicationDbContext db,
+    IAttemptProgressResolver progressResolver,
     IAttemptReservationService reservationService,
-    IProgressFinalizationService finalizationService,
-    IPlatformProgressService platformProgressService,
+    IAttemptPersistenceService persistence,
     IPlatformStudentScope platformScope,
     IPhase2BValidationRuntimeReader runtimeReader,
     ISqlSyntaxAnalyzerResolver analyzerResolver,
     ISandboxExecutor executor,
-    IResultComparer comparer,
+    AttemptEvaluationEngine evaluationEngine,
     IAttemptResultSnapshotService snapshotService,
     IOptions<SandboxOptions> sandboxOptions,
     TimeProvider timeProvider,
     ILogger<Phase2BSubmitAttemptService> logger) : IPhase2BSubmitAttemptService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
     public async Task<Phase2BSubmitResult> TryHandleAsync(
         SubmitAttemptCommand command,
         ModuleSession? moduleSession,
         CancellationToken ct)
     {
-        var progress = moduleSession is null
-            ? await db.StudentTaskProgresses.Include(value => value.ValidationVersion)
-                .SingleOrDefaultAsync(value =>
-                    value.UserId == command.UserId && value.TaskId == command.TaskId &&
-                    value.ModuleSessionId == null && value.Status == ProgressStatus.Active, ct)
-            : await db.StudentTaskProgresses.Include(value => value.ValidationVersion)
-                .SingleOrDefaultAsync(value => value.ModuleSessionId == moduleSession.Id, ct);
-        if (progress is null && moduleSession is not null)
+        var resolution = await progressResolver.ResolveAsync(command, moduleSession, ct);
+        if (resolution.IsFailure)
         {
-            // Проверяем закрытие/истечение сессии только когда для неё ещё нет прохождения:
-            // если прохождение уже существует, эту же проверку по статусу прохождения делает
-            // ReserveAsync ниже — но она корректно пропускает идемпотентный повтор (тот же
-            // Idempotency-Key), в отличие от проверки здесь, которая касается только
-            // по-настоящему нового запроса на ещё не начатую платформенную сессию.
-            var sessionState = await platformScope.ResolveAsync(
-                command.UserId, moduleSession.Id, PlatformScopeMode.Write, ct);
-            if (!sessionState.IsSuccess)
-            {
-                return Handled(Result<SubmitAttemptResponse>.Fail(sessionState.Error!));
-            }
-
-            var created = await platformProgressService.EnsureCreatedAsync(moduleSession, ct);
-            if (!created.IsSuccess)
-            {
-                return Handled(Result<SubmitAttemptResponse>.Fail(created.Error!));
-            }
-
-            try
-            {
-                await db.SaveChangesAsync(ct);
-                progress = await db.StudentTaskProgresses.Include(value => value.ValidationVersion)
-                    .SingleAsync(value => value.Id == created.Value!.Id, ct);
-            }
-            catch (DbUpdateException)
-            {
-                // Конкурентный запрос уже создал прохождение для этой же ModuleSessionId
-                // (уникальный индекс IX_StudentTaskProgresses_ModuleSessionId) — подхватываем
-                // его вместо падения в 500, дальше решает ReserveAsync ниже. Отсоединяем только
-                // неудавшуюся Added-запись, а не весь ChangeTracker.Clear() — иначе заодно
-                // "теряется" отслеживание moduleSession, и его MarkCompletionPending() дальше
-                // по коду молча не сохранится.
-                var failedEntry = db.ChangeTracker.Entries<StudentTaskProgress>()
-                    .FirstOrDefault(entry => entry.State == EntityState.Added);
-                if (failedEntry is not null)
-                {
-                    failedEntry.State = EntityState.Detached;
-                }
-
-                progress = await db.StudentTaskProgresses.Include(value => value.ValidationVersion)
-                    .SingleAsync(value => value.ModuleSessionId == moduleSession.Id, ct);
-            }
+            return Handled(Result<SubmitAttemptResponse>.Fail(resolution.Error!));
         }
 
-        if (progress is null && moduleSession is null)
-        {
-            // Нет активного standalone-прохождения — но это может быть идемпотентный повтор
-            // запроса, который сам это прохождение завершил (например, сразу набрал 100 баллов).
-            // ReserveAsync ниже уже умеет отвечать replay-ом для существующей резервации вне
-            // зависимости от статуса прохождения — не хватало только найти его без progress.Id,
-            // который standalone-клиент не передаёт явно.
-            progress = await FindProgressByIdempotencyKeyAsync(command, ct);
-        }
-
+        var progress = resolution.Progress;
         if (progress is null)
         {
             return new Phase2BSubmitResult(false, null);
@@ -157,7 +99,7 @@ public sealed class Phase2BSubmitAttemptService(
         // ReserveAsync при конкурентной гонке за номер попытки мог внутри своего retry
         // сделать db.ChangeTracker.Clear() и заново отследить прогресс новым CLR-инстансом —
         // подхватываем именно его, чтобы не держать вторую, уже отсоединённую ссылку на тот
-        // же Id (иначе db.Entry(progress).ReloadAsync ниже упадёт с "another instance ...
+        // же Id (иначе db.Entry(progress).ReloadAsync упадёт с "another instance ...
         // already tracked").
         progress = db.ChangeTracker.Entries<StudentTaskProgress>()
             .Select(entry => entry.Entity)
@@ -175,9 +117,7 @@ public sealed class Phase2BSubmitAttemptService(
         if (analyzer is null || analyzer.AnalyzerVersion != runtime.Version.AnalyzerVersion)
         {
             await reservationService.ReleaseAsync(reservation.Id, ct);
-            return Handled(Result<SubmitAttemptResponse>.Fail(Error.Unavailable(
-                "Validation.AnalyzerUnavailable",
-                "Анализатор SQL временно недоступен.")));
+            return Handled(Result<SubmitAttemptResponse>.Fail(AnalyzerUnavailable));
         }
 
         SqlSyntaxAnalysis analysis;
@@ -191,18 +131,14 @@ public sealed class Phase2BSubmitAttemptService(
                 exception,
                 "Анализатор SQL аварийно завершил проверку прохождения {ProgressId}",
                 progress.Id);
-            await ReleaseReservationSafelyAsync(reservation.Id);
-            return Handled(Result<SubmitAttemptResponse>.Fail(Error.Unavailable(
-                "Validation.AnalyzerUnavailable",
-                "Анализатор SQL временно недоступен.")));
+            await persistence.ReleaseReservationSafelyAsync(reservation.Id);
+            return Handled(Result<SubmitAttemptResponse>.Fail(AnalyzerUnavailable));
         }
 
         if (analysis.Status == SqlSyntaxAnalysisStatus.InfrastructureFailure)
         {
             await reservationService.ReleaseAsync(reservation.Id, ct);
-            return Handled(Result<SubmitAttemptResponse>.Fail(Error.Unavailable(
-                "Validation.AnalyzerUnavailable",
-                "Анализатор SQL временно недоступен.")));
+            return Handled(Result<SubmitAttemptResponse>.Fail(AnalyzerUnavailable));
         }
 
         var options = sandboxOptions.Value;
@@ -219,7 +155,7 @@ public sealed class Phase2BSubmitAttemptService(
         }
         catch (OperationCanceledException)
         {
-            await ReleaseReservationSafelyAsync(reservation.Id);
+            await persistence.ReleaseReservationSafelyAsync(reservation.Id);
             throw;
         }
         catch (Exception exception)
@@ -228,25 +164,25 @@ public sealed class Phase2BSubmitAttemptService(
                 exception,
                 "Песочница аварийно завершила попытку прохождения {ProgressId}",
                 progress.Id);
-            await ReleaseReservationSafelyAsync(reservation.Id);
-            return Handled(Result<SubmitAttemptResponse>.Fail(Error.Unavailable(
-                "Validation.SandboxUnavailable",
-                "Среда выполнения SQL временно недоступна.")));
+            await persistence.ReleaseReservationSafelyAsync(reservation.Id);
+            return Handled(Result<SubmitAttemptResponse>.Fail(SandboxUnavailable));
         }
 
         var finishedAt = timeProvider.GetUtcNow();
         if (!run.IsSuccess)
         {
             await reservationService.ReleaseAsync(reservation.Id, ct);
-            return Handled(Result<SubmitAttemptResponse>.Fail(Error.Unavailable(
-                "Validation.SandboxUnavailable",
-                "Среда выполнения SQL временно недоступна.")));
+            return Handled(Result<SubmitAttemptResponse>.Fail(SandboxUnavailable));
         }
 
         var result = run.Value!;
-        var main = EvaluateMain(result, runtime, comparer, comparisonRowLimit);
-        var checks = EvaluateChecks(runtime, analysis, main.IsCorrect);
-        var score = checks.Sum(value => value.AwardedScore);
+        var evaluation = evaluationEngine.Evaluate(result, analysis, new AttemptEvaluationInput(
+            runtime.Expected,
+            runtime.Reference.IsRequiredRowOrder,
+            runtime.Configuration.Checks,
+            runtime.Schema.Tables.ToDictionary(value => value.Key, value => value.Name),
+            comparisonRowLimit));
+        var main = evaluation.Main;
         var attempt = Attempt.Record(
             command.UserId, command.TaskId, command.SubmittedSql,
             main.Status, main.IsCorrect, main.Reason,
@@ -256,125 +192,36 @@ public sealed class Phase2BSubmitAttemptService(
             studentName: command.StudentName,
             studentEmail: command.StudentEmail,
             moduleSessionId: moduleSession?.Id);
-        attempt.AttachScoring(progress.Id, runtime.Version.Id, reservation.AttemptNumber, score, true);
+        attempt.AttachScoring(progress.Id, runtime.Version.Id, reservation.AttemptNumber, evaluation.Score, true);
         var snapshot = snapshotService.Create(
             result, snapshotService.GetEffectiveRowLimit(options.MaxRows), finishedAt);
         snapshotService.Apply(attempt, snapshot);
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        try
+        var saved = await persistence.SaveAsync(
+            new AttemptPersistenceRequest(
+                progress, moduleSession, runtime.Version, reservation, attempt,
+                evaluation.Checks, evaluation.Score, finishedAt),
+            ct);
+        if (!saved.IsSuccess)
         {
-            await LockProgressAsync(progress.Id, ct);
-            await db.Entry(progress).ReloadAsync(ct);
-            if (progress.Status != ProgressStatus.Active)
-            {
-                // Пока эта попытка выполнялась в песочнице, конкурентная попытка уже заняла
-                // последнее место и завершила прохождение (например, тоже набрала 100 баллов) —
-                // ReserveAsync выше не мог это поймать заранее, статус проверяем только теперь,
-                // под блокировкой строки прохождения.
-                await transaction.RollbackAsync(ct);
-                db.ChangeTracker.Clear();
-                await ReleaseReservationSafelyAsync(reservation.Id);
-                return Handled(Result<SubmitAttemptResponse>.Fail(ProgressErrors.Closed));
-            }
-
-            progress.RecordCountedAttempt(score);
-            FinalizationReason? finalizationReason = null;
-            if (score == 100)
-            {
-                finalizationReason = FinalizationReason.PerfectScore;
-            }
-            else if (runtime.Version.MaxAttempts.HasValue &&
-                     progress.AttemptsUsed >= runtime.Version.MaxAttempts.Value)
-            {
-                finalizationReason = FinalizationReason.AttemptsExhausted;
-            }
-
-            if (finalizationReason.HasValue)
-            {
-                await finalizationService.PrepareAsync(
-                    progress, moduleSession, finalizationReason.Value, finishedAt, attempt, ct);
-            }
-
-            db.Attempts.Add(attempt);
-            db.AttemptCheckResults.AddRange(checks.Select(value => AttemptCheckResult.Create(
-                attempt.Id, value.Check.Id, value.Check.Kind, value.Status,
-                value.Check.Weight, value.AwardedScore, value.Check.Order, value.Message, null)));
-            reservation.Complete(attempt.Id, finishedAt);
-            if (moduleSession is not null)
-            {
-                AddPracticeEvent(moduleSession, attempt, finishedAt);
-            }
-
-            await db.SaveChangesAsync(ct);
-            await transaction.CommitAsync(ct);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            db.ChangeTracker.Clear();
-            await ReleaseReservationSafelyAsync(reservation.Id);
-            throw;
+            return Handled(Result<SubmitAttemptResponse>.Fail(saved.Error!));
         }
 
         logger.LogInformation(
             "Попытка {AttemptId} прохождения {ProgressId} оценена в {Score} баллов",
-            attempt.Id, progress.Id, score);
+            attempt.Id, progress.Id, evaluation.Score);
 
-        return Handled(ToResponse(
-            attempt, progress, runtime, checks, snapshot, finishedAt));
+        return Handled(SubmitAttemptResponseFactory.Create(
+            attempt, progress, runtime, evaluation.Checks, snapshot, finishedAt));
     }
 
-    /// <summary>
-    /// Находит standalone-прохождение по чужой (уже не Active) резервации с тем же
-    /// Idempotency-Key — единственный способ повторно найти прохождение для replay,
-    /// когда клиент не передаёт progress.Id явно (в отличие от platform-flow, где
-    /// прохождение всегда однозначно определяется по moduleSession.Id).
-    /// </summary>
-    private async Task<StudentTaskProgress?> FindProgressByIdempotencyKeyAsync(
-        SubmitAttemptCommand command, CancellationToken ct)
-    {
-        var idempotencyKey = Guid.Parse(command.IdempotencyKey);
-        var reservation = await db.AttemptReservations
-            .Include(value => value.Progress).ThenInclude(value => value.ValidationVersion)
-            .Where(value =>
-                value.IdempotencyKey == idempotencyKey &&
-                value.Progress.UserId == command.UserId &&
-                value.Progress.TaskId == command.TaskId &&
-                value.Progress.ModuleSessionId == null)
-            .OrderByDescending(value => value.CreatedAt)
-            .FirstOrDefaultAsync(ct);
-        return reservation?.Progress;
-    }
+    private static Error AnalyzerUnavailable { get; } = Error.Unavailable(
+        "Validation.AnalyzerUnavailable",
+        "Анализатор SQL временно недоступен.");
 
-    private async Task LockProgressAsync(Guid progressId, CancellationToken ct)
-    {
-        var connection = db.Database.GetDbConnection();
-        await using var command = connection.CreateCommand();
-        command.Transaction = db.Database.CurrentTransaction!.GetDbTransaction();
-        command.CommandText = """SELECT "Id" FROM "StudentTaskProgresses" WHERE "Id" = @progressId FOR UPDATE""";
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = "progressId";
-        parameter.Value = progressId;
-        command.Parameters.Add(parameter);
-        _ = await command.ExecuteScalarAsync(ct);
-    }
-
-    private async Task ReleaseReservationSafelyAsync(Guid reservationId)
-    {
-        try
-        {
-            db.ChangeTracker.Clear();
-            await reservationService.ReleaseAsync(reservationId, CancellationToken.None);
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(
-                exception,
-                "Не удалось освободить резервацию попытки {ReservationId}",
-                reservationId);
-        }
-    }
+    private static Error SandboxUnavailable { get; } = Error.Unavailable(
+        "Validation.SandboxUnavailable",
+        "Среда выполнения SQL временно недоступна.");
 
     private async Task<Result<SubmitAttemptResponse>> ReplayAsync(Guid attemptId, CancellationToken ct)
     {
@@ -395,156 +242,13 @@ public sealed class Phase2BSubmitAttemptService(
         var byId = runtime.Configuration.Checks.ToDictionary(value => value.Id);
         var checks = storedChecks.Select(value => new EvaluatedCheck(
             byId[value.ValidationCheckId], value.Status, value.AwardedScore, value.Message)).ToArray();
-        return ToResponse(
+        return SubmitAttemptResponseFactory.Create(
             attempt, progress, runtime, checks,
             snapshotService.Read(attempt, timeProvider.GetUtcNow()), timeProvider.GetUtcNow());
     }
-
-    private static MainResult EvaluateMain(
-        QueryResultSet result,
-        Phase2BValidationRuntime runtime,
-        IResultComparer comparer,
-        int rowLimit)
-    {
-        if (!result.Succeeded)
-        {
-            var timeout = result.Error?.Contains("timeout", StringComparison.OrdinalIgnoreCase) == true;
-            return new MainResult(
-                timeout ? ExecutionStatus.TimedOut : ExecutionStatus.Error,
-                false,
-                timeout ? CheckReason.Timeout : CheckReason.SqlError,
-                timeout ? "Превышено допустимое время выполнения запроса." :
-                    "SQL-запрос не удалось выполнить. Проверьте синтаксис и повторите попытку.");
-        }
-
-        if (result.IsTruncated)
-        {
-            return new MainResult(
-                ExecutionStatus.Succeeded, false, CheckReason.ResultLimitExceeded,
-                $"Результат запроса превышает безопасный лимит сравнения {rowLimit} строк.");
-        }
-
-        var outcome = comparer.Compare(runtime.Expected, result, runtime.Reference.IsRequiredRowOrder);
-        return new MainResult(ExecutionStatus.Succeeded, outcome.IsCorrect, outcome.Reason, null);
-    }
-
-    private static IReadOnlyList<EvaluatedCheck> EvaluateChecks(
-        Phase2BValidationRuntime runtime,
-        SqlSyntaxAnalysis analysis,
-        bool mainPassed)
-    {
-        var tables = runtime.Schema.Tables.ToDictionary(value => value.Key, value => value.Name);
-        return runtime.Configuration.Checks.OrderBy(value => value.Order).Select(check =>
-        {
-            var passed = check.Kind switch
-            {
-                ValidationCheckKind.MainDatasetResult => mainPassed,
-                ValidationCheckKind.RequiredConstruct => Enum.TryParse<SqlConstruct>(check.Value, out var required) &&
-                                                         analysis.IsSuccess && analysis.Constructs.Contains(required),
-                ValidationCheckKind.ForbiddenConstruct => !Enum.TryParse<SqlConstruct>(check.Value, out var forbidden) ||
-                                                          !analysis.IsSuccess || !analysis.Constructs.Contains(forbidden),
-                ValidationCheckKind.RequiredTable => ContainsTable(check.Value, tables, analysis),
-                ValidationCheckKind.ForbiddenTable => !ContainsTable(check.Value, tables, analysis),
-                _ => false
-            };
-            return new EvaluatedCheck(
-                check,
-                passed ? ValidationCheckStatus.Passed : ValidationCheckStatus.Failed,
-                passed ? check.Weight : 0,
-                passed ? "Критерий выполнен." : "Критерий не выполнен.");
-        }).ToArray();
-    }
-
-    private static bool ContainsTable(
-        string? value,
-        IReadOnlyDictionary<string, string> tables,
-        SqlSyntaxAnalysis analysis) =>
-        value is not null && tables.TryGetValue(value, out var name) && analysis.IsSuccess &&
-        analysis.ReferencedTables.Any(reference =>
-            String.Equals(reference.Name, name, StringComparison.OrdinalIgnoreCase));
-
-    private SubmitAttemptResponse ToResponse(
-        Attempt attempt,
-        StudentTaskProgress progress,
-        Phase2BValidationRuntime runtime,
-        IReadOnlyList<EvaluatedCheck> checks,
-        AttemptResultSnapshot snapshot,
-        DateTimeOffset now)
-    {
-        var progressResponse = ProgressMappings.ToResponse(progress, runtime.Version, now);
-        var visible = runtime.Configuration.VisibleHintGroups.ToHashSet();
-        var visibleChecks = checks.Where(value =>
-        {
-            var group = AttemptScoringReadService.ToHintGroup(value.Check.Kind);
-            return group.HasValue && visible.Contains(group.Value);
-        }).ToArray();
-        var hints = checks.Where(value => value.Status == ValidationCheckStatus.Failed)
-            .Select(value => ToHint(value.Check.Kind))
-            .Where(group => group.HasValue && visible.Contains(group.Value))
-            .Distinct()
-            .Select(group => new AttemptHintResponse(group!.Value, "Проверьте соответствующую часть решения."))
-            .ToArray();
-        return new SubmitAttemptResponse(
-            attempt.Id, attempt.Status, attempt.IsCorrect, attempt.Reason,
-            attempt.RowCount, attempt.DurationMs, attempt.ErrorMessage,
-            snapshot.Columns, snapshot.Rows, snapshot.IsTruncated, snapshot.State,
-            snapshot.ReturnedRowCount, snapshot.RowLimit, snapshot.CreatedAt, snapshot.ExpiresAt,
-            progress.Id, runtime.Version.Id, attempt.AttemptNumber, attempt.Score,
-            progress.BestScore, runtime.Version.PassingScore, progressResponse.IsPassed,
-            progress.AttemptsUsed, progressResponse.AttemptsRemaining,
-            progressResponse.CanSubmit, progressResponse.CanFinalize,
-            visibleChecks.Select(value => new AttemptCheckResultResponse(
-                value.Check.Kind, value.Status, value.Check.Weight, value.AwardedScore, value.Message)).ToArray(),
-            hints);
-    }
-
-    private void AddPracticeEvent(ModuleSession session, Attempt attempt, DateTimeOffset occurredAt)
-    {
-        var eventId = Guid.NewGuid();
-        var message = new PracticeEventMessage(
-            session.Id, session.SessionKey, eventId, "sql_submit", occurredAt,
-            new PracticeEventPayload(
-                attempt.SubmittedSql, ToIntegrationStatus(attempt.Status),
-                attempt.RowCount, attempt.DurationMs, attempt.IsCorrect, attempt.Reason.ToString()));
-        db.PendingPublishes.Add(PendingPublish.Create(
-            eventId, PendingPublishKind.Event, session.Id, $"event:{attempt.Id:D}",
-            JsonSerializer.Serialize(message, JsonOptions), occurredAt));
-    }
-
-    /// <summary>
-    /// Тот же формат статуса в outbox-событии, что и у legacy-обработчика
-    /// (<c>SubmitAttemptCommand.ToIntegrationStatus</c>) — потребители события
-    /// (Education) ожидают "SUCCESS"/"ERROR"/"TIMEOUT", а не сырое имя enum.
-    /// </summary>
-    private static string ToIntegrationStatus(ExecutionStatus status) => status switch
-    {
-        ExecutionStatus.Succeeded => "SUCCESS",
-        ExecutionStatus.Error => "ERROR",
-        ExecutionStatus.TimedOut => "TIMEOUT",
-        _ => "UNKNOWN"
-    };
-
-    private static HintGroup? ToHint(ValidationCheckKind kind) => kind switch
-    {
-        ValidationCheckKind.MainDatasetResult => HintGroup.Result,
-        ValidationCheckKind.RequiredConstruct => HintGroup.RequiredConstructs,
-        ValidationCheckKind.ForbiddenConstruct => HintGroup.ForbiddenConstructs,
-        ValidationCheckKind.RequiredTable => HintGroup.RequiredTables,
-        ValidationCheckKind.ForbiddenTable => HintGroup.ForbiddenTables,
-        _ => null
-    };
 
     private static string HashPayload(Guid taskId, string submittedSql) => Convert.ToHexString(
         SHA256.HashData(Encoding.UTF8.GetBytes($"{taskId:D}\n{submittedSql}")));
 
     private static Phase2BSubmitResult Handled(Result<SubmitAttemptResponse> result) => new(true, result);
-
-    private sealed record MainResult(
-        ExecutionStatus Status, bool IsCorrect, CheckReason Reason, string? PublicError);
-
-    private sealed record EvaluatedCheck(
-        ValidationCheckSnapshot Check,
-        ValidationCheckStatus Status,
-        int AwardedScore,
-        string? Message);
 }
