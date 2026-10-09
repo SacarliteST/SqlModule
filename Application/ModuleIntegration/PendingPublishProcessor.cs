@@ -11,25 +11,42 @@ namespace SQLModule.Application.ModuleIntegration;
 
 public sealed class PendingPublishProcessor(
     IApplicationDbContext db,
+    IPendingPublishClaimer claimer,
     IPracticeEventPublisher publisher,
     IEducationCompletionClient completionClient,
     IOptions<ModuleIntegrationOptions> options,
     TimeProvider timeProvider,
     ILogger<PendingPublishProcessor> logger)
 {
+    /// <summary>Идентификатор экземпляра приложения для аренд outbox (общий на процесс).</summary>
+    private static readonly string InstanceId = $"{Environment.MachineName}:{Guid.NewGuid():N}";
+
     public async Task<int> ProcessBatchAsync(CancellationToken ct)
     {
         var publisherOptions = options.Value.Publisher;
         var now = timeProvider.GetUtcNow();
-        var messages = await db.PendingPublishes
-            .Where(message =>
-                message.SentAt == null &&
-                message.DeadLetterAt == null &&
-                message.NextAttemptAt <= now)
-            .OrderBy(message => message.NextAttemptAt)
-            .ThenBy(message => message.CreatedAt)
-            .Take(publisherOptions.BatchSize)
-            .ToListAsync(ct);
+        var claimedIds = await claimer.ClaimAsync(
+            InstanceId,
+            now,
+            TimeSpan.FromSeconds(publisherOptions.LeaseSeconds),
+            publisherOptions.BatchSize,
+            ct);
+        // Аренда проставлена SQL-запросом мимо ChangeTracker: уже отслеживаемые экземпляры хранят устаревшие
+        // LockedBy/LockedUntil, и снятие аренды при отправке не попало бы в UPDATE — перечитываем их.
+        foreach (var stale in db.ChangeTracker.Entries<PendingPublish>()
+                     .Where(entry => entry.State == EntityState.Unchanged && claimedIds.Contains(entry.Entity.Id))
+                     .ToList())
+        {
+            stale.State = EntityState.Detached;
+        }
+
+        var messages = claimedIds.Count == 0
+            ? []
+            : await db.PendingPublishes
+                .Where(message => claimedIds.Contains(message.Id))
+                .OrderBy(message => message.NextAttemptAt)
+                .ThenBy(message => message.CreatedAt)
+                .ToListAsync(ct);
 
         foreach (var message in messages)
         {

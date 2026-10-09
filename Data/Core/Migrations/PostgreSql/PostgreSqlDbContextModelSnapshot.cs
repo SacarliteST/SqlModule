@@ -313,6 +313,13 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
+                    b.Property<string>("LockedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("LockedUntil")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("MessageJson")
                         .IsRequired()
                         .HasColumnType("jsonb");

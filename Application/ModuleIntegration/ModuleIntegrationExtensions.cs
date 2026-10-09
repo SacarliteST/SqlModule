@@ -53,7 +53,8 @@ public static class ModuleIntegrationExtensions
                 {
                     PollIntervalSeconds: > 0,
                     BatchSize: > 0,
-                    SentRetentionDays: > 0
+                    SentRetentionDays: > 0,
+                    LeaseSeconds: > 0
                 },
                 "Числовые настройки ModuleIntegration:Publisher должны быть больше нуля.")
             .Validate(
