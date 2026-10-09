@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using SQLModule.Application.ModuleIntegration;
 using SQLModule.Application.Persistence;
 using SQLModule.Data.Core;
 using SQLModule.Data.Core.Configurations;
@@ -46,6 +47,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IMigrationManager, DatabaseMigrationManager>();
         services.AddSingleton<ITextSearch, PostgresTextSearch>();
+        services.AddScoped<IPendingPublishClaimer, PostgresPendingPublishClaimer>();
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddSingleton<IDbErrorClassifier, PostgresErrorClassifier>();
 

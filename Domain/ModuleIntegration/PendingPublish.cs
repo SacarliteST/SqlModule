@@ -15,6 +15,12 @@ public sealed class PendingPublish : BaseEntity
     public DateTimeOffset? SentAt { get; private set; }
     public DateTimeOffset? DeadLetterAt { get; private set; }
 
+    /// <summary>Владелец текущей аренды сообщения (экземпляр процессора), пока оно обрабатывается.</summary>
+    public string? LockedBy { get; private set; }
+
+    /// <summary>Момент истечения аренды; после него сообщение может забрать другой экземпляр.</summary>
+    public DateTimeOffset? LockedUntil { get; private set; }
+
     private PendingPublish(
         Guid id,
         PendingPublishKind kind,
@@ -41,12 +47,24 @@ public sealed class PendingPublish : BaseEntity
         DateTimeOffset createdAt) =>
         new(id, kind, sessionId, deduplicationKey, messageJson, createdAt);
 
-    public void MarkSent(DateTimeOffset sentAt) => SentAt = sentAt;
+    public void MarkSent(DateTimeOffset sentAt)
+    {
+        SentAt = sentAt;
+        ReleaseLock();
+    }
+
+    /// <summary>Снимает аренду: сообщение снова доступно для claim (по NextAttemptAt).</summary>
+    public void ReleaseLock()
+    {
+        LockedBy = null;
+        LockedUntil = null;
+    }
 
     public void MarkDeadLetter(DateTimeOffset failedAt)
     {
         Attempts++;
         DeadLetterAt = failedAt;
+        ReleaseLock();
     }
 
     public void RegisterFailure(
@@ -56,6 +74,7 @@ public sealed class PendingPublish : BaseEntity
     {
         Attempts++;
         NextAttemptAt = nextAttemptAt;
+        ReleaseLock();
         if (moveToDeadLetter)
         {
             DeadLetterAt = failedAt;

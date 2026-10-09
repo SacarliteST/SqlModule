@@ -49,6 +49,9 @@ public sealed class ModuleIntegrationPublisherOptions
     public int BatchSize { get; init; } = 50;
     public int PollIntervalSeconds { get; init; } = 5;
     public int SentRetentionDays { get; init; } = 14;
+
+    /// <summary>Срок аренды сообщения экземпляром; после падения воркера сообщение вернётся в обработку.</summary>
+    public int LeaseSeconds { get; init; } = 120;
 }
 
 public sealed class ModuleIntegrationEducationCompletionOptions

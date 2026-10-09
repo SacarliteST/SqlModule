@@ -1508,6 +1508,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         ILogger<PendingPublishProcessor>? logger = null) =>
         new(
             db,
+            new PostgresPendingPublishClaimer(db),
             publisher,
             completionClient ?? new StubCompletionClient(),
             integrationOptions ?? CreateModuleIntegrationOptions(),

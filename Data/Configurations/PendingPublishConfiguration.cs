@@ -22,6 +22,7 @@ internal sealed class PendingPublishConfiguration : IEntityTypeConfiguration<Pen
         builder.Property(message => message.Attempts).HasDefaultValue(0).IsRequired();
         builder.Property(message => message.NextAttemptAt).IsRequired();
         builder.Property(message => message.CreatedAt).IsRequired();
+        builder.Property(message => message.LockedBy).HasMaxLength(100);
         builder.HasIndex(message => message.DeduplicationKey).IsUnique();
         builder.HasIndex(message => new { message.SentAt, message.DeadLetterAt, message.NextAttemptAt });
         builder.HasIndex(message => message.SessionId);
