@@ -27,14 +27,14 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         var response = await GetConfigurationAsync(taskId);
 
         response.TaskId.ShouldBe(taskId);
-        response.State.ShouldBe(ValidationConfigurationState.Draft);
+        response.State.ShouldBe(SQLModule.Contracts.Training.ValidationConfigurationState.Draft);
         response.ValidationVersionId.ShouldBeNull();
         response.HasUnpublishedChanges.ShouldBeFalse();
         response.PassingScore.ShouldBe(100);
         response.MaxAttempts.ShouldBeNull();
-        response.VisibleHintGroups.ShouldBe([HintGroup.Result]);
+        response.VisibleHintGroups.ShouldBe([SQLModule.Contracts.Training.HintGroup.Result]);
         var check = response.Checks.ShouldHaveSingleItem();
-        check.Kind.ShouldBe(ValidationCheckKind.MainDatasetResult);
+        check.Kind.ShouldBe(SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult);
         check.Weight.ShouldBe(100);
         response.CreatedAt.ShouldBeGreaterThan(DateTimeOffset.UnixEpoch);
     }
@@ -113,12 +113,12 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         var previewRequest = new TaskValidationPreviewRequest(
             71,
             5,
-            [HintGroup.Result, HintGroup.RequiredConstructs],
+            [SQLModule.Contracts.Training.HintGroup.Result, SQLModule.Contracts.Training.HintGroup.RequiredConstructs],
             [
                 new ValidationCheckPreviewRequest(
-                    before.Checks[0].Id, null, ValidationCheckKind.MainDatasetResult, null, 70, 0),
+                    before.Checks[0].Id, null, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 70, 0),
                 new ValidationCheckPreviewRequest(
-                    null, "new-distinct", ValidationCheckKind.RequiredConstruct, "Distinct", 30, 1)
+                    null, "new-distinct", SQLModule.Contracts.Training.ValidationCheckKind.RequiredConstruct, "Distinct", 30, 1)
             ]);
 
         var response = await HttpClient.PostAsJsonAsync(
@@ -133,7 +133,7 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         preview.IsValid.ShouldBeTrue();
         preview.ReferenceScore.ShouldBe(100);
         preview.Checks.Single(check => check.ClientKey == "new-distinct").Status
-            .ShouldBe(ValidationCheckStatus.Passed);
+            .ShouldBe(SQLModule.Contracts.Training.ValidationCheckStatus.Passed);
         after.Version.ShouldBe(before.Version);
         after.Checks.ShouldHaveSingleItem();
     }
@@ -174,7 +174,7 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         second.StatusCode.ShouldBe(HttpStatusCode.OK);
         firstBody.ShouldNotBeNull();
         secondBody.ShouldNotBeNull();
-        firstBody.State.ShouldBe(ValidationConfigurationState.Published);
+        firstBody.State.ShouldBe(SQLModule.Contracts.Training.ValidationConfigurationState.Published);
         firstBody.HasUnpublishedChanges.ShouldBeFalse();
         firstBody.ValidationVersionNumber.ShouldBe(1);
         secondBody.ValidationVersionId.ShouldBe(firstBody.ValidationVersionId);
@@ -185,10 +185,10 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
                 firstBody.Version,
                 100,
                 null,
-                [HintGroup.Result],
+                [SQLModule.Contracts.Training.HintGroup.Result],
                 [new ValidationCheckRequest(
                     firstBody.Checks[0].Id,
-                    ValidationCheckKind.MainDatasetResult,
+                    SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult,
                     null,
                     100,
                     0)]),
@@ -221,12 +221,12 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
             current.Version,
             71,
             5,
-            [HintGroup.Result, HintGroup.RequiredConstructs],
+            [SQLModule.Contracts.Training.HintGroup.Result, SQLModule.Contracts.Training.HintGroup.RequiredConstructs],
             [
                 new ValidationCheckRequest(
-                    current.Checks[0].Id, ValidationCheckKind.MainDatasetResult, null, 70, 0),
+                    current.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 70, 0),
                 new ValidationCheckRequest(
-                    null, ValidationCheckKind.RequiredConstruct, "Distinct", 30, 1)
+                    null, SQLModule.Contracts.Training.ValidationCheckKind.RequiredConstruct, "Distinct", 30, 1)
             ]);
 
     private async Task<Guid> CreateTaskAsync(string referenceSql)

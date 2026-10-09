@@ -224,12 +224,12 @@ public sealed class SubmitAttemptHandler(
         snapshotService.Apply(attempt, snapshot);
 
         var response = new SubmitAttemptResponse(
-            attempt.Id, status, isCorrect, reason,
+            attempt.Id, status.ToContract(), isCorrect, reason.ToContract(),
             result.Succeeded ? result.RowCount : null,
             result.Succeeded ? result.DurationMs : null,
             publicError,
             snapshot.Columns, snapshot.Rows, snapshot.IsTruncated,
-            snapshot.State, snapshot.ReturnedRowCount, snapshot.RowLimit,
+            snapshot.State.ToContract(), snapshot.ReturnedRowCount, snapshot.RowLimit,
             snapshot.CreatedAt, snapshot.ExpiresAt);
 
         db.Attempts.Add(attempt);
@@ -329,13 +329,13 @@ public sealed class SubmitAttemptHandler(
                 "IdempotencyRequestInProgress", "Запрос с этим Idempotency-Key ещё выполняется."));
         }
 
-        if (response.ResultSnapshotState == AttemptResultSnapshotState.Available &&
+        if (response.ResultSnapshotState == Contracts.Training.AttemptResultSnapshotState.Available &&
             response.ResultSnapshotExpiresAt.HasValue &&
             response.ResultSnapshotExpiresAt.Value <= now)
         {
             response = response with
             {
-                ResultSnapshotState = AttemptResultSnapshotState.Expired,
+                ResultSnapshotState = Contracts.Training.AttemptResultSnapshotState.Expired,
                 ActualColumns = null,
                 ActualRows = null,
                 ReturnedRowCount = null,

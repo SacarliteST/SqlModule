@@ -7,7 +7,7 @@ public static class SqlTaskMappings
 {
     public static SqlTaskResponse ToResponse(SqlTask e) => new(
         e.Id, e.TopicId, e.SqlQueryId,
-        e.TaskName, e.TaskText, e.DifficultyLevel, e.PublicationStatus,
+        e.TaskName, e.TaskText, e.DifficultyLevel, e.PublicationStatus.ToContract(),
         e.CreatedById, e.CreatedAt, e.UpdatedById, e.UpdatedAt,
         CreatedByName: e.CreatedByName, UpdatedByName: e.UpdatedByName);
 
@@ -25,7 +25,7 @@ public static class SqlTaskMappings
             req.TaskName!,
             req.TaskText!,
             req.DifficultyLevel!.Value,
-            req.PublicationStatus,
+            req.PublicationStatus?.ToDomain(),
             req.TopicId);
 
     private static ReferenceQueryData ToData(ReferenceQueryRequest req) =>

@@ -94,8 +94,8 @@ public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
             .Skip(query.Offset)
             .Take(query.Limit)
             .Select(x => new AttemptListItemResponse(
-                x.Id, x.UserId, x.StudentName, x.TaskId, x.SubmittedSql, x.Status,
-                x.IsCorrect, x.Reason, x.RowCount, x.DurationMs,
+                x.Id, x.UserId, x.StudentName, x.TaskId, x.SubmittedSql, x.Status.ToContract(),
+                x.IsCorrect, x.Reason.ToContract(), x.RowCount, x.DurationMs,
                 x.Status == Domain.Training.ExecutionStatus.Error ||
                 x.Status == Domain.Training.ExecutionStatus.TimedOut
                     ? "Не удалось выполнить SQL-запрос."

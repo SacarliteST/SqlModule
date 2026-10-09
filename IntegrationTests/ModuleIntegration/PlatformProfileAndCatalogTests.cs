@@ -1468,9 +1468,9 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             HttpMethod.Put, ApiRoutes.Training.SqlTasks.ForValidation(task.Id))
         {
             Content = JsonContent.Create(new Contracts.Training.Validation.TaskValidationConfigurationRequest(
-                configuration!.Version, 100, null, [HintGroup.Result],
+                configuration!.Version, 100, null, [SQLModule.Contracts.Training.HintGroup.Result],
                 [new Contracts.Training.Validation.ValidationCheckRequest(
-                    configuration.Checks[0].Id, ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
+                    configuration.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
                 options: ClientJson.Options)
         };
         using var updateResponse = await client.SendAsync(updateRequest);

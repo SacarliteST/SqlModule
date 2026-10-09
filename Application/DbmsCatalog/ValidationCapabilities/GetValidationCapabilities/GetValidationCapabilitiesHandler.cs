@@ -70,9 +70,9 @@ public sealed class GetValidationCapabilitiesHandler(
 
         return new DbmsValidationCapabilitiesResponse(
             query.DbmsId,
-            [ValidationCheckKind.MainDatasetResult, .. AstCheckKinds],
-            supportedConstructs,
-            [HintGroup.Result, .. AstHintGroups],
+            [ValidationCheckKind.MainDatasetResult.ToContract(), .. AstCheckKinds.Select(value => value.ToContract())],
+            supportedConstructs.Select(value => value.ToContract()).ToArray(),
+            [HintGroup.Result.ToContract(), .. AstHintGroups.Select(value => value.ToContract())],
             options.Value.MaxAttemptsLimit,
             analyzer.AnalyzerVersion);
     }

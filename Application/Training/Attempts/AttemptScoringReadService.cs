@@ -43,7 +43,7 @@ public sealed class AttemptScoringReadService(
         var checks = storedChecks
             .Where(value => !studentSafe || IsVisible(value.Kind, visibleGroups))
             .Select(value => new AttemptCheckResultResponse(
-                value.Kind, value.Status, value.Weight, value.AwardedScore, value.Message))
+                value.Kind.ToContract(), value.Status.ToContract(), value.Weight, value.AwardedScore, value.Message))
             .ToArray();
         var hints = studentSafe
             ? storedChecks
@@ -52,7 +52,7 @@ public sealed class AttemptScoringReadService(
                 .Where(value => value.HasValue && visibleGroups.Contains(value.Value))
                 .Distinct()
                 .Select(value => new AttemptHintResponse(
-                    value!.Value, "Проверьте соответствующую часть решения."))
+                    value!.Value.ToContract(), "Проверьте соответствующую часть решения."))
                 .ToArray()
             : [];
         var state = ProgressMappings.ToResponse(progress, version, timeProvider.GetUtcNow());

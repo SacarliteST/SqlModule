@@ -1,3 +1,4 @@
+using SQLModule.Application;
 using SQLModule.Application.Training.Attempts;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -43,10 +44,10 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
         var result = await sender.Send<GetAllAttemptsQuery, Result<PageResponse<AttemptListItemResponse>>>(
             new GetAllAttemptsQuery(
                 request.Offset, request.Limit, request.TaskId, request.UserId,
-                request.TopicId, request.Status, request.IsCorrect,
+                request.TopicId, request.Status?.ToDomain(), request.IsCorrect,
                 request.DateFrom, request.DateTo,
                 request.ProgressId, request.ValidationVersionId,
-                request.ScoreFrom, request.ScoreTo, request.FinalizationReason), ct);
+                request.ScoreFrom, request.ScoreTo, request.FinalizationReason?.ToDomain()), ct);
         return result.ToOk();
     }
 }

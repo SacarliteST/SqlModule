@@ -10,5 +10,5 @@ public record UpdateSqlTaskRequest(
     string? TaskName = null,
     string? TaskText = null,
     short? DifficultyLevel = null,
-    SQLModule.Domain.Training.PublicationStatus? PublicationStatus = null,
+    SQLModule.Contracts.Training.PublicationStatus? PublicationStatus = null,
     Guid? TopicId = null);

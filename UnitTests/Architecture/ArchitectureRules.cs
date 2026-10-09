@@ -60,7 +60,6 @@ internal static class ArchitectureRules
     public static IReadOnlyDictionary<string, string> KnownProjectViolations { get; } =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["Contracts -> Domain"] = "REF-009: Contracts использует доменные enum.",
         };
 
     /// <summary>Запрещённые NuGet-пакеты по проектам.</summary>
