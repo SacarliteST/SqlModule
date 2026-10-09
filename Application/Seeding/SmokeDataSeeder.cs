@@ -111,7 +111,7 @@ public sealed class SmokeDataSeeder(
 
         if (!task.ActiveValidationVersionId.HasValue)
         {
-            // Platform-flow (PlatformProgressService.EnsureCreatedAsync) с Phase 2B требует
+            // Platform-flow (PlatformProgressService.EnsureCreatedAsync) с версионированной проверкой требует
             // опубликованную конфигурацию проверки для любой platform-сессии — без этого
             // блока задание смоук-теста существовало бы только в "легаси"-режиме и
             // platform-сабмит отвечал бы 422 ModuleSession.TaskValidationUnavailable.

@@ -127,7 +127,7 @@ public sealed class ModuleSessionCleanupProcessor(
                 "Platform-сессия {SessionId} (студент {UserId}, задание {TaskRef}) истекла без " +
                 "финализации: {AttemptCount} попыток, есть успешная попытка: {HasCorrectAttempt}. " +
                 "Итоговая оценка не будет передана в Education, пока не появится авто-финализация " +
-                "по expiry (Phase 2B).",
+                "по expiry (версионированная проверка).",
                 session.Id, session.UserId, session.TaskRef, stats.AttemptCount, stats.HasCorrectAttempt);
         }
 

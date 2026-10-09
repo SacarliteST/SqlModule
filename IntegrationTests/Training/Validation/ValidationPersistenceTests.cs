@@ -7,10 +7,10 @@ using SQLModule.IntegrationTests.Infrastructure;
 namespace SQLModule.IntegrationTests.Training.Validation;
 
 [Collection(IntegrationTestCollection.Name)]
-public sealed class Phase2BPersistenceTests(TestApplication app)
+public sealed class ValidationPersistenceTests(TestApplication app)
 {
-    [Fact(DisplayName = "Migration создаёт таблицы и ключевые ограничения Phase 2B")]
-    public async Task Migration_CreatesPhase2BSchema()
+    [Fact(DisplayName = "Migration создаёт таблицы и ключевые ограничения версионированной проверки")]
+    public async Task Migration_CreatesValidationSchema()
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

@@ -32,7 +32,7 @@ public sealed class SubmitAttemptHandler(
     ITaskMaterializer materializer,
     ISandboxExecutor executor,
     IResultComparer comparer,
-    IPhase2BSubmitAttemptService phase2BSubmit,
+    ISubmitAttemptWorkflow submitWorkflow,
     IPlatformStudentScope platformScope,
     IAttemptResultSnapshotService snapshotService,
     IOptions<SandboxOptions> sandboxOptions,
@@ -55,7 +55,7 @@ public sealed class SubmitAttemptHandler(
             }
 
             // Владелец и задание проверяются до любых побочных эффектов; закрытие/истечение
-            // сессии решает Phase2B — только там можно отличить идемпотентный replay от нового запроса.
+            // сессии решает workflow версионированной проверки — только там можно отличить идемпотентный replay от нового запроса.
             var allowed = await platformScope.EnsureTaskAllowedAsync(
                 command.UserId,
                 command.ModuleSessionId.Value,
@@ -94,13 +94,13 @@ public sealed class SubmitAttemptHandler(
             await db.SaveChangesAsync(ct);
         }
 
-        // Phase2B проверяет закрытие/истечение платформенной сессии до поиска задания —
+        // Workflow версионированной проверки проверяет закрытие/истечение платформенной сессии до поиска задания —
         // фейковый/ещё не опубликованный TaskId не должен превращать честный 409
         // ModuleSession.Closed в 404 TaskNotFound.
-        var phase2B = await phase2BSubmit.TryHandleAsync(command, moduleSession, ct);
-        if (phase2B.Handled)
+        var workflowResult = await submitWorkflow.TryHandleAsync(command, moduleSession, ct);
+        if (workflowResult.Handled)
         {
-            return phase2B.Result!;
+            return workflowResult.Result!;
         }
 
         var task = await db.SqlTasks.AsNoTracking()

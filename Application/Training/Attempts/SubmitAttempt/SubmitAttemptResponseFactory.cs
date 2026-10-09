@@ -12,7 +12,7 @@ public static class SubmitAttemptResponseFactory
     public static SubmitAttemptResponse Create(
         Attempt attempt,
         StudentTaskProgress progress,
-        Phase2BValidationRuntime runtime,
+        ValidationRuntime runtime,
         IReadOnlyList<EvaluatedCheck> checks,
         AttemptResultSnapshot snapshot,
         DateTimeOffset now)

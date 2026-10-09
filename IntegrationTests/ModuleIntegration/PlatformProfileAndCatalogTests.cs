@@ -1406,8 +1406,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
     }
 
     /// <summary>
-    /// Как <see cref="SeedRunnableTaskAsync"/>, но дополнительно публикует Phase 2B
-    /// конфигурацию проверки — начиная с Phase 2B <see cref="PlatformProgressService"/>
+    /// Как <see cref="SeedRunnableTaskAsync"/>, но дополнительно публикует
+    /// конфигурацию проверки — начиная с версионированной проверки <see cref="PlatformProgressService"/>
     /// требует опубликованную <c>ActiveValidationVersionId</c> для любого platform-задания,
     /// иначе submit отвечает 422 <c>ModuleSession.TaskValidationUnavailable</c>.
     /// </summary>

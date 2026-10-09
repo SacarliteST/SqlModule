@@ -25,7 +25,7 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
                 "limit — размер страницы (1–100, по умолчанию 20). " +
                 "taskId — необязательный фильтр по заданию. " +
                 "userId — необязательный фильтр по студенту. " +
-                "progressId и validationVersionId — фильтры Phase 2B. " +
+                "progressId и validationVersionId — фильтры версионированной проверки. " +
                 "scoreFrom/scoreTo — включительный диапазон баллов 0–100. " +
                 "finalizationReason — причина финализации прохождения. " +
                 "422 — некорректные параметры фильтрации или пагинации.")

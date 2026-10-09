@@ -16,11 +16,11 @@ using SQLModule.Sandbox;
 
 namespace SQLModule.Application.Training.Attempts.SubmitAttempt;
 
-public sealed record Phase2BSubmitResult(bool Handled, Result<SubmitAttemptResponse>? Result);
+public sealed record SubmitAttemptWorkflowResult(bool Handled, Result<SubmitAttemptResponse>? Result);
 
-public interface IPhase2BSubmitAttemptService
+public interface ISubmitAttemptWorkflow
 {
-    Task<Phase2BSubmitResult> TryHandleAsync(
+    Task<SubmitAttemptWorkflowResult> TryHandleAsync(
         SubmitAttemptCommand command,
         ModuleSession? moduleSession,
         CancellationToken ct);
@@ -30,22 +30,22 @@ public interface IPhase2BSubmitAttemptService
 /// Оркестратор отправки решения по версии проверки: прохождение → резервация номера → runtime версии →
 /// анализ и выполнение SQL → оценка → атомарное сохранение. Каждый шаг вынесен в отдельный сервис.
 /// </summary>
-public sealed class Phase2BSubmitAttemptService(
+public sealed class SubmitAttemptWorkflow(
     IApplicationDbContext db,
     IAttemptProgressResolver progressResolver,
     IAttemptReservationService reservationService,
     IAttemptPersistenceService persistence,
     IPlatformStudentScope platformScope,
-    IPhase2BValidationRuntimeReader runtimeReader,
+    IValidationRuntimeReader runtimeReader,
     ISqlSyntaxAnalyzerResolver analyzerResolver,
     ISandboxExecutor executor,
     AttemptEvaluationEngine evaluationEngine,
     IAttemptResultSnapshotService snapshotService,
     IOptions<SandboxOptions> sandboxOptions,
     TimeProvider timeProvider,
-    ILogger<Phase2BSubmitAttemptService> logger) : IPhase2BSubmitAttemptService
+    ILogger<SubmitAttemptWorkflow> logger) : ISubmitAttemptWorkflow
 {
-    public async Task<Phase2BSubmitResult> TryHandleAsync(
+    public async Task<SubmitAttemptWorkflowResult> TryHandleAsync(
         SubmitAttemptCommand command,
         ModuleSession? moduleSession,
         CancellationToken ct)
@@ -59,7 +59,7 @@ public sealed class Phase2BSubmitAttemptService(
         var progress = resolution.Progress;
         if (progress is null)
         {
-            return new Phase2BSubmitResult(false, null);
+            return new SubmitAttemptWorkflowResult(false, null);
         }
 
         var payloadHash = HashPayload(command.TaskId, command.SubmittedSql);
@@ -250,5 +250,5 @@ public sealed class Phase2BSubmitAttemptService(
     private static string HashPayload(Guid taskId, string submittedSql) => Convert.ToHexString(
         SHA256.HashData(Encoding.UTF8.GetBytes($"{taskId:D}\n{submittedSql}")));
 
-    private static Phase2BSubmitResult Handled(Result<SubmitAttemptResponse> result) => new(true, result);
+    private static SubmitAttemptWorkflowResult Handled(Result<SubmitAttemptResponse> result) => new(true, result);
 }
