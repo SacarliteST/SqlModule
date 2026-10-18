@@ -13,6 +13,7 @@ internal static class ModuleIntegrationExtensions
     {
         var section = configuration.GetSection(ModuleIntegrationOptions.SectionKey);
         services.AddScoped<IPlatformStudentScope, PlatformStudentScope>();
+        services.AddScoped<PracticeCompletionOutbox>();
         services.AddOptions<ModuleIntegrationOptions>()
             .Bind(section)
             .Validate(

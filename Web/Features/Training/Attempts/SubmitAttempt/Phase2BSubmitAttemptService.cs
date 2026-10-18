@@ -16,6 +16,7 @@ using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.ModuleIntegration;
+using SQLModule.Web.Features.Training.Attempts;
 using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;
@@ -45,8 +46,6 @@ internal sealed class Phase2BSubmitAttemptService(
     TimeProvider timeProvider,
     ILogger<Phase2BSubmitAttemptService> logger) : IPhase2BSubmitAttemptService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
     public async Task<Phase2BSubmitResult> TryHandleAsync(
         SubmitAttemptCommand command,
         ModuleSession? moduleSession,
@@ -303,7 +302,7 @@ internal sealed class Phase2BSubmitAttemptService(
             reservation.Complete(attempt.Id, finishedAt);
             if (moduleSession is not null)
             {
-                AddPracticeEvent(moduleSession, attempt, finishedAt);
+                AddPracticeEvent(moduleSession, attempt, finishedAt, runtime, checks);
             }
 
             await db.SaveChangesAsync(ct);
@@ -498,17 +497,49 @@ internal sealed class Phase2BSubmitAttemptService(
             hints);
     }
 
-    private void AddPracticeEvent(ModuleSession session, Attempt attempt, DateTimeOffset occurredAt)
+    private void AddPracticeEvent(
+        ModuleSession session,
+        Attempt attempt,
+        DateTimeOffset occurredAt,
+        Phase2BValidationRuntime runtime,
+        IReadOnlyList<EvaluatedCheck> checks)
     {
+        var visible = runtime.Configuration.VisibleHintGroups.ToHashSet();
+        var visibleChecks = checks.Where(value =>
+        {
+            var group = AttemptScoringReadService.ToHintGroup(value.Check.Kind);
+            return group.HasValue && visible.Contains(group.Value);
+        }).Select(value => new AttemptCheckResultResponse(
+            value.Check.Kind, value.Status, value.Check.Weight, value.AwardedScore, value.Message)).ToArray();
+        var hints = checks.Where(value => value.Status == ValidationCheckStatus.Failed)
+            .Select(value => ToHint(value.Check.Kind))
+            .Where(group => group.HasValue && visible.Contains(group.Value))
+            .Distinct()
+            .Select(group => new AttemptHintResponse(group!.Value, "Проверьте соответствующую часть решения."))
+            .ToArray();
         var eventId = Guid.NewGuid();
         var message = new PracticeEventMessage(
             session.Id, session.SessionKey, eventId, "sql_submit", occurredAt,
-            new PracticeEventPayload(
+            JsonSerializer.SerializeToElement(new PracticeEventPayload(
                 attempt.SubmittedSql, ToIntegrationStatus(attempt.Status),
-                attempt.RowCount, attempt.DurationMs, attempt.IsCorrect, attempt.Reason.ToString()));
+                attempt.RowCount, attempt.DurationMs, attempt.IsCorrect, attempt.Reason.ToString()),
+                PlatformIntegrationJson.Default),
+            PracticeEventMarkdownBuilder.BuildAttempt(new PracticeAttemptReport(
+                attempt.AttemptNumber,
+                runtime.Version.MaxAttempts,
+                attempt.Score,
+                attempt.SubmittedSql,
+                attempt.Status,
+                attempt.IsCorrect,
+                attempt.Reason,
+                attempt.RowCount,
+                attempt.DurationMs,
+                AttemptMappings.ToPublicError(attempt),
+                visibleChecks,
+                hints)));
         db.PendingPublishes.Add(PendingPublish.Create(
             eventId, PendingPublishKind.Event, session.Id, $"event:{attempt.Id:D}",
-            JsonSerializer.Serialize(message, JsonOptions), occurredAt));
+            JsonSerializer.Serialize(message, PlatformIntegrationJson.Default), occurredAt));
     }
 
     /// <summary>

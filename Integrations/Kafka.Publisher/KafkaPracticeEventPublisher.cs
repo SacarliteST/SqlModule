@@ -19,16 +19,16 @@ internal sealed class KafkaPracticeEventPublisher(
             Acks = Acks.All,
         }).Build();
 
-    public async Task PublishAsync(PracticeEventMessage message, CancellationToken ct = default)
+    public async Task PublishAsync(Guid sessionId, string messageJson, CancellationToken ct = default)
     {
         var result = await producer.ProduceAsync(options.Value.EventsTopic, new Message<string, string>
         {
-            Key = message.SessionId.ToString("D"),
-            Value = JsonSerializer.Serialize(message, PlatformIntegrationJson.Default),
+            Key = sessionId.ToString("D"),
+            Value = messageJson,
         }, ct);
         logger.LogInformation(
             "Событие платформенной сессии {SessionId} опубликовано в Kafka; топик {Topic}, партиция {Partition}, смещение {Offset}",
-            message.SessionId,
+            sessionId,
             result.Topic,
             result.Partition.Value,
             result.Offset.Value);

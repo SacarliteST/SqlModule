@@ -10,7 +10,7 @@ using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
-using SQLModule.PlatformIntegration.Contracts;
+using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Progress;
 
@@ -33,6 +33,7 @@ internal interface IProgressFinalizationService
 
 internal sealed class ProgressFinalizationService(
     AppDbContext db,
+    PracticeCompletionOutbox completionOutbox,
     TimeProvider timeProvider,
     ILogger<ProgressFinalizationService> logger) : IProgressFinalizationService
 {
@@ -95,26 +96,14 @@ internal sealed class ProgressFinalizationService(
             return;
         }
 
-        var deduplicationKey = $"grade:{moduleSession.Id:D}";
-        var exists = db.PendingPublishes.Local.Any(value => value.DeduplicationKey == deduplicationKey) ||
-                     await db.PendingPublishes.AsNoTracking()
-                         .AnyAsync(value => value.DeduplicationKey == deduplicationKey, ct);
-        if (!exists)
-        {
-            var bestAttemptId = await FindBestAttemptIdAsync(progress.Id, currentAttempt, ct);
-            var completion = new PracticeCompletionRequest(
-                moduleSession.SessionKey,
-                progress.FinalScore.Value,
-                new PracticeCompletionData(progress.AttemptsUsed, bestAttemptId),
-                progress.FinalizedAt!.Value);
-            db.PendingPublishes.Add(PendingPublish.Create(
-                Guid.NewGuid(),
-                PendingPublishKind.Grade,
-                moduleSession.Id,
-                deduplicationKey,
-                JsonSerializer.Serialize(completion, JsonOptions),
-                finalizedAt));
-        }
+        await completionOutbox.TryAddAsync(
+            moduleSession,
+            progress.FinalScore.Value,
+            progress.AttemptsUsed,
+            reason,
+            finalizedAt,
+            currentAttempt,
+            ct);
 
         if (moduleSession.Status == ModuleSessionStatus.Active)
         {
@@ -184,26 +173,6 @@ internal sealed class ProgressFinalizationService(
             "Прохождение {ProgressId} финализировано с итогом {FinalScore} по причине {Reason}",
             progress.Id, progress.FinalScore, progress.FinalizationReason);
         return response;
-    }
-
-    private async Task<Guid> FindBestAttemptIdAsync(
-        Guid progressId,
-        Attempt? currentAttempt,
-        CancellationToken ct)
-    {
-        var stored = await db.Attempts.AsNoTracking()
-            .Where(value => value.ProgressId == progressId && value.Score != null)
-            .OrderByDescending(value => value.Score)
-            .ThenBy(value => value.AttemptNumber)
-            .Select(value => new { value.Id, value.Score })
-            .FirstOrDefaultAsync(ct);
-        if (currentAttempt?.Score is { } currentScore &&
-            (stored is null || currentScore > stored.Score))
-        {
-            return currentAttempt.Id;
-        }
-
-        return stored?.Id ?? currentAttempt?.Id ?? Guid.Empty;
     }
 
     private static ProgressFinalizationResponse ToResponse(

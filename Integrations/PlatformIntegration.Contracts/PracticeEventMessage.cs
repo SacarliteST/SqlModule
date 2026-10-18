@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SQLModule.PlatformIntegration.Contracts;
 
@@ -8,7 +9,8 @@ public sealed record PracticeEventMessage(
     Guid EventId,
     string Kind,
     DateTimeOffset OccurredAt,
-    PracticeEventPayload Payload);
+    JsonElement Payload,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Markdown = null);
 
 public sealed record PracticeEventPayload(
     string SubmittedSql,
@@ -17,3 +19,9 @@ public sealed record PracticeEventPayload(
     long? DurationMs,
     bool IsCorrect,
     string Reason);
+
+public sealed record PracticeSessionSummaryPayload(
+    int TotalAttempts,
+    int FinalGrade,
+    string Reason,
+    long? DurationMs);
