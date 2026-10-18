@@ -40,11 +40,7 @@ internal sealed class PendingPublishProcessor(
             {
                 if (message.Kind == PendingPublishKind.Event)
                 {
-                    var request = JsonSerializer.Deserialize<PracticeEventMessage>(
-                        message.MessageJson,
-                        PlatformIntegrationJson.Default) ?? throw new JsonException(
-                        "Outbox-сообщение события платформенной сессии не содержит тела запроса.");
-                    await publisher.PublishAsync(request, ct);
+                    await publisher.PublishAsync(message.SessionId, message.MessageJson, ct);
                     message.MarkSent(timeProvider.GetUtcNow());
                     ModuleIntegrationTelemetry.RecordPublish(
                         message.Kind,

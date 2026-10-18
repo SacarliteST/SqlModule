@@ -4,5 +4,5 @@ namespace SQLModule.PlatformIntegration.Abstractions;
 
 public interface IPracticeEventPublisher
 {
-    Task PublishAsync(PracticeEventMessage message, CancellationToken ct = default);
+    Task PublishAsync(Guid sessionId, string messageJson, CancellationToken ct = default);
 }

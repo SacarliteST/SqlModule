@@ -490,8 +490,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             .Where(value => value.SessionId == sessionId)
             .OrderBy(value => value.Kind)
             .ToListAsync();
-        pending.Count.ShouldBe(2);
-        var eventMessage = pending.Single(value => value.Kind == PendingPublishKind.Event);
+        pending.Count.ShouldBe(3);
+        var eventMessage = pending.Single(value => value.DeduplicationKey == $"event:{attempt.Id:D}");
         eventMessage.DeduplicationKey.ShouldBe($"event:{attempt.Id:D}");
         eventMessage.Attempts.ShouldBe(0);
         eventMessage.SentAt.ShouldBeNull();
@@ -504,6 +504,16 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         root.GetProperty("kind").GetString().ShouldBe("sql_submit");
         root.GetProperty("payload").GetProperty("status").GetString().ShouldBe("SUCCESS");
         root.GetProperty("payload").GetProperty("isCorrect").GetBoolean().ShouldBeTrue();
+        root.GetProperty("markdown").GetString().ShouldNotBeNullOrWhiteSpace();
+
+        var summaryMessage = pending.Single(value => value.DeduplicationKey == $"summary:{sessionId:D}");
+        using var summary = JsonDocument.Parse(summaryMessage.MessageJson);
+        summary.RootElement.GetProperty("kind").GetString().ShouldBe("session_summary");
+        summary.RootElement.GetProperty("payload").GetProperty("totalAttempts").GetInt32().ShouldBe(1);
+        summary.RootElement.GetProperty("payload").GetProperty("finalGrade").GetInt32().ShouldBe(100);
+        var summaryMarkdown = summary.RootElement.GetProperty("markdown").GetString();
+        summaryMarkdown.ShouldNotBeNull();
+        summaryMarkdown.ShouldContain("Итог прохождения");
 
         var gradeMessage = pending.Single(value => value.Kind == PendingPublishKind.Grade);
         gradeMessage.DeduplicationKey.ShouldBe($"grade:{sessionId:D}");
@@ -556,8 +566,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
                 .Where(value => value.SessionId == sessionId && value.Kind == PendingPublishKind.Event)
                 .Select(value => value.Id)
                 .ToListAsync();
-            eventIds.Count.ShouldBe(2);
-            eventIds.Distinct().Count().ShouldBe(2);
+            eventIds.Count.ShouldBe(3);
+            eventIds.Distinct().Count().ShouldBe(3);
             using var grade = JsonDocument.Parse(gradeMessage.MessageJson);
             grade.RootElement.GetProperty("completionData").GetProperty("totalAttempts").GetInt32().ShouldBe(2);
         }
@@ -593,6 +603,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         (await db.Attempts.CountAsync(value => value.ModuleSessionId == sessionId)).ShouldBe(1);
         (await db.PendingPublishes.CountAsync(value =>
             value.SessionId == sessionId && value.Kind == PendingPublishKind.Grade)).ShouldBe(1);
+        (await db.PendingPublishes.CountAsync(value =>
+            value.DeduplicationKey == $"summary:{sessionId:D}")).ShouldBe(1);
     }
 
     [Fact(DisplayName = "Новый submit после завершения сессии отклоняется без запуска sandbox")]
@@ -620,6 +632,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         (await db.Attempts.CountAsync(value => value.ModuleSessionId == sessionId)).ShouldBe(1);
         (await db.PendingPublishes.CountAsync(value =>
             value.SessionId == sessionId && value.Kind == PendingPublishKind.Grade)).ShouldBe(1);
+        (await db.PendingPublishes.CountAsync(value =>
+            value.DeduplicationKey == $"summary:{sessionId:D}")).ShouldBe(1);
     }
 
     [Fact(DisplayName = "Параллельные правильные submit создают только одну попытку и одну оценку")]
@@ -656,9 +670,11 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         (await db.Attempts.CountAsync(value => value.ModuleSessionId == sessionId)).ShouldBe(1);
         (await db.PendingPublishes.CountAsync(value =>
-            value.SessionId == sessionId && value.Kind == PendingPublishKind.Event)).ShouldBe(1);
+            value.SessionId == sessionId && value.Kind == PendingPublishKind.Event)).ShouldBe(2);
         (await db.PendingPublishes.CountAsync(value =>
             value.SessionId == sessionId && value.Kind == PendingPublishKind.Grade)).ShouldBe(1);
+        (await db.PendingPublishes.CountAsync(value =>
+            value.DeduplicationKey == $"summary:{sessionId:D}")).ShouldBe(1);
         (await db.ModuleSessions.AsNoTracking().SingleAsync(value => value.Id == sessionId))
             .Status.ShouldBe(ModuleSessionStatus.CompletionPending);
     }
@@ -899,6 +915,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             PendingPublish.Create(successfulId, PendingPublishKind.Event, successfulSessionId,
                 $"event:{successfulId}", CreateEventMessageJson(successfulSessionId, "ok"), now));
         await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
         var publisher = new RecordingEventPublisher("fail");
         var processor = CreatePendingPublishProcessor(db, publisher);
 
@@ -912,6 +929,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         var successful = await db.PendingPublishes.AsNoTracking().SingleAsync(value => value.Id == successfulId);
         successful.SentAt.ShouldNotBeNull();
         publisher.PublishedIds.ShouldContain(successful.SessionId);
+        publisher.PublishedMessages.Single(value => value.SessionId == successful.SessionId)
+            .MessageJson.ShouldBe(successful.MessageJson);
     }
 
     [Fact(DisplayName = "Publisher после настроенного числа ошибок переводит событие в dead-letter")]
@@ -1559,13 +1578,13 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
                 Guid.NewGuid(),
                 "AttemptSubmitted",
                 DateTimeOffset.Parse("2026-09-06T10:40:00Z"),
-                new PracticeEventPayload(
+                JsonSerializer.SerializeToElement(new PracticeEventPayload(
                     submittedSql,
                     "Rejected",
                     null,
                     null,
                     false,
-                    "test")),
+                    "test"), PlatformIntegrationJson.Default)),
             PlatformIntegrationJson.Default);
 
     private static IOptions<EducationClientOptions> CreateEducationClientOptions() =>
@@ -1580,16 +1599,17 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         string failureMessage = "Simulated broker failure") : IPracticeEventPublisher
     {
         internal List<Guid> PublishedIds { get; } = [];
+        internal List<(Guid SessionId, string MessageJson)> PublishedMessages { get; } = [];
 
-        public Task PublishAsync(PracticeEventMessage message, CancellationToken ct = default)
+        public Task PublishAsync(Guid sessionId, string messageJson, CancellationToken ct = default)
         {
-            var messageJson = JsonSerializer.Serialize(message, PlatformIntegrationJson.Default);
             if (messageJson.Contains(failingMarker, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(failureMessage);
             }
 
-            PublishedIds.Add(message.SessionId);
+            PublishedIds.Add(sessionId);
+            PublishedMessages.Add((sessionId, messageJson));
             return Task.CompletedTask;
         }
     }

@@ -20,13 +20,13 @@ public sealed class ModuleIntegrationTransportContractTests
             eventId,
             "sql_submit",
             DateTimeOffset.Parse("2026-09-06T10:15:30Z"),
-            new PracticeEventPayload(
+            JsonSerializer.SerializeToElement(new PracticeEventPayload(
                 "SELECT 1",
                 "SUCCESS",
                 25,
                 120,
                 false,
-                "ValueMismatch"));
+                "ValueMismatch"), PlatformIntegrationJson.Default));
 
         using var document = JsonDocument.Parse(JsonSerializer.Serialize(message, JsonOptions));
         var root = document.RootElement;
@@ -50,6 +50,22 @@ public sealed class ModuleIntegrationTransportContractTests
         payloadJson.ShouldNotContain("accessToken");
         payloadJson.ShouldNotContain("refreshToken");
         payloadJson.ShouldNotContain("stackTrace");
+    }
+
+    [Fact(DisplayName = "Kafka-событие опускает отсутствующий markdown")]
+    public void PracticeEvent_OmitsNullMarkdown()
+    {
+        var message = new PracticeEventMessage(
+            Guid.NewGuid(),
+            "session-key",
+            Guid.NewGuid(),
+            "sql_submit",
+            DateTimeOffset.UtcNow,
+            JsonSerializer.SerializeToElement(new PracticeEventPayload(
+                "SELECT 1", "SUCCESS", 1, 1, true, "Ok"), PlatformIntegrationJson.Default));
+
+        JsonSerializer.Serialize(message, PlatformIntegrationJson.Default)
+            .ShouldNotContain("markdown");
     }
 
     [Fact(DisplayName = "CompletionData не содержит секрет сессии и транспортные идентификаторы")]

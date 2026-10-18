@@ -14,6 +14,7 @@ using SQLModule.Sandbox;
 using SQLModule.Web.Common.Cqrs;
 using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.ModuleIntegration;
+using SQLModule.Web.Features.Training.Attempts;
 
 namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;
 
@@ -35,6 +36,7 @@ internal sealed class SubmitAttemptHandler(
     IPhase2BSubmitAttemptService phase2BSubmit,
     IPlatformStudentScope platformScope,
     IAttemptResultSnapshotService snapshotService,
+    PracticeCompletionOutbox completionOutbox,
     IOptions<SandboxOptions> sandboxOptions,
     TimeProvider timeProvider,
     AppDbContext db)
@@ -242,37 +244,46 @@ internal sealed class SubmitAttemptHandler(
                 eventId,
                 "sql_submit",
                 finishedAt,
-                new PracticeEventPayload(
+                JsonSerializer.SerializeToElement(new PracticeEventPayload(
                     command.SubmittedSql,
                     ToIntegrationStatus(status),
                     result.Succeeded ? result.RowCount : null,
                     result.Succeeded ? result.DurationMs : null,
                     isCorrect,
-                    reason.ToString()));
+                    reason.ToString()), PlatformIntegrationJson.Default),
+                PracticeEventMarkdownBuilder.BuildAttempt(new PracticeAttemptReport(
+                    null,
+                    null,
+                    null,
+                    command.SubmittedSql,
+                    status,
+                    isCorrect,
+                    reason,
+                    result.Succeeded ? result.RowCount : null,
+                    result.Succeeded ? result.DurationMs : null,
+                    AttemptMappings.ToPublicError(attempt),
+                    [],
+                    [])));
             db.PendingPublishes.Add(PendingPublish.Create(
                 eventId,
                 PendingPublishKind.Event,
                 moduleSession.Id,
                 $"event:{attempt.Id:D}",
-                JsonSerializer.Serialize(message, JsonOptions),
+                JsonSerializer.Serialize(message, PlatformIntegrationJson.Default),
                 finishedAt));
 
             if (isCorrect)
             {
                 var previousAttempts = await db.Attempts.CountAsync(
                     value => value.ModuleSessionId == moduleSession.Id, ct);
-                var completion = new PracticeCompletionRequest(
-                    moduleSession.SessionKey,
+                await completionOutbox.TryAddAsync(
+                    moduleSession,
                     100,
-                    new PracticeCompletionData(previousAttempts + 1, attempt.Id),
-                    finishedAt);
-                db.PendingPublishes.Add(PendingPublish.Create(
-                    Guid.NewGuid(),
-                    PendingPublishKind.Grade,
-                    moduleSession.Id,
-                    $"grade:{moduleSession.Id:D}",
-                    JsonSerializer.Serialize(completion, JsonOptions),
-                    finishedAt));
+                    previousAttempts + 1,
+                    FinalizationReason.PerfectScore,
+                    finishedAt,
+                    attempt,
+                    ct);
                 moduleSession.MarkCompletionPending();
             }
         }
