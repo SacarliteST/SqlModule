@@ -1,11 +1,13 @@
+using SQLModule.Application;
 ﻿using Microsoft.AspNetCore.Builder;
+using SQLModule.Application.Training.SqlTasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Web.Common;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.SqlTasks;
 
@@ -34,7 +36,7 @@ public sealed class GetAllSqlTasksEndpoint : IEndpoint
         var result = await sender.Send<GetAllSqlTasksQuery, Result<PageResponse<SqlTaskResponse>>>(
             new GetAllSqlTasksQuery(
                 request.Offset, request.Limit, request.TopicId, request.Name,
-                request.TargetDbId, request.DifficultyLevel, request.PublicationStatus), ct);
+                request.TargetDbId, request.DifficultyLevel, request.PublicationStatus?.ToDomain()), ct);
         return result.ToOk();
     }
 }

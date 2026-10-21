@@ -65,7 +65,7 @@ public sealed class TeacherAuthoringAuthenticationTests(TestApplication app)
         var task = await createResponse.Content.ReadFromJsonAsync<SqlTaskResponse>(JsonOptions);
         task.ShouldNotBeNull();
         task.CreatedById.ShouldBe(userId);
-        task.PublicationStatus.ShouldBe(PublicationStatus.Draft);
+        task.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Draft);
         task.SqlQueryId.ShouldNotBe(Guid.Empty);
     }
 

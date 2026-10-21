@@ -1,7 +1,8 @@
+using SQLModule.Application.Training.Attempts;
 ﻿using Shouldly;
+using SQLModule.Application.TaskMaterialization;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Sandbox;
 using SQLModule.Web.Features.Training.Attempts;
 
 namespace SQLModule.UnitTests.Training;

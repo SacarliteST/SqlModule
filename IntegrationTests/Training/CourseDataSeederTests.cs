@@ -8,7 +8,9 @@ using Shouldly;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.Infrastructure;
-using SQLModule.Web.Common.Isolated;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox;
+using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.IntegrationTests.Training;
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using SQLModule.Sandbox.DbmsProbing;
 using SQLModule.Sandbox.Dialects;
 using SQLModule.Sandbox.Pooling;
 
@@ -44,6 +45,9 @@ public static class SandboxExtensions
         services.AddSingleton<ISandboxIsolationManager, SandboxIsolationManager>();
         services.AddHostedService<SandboxPoolHostedService>();
         services.AddSingleton<ISchemaSqlGenerator, SchemaSqlGenerator>();
+        services.AddOptions<DbmsCatalogOptions>().BindConfiguration(DbmsCatalogOptions.SectionKey);
+        services.AddMemoryCache();
+        services.AddSingleton<IDbmsProbe, TestcontainersDbmsProbe>();
         return services;
     }
 }

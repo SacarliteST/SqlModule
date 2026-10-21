@@ -1,3 +1,4 @@
+using SQLModule.Application.DbmsCatalog.PhysicalTypes;
 ﻿using FluentValidation;
 using SQLModule.Contracts.DbmsCatalog.PhysicalType;
 

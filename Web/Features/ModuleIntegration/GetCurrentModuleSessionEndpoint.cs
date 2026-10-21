@@ -1,11 +1,12 @@
+using SQLModule.Application.ModuleIntegration;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Cqrs;
+using SQLModule.Common.Results;
+using SQLModule.Domain.Common;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;
-using SQLModule.Data.Core;
-using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
@@ -30,7 +31,7 @@ internal sealed class GetCurrentModuleSessionEndpoint : IModuleIntegrationEndpoi
 
     private static async Task<IResult> Handle(
         ICurrentUser currentUser,
-        AppDbContext db,
+        ISender sender,
         CancellationToken ct)
     {
         using var activity = ModuleIntegrationTelemetry.StartActivity("module-session.current");
@@ -40,32 +41,14 @@ internal sealed class GetCurrentModuleSessionEndpoint : IModuleIntegrationEndpoi
             return NotFound();
         }
 
-        var session = await db.ModuleSessions.AsNoTracking()
-            .Where(value => value.Id == sessionId && value.UserId == userId)
-            .Select(value => new
-            {
-                value.TaskRef,
-                value.ReturnUrl,
-                value.ExpiresAt
-            })
-            .SingleOrDefaultAsync(ct);
-
-        if (session is null || !Guid.TryParse(session.TaskRef, out var taskId))
-        {
-            ModuleIntegrationTelemetry.RecordCurrent(ModuleIntegrationTelemetryOutcomes.NotFound);
-            return NotFound();
-        }
-
-        ModuleIntegrationTelemetry.RecordCurrent(ModuleIntegrationTelemetryOutcomes.Found);
-        return TypedResults.Ok(new CurrentModuleSessionResponse(
-            taskId,
-            session.ReturnUrl,
-            session.ExpiresAt));
+        var result = await sender.Send<GetCurrentModuleSessionQuery, Result<CurrentModuleSessionResponse>>(
+            new GetCurrentModuleSessionQuery(userId, sessionId), ct);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : NotFound();
     }
 
     private static IResult NotFound() => ApiProblemFactory.ToResult(
         StatusCodes.Status404NotFound,
         "Ресурс не найден",
         "Платформенная сессия не найдена или недоступна.",
-        "ModuleSession.NotFound");
+        ModuleSessionErrors.NotFoundCode);
 }

@@ -72,7 +72,7 @@ public sealed class SqlTaskPublishReadinessTests(TestApplication app) : ApiTestB
         body.RootElement.GetProperty("status").GetInt32().ShouldBe(409);
         body.RootElement.GetProperty("code").GetString().ShouldBe("SqlTask.ValidationVersionNotPublished");
         body.RootElement.GetProperty("detail").GetString().ShouldNotBeNullOrWhiteSpace();
-        (await SqlTaskClient.GetByIdAsync(draft.TaskId))!.PublicationStatus.ShouldBe(PublicationStatus.Draft);
+        (await SqlTaskClient.GetByIdAsync(draft.TaskId))!.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Draft);
     }
 
     [Fact(DisplayName = "Publish после публикации версии оценки → задание опубликовано")]
@@ -83,7 +83,7 @@ public sealed class SqlTaskPublishReadinessTests(TestApplication app) : ApiTestB
 
         var published = await SqlTaskClient.PublishAsync(draft.TaskId);
 
-        published.PublicationStatus.ShouldBe(PublicationStatus.Published);
+        published.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Published);
     }
 
     [Fact(DisplayName = "Publish задания с несколькими причинами → в errors все причины, code — первая")]
@@ -185,26 +185,26 @@ public sealed class SqlTaskPublishReadinessTests(TestApplication app) : ApiTestB
         var none = await GetValidationAsync(draft.TaskId);
         none.ValidationVersionId.ShouldBeNull();
         none.HasUnpublishedChanges.ShouldBeFalse();
-        none.State.ShouldBe(ValidationConfigurationState.Draft);
+        none.State.ShouldBe(SQLModule.Contracts.Training.ValidationConfigurationState.Draft);
 
         await PublishValidationAsync(draft.TaskId);
         var published = await GetValidationAsync(draft.TaskId);
         published.ValidationVersionId.ShouldNotBeNull();
         published.HasUnpublishedChanges.ShouldBeFalse();
-        published.State.ShouldBe(ValidationConfigurationState.Published);
+        published.State.ShouldBe(SQLModule.Contracts.Training.ValidationConfigurationState.Published);
 
         var update = await HttpClient.PutAsJsonAsync(
             ApiRoutes.Training.SqlTasks.ForValidation(draft.TaskId),
             new TaskValidationConfigurationRequest(
-                published.Version, 90, null, [HintGroup.Result],
+                published.Version, 90, null, [SQLModule.Contracts.Training.HintGroup.Result],
                 [new ValidationCheckRequest(
-                    published.Checks[0].Id, ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
+                    published.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
             ClientJson.Options);
         update.StatusCode.ShouldBe(HttpStatusCode.OK, await update.Content.ReadAsStringAsync());
         var changed = await GetValidationAsync(draft.TaskId);
         changed.ValidationVersionId.ShouldBe(published.ValidationVersionId);
         changed.HasUnpublishedChanges.ShouldBeTrue();
-        changed.State.ShouldBe(ValidationConfigurationState.Draft);
+        changed.State.ShouldBe(SQLModule.Contracts.Training.ValidationConfigurationState.Draft);
     }
 
     [Fact(DisplayName = "Публикация оценки идемпотентна: тот же Idempotency-Key возвращает исходную версию")]
@@ -233,7 +233,7 @@ public sealed class SqlTaskPublishReadinessTests(TestApplication app) : ApiTestB
 
         await PublishValidationAsync(draft.TaskId);
 
-        (await SqlTaskClient.GetByIdAsync(draft.TaskId))!.PublicationStatus.ShouldBe(PublicationStatus.Draft);
+        (await SqlTaskClient.GetByIdAsync(draft.TaskId))!.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Draft);
     }
 
     [Fact(DisplayName = "Новая версия оценки не меняет версию уже начатого прохождения")]
@@ -254,9 +254,9 @@ public sealed class SqlTaskPublishReadinessTests(TestApplication app) : ApiTestB
         (await HttpClient.PutAsJsonAsync(
             ApiRoutes.Training.SqlTasks.ForValidation(draft.TaskId),
             new TaskValidationConfigurationRequest(
-                configuration.Version, 80, null, [HintGroup.Result],
+                configuration.Version, 80, null, [SQLModule.Contracts.Training.HintGroup.Result],
                 [new ValidationCheckRequest(
-                    configuration.Checks[0].Id, ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
+                    configuration.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
             ClientJson.Options)).StatusCode.ShouldBe(HttpStatusCode.OK);
         await PublishValidationAsync(draft.TaskId);
 

@@ -1,4 +1,3 @@
-﻿using SQLModule.Domain.Training;
 
 namespace SQLModule.Contracts.Training.Attempt;
 

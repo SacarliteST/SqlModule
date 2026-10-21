@@ -15,7 +15,9 @@ using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Host;
 using SQLModule.IntegrationTests.Infrastructure;
-using SQLModule.Web.Common.Isolated;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox;
+using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.IntegrationTests.ModuleIntegration;
 
@@ -89,12 +91,23 @@ public sealed class PlatformSmokeDockerTests(DockerTestApplication app)
             .Where(value => value.SessionId == sessionId)
             .OrderBy(value => value.Kind)
             .ToListAsync();
-        outbox.Count.ShouldBe(2);
-        outbox.Count(value => value.Kind == PendingPublishKind.Event).ShouldBe(1);
+        // Верный ответ завершает прохождение: событие попытки, оценка и итог сессии (session_summary).
+        outbox.Count.ShouldBe(3);
+        outbox.Count(value => value.Kind == PendingPublishKind.Event).ShouldBe(2);
         outbox.Count(value => value.Kind == PendingPublishKind.Grade).ShouldBe(1);
 
+        var eventKinds = outbox.Where(value => value.Kind == PendingPublishKind.Event)
+            .Select(value =>
+            {
+                using var document = JsonDocument.Parse(value.MessageJson);
+                return document.RootElement.GetProperty("kind").GetString();
+            })
+            .Order()
+            .ToArray();
+        eventKinds.ShouldBe(["session_summary", "sql_submit"]);
+
         using var eventJson = JsonDocument.Parse(
-            outbox.Single(value => value.Kind == PendingPublishKind.Event).MessageJson);
+            outbox.Single(value => value.Kind == PendingPublishKind.Event && value.DeduplicationKey.StartsWith("event:")).MessageJson);
         eventJson.RootElement.GetProperty("kind").GetString().ShouldBe("sql_submit");
         eventJson.RootElement.GetProperty("payload").GetProperty("isCorrect").GetBoolean()
             .ShouldBeTrue();

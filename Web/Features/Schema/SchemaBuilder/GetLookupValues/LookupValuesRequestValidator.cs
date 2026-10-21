@@ -1,3 +1,5 @@
+using SQLModule.Application.Schema.SchemaBuilder.GetLookupValues;
+using SQLModule.Application.Schema.SchemaBuilder;
 ﻿using FluentValidation;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 

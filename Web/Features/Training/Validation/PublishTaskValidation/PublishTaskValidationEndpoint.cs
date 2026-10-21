@@ -1,4 +1,6 @@
+using SQLModule.Application.Training.Validation.PublishTaskValidation;
 ﻿using System.ComponentModel.DataAnnotations;
+using SQLModule.Application.Training.Validation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +9,7 @@ using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Web.Common;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Validation.PublishTaskValidation;
 

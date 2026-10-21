@@ -2,7 +2,10 @@
 using Shouldly;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Training;
-using SQLModule.Web.Features.ModuleIntegration;
+using ContractCheckKind = SQLModule.Contracts.Training.ValidationCheckKind;
+using ContractCheckStatus = SQLModule.Contracts.Training.ValidationCheckStatus;
+using ContractHintGroup = SQLModule.Contracts.Training.HintGroup;
+using SQLModule.Application.ModuleIntegration;
 
 namespace SQLModule.UnitTests.Common;
 
@@ -23,12 +26,12 @@ public sealed class PracticeEventMarkdownBuilderTests
             250,
             "SQL-запрос не удалось выполнить. Проверьте синтаксис и повторите попытку.",
             [new AttemptCheckResultResponse(
-                ValidationCheckKind.RequiredConstruct,
-                ValidationCheckStatus.Failed,
+                ContractCheckKind.RequiredConstruct,
+                ContractCheckStatus.Failed,
                 40,
                 0,
                 "Нужно проверить [условие](javascript:alert(1)) | ещё раз")],
-            [new AttemptHintResponse(HintGroup.RequiredConstructs, "Попробуйте *другую* конструкцию")]);
+            [new AttemptHintResponse(ContractHintGroup.RequiredConstructs, "Попробуйте *другую* конструкцию")]);
 
         var markdown = PracticeEventMarkdownBuilder.BuildAttempt(report);
 

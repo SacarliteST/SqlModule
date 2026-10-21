@@ -19,7 +19,8 @@ using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Sandbox;
 using SQLModule.Web.Common.Auth;
-using SQLModule.Web.Common.Isolated;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.IntegrationTests.Infrastructure;
 

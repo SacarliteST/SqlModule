@@ -1,3 +1,4 @@
+using SQLModule.Application.ModuleIntegration;
 ﻿using FluentValidation;
 using SQLModule.Contracts.ModuleIntegration;
 

@@ -9,8 +9,9 @@ using SQLModule.Client;
 using SQLModule.Client.SchemaBuilder;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Host;
-using SQLModule.Web.Common.Isolated;
-using SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.Sandbox;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox;
+using SQLModule.Sandbox.DbmsProbing;
 using Testcontainers.PostgreSql;
 
 namespace SQLModule.IntegrationTests.Infrastructure;

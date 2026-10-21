@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using SQLModule.Application.Training.SqlTasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Web.Common;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.SqlTasks;
 

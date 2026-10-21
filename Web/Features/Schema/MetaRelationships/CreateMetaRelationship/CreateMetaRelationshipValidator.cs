@@ -1,3 +1,4 @@
+using SQLModule.Application.Schema.MetaRelationships;
 ﻿using FluentValidation;
 using SQLModule.Contracts.Schema.MetaRelationship;
 

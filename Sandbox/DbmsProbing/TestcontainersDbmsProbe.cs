@@ -1,0 +1,116 @@
+﻿using System.Data.Common;
+using DotNet.Testcontainers.Builders;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using MySqlConnector;
+using Npgsql;
+
+namespace SQLModule.Sandbox.DbmsProbing;
+
+public sealed class TestcontainersDbmsProbe(
+    IOptions<DbmsCatalogOptions> optionsAccessor,
+    IMemoryCache cache) : IDbmsProbe
+{
+    private readonly DbmsCatalogOptions opts = optionsAccessor.Value;
+
+    public async Task<DbmsProbeResult> ProbeAsync(DbmsProbeSpec spec, CancellationToken ct)
+    {
+        if (!opts.ProbeEnabled)
+        {
+            return DbmsProbeResult.Success();
+        }
+
+        var cacheKey =
+            $"probe:{spec.DbmsSystemName}:{spec.DockerImage}:{spec.DefaultPort}:{spec.DefaultDatabase}:{spec.DefaultUsername}";
+        if (cache.TryGetValue(cacheKey, out _))
+        {
+            return DbmsProbeResult.Success();
+        }
+
+        try
+        {
+            var envVars = BuildEnvVars(spec);
+
+            await using var container = new ContainerBuilder()
+                .WithImage(spec.DockerImage)
+                .WithPortBinding(spec.DefaultPort, true)
+                .WithEnvironment(envVars)
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(spec.DefaultPort))
+                .Build();
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(TimeSpan.FromSeconds(opts.ProbeTimeoutSeconds));
+
+            await container.StartAsync(cts.Token);
+
+            var host = container.Hostname;
+            var port = container.GetMappedPublicPort(spec.DefaultPort);
+
+            await using var conn = CreateConnection(spec, host, port);
+            await conn.OpenAsync(cts.Token);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT 1";
+            await cmd.ExecuteScalarAsync(cts.Token);
+
+            cache.Set(cacheKey, true, opts.ProbeCacheTtl);
+            return DbmsProbeResult.Success();
+        }
+        catch (Exception ex)
+        {
+            return DbmsProbeResult.Failure(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Выбирает ADO.NET-драйвер по <see cref="DbmsProbeSpec.DbmsSystemName"/>, а не по порту
+    /// или имени Docker-образа — иначе проба СУБД, отличной от PostgreSQL, шлёт чужой протокол
+    /// (например, Postgres SSLRequest на MySQL) и всегда падает.
+    /// </summary>
+    private static DbConnection CreateConnection(DbmsProbeSpec spec, string host, int port)
+    {
+        switch (spec.DbmsSystemName.Trim().ToLowerInvariant())
+        {
+            case "postgres":
+            case "postgresql":
+                return new NpgsqlConnection(
+                    $"Host={host};Port={port};Database={spec.DefaultDatabase};" +
+                    $"Username={spec.DefaultUsername};Password={spec.DefaultPassword};" +
+                    "Timeout=10;Command Timeout=10");
+            case "mysql":
+            case "mariadb":
+                return new MySqlConnection(
+                    $"Server={host};Port={port};Database={spec.DefaultDatabase};" +
+                    $"User={spec.DefaultUsername};Password={spec.DefaultPassword};" +
+                    "ConnectionTimeout=10;DefaultCommandTimeout=10");
+            default:
+                throw new NotSupportedException(
+                    $"Проба СУБД не поддерживает DbmsSystemName '{spec.DbmsSystemName}'.");
+        }
+    }
+
+    private static Dictionary<string, string> BuildEnvVars(DbmsProbeSpec spec)
+    {
+        var env = new Dictionary<string, string>
+        {
+            [spec.EnvUserKey] = spec.DefaultUsername,
+            [spec.EnvPasswordKey] = spec.DefaultPassword,
+            [spec.EnvDatabaseKey] = spec.DefaultDatabase,
+        };
+
+        if (String.IsNullOrWhiteSpace(spec.ExtraEnvConfig))
+        {
+            return env;
+        }
+
+        foreach (var pair in spec.ExtraEnvConfig.Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var idx = pair.IndexOf('=');
+            if (idx > 0)
+            {
+                env[pair[..idx].Trim()] = pair[(idx + 1)..].Trim();
+            }
+        }
+
+        return env;
+    }
+}
