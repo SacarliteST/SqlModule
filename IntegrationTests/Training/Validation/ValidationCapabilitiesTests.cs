@@ -27,9 +27,9 @@ public sealed class ValidationCapabilitiesTests(TestApplication app) : ApiTestBa
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         capabilities.ShouldNotBeNull();
         capabilities.DbmsId.ShouldBe(dbmsId);
-        capabilities.SupportedCheckKinds.ShouldBe(Enum.GetValues<ValidationCheckKind>());
-        capabilities.SupportedConstructs.ShouldBe(Enum.GetValues<SqlConstruct>());
-        capabilities.SupportedHintGroups.ShouldBe(Enum.GetValues<HintGroup>());
+        capabilities.SupportedCheckKinds.ShouldBe(Enum.GetValues<SQLModule.Contracts.Training.ValidationCheckKind>());
+        capabilities.SupportedConstructs.ShouldBe(Enum.GetValues<SQLModule.Contracts.Training.SqlConstruct>());
+        capabilities.SupportedHintGroups.ShouldBe(Enum.GetValues<SQLModule.Contracts.Training.HintGroup>());
         capabilities.MaxAttemptsLimit.ShouldBe(100);
         capabilities.AnalyzerVersion.ShouldBe("0.6.5");
     }
@@ -45,9 +45,9 @@ public sealed class ValidationCapabilitiesTests(TestApplication app) : ApiTestBa
             ClientJson.Options);
 
         capabilities.ShouldNotBeNull();
-        capabilities.SupportedConstructs.ShouldNotContain(SqlConstruct.FullJoin);
-        capabilities.SupportedConstructs.ShouldContain(SqlConstruct.Cte);
-        capabilities.SupportedConstructs.ShouldContain(SqlConstruct.WindowFunction);
+        capabilities.SupportedConstructs.ShouldNotContain(SQLModule.Contracts.Training.SqlConstruct.FullJoin);
+        capabilities.SupportedConstructs.ShouldContain(SQLModule.Contracts.Training.SqlConstruct.Cte);
+        capabilities.SupportedConstructs.ShouldContain(SQLModule.Contracts.Training.SqlConstruct.WindowFunction);
     }
 
     [Fact(DisplayName = "Capabilities: неизвестная СУБД даёт 404, неподдерживаемый диалект — 422")]

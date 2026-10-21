@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using SQLModule.Application.Persistence;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.ModuleIntegration;
@@ -9,7 +10,7 @@ using SQLModule.Domain.Training;
 namespace SQLModule.Data.Core;
 
 /// <summary>Контекст базы данных приложения.</summary>
-public class AppDbContext : DbContext
+public class AppDbContext : DbContext, IApplicationDbContext
 {
     /// <summary>Настройки подключения (используются производными контекстами миграций).</summary>
     protected readonly ConnectionOptions Options;

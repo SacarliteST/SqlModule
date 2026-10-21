@@ -1,3 +1,5 @@
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Training.Progress;
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -23,7 +25,8 @@ using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.PlatformIntegration.Abstractions;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
-using SQLModule.Web.Common.Isolated;
+using SQLModule.Application.Seeding;
+using SQLModule.Sandbox.DbmsProbing;
 using SQLModule.Web.Features.ModuleIntegration;
 using SQLModule.Web.Features.Training.Progress;
 using Swashbuckle.AspNetCore.Swagger;
@@ -1422,8 +1425,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
     }
 
     /// <summary>
-    /// Как <see cref="SeedRunnableTaskAsync"/>, но дополнительно публикует Phase 2B
-    /// конфигурацию проверки — начиная с Phase 2B <see cref="PlatformProgressService"/>
+    /// Как <see cref="SeedRunnableTaskAsync"/>, но дополнительно публикует
+    /// конфигурацию проверки — начиная с версионированной проверки <see cref="PlatformProgressService"/>
     /// требует опубликованную <c>ActiveValidationVersionId</c> для любого platform-задания,
     /// иначе submit отвечает 422 <c>ModuleSession.TaskValidationUnavailable</c>.
     /// </summary>
@@ -1484,9 +1487,9 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             HttpMethod.Put, ApiRoutes.Training.SqlTasks.ForValidation(task.Id))
         {
             Content = JsonContent.Create(new Contracts.Training.Validation.TaskValidationConfigurationRequest(
-                configuration!.Version, 100, null, [HintGroup.Result],
+                configuration!.Version, 100, null, [SQLModule.Contracts.Training.HintGroup.Result],
                 [new Contracts.Training.Validation.ValidationCheckRequest(
-                    configuration.Checks[0].Id, ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
+                    configuration.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
                 options: ClientJson.Options)
         };
         using var updateResponse = await client.SendAsync(updateRequest);
@@ -1524,6 +1527,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         ILogger<PendingPublishProcessor>? logger = null) =>
         new(
             db,
+            new PostgresPendingPublishClaimer(db),
             publisher,
             completionClient ?? new StubCompletionClient(),
             integrationOptions ?? CreateModuleIntegrationOptions(),

@@ -1,0 +1,65 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Common.Results;
+using SQLModule.Contracts.Training.SqlTask;
+using SQLModule.Application.Persistence;
+using SQLModule.Domain.Training;
+using SQLModule.Sandbox;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.TaskMaterialization;
+using SQLModule.Application.Training.SqlQueries;
+using SQLModule.Application.Training.Validation;
+
+namespace SQLModule.Application.Training.SqlTasks;
+
+public sealed record ReferenceQueryData(
+    Guid TargetDbId,
+    string QueryText,
+    bool StrictColumnOrder,
+    bool StrictRowOrder);
+
+public record CreateSqlTaskCommand(
+    Guid TopicId,
+    string TaskName,
+    string TaskText,
+    short DifficultyLevel,
+    ReferenceQueryData ReferenceQuery)
+    : IRequest<Result<SqlTaskResponse>>;
+
+public sealed class CreateSqlTaskHandler(
+    ISqlQueryValidationRunner validationRunner,
+    IApplicationDbContext db)
+    : IRequestHandler<CreateSqlTaskCommand, Result<SqlTaskResponse>>
+{
+    public async Task<Result<SqlTaskResponse>> Handle(CreateSqlTaskCommand command, CancellationToken ct)
+    {
+        if (!await db.Topics.AnyAsync(x => x.Id == command.TopicId, ct))
+        {
+            return Result<SqlTaskResponse>.Fail(SqlTaskErrors.TopicNotFound(command.TopicId));
+        }
+
+        var reference = command.ReferenceQuery;
+        var run = await validationRunner.ValidateAsync(reference.TargetDbId, reference.QueryText, ct);
+        if (!run.IsSuccess)
+        {
+            return Result<SqlTaskResponse>.Fail(run.Error!);
+        }
+
+        var sqlQuery = SqlQuery.Create(
+            reference.QueryText,
+            reference.StrictColumnOrder,
+            reference.StrictRowOrder,
+            reference.TargetDbId);
+        sqlQuery.SetExpectedResult(GoldenResult.Serialize(run.Value!));
+
+        var entity = SqlTask.Create(
+            command.TopicId, sqlQuery.Id,
+            command.TaskName, command.TaskText, command.DifficultyLevel,
+            publicationStatus: PublicationStatus.Draft);
+
+        db.SqlQueries.Add(sqlQuery);
+        db.SqlTasks.Add(entity);
+        db.TaskValidationConfigurations.Add(TaskValidationDefaults.Create(entity.Id));
+        await db.SaveChangesAsync(ct);
+        return SqlTaskMappings.ToResponse(entity);
+    }
+}

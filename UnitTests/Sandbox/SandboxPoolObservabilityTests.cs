@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using Shouldly;
 using SQLModule.Sandbox;
 using SQLModule.Sandbox.Pooling;
-using SQLModule.Web.Common;
+using SQLModule.Host;
 
 namespace SQLModule.UnitTests.Sandbox;
 

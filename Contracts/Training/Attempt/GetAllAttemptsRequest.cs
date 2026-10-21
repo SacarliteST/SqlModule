@@ -21,7 +21,7 @@ public record GetAllAttemptsRequest(
     Guid? TaskId = null,
     Guid? UserId = null,
     Guid? TopicId = null,
-    SQLModule.Domain.Training.ExecutionStatus? Status = null,
+    SQLModule.Contracts.Training.ExecutionStatus? Status = null,
     bool? IsCorrect = null,
     DateTimeOffset? DateFrom = null,
     DateTimeOffset? DateTo = null,
@@ -29,4 +29,4 @@ public record GetAllAttemptsRequest(
     Guid? ValidationVersionId = null,
     int? ScoreFrom = null,
     int? ScoreTo = null,
-    SQLModule.Domain.Training.FinalizationReason? FinalizationReason = null);
+    SQLModule.Contracts.Training.FinalizationReason? FinalizationReason = null);

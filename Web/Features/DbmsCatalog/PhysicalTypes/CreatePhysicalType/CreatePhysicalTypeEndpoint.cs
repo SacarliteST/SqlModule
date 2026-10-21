@@ -1,3 +1,4 @@
+using SQLModule.Application.DbmsCatalog.PhysicalTypes;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -5,7 +6,7 @@ using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.PhysicalType;
 using SQLModule.Web.Common;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.DbmsCatalog.PhysicalTypes;
 

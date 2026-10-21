@@ -8,25 +8,17 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
-        <PackageReference Include="Testcontainers" />
-        <PackageReference Include="Npgsql" />
         <PackageReference Include="Microsoft.OpenApi" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
         <PackageReference Include="FluentValidation" />
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\Contracts\Contracts.csproj" />
         <ProjectReference Include="..\Domain\Domain.csproj" />
-        <ProjectReference Include="..\Data\Data.csproj" />
-        <ProjectReference Include="..\Integrations\Education.Client\Education.Client.csproj" />
-        <ProjectReference Include="..\Integrations\Identity.Client\Identity.Client.csproj" />
-        <ProjectReference Include="..\Integrations\Kafka.Publisher\Kafka.Publisher.csproj" />
         <ProjectReference Include="..\Integrations\PlatformIntegration.Abstractions\PlatformIntegration.Abstractions.csproj" />
         <ProjectReference Include="..\Integrations\PlatformIntegration.Contracts\PlatformIntegration.Contracts.csproj" />
-        <ProjectReference Include="..\Sandbox\Sandbox.csproj" />
-        <ProjectReference Include="..\SqlAnalysis\SqlAnalysis.csproj" />
+        <ProjectReference Include="..\Application\Application.csproj" />
     </ItemGroup>
 </Project>

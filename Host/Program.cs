@@ -1,4 +1,4 @@
-﻿using SQLModule.Web;
+using SQLModule.Web;
 
 namespace SQLModule.Host;
 
@@ -6,7 +6,8 @@ internal sealed class Program
 {
     public static async Task Main(string[] args)
     {
-        var logger = Startup.CreateLogger();
+        using var bootstrapLoggerFactory = Startup.CreateLoggerFactory();
+        var logger = bootstrapLoggerFactory.CreateLogger<Program>();
         var builder = WebApplication.CreateBuilder(args);
 
         try
@@ -18,19 +19,17 @@ internal sealed class Program
 
             Startup.ConfigureApp(app);
 
-            await app.InitializeWebAsync();
+            await app.InitializeDatabaseAsync();
 
             await app.RunAsync();
         }
         catch (Exception exception)
         {
-            Console.WriteLine($"{exception} Host terminated unexpectedly");
-            logger.LogError("{Exception} Host terminated unexpectedly", exception);
+            logger.LogError(exception, "Host terminated unexpectedly");
             throw;
         }
         finally
         {
-            Console.WriteLine("Stopping application...");
             logger.LogInformation("Stopping application...");
         }
     }

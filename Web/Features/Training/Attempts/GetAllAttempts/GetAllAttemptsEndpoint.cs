@@ -1,3 +1,5 @@
+using SQLModule.Application;
+using SQLModule.Application.Training.Attempts;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -5,7 +7,7 @@ using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Web.Common;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Attempts;
 
@@ -24,7 +26,7 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
                 "limit — размер страницы (1–100, по умолчанию 20). " +
                 "taskId — необязательный фильтр по заданию. " +
                 "userId — необязательный фильтр по студенту. " +
-                "progressId и validationVersionId — фильтры Phase 2B. " +
+                "progressId и validationVersionId — фильтры версионированной проверки. " +
                 "scoreFrom/scoreTo — включительный диапазон баллов 0–100. " +
                 "finalizationReason — причина финализации прохождения. " +
                 "422 — некорректные параметры фильтрации или пагинации.")
@@ -42,10 +44,10 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
         var result = await sender.Send<GetAllAttemptsQuery, Result<PageResponse<AttemptListItemResponse>>>(
             new GetAllAttemptsQuery(
                 request.Offset, request.Limit, request.TaskId, request.UserId,
-                request.TopicId, request.Status, request.IsCorrect,
+                request.TopicId, request.Status?.ToDomain(), request.IsCorrect,
                 request.DateFrom, request.DateTo,
                 request.ProgressId, request.ValidationVersionId,
-                request.ScoreFrom, request.ScoreTo, request.FinalizationReason), ct);
+                request.ScoreFrom, request.ScoreTo, request.FinalizationReason?.ToDomain()), ct);
         return result.ToOk();
     }
 }

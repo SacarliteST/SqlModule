@@ -1,3 +1,4 @@
+using SQLModule.Application.Schema.MetaAttributes;
 ﻿using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;

@@ -10,5 +10,11 @@
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Web\Web.csproj" />
+        <ProjectReference Include="..\Application\Application.csproj" />
+        <ProjectReference Include="..\Data\Data.csproj" />
+        <ProjectReference Include="..\Sandbox\Sandbox.csproj" />
+        <ProjectReference Include="..\Integrations\Education.Client\Education.Client.csproj" />
+        <ProjectReference Include="..\Integrations\Identity.Client\Identity.Client.csproj" />
+        <ProjectReference Include="..\Integrations\Kafka.Publisher\Kafka.Publisher.csproj" />
     </ItemGroup>
 </Project>

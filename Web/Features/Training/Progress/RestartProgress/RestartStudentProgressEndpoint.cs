@@ -1,3 +1,6 @@
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Training.Progress;
+using SQLModule.Application.Training.Progress.RestartProgress;
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using SQLModule.Common.Results;
@@ -5,7 +8,7 @@ using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Progress.RestartProgress;

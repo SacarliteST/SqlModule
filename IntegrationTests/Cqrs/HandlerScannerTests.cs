@@ -1,16 +1,18 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+using Microsoft.Extensions.Configuration;
 using Shouldly;
+using SQLModule.Application;
 using SQLModule.Host;
 using SQLModule.Web;
-using SQLModule.Web.Common;
-using SQLModule.Web.Common.Cqrs;
+using SQLModule.Application.Cqrs;
 
 namespace SQLModule.IntegrationTests.Cqrs;
 
 /// <summary>
 /// Проверяет, что каждый <see cref="IRequest{TResponse}"/> в сборке Host
 /// имеет соответствующий зарегистрированный <see cref="IRequestHandler{TRequest,TResponse}"/>.
-/// Тест автоматически покрывает новые фичи при условии добавления через <c>AddFeatures()</c>.
+/// Тест автоматически покрывает новые фичи при условии добавления через <c>AddApplication()</c>.
 /// </summary>
 public sealed class HandlerScannerTests
 {
@@ -20,14 +22,13 @@ public sealed class HandlerScannerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddCqrs();
-        services.AddFeatures();
+        services.AddApplication(new ConfigurationBuilder().Build());
 
         var iRequestOpenType = typeof(IRequest<>);
-        var hostAssembly = typeof(IWebMarker).Assembly;
+        Assembly[] assemblies = [typeof(IWebMarker).Assembly, typeof(ApplicationExtensions).Assembly];
 
         // Act
-        var requestInfos = hostAssembly.GetTypes()
+        var requestInfos = assemblies.SelectMany(assembly => assembly.GetTypes())
             .Where(t => t is { IsAbstract: false, IsInterface: false, IsGenericTypeDefinition: false })
             .SelectMany(t => t.GetInterfaces()
                 .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == iRequestOpenType)
