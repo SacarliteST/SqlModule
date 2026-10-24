@@ -83,6 +83,17 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                 name: "CK_Attempts_Phase2bScoring",
                 table: "Attempts");
 
+            // Номер попытки теперь считается внутри сессии, а один progress может охватывать несколько сессий:
+            // уникальность (ProgressId, AttemptNumber) мешает перенумерации ниже, дальше индекс только ускоряет выборки.
+            migrationBuilder.DropIndex(
+                name: "IX_Attempts_ProgressId_AttemptNumber",
+                table: "Attempts");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Attempts_ProgressId_AttemptNumber",
+                table: "Attempts",
+                columns: new[] { "ProgressId", "AttemptNumber" });
+
             migrationBuilder.Sql("""
                 WITH numbered AS (
                     SELECT "Id",
