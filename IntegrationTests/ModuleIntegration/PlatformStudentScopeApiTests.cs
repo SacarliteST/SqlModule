@@ -7,8 +7,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Contracts;
+using SQLModule.Contracts.ModuleIntegration;
 using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
+using SQLModule.Domain.Training;
 using SQLModule.Host;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
@@ -145,6 +147,59 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
     private static void ReturnIncorrectResult(Scenario scenario) =>
         scenario.Executor.OverrideRun = SQLModule.Common.Results.Result<QueryResultSet>.Success(
             new QueryResultSet(true, null, ["unexpected"], [], 0, 1));
+
+    private static async Task<Guid> CreateLegacyValidationVersionAsync(
+        Scenario scenario,
+        int maxAttempts)
+    {
+        using var scope = scenario.Platform.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var task = await db.SqlTasks.SingleAsync(value => value.Id == scenario.TaskId);
+        var current = await db.TaskValidationVersions.AsNoTracking()
+            .SingleAsync(value => value.Id == task.ActiveValidationVersionId);
+        var legacy = Domain.Training.TaskValidationVersion.Publish(
+            scenario.TaskId,
+            current.VersionNumber + 1,
+            Guid.NewGuid(),
+            current.PassingScore,
+            maxAttempts,
+            current.VisibleHintGroupsMask,
+            new Domain.Training.TaskValidationVersionSnapshot(
+                current.SchemaSnapshotJson,
+                current.DatasetSnapshotJson,
+                current.ReferenceQuerySnapshotJson,
+                current.ExpectedResultSnapshotJson,
+                current.ValidationConfigurationSnapshotJson,
+                current.AnalyzerVersion),
+            Guid.NewGuid(),
+            "integration-test",
+            DateTimeOffset.UtcNow);
+        db.TaskValidationVersions.Add(legacy);
+        task.ActivateValidationVersion(legacy.Id);
+        var session = await db.ModuleSessions.SingleAsync(value => value.Id == scenario.SessionId);
+        session.PinValidationVersion(legacy.Id);
+        await db.SaveChangesAsync();
+        return legacy.Id;
+    }
+
+    private static async Task<HttpResponseMessage> PushSessionAsync(
+        Scenario scenario,
+        int? maxAttempts)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.ModuleIntegration.Sessions)
+        {
+            Content = JsonContent.Create(new UpsertModuleSessionRequest(
+                scenario.SessionId,
+                "current-session-key",
+                scenario.UserId,
+                scenario.TaskId.ToString(),
+                "https://platform.example/return",
+                DateTimeOffset.UtcNow.AddMinutes(10),
+                maxAttempts))
+        };
+        request.Headers.Add("X-Service-Key", "platform-integration-test-key");
+        return await scenario.Client.SendAsync(request);
+    }
 
     [Fact(DisplayName = "Platform scope: своё задание и его схема доступны")]
     public async Task OwnTask_DetailsAndSchema_AreAvailable()
@@ -331,8 +386,13 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
         using var scope = platform.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         (await db.Attempts.CountAsync(value => value.ModuleSessionId == scenario.SessionId)).ShouldBe(1);
-        (await db.PendingPublishes.CountAsync(value =>
-            value.SessionId == scenario.SessionId && value.Kind == PendingPublishKind.Event)).ShouldBe(1);
+        var eventKinds = await db.PendingPublishes.AsNoTracking()
+            .Where(value => value.SessionId == scenario.SessionId && value.Kind == PendingPublishKind.Event)
+            .Select(value => value.MessageJson)
+            .ToArrayAsync();
+        eventKinds.Select(value =>
+            System.Text.Json.JsonDocument.Parse(value).RootElement.GetProperty("kind").GetString())
+            .ShouldBe(["sql_submit", "session_summary"], ignoreOrder: true);
         (await db.PendingPublishes.CountAsync(value =>
             value.SessionId == scenario.SessionId && value.Kind == PendingPublishKind.Grade)).ShouldBe(1);
     }
@@ -341,17 +401,19 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
     public async Task AttemptLimit_ClosesSession_AndRejectsNextSubmitBeforeSandbox()
     {
         using var platform = CreatePlatformApplication();
-        var scenario = await SeedAsync(platform, DateTimeOffset.UtcNow.AddMinutes(10), maxAttempts: 2);
+        var scenario = await SeedAsync(platform, DateTimeOffset.UtcNow.AddMinutes(10), maxAttempts: 3);
         ReturnIncorrectResult(scenario);
 
         using var first = await SubmitAsync(scenario, scenario.TaskId);
         using var second = await SubmitAsync(scenario, scenario.TaskId);
         using var third = await SubmitAsync(scenario, scenario.TaskId);
+        using var fourth = await SubmitAsync(scenario, scenario.TaskId);
 
         first.StatusCode.ShouldBe(HttpStatusCode.Created, await first.Content.ReadAsStringAsync());
         second.StatusCode.ShouldBe(HttpStatusCode.Created, await second.Content.ReadAsStringAsync());
-        await ShouldBeProblemAsync(third, HttpStatusCode.Conflict, "ModuleSession.AttemptsExhausted");
-        scenario.Executor.RunCallCount.ShouldBe(2);
+        third.StatusCode.ShouldBe(HttpStatusCode.Created, await third.Content.ReadAsStringAsync());
+        await ShouldBeProblemAsync(fourth, HttpStatusCode.Conflict, "ModuleSession.AttemptsExhausted");
+        scenario.Executor.RunCallCount.ShouldBe(3);
 
         using var scope = platform.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -359,10 +421,12 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
             .Where(value => value.ModuleSessionId == scenario.SessionId)
             .OrderBy(value => value.AttemptNumber)
             .ToArrayAsync();
-        attempts.Select(value => value.AttemptNumber).ShouldBe([1, 2]);
+        attempts.Select(value => value.AttemptNumber).ShouldBe([1, 2, 3]);
         var session = await db.ModuleSessions.AsNoTracking().SingleAsync(value => value.Id == scenario.SessionId);
         session.FinalizationReason.ShouldBe(Domain.Training.FinalizationReason.AttemptsExhausted);
         session.FinalScore.ShouldNotBeNull();
+        (await db.PendingPublishes.CountAsync(value =>
+            value.SessionId == scenario.SessionId && value.Kind == PendingPublishKind.Grade)).ShouldBe(1);
     }
 
     [Fact(DisplayName = "Platform scope: два параллельных submit при лимите 1 создают ровно одну попытку")]
@@ -557,6 +621,139 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
             .Select(value => value.ValidationVersionId)
             .ToArrayAsync();
         attemptVersions.ShouldAllBe(value => value == pinnedVersionId);
+    }
+
+    [Fact(DisplayName = "Platform scope: незасчитываемая старая попытка не занимает номер новой")]
+    public async Task UncountedScoredAttempt_DoesNotBreakNextAttemptNumber()
+    {
+        using var platform = CreatePlatformApplication();
+        var scenario = await SeedAsync(platform, DateTimeOffset.UtcNow.AddMinutes(10), maxAttempts: 3);
+        ReturnIncorrectResult(scenario);
+        using (var scope = platform.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var versionId = await db.SqlTasks.AsNoTracking()
+                .Where(value => value.Id == scenario.TaskId)
+                .Select(value => value.ActiveValidationVersionId!.Value)
+                .SingleAsync();
+            var session = await db.ModuleSessions.SingleAsync(value => value.Id == scenario.SessionId);
+            session.PinValidationVersion(versionId);
+            var oldAttempt = Attempt.Record(
+                scenario.UserId,
+                scenario.TaskId,
+                "SELECT technical_failure",
+                ExecutionStatus.Error,
+                false,
+                CheckReason.SqlError,
+                null,
+                1,
+                "test",
+                DateTimeOffset.UtcNow.AddMinutes(-1),
+                DateTimeOffset.UtcNow.AddMinutes(-1),
+                moduleSessionId: scenario.SessionId);
+            oldAttempt.AttachScoring(null, versionId, 7, 0, false);
+            db.Attempts.Add(oldAttempt);
+            await db.SaveChangesAsync();
+        }
+
+        using var response = await SubmitAsync(scenario, scenario.TaskId);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created, await response.Content.ReadAsStringAsync());
+        using var assertionScope = platform.Services.CreateScope();
+        var assertionDb = assertionScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var numbers = await assertionDb.Attempts.AsNoTracking()
+            .Where(value => value.ModuleSessionId == scenario.SessionId)
+            .OrderBy(value => value.AttemptNumber)
+            .Select(value => value.AttemptNumber)
+            .ToArrayAsync();
+        numbers.ShouldBe([7, 8]);
+        (await assertionDb.Attempts.CountAsync(value =>
+            value.ModuleSessionId == scenario.SessionId && value.CountsTowardLimit)).ShouldBe(1);
+    }
+
+    [Fact(DisplayName = "Platform scope: resume с null сохраняет переходный лимит validation version")]
+    public async Task ResumeWithoutLimit_UsesLegacyValidationVersionLimit()
+    {
+        using var platform = CreatePlatformApplication();
+        var scenario = await SeedAsync(platform, DateTimeOffset.UtcNow.AddMinutes(10), maxAttempts: 2);
+        await CreateLegacyValidationVersionAsync(scenario, 2);
+        ReturnIncorrectResult(scenario);
+
+        using (var push = await PushSessionAsync(scenario, null))
+        {
+            push.StatusCode.ShouldBe(HttpStatusCode.OK, await push.Content.ReadAsStringAsync());
+        }
+        using (var current = await SendAsync(
+                   scenario, HttpMethod.Get, ApiRoutes.ModuleIntegration.CurrentSession))
+        {
+            current.StatusCode.ShouldBe(HttpStatusCode.OK, await current.Content.ReadAsStringAsync());
+            var body = await current.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            body.GetProperty("maxAttempts").GetInt32().ShouldBe(2);
+        }
+        using var first = await SubmitAsync(scenario, scenario.TaskId);
+        using var second = await SubmitAsync(scenario, scenario.TaskId);
+        using var third = await SubmitAsync(scenario, scenario.TaskId);
+
+        first.StatusCode.ShouldBe(HttpStatusCode.Created);
+        second.StatusCode.ShouldBe(HttpStatusCode.Created);
+        await ShouldBeProblemAsync(third, HttpStatusCode.Conflict, "ModuleSession.AttemptsExhausted");
+        using var scope = platform.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        (await db.ModuleSessions.AsNoTracking().SingleAsync(value => value.Id == scenario.SessionId))
+            .MaxAttempts.ShouldBeNull();
+        (await db.Attempts.CountAsync(value => value.ModuleSessionId == scenario.SessionId)).ShouldBe(2);
+    }
+
+    [Fact(DisplayName = "Platform scope: уменьшение лимита до использованного сразу завершает сессию")]
+    public async Task LoweringLimit_FinalizesSessionImmediately()
+    {
+        using var platform = CreatePlatformApplication();
+        var scenario = await SeedAsync(platform, DateTimeOffset.UtcNow.AddMinutes(10), maxAttempts: 5);
+        ReturnIncorrectResult(scenario);
+        using (var first = await SubmitAsync(scenario, scenario.TaskId))
+        using (var second = await SubmitAsync(scenario, scenario.TaskId))
+        {
+            first.StatusCode.ShouldBe(HttpStatusCode.Created);
+            second.StatusCode.ShouldBe(HttpStatusCode.Created);
+        }
+
+        using var push = await PushSessionAsync(scenario, 2);
+
+        push.StatusCode.ShouldBe(HttpStatusCode.OK, await push.Content.ReadAsStringAsync());
+        using var scope = platform.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var session = await db.ModuleSessions.AsNoTracking().SingleAsync(value => value.Id == scenario.SessionId);
+        session.Status.ShouldBe(ModuleSessionStatus.CompletionPending);
+        session.FinalizationReason.ShouldBe(Domain.Training.FinalizationReason.AttemptsExhausted);
+        (await db.PendingPublishes.CountAsync(value =>
+            value.SessionId == scenario.SessionId && value.Kind == PendingPublishKind.Grade)).ShouldBe(1);
+    }
+
+    [Fact(DisplayName = "Platform scope: finalize завершённой сессии возвращает сохранённый итог")]
+    public async Task FinalizeCompletedSession_ReturnsStoredResult()
+    {
+        using var platform = CreatePlatformApplication();
+        var scenario = await SeedAsync(platform, DateTimeOffset.UtcNow.AddMinutes(10));
+        using (var submit = await SubmitAsync(scenario, scenario.TaskId))
+        {
+            submit.StatusCode.ShouldBe(HttpStatusCode.Created, await submit.Content.ReadAsStringAsync());
+        }
+
+        using var finalize = await SendAsync(
+            scenario,
+            HttpMethod.Post,
+            ApiRoutes.ModuleIntegration.FinalizeCurrentSession,
+            idempotencyKey: Guid.NewGuid().ToString("D"));
+
+        finalize.StatusCode.ShouldBe(HttpStatusCode.OK, await finalize.Content.ReadAsStringAsync());
+        var body = await finalize.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        body.GetProperty("finalScore").GetInt32().ShouldBe(100);
+        body.GetProperty("reason").GetString().ShouldBe("PerfectScore");
+        body.GetProperty("returnUrl").GetString().ShouldBe("https://platform.example/return");
+        using var scope = platform.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        (await db.PendingPublishes.CountAsync(value =>
+            value.SessionId == scenario.SessionId && value.Kind == PendingPublishKind.Grade)).ShouldBe(1);
     }
 
     [Fact(DisplayName = "Platform scope: токен без session_id в platform-инстансе сохраняет standalone-поведение")]

@@ -258,6 +258,8 @@ public sealed class SessionAttemptWorkflow(
             }
 
             attemptsUsed = await CountAttemptsAsync(session.Id, ct);
+            // Переходный шаг A: Education ещё может прислать null при resume, поэтому
+            // до шага B сохраняем эффективный лимит из старой validation version.
             maxAttempts = session.MaxAttempts ?? runtime.Version.MaxAttempts;
             if (maxAttempts.HasValue && attemptsUsed >= maxAttempts.Value)
             {
@@ -284,7 +286,15 @@ public sealed class SessionAttemptWorkflow(
                 .MaxAsync(value => (int?)value.Score, ct) ?? 0;
         }
 
-        var attemptNumber = attemptsUsed + 1;
+        var attemptNumber = session is not null
+            ? await db.Attempts
+                .Where(value => value.ModuleSessionId == session.Id && value.AttemptNumber != null)
+                .MaxAsync(value => (int?)value.AttemptNumber, ct) ?? 0
+            : await db.Attempts
+                .Where(value => value.UserId == command.UserId && value.TaskId == command.TaskId &&
+                                value.ModuleSessionId == null && value.AttemptNumber != null)
+                .MaxAsync(value => (int?)value.AttemptNumber, ct) ?? 0;
+        attemptNumber++;
         attemptsUsed++;
         bestScore = Math.Max(bestScore, score);
         attempt.AttachScoring(null, runtime.Version.Id, attemptNumber, score, true);

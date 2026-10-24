@@ -68,6 +68,8 @@ public sealed class ModuleSession : AuditableEntity
         TaskRef = taskRef;
         ReturnUrl = returnUrl;
         ExpiresAt = expiresAt;
+        // Переходный шаг A намеренно принимает null при resume: эффективный лимит
+        // временно восстанавливается из validation version в Application.
         MaxAttempts = maxAttempts;
     }
 
