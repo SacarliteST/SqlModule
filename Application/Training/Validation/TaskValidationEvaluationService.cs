@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Training.Validation;
 using SQLModule.Application.Training.SqlQueries;
-using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Application.Persistence;
@@ -30,8 +29,7 @@ public sealed class TaskValidationEvaluationService(
     IApplicationDbContext db,
     ISqlSyntaxAnalyzerResolver analyzerResolver,
     ITaskValidationConfigurationValidator configurationValidator,
-    ISqlQueryValidationRunner validationRunner,
-    IOptions<TaskValidationOptions> options)
+    ISqlQueryValidationRunner validationRunner)
     : ITaskValidationEvaluationService
 {
     private static readonly IReadOnlySet<ValidationCheckKind> CheckKinds =
@@ -82,8 +80,7 @@ public sealed class TaskValidationEvaluationService(
         var capabilities = new ValidationRuleCapabilities(
             CheckKinds,
             analyzer.SupportedConstructs,
-            HintGroups,
-            options.Value.MaxAttemptsLimit);
+            HintGroups);
         var ruleResult = configurationValidator.Validate(
             definition,
             capabilities,

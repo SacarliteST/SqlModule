@@ -12,10 +12,9 @@ public sealed record AttemptCheckResultResponse(
 /// <summary>Подсказка, разрешённая текущей validation version.</summary>
 public sealed record AttemptHintResponse(HintGroup Group, string Message);
 
-/// <summary>Составная оценка попытки и актуальное состояние progress.</summary>
+/// <summary>Составная оценка попытки и актуальное состояние её сессии.</summary>
 public sealed record AttemptScoringResponse(
     Guid AttemptId,
-    Guid ProgressId,
     Guid ValidationVersionId,
     int AttemptNumber,
     int Score,

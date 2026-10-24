@@ -160,7 +160,7 @@ public sealed class PublishTaskValidationHandler(
             nextVersionNumber,
             configuration.Version,
             configuration.PassingScore,
-            configuration.MaxAttempts,
+            null,
             configuration.VisibleHintGroupsMask,
             snapshot.Value!,
             userId,
@@ -228,8 +228,9 @@ public sealed class PublishTaskValidationHandler(
     {
         if (receipt.PayloadHash != payloadHash)
         {
-            return Result<TaskValidationConfigurationResponse>.Fail(
-                SQLModule.Application.Training.Progress.ProgressErrors.IdempotencyPayloadMismatch);
+            return Result<TaskValidationConfigurationResponse>.Fail(Error.Conflict(
+                "IdempotencyKeyPayloadMismatch",
+                "Idempotency-Key уже использован с другим запросом."));
         }
 
         var response = JsonSerializer.Deserialize<TaskValidationConfigurationResponse>(

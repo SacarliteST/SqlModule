@@ -1,12 +1,13 @@
 using SQLModule.Application.ModuleIntegration;
 ﻿using FluentValidation;
 using SQLModule.Contracts.ModuleIntegration;
+using Microsoft.Extensions.Options;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 
 internal sealed class UpsertModuleSessionValidator : AbstractValidator<UpsertModuleSessionRequest>
 {
-    public UpsertModuleSessionValidator()
+    public UpsertModuleSessionValidator(IOptions<ModuleIntegrationOptions> options)
     {
         RuleFor(request => request.SessionId).NotNull().NotEmpty();
         RuleFor(request => request.SessionKey).NotEmpty().MaximumLength(512);
@@ -23,6 +24,9 @@ internal sealed class UpsertModuleSessionValidator : AbstractValidator<UpsertMod
             .MaximumLength(2048)
             .Must(IsAbsoluteHttpUrl)
             .WithMessage("ReturnUrl должен быть абсолютным HTTP(S)-адресом.");
+        RuleFor(request => request.MaxAttempts)
+            .InclusiveBetween(1, options.Value.MaxAttemptsPerSession)
+            .When(request => request.MaxAttempts.HasValue);
     }
 
     private static bool IsAbsoluteHttpUrl(string? value) =>

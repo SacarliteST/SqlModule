@@ -112,7 +112,7 @@ public sealed class Attempt : AuditableEntity
     }
 
     public void AttachScoring(
-        Guid progressId,
+        Guid? progressId,
         Guid validationVersionId,
         int attemptNumber,
         int score,

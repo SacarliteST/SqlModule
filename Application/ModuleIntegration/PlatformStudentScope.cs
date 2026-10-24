@@ -162,7 +162,7 @@ public sealed class PlatformStudentScope(IApplicationDbContext db, TimeProvider 
             return Result.Fail(PlatformSessionErrors.SessionClosed);
         }
 
-        return context.ExpiresAt.HasValue && context.ExpiresAt.Value < timeProvider.GetUtcNow()
+        return context.ExpiresAt.HasValue && context.ExpiresAt.Value <= timeProvider.GetUtcNow()
             ? Result.Fail(PlatformSessionErrors.SessionExpired)
             : Result.Success();
     }

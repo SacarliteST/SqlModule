@@ -54,7 +54,7 @@ public sealed class ValidationRuntimeReader(
         if (version is null)
         {
             return Result<ValidationRuntime>.Fail(Error.Conflict(
-                "Progress.ValidationVersionNotFound",
+                "Validation.VersionNotFound",
                 "Опубликованная версия проверки прохождения недоступна."));
         }
 

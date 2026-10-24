@@ -131,20 +131,14 @@ public sealed class PendingPublishProcessor(
             message.MarkSent(deliveredAt);
             var session = await db.ModuleSessions.SingleOrDefaultAsync(
                 value => value.Id == message.SessionId, ct);
-            if (session is not null && session.Status != ModuleSessionStatus.Completed)
+            if (session is not null && session.Status is
+                ModuleSessionStatus.Active or ModuleSessionStatus.CompletionPending)
             {
                 var previousStatus = session.Status;
                 session.MarkCompleted();
                 ModuleIntegrationTelemetry.RecordSessionTransition(
                     previousStatus,
                     ModuleSessionStatus.Completed);
-            }
-
-            var progress = await db.StudentTaskProgresses.SingleOrDefaultAsync(
-                value => value.ModuleSessionId == message.SessionId, ct);
-            if (progress is not null && progress.Status != Domain.Training.ProgressStatus.Completed)
-            {
-                progress.MarkCompleted();
             }
 
             if (result == EducationCompletionDeliveryResult.TerminalConflict)
@@ -188,12 +182,6 @@ public sealed class PendingPublishProcessor(
                 ModuleSessionStatus.CompletionFailed);
         }
 
-        var progress = await db.StudentTaskProgresses.SingleOrDefaultAsync(
-            value => value.ModuleSessionId == sessionId, ct);
-        if (progress?.Status == Domain.Training.ProgressStatus.CompletionPending)
-        {
-            progress.MarkCompletionFailed();
-        }
     }
 
     private Task<int> CountPendingAsync(PendingPublishKind kind, CancellationToken ct) =>

@@ -11,7 +11,6 @@ public static class TaskValidationMappings
     public static TaskValidationDefinition ToDefinition(TaskValidationConfiguration configuration) =>
         new(
             configuration.PassingScore,
-            configuration.MaxAttempts,
             configuration.GetVisibleHintGroups(),
             configuration.Checks
                 .OrderBy(check => check.Order)
@@ -26,7 +25,6 @@ public static class TaskValidationMappings
     public static TaskValidationDefinition ToDefinition(TaskValidationConfigurationRequest request) =>
         new(
             request.PassingScore!.Value,
-            request.MaxAttempts,
             request.VisibleHintGroups!.Select(value => value.ToDomain()).ToArray(),
             request.Checks!
                 .Select(check => new ValidationCheckDefinition(
@@ -41,7 +39,6 @@ public static class TaskValidationMappings
     public static TaskValidationDefinition ToDefinition(TaskValidationPreviewRequest request) =>
         new(
             request.PassingScore!.Value,
-            request.MaxAttempts,
             request.VisibleHintGroups!.Select(value => value.ToDomain()).ToArray(),
             request.Checks!
                 .Select(check => new ValidationCheckDefinition(
@@ -85,7 +82,6 @@ public static class TaskValidationMappings
                 : ValidationConfigurationState.Published.ToContract(),
             hasUnpublishedChanges,
             configuration.PassingScore,
-            configuration.MaxAttempts,
             configuration.GetVisibleHintGroups().Select(value => value.ToContract()).ToArray(),
             configuration.Checks
                 .OrderBy(check => check.Order)

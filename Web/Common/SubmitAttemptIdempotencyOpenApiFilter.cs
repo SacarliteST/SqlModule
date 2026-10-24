@@ -12,9 +12,6 @@ internal sealed class SubmitAttemptIdempotencyOpenApiFilter : IOperationFilter
     private static readonly HashSet<string> IdempotentOperations =
     [
         "SubmitAttempt",
-        "StartStudentTaskProgress",
-        "RestartStudentTaskProgress",
-        "FinalizeStudentTaskProgress",
         "FinalizeCurrentModuleSession",
         "PublishTaskValidation"
     ];

@@ -9,5 +9,4 @@ public sealed record DbmsValidationCapabilitiesResponse(
     IReadOnlyList<ValidationCheckKind> SupportedCheckKinds,
     IReadOnlyList<SqlConstruct> SupportedConstructs,
     IReadOnlyList<HintGroup> SupportedHintGroups,
-    int MaxAttemptsLimit,
     string AnalyzerVersion);

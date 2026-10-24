@@ -31,7 +31,6 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         response.ValidationVersionId.ShouldBeNull();
         response.HasUnpublishedChanges.ShouldBeFalse();
         response.PassingScore.ShouldBe(100);
-        response.MaxAttempts.ShouldBeNull();
         response.VisibleHintGroups.ShouldBe([SQLModule.Contracts.Training.HintGroup.Result]);
         var check = response.Checks.ShouldHaveSingleItem();
         check.Kind.ShouldBe(SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult);
@@ -71,7 +70,7 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
     public async Task Put_MissingRequiredFieldsReturnsValidationProblem()
     {
         var taskId = await CreateTaskAsync("SELECT 1");
-        var request = new TaskValidationConfigurationRequest(null, null, null, null, null);
+        var request = new TaskValidationConfigurationRequest(null, null, null, null);
 
         var response = await HttpClient.PutAsJsonAsync(
             ApiRoutes.Training.SqlTasks.ForValidation(taskId),
@@ -112,7 +111,6 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         var before = await GetConfigurationAsync(taskId);
         var previewRequest = new TaskValidationPreviewRequest(
             71,
-            5,
             [SQLModule.Contracts.Training.HintGroup.Result, SQLModule.Contracts.Training.HintGroup.RequiredConstructs],
             [
                 new ValidationCheckPreviewRequest(
@@ -184,7 +182,6 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
             new TaskValidationConfigurationRequest(
                 firstBody.Version,
                 100,
-                null,
                 [SQLModule.Contracts.Training.HintGroup.Result],
                 [new ValidationCheckRequest(
                     firstBody.Checks[0].Id,
@@ -220,7 +217,6 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         new(
             current.Version,
             71,
-            5,
             [SQLModule.Contracts.Training.HintGroup.Result, SQLModule.Contracts.Training.HintGroup.RequiredConstructs],
             [
                 new ValidationCheckRequest(

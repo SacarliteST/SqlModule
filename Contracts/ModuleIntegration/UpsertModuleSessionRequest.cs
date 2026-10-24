@@ -7,10 +7,12 @@
 /// <param name="TaskRef">Непрозрачная ссылка на задание; для SQL-модуля это SqlTask.Id.</param>
 /// <param name="ReturnUrl">Канонический адрес возврата в платформу.</param>
 /// <param name="ExpiresAt">Необязательное время окончания сессии.</param>
+/// <param name="MaxAttempts">Необязательный лимит отправок внутри сессии.</param>
 public sealed record UpsertModuleSessionRequest(
     Guid? SessionId,
     string? SessionKey,
     Guid? UserId,
     string? TaskRef,
     string? ReturnUrl,
-    DateTimeOffset? ExpiresAt);
+    DateTimeOffset? ExpiresAt,
+    int? MaxAttempts = null);

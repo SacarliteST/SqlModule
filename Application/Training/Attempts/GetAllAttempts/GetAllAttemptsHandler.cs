@@ -81,9 +81,13 @@ public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
 
         if (query.FinalizationReason.HasValue)
         {
-            q = q.Where(x => x.ProgressId.HasValue && db.StudentTaskProgresses.Any(progress =>
-                progress.Id == x.ProgressId.Value &&
-                progress.FinalizationReason == query.FinalizationReason.Value));
+            q = q.Where(x =>
+                x.ModuleSessionId.HasValue && db.ModuleSessions.Any(session =>
+                    session.Id == x.ModuleSessionId.Value &&
+                    session.FinalizationReason == query.FinalizationReason.Value) ||
+                x.ProgressId.HasValue && db.StudentTaskProgresses.Any(progress =>
+                    progress.Id == x.ProgressId.Value &&
+                    progress.FinalizationReason == query.FinalizationReason.Value));
         }
 
         var total = await q.CountAsync(ct);

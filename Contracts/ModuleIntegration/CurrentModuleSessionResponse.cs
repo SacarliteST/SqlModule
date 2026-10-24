@@ -4,7 +4,11 @@
 /// <param name="TaskId">Идентификатор SQL-задания, доверенно полученный от Education.</param>
 /// <param name="ReturnUrl">Канонический адрес возврата в платформу.</param>
 /// <param name="ExpiresAt">Время окончания сессии или null для сессии без лимита.</param>
+/// <param name="MaxAttempts">Лимит отправок или null, если он не задан.</param>
+/// <param name="AttemptsUsed">Количество засчитанных отправок.</param>
 public sealed record CurrentModuleSessionResponse(
     Guid TaskId,
     string ReturnUrl,
-    DateTimeOffset? ExpiresAt);
+    DateTimeOffset? ExpiresAt,
+    int? MaxAttempts,
+    int AttemptsUsed);

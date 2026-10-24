@@ -1,23 +1,6 @@
 
 namespace SQLModule.Contracts.Training.Validation;
 
-/// <summary>Текущее прохождение SQL-задания.</summary>
-public sealed record StudentTaskProgressResponse(
-    Guid Id,
-    Guid TaskId,
-    ProgressStatus Status,
-    Guid ValidationVersionId,
-    int BestScore,
-    int AttemptsUsed,
-    int? AttemptsRemaining,
-    bool CanSubmit,
-    bool CanFinalize,
-    bool IsPassed,
-    DateTimeOffset? ExpiresAt,
-    int? FinalScore,
-    FinalizationReason? FinalizationReason,
-    DateTimeOffset? FinalizedAt);
-
 /// <summary>Таблица, раскрытая студенту как безопасная подсказка.</summary>
 public sealed record StudentHintTableResponse(Guid Id, string Name);
 
@@ -32,14 +15,27 @@ public sealed record StudentTaskHintsResponse(
 /// <summary>Безопасная validation-часть student task details.</summary>
 public sealed record StudentTaskValidationResponse(
     int PassingScore,
-    int? MaxAttempts,
-    StudentTaskProgressResponse? Progress,
+    StudentSessionStateResponse? Session,
     StudentTaskHintsResponse Hints);
 
-/// <summary>Результат завершения standalone- или platform-прохождения.</summary>
-public sealed record ProgressFinalizationResponse(
-    Guid ProgressId,
-    ProgressStatus Status,
+/// <summary>Состояние платформенной сессии; отсутствует в standalone-режиме.</summary>
+public sealed record StudentSessionStateResponse(
+    SessionStatus Status,
+    int BestScore,
+    int AttemptsUsed,
+    int? MaxAttempts,
+    int? AttemptsRemaining,
+    bool CanSubmit,
+    bool CanFinalize,
+    bool IsPassed,
+    DateTimeOffset? ExpiresAt,
+    int? FinalScore,
+    FinalizationReason? FinalizationReason,
+    DateTimeOffset? FinalizedAt);
+
+/// <summary>Результат ручного завершения платформенной сессии.</summary>
+public sealed record SessionFinalizationResponse(
+    SessionStatus Status,
     int BestScore,
     int FinalScore,
     bool IsPassed,
