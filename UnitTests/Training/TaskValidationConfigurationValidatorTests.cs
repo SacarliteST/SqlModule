@@ -14,7 +14,6 @@ public sealed class TaskValidationConfigurationValidatorTests
     {
         var definition = Definition(
             passingScore: 1,
-            maxAttempts: null,
             checks: [Check(ValidationCheckKind.MainDatasetResult, null, 100, 0)]);
 
         var result = Validate(definition);
@@ -31,7 +30,6 @@ public sealed class TaskValidationConfigurationValidatorTests
     {
         var definition = Definition(
             passingScore,
-            5,
             [
                 Check(ValidationCheckKind.MainDatasetResult, null, 20, 0),
                 Check(ValidationCheckKind.RequiredConstruct, nameof(SqlConstruct.Join), 80, 1)
@@ -53,21 +51,9 @@ public sealed class TaskValidationConfigurationValidatorTests
     {
         var result = Validate(Definition(
             passingScore,
-            null,
             [Check(ValidationCheckKind.MainDatasetResult, null, 100, 0)]));
 
         result.ShouldContain("Validation.PassingScoreOutOfRange", "passingScore");
-    }
-
-    [Fact(DisplayName = "MaxAttempts null валиден, ноль и превышение capability запрещены")]
-    public void Validate_MaxAttempts_UsesCapabilityLimit()
-    {
-        Validate(Definition(70, null, ValidCompositeChecks())).IsValid.ShouldBeTrue();
-
-        Validate(Definition(70, 0, ValidCompositeChecks()))
-            .ShouldContain("Validation.MaxAttemptsOutOfRange", "maxAttempts");
-        Validate(Definition(70, 101, ValidCompositeChecks()))
-            .ShouldContain("Validation.MaxAttemptsOutOfRange", "maxAttempts");
     }
 
     [Fact(DisplayName = "Отсутствующий и повторный MainDatasetResult возвращают точные пути")]
@@ -75,13 +61,11 @@ public sealed class TaskValidationConfigurationValidatorTests
     {
         var missing = Validate(Definition(
             100,
-            null,
             [Check(ValidationCheckKind.RequiredConstruct, nameof(SqlConstruct.Join), 100, 0)]));
         missing.ShouldContain("Validation.MainDatasetResultRequired", "checks");
 
         var duplicate = Validate(Definition(
             100,
-            null,
             [
                 Check(ValidationCheckKind.MainDatasetResult, null, 50, 0),
                 Check(ValidationCheckKind.MainDatasetResult, null, 50, 1)
@@ -96,7 +80,6 @@ public sealed class TaskValidationConfigurationValidatorTests
         var id = Guid.NewGuid();
         var result = Validate(Definition(
             100,
-            null,
             [
                 new ValidationCheckDefinition(id, ValidationCheckKind.MainDatasetResult, null, 0, -1),
                 new ValidationCheckDefinition(id, ValidationCheckKind.RequiredConstruct, nameof(SqlConstruct.Join), 20, 0),
@@ -115,7 +98,6 @@ public sealed class TaskValidationConfigurationValidatorTests
     {
         var result = Validate(Definition(
             80,
-            null,
             [
                 Check(ValidationCheckKind.MainDatasetResult, null, 60, 0),
                 Check(ValidationCheckKind.RequiredConstruct, nameof(SqlConstruct.Cte), 10, 1),
@@ -141,7 +123,6 @@ public sealed class TaskValidationConfigurationValidatorTests
             });
         var definition = Definition(
             80,
-            null,
             [
                 Check(ValidationCheckKind.MainDatasetResult, "unexpected", 70, 0),
                 Check(ValidationCheckKind.RequiredConstruct, nameof(SqlConstruct.Cte), 10, 1),
@@ -184,7 +165,6 @@ public sealed class TaskValidationConfigurationValidatorTests
     {
         var definition = Definition(
             100,
-            null,
             [
                 Check(ValidationCheckKind.MainDatasetResult, null, Int32.MaxValue, 0),
                 Check((ValidationCheckKind)999, null, Int32.MaxValue, 1)
@@ -202,7 +182,6 @@ public sealed class TaskValidationConfigurationValidatorTests
     {
         var result = Validate(Definition(
             80,
-            null,
             [
                 Check(ValidationCheckKind.MainDatasetResult, null, 80, 0),
                 Check(ValidationCheckKind.RequiredConstruct, "1", 20, 1)
@@ -216,7 +195,6 @@ public sealed class TaskValidationConfigurationValidatorTests
     {
         var result = Validate(Definition(
             90,
-            null,
             [
                 Check(ValidationCheckKind.MainDatasetResult, null, 80, 0),
                 Check(ValidationCheckKind.RequiredTable, tableId.ToString("D").ToLowerInvariant(), 10, 1),
@@ -234,7 +212,6 @@ public sealed class TaskValidationConfigurationValidatorTests
 
     private TaskValidationDefinition Definition(
         int passingScore,
-        int? maxAttempts,
         IReadOnlyList<ValidationCheckDefinition> checks) =>
         new(passingScore, [HintGroup.Result], checks);
 

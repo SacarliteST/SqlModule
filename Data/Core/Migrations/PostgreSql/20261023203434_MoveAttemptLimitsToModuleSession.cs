@@ -138,36 +138,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_ModuleSessions_FinalScore",
-                table: "ModuleSessions");
-
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_ModuleSessions_MaxAttempts",
-                table: "ModuleSessions");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Attempts_ModuleSessionId_AttemptNumber",
-                table: "Attempts");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Attempts_UserId_TaskId_AttemptNumber",
-                table: "Attempts");
-
-            migrationBuilder.DropCheckConstraint(
-                name: "CK_Attempts_Phase2bScoring",
-                table: "Attempts");
-
-            migrationBuilder.AddCheckConstraint(
-                name: "CK_Attempts_Phase2bScoring",
-                table: "Attempts",
-                sql: "(\"ProgressId\" IS NULL AND \"ValidationVersionId\" IS NULL AND \"AttemptNumber\" IS NULL AND \"Score\" IS NULL) OR (\"ProgressId\" IS NOT NULL AND \"ValidationVersionId\" IS NOT NULL AND \"AttemptNumber\" IS NOT NULL AND \"Score\" IS NOT NULL)");
-
-            migrationBuilder.DropColumn(name: "FinalScore", table: "ModuleSessions");
-            migrationBuilder.DropColumn(name: "FinalizationReason", table: "ModuleSessions");
-            migrationBuilder.DropColumn(name: "FinalizedAt", table: "ModuleSessions");
-            migrationBuilder.DropColumn(name: "MaxAttempts", table: "ModuleSessions");
-            migrationBuilder.DropColumn(name: "ValidationVersionId", table: "ModuleSessions");
         }
     }
 }

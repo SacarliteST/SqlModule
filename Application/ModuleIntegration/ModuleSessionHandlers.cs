@@ -44,7 +44,8 @@ public sealed class GetCurrentModuleSessionHandler(IApplicationDbContext db)
                 value.TaskRef,
                 value.ReturnUrl,
                 value.ExpiresAt,
-                value.MaxAttempts
+                value.MaxAttempts,
+                value.ValidationVersionId
             })
             .SingleOrDefaultAsync(ct);
 
@@ -55,10 +56,19 @@ public sealed class GetCurrentModuleSessionHandler(IApplicationDbContext db)
         }
 
         ModuleIntegrationTelemetry.RecordCurrent(ModuleIntegrationTelemetryOutcomes.Found);
+        var effectiveMaxAttempts = session.MaxAttempts;
+        if (!effectiveMaxAttempts.HasValue && session.ValidationVersionId.HasValue)
+        {
+            effectiveMaxAttempts = await db.TaskValidationVersions.AsNoTracking()
+                .Where(value => value.Id == session.ValidationVersionId.Value)
+                .Select(value => value.MaxAttempts)
+                .SingleOrDefaultAsync(ct);
+        }
+
         var attemptsUsed = await db.Attempts.AsNoTracking().CountAsync(value =>
             value.ModuleSessionId == query.SessionId && value.CountsTowardLimit, ct);
         return new CurrentModuleSessionResponse(
-            taskId, session.ReturnUrl, session.ExpiresAt, session.MaxAttempts, attemptsUsed);
+            taskId, session.ReturnUrl, session.ExpiresAt, effectiveMaxAttempts, attemptsUsed);
     }
 }
 

@@ -90,6 +90,8 @@ public sealed class TestApplication :
     /// <summary>Контекст текущего тест-пользователя (роль, userId).</summary>
     public TestUserContext UserContext { get; } = new();
 
+    internal string ConnectionString => postgreContainer.GetConnectionString();
+
     private readonly PostgreSqlContainer postgreContainer
         = new PostgreSqlBuilder()
                     .WithImage(DockerImages.PostgreSql)
