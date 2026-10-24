@@ -30,7 +30,6 @@ public sealed class ValidationCapabilitiesTests(TestApplication app) : ApiTestBa
         capabilities.SupportedCheckKinds.ShouldBe(Enum.GetValues<SQLModule.Contracts.Training.ValidationCheckKind>());
         capabilities.SupportedConstructs.ShouldBe(Enum.GetValues<SQLModule.Contracts.Training.SqlConstruct>());
         capabilities.SupportedHintGroups.ShouldBe(Enum.GetValues<SQLModule.Contracts.Training.HintGroup>());
-        capabilities.MaxAttemptsLimit.ShouldBe(100);
         capabilities.AnalyzerVersion.ShouldBe("0.6.5");
     }
 

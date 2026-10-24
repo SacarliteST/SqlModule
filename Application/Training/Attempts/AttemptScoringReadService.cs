@@ -1,4 +1,3 @@
-using SQLModule.Application.Training.Progress;
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Application.Persistence;
@@ -20,17 +19,15 @@ public sealed class AttemptScoringReadService(
         bool studentSafe,
         CancellationToken ct)
     {
-        if (!attempt.ProgressId.HasValue || !attempt.ValidationVersionId.HasValue ||
+        if (!attempt.ValidationVersionId.HasValue ||
             !attempt.AttemptNumber.HasValue || !attempt.Score.HasValue)
         {
             return null;
         }
 
-        var progress = await db.StudentTaskProgresses.AsNoTracking()
-            .SingleOrDefaultAsync(value => value.Id == attempt.ProgressId.Value, ct);
         var version = await db.TaskValidationVersions.AsNoTracking()
             .SingleOrDefaultAsync(value => value.Id == attempt.ValidationVersionId.Value, ct);
-        if (progress is null || version is null)
+        if (version is null)
         {
             return null;
         }
@@ -55,21 +52,35 @@ public sealed class AttemptScoringReadService(
                     value!.Value.ToContract(), "Проверьте соответствующую часть решения."))
                 .ToArray()
             : [];
-        var state = ProgressMappings.ToResponse(progress, version, timeProvider.GetUtcNow());
+        var attempts = db.Attempts.AsNoTracking().Where(value => value.CountsTowardLimit &&
+            (attempt.ModuleSessionId.HasValue
+                ? value.ModuleSessionId == attempt.ModuleSessionId
+                : value.ModuleSessionId == null && value.UserId == attempt.UserId && value.TaskId == attempt.TaskId));
+        var attemptsUsed = await attempts.CountAsync(ct);
+        var bestScore = await attempts.MaxAsync(value => (int?)value.Score, ct) ?? attempt.Score.Value;
+        var session = attempt.ModuleSessionId.HasValue
+            ? await db.ModuleSessions.AsNoTracking().SingleOrDefaultAsync(
+                value => value.Id == attempt.ModuleSessionId.Value, ct)
+            : null;
+        var maxAttempts = session?.MaxAttempts ?? (session is null ? null : version.MaxAttempts);
+        int? attemptsRemaining = maxAttempts.HasValue
+            ? Math.Max(0, maxAttempts.Value - attemptsUsed)
+            : null;
+        var active = session is null || session.Status == Domain.ModuleIntegration.ModuleSessionStatus.Active &&
+            !session.IsExpired(timeProvider.GetUtcNow());
 
         return new AttemptScoringResponse(
             attempt.Id,
-            progress.Id,
             version.Id,
             attempt.AttemptNumber.Value,
             attempt.Score.Value,
-            progress.BestScore,
+            bestScore,
             version.PassingScore,
-            state.IsPassed,
-            progress.AttemptsUsed,
-            state.AttemptsRemaining,
-            state.CanSubmit,
-            state.CanFinalize,
+            bestScore >= version.PassingScore,
+            attemptsUsed,
+            attemptsRemaining,
+            active && attemptsRemaining != 0,
+            session is not null && active,
             checks,
             hints);
     }

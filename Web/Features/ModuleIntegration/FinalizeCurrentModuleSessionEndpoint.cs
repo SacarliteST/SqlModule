@@ -1,5 +1,4 @@
 using SQLModule.Application.ModuleIntegration;
-using SQLModule.Application.Training.Progress;
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using SQLModule.Common.Results;
@@ -7,7 +6,6 @@ using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
-using SQLModule.Web.Features.Training.Progress;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 
@@ -20,7 +18,7 @@ internal sealed class FinalizeCurrentModuleSessionEndpoint : IModuleIntegrationE
             .WithTags("Module Integration")
             .WithSummary("Завершить текущее платформенное прохождение")
             .WithDescription("Фиксирует фактический BestScore и атомарно ставит один итог в outbox Education.")
-            .Produces<ProgressFinalizationResponse>()
+            .Produces<SessionFinalizationResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
@@ -30,7 +28,7 @@ internal sealed class FinalizeCurrentModuleSessionEndpoint : IModuleIntegrationE
     private static async Task<IResult> Handle(
         [FromHeader(Name = "Idempotency-Key"), Required] string? idempotencyKey,
         ICurrentUser currentUser,
-        IProgressFinalizationService service,
+        IModuleSessionFinalizationService service,
         CancellationToken ct)
     {
         if (!Guid.TryParseExact(idempotencyKey, "D", out var key))
@@ -49,6 +47,6 @@ internal sealed class FinalizeCurrentModuleSessionEndpoint : IModuleIntegrationE
                 "ModuleSession.NotFound");
         }
 
-        return (await service.FinalizePlatformAsync(userId, sessionId, key, ct)).ToOk();
+        return (await service.FinalizeAsync(userId, sessionId, key, ct)).ToOk();
     }
 }

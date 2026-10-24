@@ -1,5 +1,4 @@
 using SQLModule.Application.ModuleIntegration;
-using SQLModule.Application.Training.Progress;
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -28,7 +27,6 @@ using SQLModule.Sandbox;
 using SQLModule.Application.Seeding;
 using SQLModule.Sandbox.DbmsProbing;
 using SQLModule.Web.Features.ModuleIntegration;
-using SQLModule.Web.Features.Training.Progress;
 using Swashbuckle.AspNetCore.Swagger;
 using EducationClientOptions = SQLModule.Education.Client.EducationClientOptions;
 using EducationCompletionClient = SQLModule.Education.Client.EducationCompletionClient;
@@ -803,8 +801,8 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         executor.RunCallCount.ShouldBe(0);
     }
 
-    [Fact(DisplayName = "Lifecycle удаляет только устаревшие сессии и сохраняет историю попыток")]
-    public async Task ModuleSessionCleanup_RemovesStaleSessionsAndDetachesAttempts()
+    [Fact(DisplayName = "Lifecycle финализирует истёкшие сессии и сохраняет связь истории с сессией")]
+    public async Task ModuleSessionCleanup_FinalizesExpiredSessionsAndKeepsAttemptLinks()
     {
         using var platform = CreatePlatformApplication();
         var taskId = await SeedRunnableTaskAsync(platform);
@@ -863,36 +861,33 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
                     BatchSize = 100
                 }
             }),
-            scope.ServiceProvider.GetRequiredService<IProgressFinalizationService>(),
+            new PracticeCompletionOutbox(db),
             TimeProvider.System,
             NullLogger<ModuleSessionCleanupProcessor>.Instance);
 
         var removed = await processor.CleanupAsync(CancellationToken.None);
 
-        removed.ShouldBe(1);
+        removed.ShouldBe(0);
         (await db.ModuleSessions.AsNoTracking().SingleAsync(session => session.Id == oldExpiredId))
             .Status.ShouldBe(ModuleSessionStatus.Expired);
-        (await db.ModuleSessions.AnyAsync(session => session.Id == completedId)).ShouldBeFalse();
+        (await db.ModuleSessions.AnyAsync(session => session.Id == completedId)).ShouldBeTrue();
         (await db.ModuleSessions.AsNoTracking().SingleAsync(session => session.Id == recentExpiredId))
             .Status.ShouldBe(ModuleSessionStatus.Expired);
         (await db.ModuleSessions.AsNoTracking().SingleAsync(session => session.Id == activeId))
             .Status.ShouldBe(ModuleSessionStatus.Active);
         (await db.PendingPublishes.CountAsync(message =>
-            message.SessionId == oldExpiredId || message.SessionId == recentExpiredId)).ShouldBe(0);
+            (message.SessionId == oldExpiredId || message.SessionId == recentExpiredId) &&
+            message.Kind == PendingPublishKind.Grade)).ShouldBe(2);
         (await db.Attempts.AsNoTracking().SingleAsync(value => value.Id == attemptId))
             .ModuleSessionId.ShouldBe(oldExpiredId);
 
-        await db.ModuleSessions
-            .Where(session => session.Id == oldExpiredId)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(
-                session => session.UpdatedAt,
-                now.AddDays(-8)));
-        db.ChangeTracker.Clear();
-
-        (await processor.CleanupAsync(CancellationToken.None)).ShouldBe(1);
-        (await db.ModuleSessions.AnyAsync(session => session.Id == oldExpiredId)).ShouldBeFalse();
+        (await processor.CleanupAsync(CancellationToken.None)).ShouldBe(0);
+        (await db.ModuleSessions.AnyAsync(session => session.Id == oldExpiredId)).ShouldBeTrue();
         (await db.Attempts.AsNoTracking().SingleAsync(value => value.Id == attemptId))
-            .ModuleSessionId.ShouldBeNull();
+            .ModuleSessionId.ShouldBe(oldExpiredId);
+        (await db.PendingPublishes.CountAsync(message =>
+            (message.SessionId == oldExpiredId || message.SessionId == recentExpiredId) &&
+            message.Kind == PendingPublishKind.Grade)).ShouldBe(2);
     }
 
     [Fact(DisplayName = "Publisher подтверждает успешное событие и не блокируется ошибочным")]
@@ -1426,7 +1421,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
 
     /// <summary>
     /// Как <see cref="SeedRunnableTaskAsync"/>, но дополнительно публикует
-    /// конфигурацию проверки — начиная с версионированной проверки <see cref="PlatformProgressService"/>
+    /// конфигурацию проверки — начиная с версионированной проверки
     /// требует опубликованную <c>ActiveValidationVersionId</c> для любого platform-задания,
     /// иначе submit отвечает 422 <c>ModuleSession.TaskValidationUnavailable</c>.
     /// </summary>
@@ -1487,7 +1482,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             HttpMethod.Put, ApiRoutes.Training.SqlTasks.ForValidation(task.Id))
         {
             Content = JsonContent.Create(new Contracts.Training.Validation.TaskValidationConfigurationRequest(
-                configuration!.Version, 100, null, [SQLModule.Contracts.Training.HintGroup.Result],
+                configuration!.Version, 100, [SQLModule.Contracts.Training.HintGroup.Result],
                 [new Contracts.Training.Validation.ValidationCheckRequest(
                     configuration.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
                 options: ClientJson.Options)

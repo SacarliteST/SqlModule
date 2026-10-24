@@ -13,9 +13,9 @@ internal sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
         {
             table.HasCheckConstraint(
                 "CK_Attempts_Phase2bScoring",
-                "(\"ProgressId\" IS NULL AND \"ValidationVersionId\" IS NULL AND " +
+                "(\"ValidationVersionId\" IS NULL AND " +
                 "\"AttemptNumber\" IS NULL AND \"Score\" IS NULL) OR " +
-                "(\"ProgressId\" IS NOT NULL AND \"ValidationVersionId\" IS NOT NULL AND " +
+                "(\"ValidationVersionId\" IS NOT NULL AND " +
                 "\"AttemptNumber\" IS NOT NULL AND \"Score\" IS NOT NULL)");
             table.HasCheckConstraint(
                 "CK_Attempts_AttemptNumber",
@@ -64,6 +64,12 @@ internal sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
                .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(x => x.ModuleSessionId);
         builder.HasIndex(x => new { x.ProgressId, x.AttemptNumber }).IsUnique();
+        builder.HasIndex(x => new { x.ModuleSessionId, x.AttemptNumber })
+            .IsUnique()
+            .HasFilter("\"ModuleSessionId\" IS NOT NULL");
+        builder.HasIndex(x => new { x.UserId, x.TaskId, x.AttemptNumber })
+            .IsUnique()
+            .HasFilter("\"ModuleSessionId\" IS NULL AND \"AttemptNumber\" IS NOT NULL");
         builder.HasIndex(x => x.ValidationVersionId);
     }
 }

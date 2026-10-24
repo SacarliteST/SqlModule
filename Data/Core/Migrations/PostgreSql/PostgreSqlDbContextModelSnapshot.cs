@@ -244,6 +244,19 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<DateTimeOffset?>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("FinalScore")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FinalizationReason")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset?>("FinalizedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("MaxAttempts")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ReturnUrl")
                         .IsRequired()
                         .HasMaxLength(2048)
@@ -277,13 +290,21 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ValidationVersionId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
                     b.HasIndex("Status", "ExpiresAt");
 
-                    b.ToTable("ModuleSessions", (string)null);
+                    b.ToTable("ModuleSessions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ModuleSessions_FinalScore", "\"FinalScore\" IS NULL OR \"FinalScore\" BETWEEN 0 AND 100");
+
+                            t.HasCheckConstraint("CK_ModuleSessions_MaxAttempts", "\"MaxAttempts\" IS NULL OR \"MaxAttempts\" > 0");
+                        });
                 });
 
             modelBuilder.Entity("SQLModule.Domain.ModuleIntegration.PendingPublish", b =>
@@ -846,14 +867,22 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.HasIndex("ValidationVersionId");
 
+                    b.HasIndex("ModuleSessionId", "AttemptNumber")
+                        .IsUnique()
+                        .HasFilter("\"ModuleSessionId\" IS NOT NULL");
+
                     b.HasIndex("ProgressId", "AttemptNumber")
                         .IsUnique();
+
+                    b.HasIndex("UserId", "TaskId", "AttemptNumber")
+                        .IsUnique()
+                        .HasFilter("\"ModuleSessionId\" IS NULL AND \"AttemptNumber\" IS NOT NULL");
 
                     b.ToTable("Attempts", null, t =>
                         {
                             t.HasCheckConstraint("CK_Attempts_AttemptNumber", "\"AttemptNumber\" IS NULL OR \"AttemptNumber\" > 0");
 
-                            t.HasCheckConstraint("CK_Attempts_Phase2bScoring", "(\"ProgressId\" IS NULL AND \"ValidationVersionId\" IS NULL AND \"AttemptNumber\" IS NULL AND \"Score\" IS NULL) OR (\"ProgressId\" IS NOT NULL AND \"ValidationVersionId\" IS NOT NULL AND \"AttemptNumber\" IS NOT NULL AND \"Score\" IS NOT NULL)");
+                            t.HasCheckConstraint("CK_Attempts_Phase2bScoring", "(\"ValidationVersionId\" IS NULL AND \"AttemptNumber\" IS NULL AND \"Score\" IS NULL) OR (\"ValidationVersionId\" IS NOT NULL AND \"AttemptNumber\" IS NOT NULL AND \"Score\" IS NOT NULL)");
 
                             t.HasCheckConstraint("CK_Attempts_Score", "\"Score\" IS NULL OR \"Score\" BETWEEN 0 AND 100");
                         });

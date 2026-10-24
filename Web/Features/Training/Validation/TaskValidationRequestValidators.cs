@@ -15,9 +15,6 @@ internal sealed class TaskValidationConfigurationRequestValidator
             .Must(BeGuid)
             .WithMessage("Версия конфигурации должна быть UUID.");
         RuleFor(request => request.PassingScore).NotNull().InclusiveBetween(1, 100);
-        RuleFor(request => request.MaxAttempts)
-            .GreaterThan(0)
-            .When(request => request.MaxAttempts.HasValue);
         RuleFor(request => request.VisibleHintGroups).NotNull();
         RuleForEach(request => request.VisibleHintGroups!)
             .IsInEnum()
@@ -37,9 +34,6 @@ internal sealed class TaskValidationPreviewRequestValidator : AbstractValidator<
     public TaskValidationPreviewRequestValidator()
     {
         RuleFor(request => request.PassingScore).NotNull().InclusiveBetween(1, 100);
-        RuleFor(request => request.MaxAttempts)
-            .GreaterThan(0)
-            .When(request => request.MaxAttempts.HasValue);
         RuleFor(request => request.VisibleHintGroups).NotNull();
         RuleForEach(request => request.VisibleHintGroups!)
             .IsInEnum()

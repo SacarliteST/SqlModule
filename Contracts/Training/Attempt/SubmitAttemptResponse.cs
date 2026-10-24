@@ -18,7 +18,6 @@ public record SubmitAttemptResponse(
     int? ResultRowLimit = null,
     DateTimeOffset? ResultSnapshotCreatedAt = null,
     DateTimeOffset? ResultSnapshotExpiresAt = null,
-    Guid? ProgressId = null,
     Guid? ValidationVersionId = null,
     int? AttemptNumber = null,
     int? Score = null,

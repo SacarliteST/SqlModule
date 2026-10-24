@@ -6,12 +6,12 @@ using SQLModule.Application.Persistence;
 using SQLModule.Application.Schema.SchemaBuilder;
 using SQLModule.Application.Schema.SchemaBuilder.GetTableRows;
 using SQLModule.Application.Training.Attempts;
-using SQLModule.Application.Training.Progress;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Contracts.Training.Student;
 using SQLModule.Contracts.Training.Validation;
+using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
 using SQLModule.Sandbox;
 
@@ -141,20 +141,43 @@ public sealed class GetStudentTaskByIdHandler(
         StudentTaskValidationResponse? validation = null;
         if (item.ActiveValidationVersionId.HasValue)
         {
-            var version = await db.TaskValidationVersions.AsNoTracking()
-                .SingleOrDefaultAsync(value => value.Id == item.ActiveValidationVersionId.Value, ct);
+            var moduleSession = query.ModuleSessionId.HasValue
+                ? await db.ModuleSessions.AsNoTracking().SingleOrDefaultAsync(value =>
+                    value.Id == query.ModuleSessionId.Value && value.UserId == query.UserId &&
+                    value.TaskRef == taskId.ToString(), ct)
+                : null;
+            var versionId = moduleSession?.ValidationVersionId ?? item.ActiveValidationVersionId;
+            var version = versionId.HasValue
+                ? await db.TaskValidationVersions.AsNoTracking()
+                    .SingleOrDefaultAsync(value => value.Id == versionId.Value, ct)
+                : null;
             if (version is not null)
             {
-                var sessionId = query.ModuleSessionId;
-                var progress = await db.StudentTaskProgresses.AsNoTracking()
-                    .Where(value => value.TaskId == taskId && value.UserId == query.UserId &&
-                                    value.ModuleSessionId == sessionId)
-                    .OrderByDescending(value => value.CreatedAt)
-                    .FirstOrDefaultAsync(ct);
+                StudentSessionStateResponse? sessionState = null;
+                if (moduleSession is not null)
+                {
+                    var attemptsUsed = await db.Attempts.CountAsync(value =>
+                        value.ModuleSessionId == moduleSession.Id && value.CountsTowardLimit, ct);
+                    var bestScore = await db.Attempts
+                        .Where(value => value.ModuleSessionId == moduleSession.Id && value.CountsTowardLimit)
+                        .MaxAsync(value => (int?)value.Score, ct) ?? 0;
+                    var maxAttempts = moduleSession.MaxAttempts ?? version.MaxAttempts;
+                    int? remaining = maxAttempts.HasValue
+                        ? Math.Max(0, maxAttempts.Value - attemptsUsed)
+                        : null;
+                    var active = moduleSession.Status == ModuleSessionStatus.Active &&
+                                 !moduleSession.IsExpired(timeProvider.GetUtcNow());
+                    sessionState = new StudentSessionStateResponse(
+                        moduleSession.Status.ToContract(), bestScore, attemptsUsed, maxAttempts,
+                        remaining, active && remaining != 0, active,
+                        bestScore >= version.PassingScore, moduleSession.ExpiresAt,
+                        moduleSession.FinalScore, moduleSession.FinalizationReason?.ToContract(),
+                        moduleSession.FinalizedAt);
+                }
+
                 validation = new StudentTaskValidationResponse(
                     version.PassingScore,
-                    version.MaxAttempts,
-                    progress is null ? null : ProgressMappings.ToResponse(progress, version, timeProvider.GetUtcNow()),
+                    sessionState,
                     StudentHints.Build(version));
             }
         }

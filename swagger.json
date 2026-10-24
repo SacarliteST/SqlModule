@@ -1106,7 +1106,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProgressFinalizationResponse"
+                  "$ref": "#/components/schemas/SessionFinalizationResponse"
                 }
               }
             }
@@ -4616,287 +4616,6 @@
         }
       }
     },
-    "/api/v1/student/tasks/{taskId}/progress/finalize": {
-      "post": {
-        "tags": [
-          "Student"
-        ],
-        "summary": "Завершить standalone-прохождение",
-        "description": "Фиксирует фактический BestScore. Передать итоговый балл с клиента нельзя.",
-        "operationId": "FinalizeStudentTaskProgress",
-        "parameters": [
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
-            "required": true,
-            "schema": {
-              "maxLength": 36,
-              "minLength": 36,
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProgressFinalizationResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standalone-операция недоступна платформенному токену. code: PlatformSession.StandaloneOperationForbidden (или PlatformSession.ScopeRestricted).",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/student/tasks/{taskId}/progress": {
-      "post": {
-        "tags": [
-          "Student"
-        ],
-        "operationId": "StartStudentTaskProgress",
-        "parameters": [
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
-            "required": true,
-            "schema": {
-              "maxLength": 36,
-              "minLength": 36,
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudentTaskProgressResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standalone-операция недоступна платформенному токену. code: PlatformSession.StandaloneOperationForbidden (или PlatformSession.ScopeRestricted).",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/student/tasks/{taskId}/progress/restart": {
-      "post": {
-        "tags": [
-          "Student"
-        ],
-        "operationId": "RestartStudentTaskProgress",
-        "parameters": [
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
-            "required": true,
-            "schema": {
-              "maxLength": 36,
-              "minLength": 36,
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StudentTaskProgressResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standalone-операция недоступна платформенному токену. code: PlatformSession.StandaloneOperationForbidden (или PlatformSession.ScopeRestricted).",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/topics": {
       "post": {
         "tags": [
@@ -6414,8 +6133,7 @@
                 "PerfectScore",
                 "AttemptsExhausted",
                 "Expired",
-                "EducationClosed",
-                "Restarted"
+                "EducationClosed"
               ],
               "type": "string",
               "allOf": [
@@ -6577,7 +6295,7 @@
             }
           },
           "409": {
-            "description": "Конфликт состояния платформенной сессии, прохождения или идемпотентного запроса. Возможные code: ModuleSession.Expired, ModuleSession.Closed, Progress.Closed, Progress.AttemptsExhausted, IdempotencyKeyPayloadMismatch, IdempotencyRequestInProgress. Повтор с тем же Idempotency-Key после завершения сессии возвращает исходный результат.",
+            "description": "Конфликт состояния платформенной сессии или идемпотентного запроса. Возможные code: ModuleSession.Expired, ModuleSession.Closed, ModuleSession.AttemptsExhausted, IdempotencyKeyPayloadMismatch, IdempotencyRequestInProgress. Повтор с тем же Idempotency-Key после завершения сессии возвращает исходный результат.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7801,7 +7519,7 @@
                 "$ref": "#/components/schemas/AttemptScoringResponse"
               }
             ],
-            "description": "Составная оценка попытки и актуальное состояние progress.",
+            "description": "Составная оценка попытки и актуальное состояние её сессии.",
             "nullable": true
           }
         },
@@ -7830,17 +7548,12 @@
           "hints",
           "isPassed",
           "passingScore",
-          "progressId",
           "score",
           "validationVersionId"
         ],
         "type": "object",
         "properties": {
           "attemptId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "progressId": {
             "type": "string",
             "format": "uuid"
           },
@@ -7896,7 +7609,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Составная оценка попытки и актуальное состояние progress."
+        "description": "Составная оценка попытки и актуальное состояние её сессии."
       },
       "AttemptStudentFilterOptionResponse": {
         "type": "object",
@@ -8761,6 +8474,17 @@
             "description": "Время окончания сессии или null для сессии без лимита.",
             "format": "date-time",
             "nullable": true
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "description": "Лимит отправок или null, если он не задан.",
+            "format": "int32",
+            "nullable": true
+          },
+          "attemptsUsed": {
+            "type": "integer",
+            "description": "Количество засчитанных отправок.",
+            "format": "int32"
           }
         },
         "additionalProperties": false,
@@ -8924,7 +8648,6 @@
         "required": [
           "analyzerVersion",
           "dbmsId",
-          "maxAttemptsLimit",
           "supportedCheckKinds",
           "supportedConstructs",
           "supportedHintGroups"
@@ -8952,10 +8675,6 @@
             "items": {
               "$ref": "#/components/schemas/HintGroup"
             }
-          },
-          "maxAttemptsLimit": {
-            "type": "integer",
-            "format": "int32"
           },
           "analyzerVersion": {
             "type": "string"
@@ -8997,8 +8716,7 @@
           "PerfectScore",
           "AttemptsExhausted",
           "Expired",
-          "EducationClosed",
-          "Restarted"
+          "EducationClosed"
         ],
         "type": "string"
       },
@@ -9613,93 +9331,6 @@
         },
         "additionalProperties": { }
       },
-      "ProgressFinalizationResponse": {
-        "required": [
-          "bestScore",
-          "canReturnToEducation",
-          "finalizedAt",
-          "finalScore",
-          "isPassed",
-          "progressId",
-          "reason",
-          "returnUrl",
-          "status"
-        ],
-        "type": "object",
-        "properties": {
-          "progressId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "enum": [
-              "Active",
-              "Finalizing",
-              "CompletionPending",
-              "CompletionFailed",
-              "Completed",
-              "Expired"
-            ],
-            "type": "string",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ProgressStatus"
-              }
-            ]
-          },
-          "bestScore": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "finalScore": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "isPassed": {
-            "type": "boolean"
-          },
-          "reason": {
-            "enum": [
-              "Manual",
-              "PerfectScore",
-              "AttemptsExhausted",
-              "Expired",
-              "EducationClosed",
-              "Restarted"
-            ],
-            "type": "string",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/FinalizationReason"
-              }
-            ]
-          },
-          "finalizedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "canReturnToEducation": {
-            "type": "boolean"
-          },
-          "returnUrl": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "Результат завершения standalone- или platform-прохождения."
-      },
-      "ProgressStatus": {
-        "enum": [
-          "Active",
-          "Finalizing",
-          "CompletionPending",
-          "CompletionFailed",
-          "Completed",
-          "Expired"
-        ],
-        "type": "string"
-      },
       "PublicationStatus": {
         "enum": [
           "Draft",
@@ -10273,6 +9904,85 @@
           }
         },
         "additionalProperties": false
+      },
+      "SessionFinalizationResponse": {
+        "required": [
+          "bestScore",
+          "canReturnToEducation",
+          "finalizedAt",
+          "finalScore",
+          "isPassed",
+          "reason",
+          "returnUrl",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "Active",
+              "CompletionPending",
+              "Completed",
+              "CompletionFailed",
+              "Expired"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionStatus"
+              }
+            ]
+          },
+          "bestScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "finalScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isPassed": {
+            "type": "boolean"
+          },
+          "reason": {
+            "enum": [
+              "Manual",
+              "PerfectScore",
+              "AttemptsExhausted",
+              "Expired",
+              "EducationClosed"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinalizationReason"
+              }
+            ]
+          },
+          "finalizedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canReturnToEducation": {
+            "type": "boolean"
+          },
+          "returnUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Результат ручного завершения платформенной сессии."
+      },
+      "SessionStatus": {
+        "enum": [
+          "Active",
+          "CompletionPending",
+          "Completed",
+          "CompletionFailed",
+          "Expired"
+        ],
+        "type": "string"
       },
       "SqlConstruct": {
         "enum": [
@@ -10855,7 +10565,7 @@
                 "$ref": "#/components/schemas/AttemptScoringResponse"
               }
             ],
-            "description": "Составная оценка попытки и актуальное состояние progress.",
+            "description": "Составная оценка попытки и актуальное состояние её сессии.",
             "nullable": true
           }
         },
@@ -10988,6 +10698,100 @@
         },
         "additionalProperties": false
       },
+      "StudentSessionStateResponse": {
+        "required": [
+          "attemptsRemaining",
+          "attemptsUsed",
+          "bestScore",
+          "canFinalize",
+          "canSubmit",
+          "expiresAt",
+          "finalizationReason",
+          "finalizedAt",
+          "finalScore",
+          "isPassed",
+          "maxAttempts",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "Active",
+              "CompletionPending",
+              "Completed",
+              "CompletionFailed",
+              "Expired"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionStatus"
+              }
+            ]
+          },
+          "bestScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attemptsUsed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "attemptsRemaining": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canFinalize": {
+            "type": "boolean"
+          },
+          "isPassed": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "finalScore": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "finalizationReason": {
+            "enum": [
+              "Manual",
+              "PerfectScore",
+              "AttemptsExhausted",
+              "Expired",
+              "EducationClosed"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinalizationReason"
+              }
+            ],
+            "nullable": true
+          },
+          "finalizedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Состояние платформенной сессии; отсутствует в standalone-режиме."
+      },
       "StudentTaskDetailsResponse": {
         "required": [
           "dbmsName",
@@ -11089,111 +10893,6 @@
         "additionalProperties": false,
         "description": "Разрешённые преподавателем подсказки по validation version."
       },
-      "StudentTaskProgressResponse": {
-        "required": [
-          "attemptsRemaining",
-          "attemptsUsed",
-          "bestScore",
-          "canFinalize",
-          "canSubmit",
-          "expiresAt",
-          "finalizationReason",
-          "finalizedAt",
-          "finalScore",
-          "id",
-          "isPassed",
-          "status",
-          "taskId",
-          "validationVersionId"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "taskId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "enum": [
-              "Active",
-              "Finalizing",
-              "CompletionPending",
-              "CompletionFailed",
-              "Completed",
-              "Expired"
-            ],
-            "type": "string",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ProgressStatus"
-              }
-            ]
-          },
-          "validationVersionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "bestScore": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "attemptsUsed": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "attemptsRemaining": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "canSubmit": {
-            "type": "boolean"
-          },
-          "canFinalize": {
-            "type": "boolean"
-          },
-          "isPassed": {
-            "type": "boolean"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "finalScore": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "finalizationReason": {
-            "enum": [
-              "Manual",
-              "PerfectScore",
-              "AttemptsExhausted",
-              "Expired",
-              "EducationClosed",
-              "Restarted"
-            ],
-            "type": "string",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/FinalizationReason"
-              }
-            ],
-            "nullable": true
-          },
-          "finalizedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "Текущее прохождение SQL-задания."
-      },
       "StudentTaskResponse": {
         "type": "object",
         "properties": {
@@ -11272,9 +10971,8 @@
       "StudentTaskValidationResponse": {
         "required": [
           "hints",
-          "maxAttempts",
           "passingScore",
-          "progress"
+          "session"
         ],
         "type": "object",
         "properties": {
@@ -11282,18 +10980,13 @@
             "type": "integer",
             "format": "int32"
           },
-          "maxAttempts": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "progress": {
+          "session": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/StudentTaskProgressResponse"
+                "$ref": "#/components/schemas/StudentSessionStateResponse"
               }
             ],
-            "description": "Текущее прохождение SQL-задания.",
+            "description": "Состояние платформенной сессии; отсутствует в standalone-режиме.",
             "nullable": true
           },
           "hints": {
@@ -11386,7 +11079,6 @@
           "isPassed",
           "isResultTruncated",
           "passingScore",
-          "progressId",
           "publicError",
           "reason",
           "resultRowLimit",
@@ -11507,11 +11199,6 @@
           "resultSnapshotExpiresAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
-          },
-          "progressId": {
-            "type": "string",
-            "format": "uuid",
             "nullable": true
           },
           "validationVersionId": {
@@ -11932,11 +11619,6 @@
             "format": "int32",
             "nullable": true
           },
-          "maxAttempts": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "visibleHintGroups": {
             "type": "array",
             "items": {
@@ -11960,7 +11642,6 @@
           "checks",
           "createdAt",
           "hasUnpublishedChanges",
-          "maxAttempts",
           "passingScore",
           "publishedAt",
           "state",
@@ -12016,12 +11697,6 @@
             "description": "Проходной балл (1–100).",
             "format": "int32"
           },
-          "maxAttempts": {
-            "type": "integer",
-            "description": "Лимит попыток; `null` — без ограничения.",
-            "format": "int32",
-            "nullable": true
-          },
           "visibleHintGroups": {
             "type": "array",
             "items": {
@@ -12060,11 +11735,6 @@
         "type": "object",
         "properties": {
           "passingScore": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "maxAttempts": {
             "type": "integer",
             "format": "int32",
             "nullable": true
@@ -12863,6 +12533,12 @@
             "description": "Необязательное время окончания сессии.",
             "format": "date-time",
             "nullable": true
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "description": "Необязательный лимит отправок внутри сессии.",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -13275,4 +12951,4 @@
       "name": "TrainingValidation"
     }
   ]
-}
+}

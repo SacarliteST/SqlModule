@@ -5,7 +5,6 @@ namespace SQLModule.Contracts.Training.Validation;
 public sealed record TaskValidationConfigurationRequest(
     string? Version,
     int? PassingScore,
-    int? MaxAttempts,
     IReadOnlyList<HintGroup>? VisibleHintGroups,
     IReadOnlyList<ValidationCheckRequest>? Checks);
 
@@ -49,7 +48,6 @@ public sealed record ValidationCheckResponse(
 /// значение <c>false</c>: сравнивать не с чем. Поле не означает отсутствие версии.
 /// </param>
 /// <param name="PassingScore">Проходной балл (1–100).</param>
-/// <param name="MaxAttempts">Лимит попыток; <c>null</c> — без ограничения.</param>
 /// <param name="VisibleHintGroups">Группы подсказок, видимые студенту.</param>
 /// <param name="Checks">Критерии оценки.</param>
 /// <param name="CreatedAt">Дата создания конфигурации.</param>
@@ -63,7 +61,6 @@ public sealed record TaskValidationConfigurationResponse(
     ValidationConfigurationState State,
     bool HasUnpublishedChanges,
     int PassingScore,
-    int? MaxAttempts,
     IReadOnlyList<HintGroup> VisibleHintGroups,
     IReadOnlyList<ValidationCheckResponse> Checks,
     DateTimeOffset CreatedAt,
@@ -73,7 +70,6 @@ public sealed record TaskValidationConfigurationResponse(
 /// <summary>Draft-конфигурация для проверки эталона без публикации версии.</summary>
 public sealed record TaskValidationPreviewRequest(
     int? PassingScore,
-    int? MaxAttempts,
     IReadOnlyList<HintGroup>? VisibleHintGroups,
     IReadOnlyList<ValidationCheckPreviewRequest>? Checks);
 

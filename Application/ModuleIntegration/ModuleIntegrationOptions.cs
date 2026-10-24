@@ -25,6 +25,9 @@ public sealed class ModuleIntegrationOptions
 
     /// <summary>Настройки хранения локальных платформенных сессий.</summary>
     public ModuleSessionLifecycleOptions Lifecycle { get; init; } = new();
+
+    /// <summary>Максимальный разрешённый лимит отправок, принимаемый от платформы.</summary>
+    public int MaxAttemptsPerSession { get; init; } = 1000;
 }
 
 public sealed class ModuleSessionLifecycleOptions

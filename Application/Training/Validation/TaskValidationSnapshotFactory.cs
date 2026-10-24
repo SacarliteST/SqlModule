@@ -43,7 +43,6 @@ public sealed class TaskValidationSnapshotFactory(IApplicationDbContext db) : IT
         var configurationSnapshot = new
         {
             configuration.PassingScore,
-            configuration.MaxAttempts,
             VisibleHintGroups = configuration.GetVisibleHintGroups(),
             Checks = configuration.Checks.OrderBy(check => check.Order).Select(check => new
             {

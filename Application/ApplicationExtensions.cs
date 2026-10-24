@@ -22,7 +22,6 @@ using SQLModule.Application.Schema.TargetDbs;
 using SQLModule.Application.Schema.SchemaBuilder;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.SqlQueries;
-using SQLModule.Application.Training.Progress;
 using SQLModule.Application.Training.SqlTasks;
 using SQLModule.Application.Training.Topics;
 using SQLModule.Application.Training.Attempts;
@@ -70,7 +69,6 @@ public static class ApplicationExtensions
             .AddAttributeParameterValues()
             .AddTopics()
             .AddSqlQueries()
-            .AddStudentProgress()
             .AddTaskValidation()
             .AddSchemaBuilder()
             .AddAttempts();

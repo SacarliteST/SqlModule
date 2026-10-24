@@ -77,14 +77,13 @@ public enum ValidationCheckStatus
     NotEvaluated
 }
 
-// Состояние прохождения SQL-задания.
-public enum ProgressStatus
+// Состояние платформенной сессии SQL-модуля.
+public enum SessionStatus
 {
     Active,
-    Finalizing,
     CompletionPending,
-    CompletionFailed,
     Completed,
+    CompletionFailed,
     Expired
 }
 
@@ -95,8 +94,7 @@ public enum FinalizationReason
     PerfectScore,
     AttemptsExhausted,
     Expired,
-    EducationClosed,
-    Restarted
+    EducationClosed
 }
 
 // Состояние текущей редактируемой validation-конфигурации.

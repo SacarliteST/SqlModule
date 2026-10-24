@@ -14,14 +14,14 @@ internal sealed class ResponseSchemaFilter : ISchemaFilter
     private static readonly HashSet<Type> ResponseTypes =
     [
         typeof(DbmsValidationCapabilitiesResponse),
-        typeof(StudentTaskProgressResponse),
+        typeof(StudentSessionStateResponse),
         typeof(StudentTaskValidationResponse),
         typeof(StudentTaskHintsResponse),
         typeof(StudentHintTableResponse),
         typeof(AttemptScoringResponse),
         typeof(AttemptCheckResultResponse),
         typeof(AttemptHintResponse),
-        typeof(ProgressFinalizationResponse),
+        typeof(SessionFinalizationResponse),
         typeof(SubmitAttemptResponse),
         typeof(StudentTaskDetailsResponse),
         typeof(StudentExecutionLimitsResponse),
@@ -61,7 +61,7 @@ internal sealed class ResponseSchemaFilter : ISchemaFilter
             response.Required.Add(property);
         }
 
-        if (context.Type == typeof(StudentTaskProgressResponse) &&
+        if (context.Type == typeof(StudentSessionStateResponse) &&
             response.Properties.TryGetValue("finalizationReason", out var propertySchema) &&
             propertySchema is OpenApiSchema finalizationReason)
         {

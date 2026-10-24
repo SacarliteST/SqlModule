@@ -20,8 +20,6 @@ public sealed class ContractEnumParityTests
         { typeof(ContractTraining.AttemptResultSnapshotState), typeof(DomainTraining.AttemptResultSnapshotState) },
         { typeof(ContractTraining.SqlConstruct), typeof(DomainTraining.SqlConstruct) },
         { typeof(ContractTraining.ValidationCheckStatus), typeof(DomainTraining.ValidationCheckStatus) },
-        { typeof(ContractTraining.ProgressStatus), typeof(DomainTraining.ProgressStatus) },
-        { typeof(ContractTraining.FinalizationReason), typeof(DomainTraining.FinalizationReason) },
         { typeof(ContractTraining.ValidationConfigurationState), typeof(DomainTraining.ValidationConfigurationState) },
         { typeof(ContractTraining.PublicationStatus), typeof(DomainTraining.PublicationStatus) },
         { typeof(ContractTraining.ValidationViolationSeverity), typeof(DomainValidation.ValidationViolationSeverity) },

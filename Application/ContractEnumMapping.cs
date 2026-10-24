@@ -1,5 +1,6 @@
 using ContractTraining = SQLModule.Contracts.Training;
 using DomainTraining = SQLModule.Domain.Training;
+using DomainModuleIntegration = SQLModule.Domain.ModuleIntegration;
 using DomainValidation = SQLModule.Domain.Training.Validation;
 
 namespace SQLModule.Application;
@@ -38,9 +39,8 @@ public static class ContractEnumMapping
     public static DomainTraining.ValidationCheckStatus ToDomain(this ContractTraining.ValidationCheckStatus value) =>
         Map<DomainTraining.ValidationCheckStatus>(value);
 
-    public static ContractTraining.ProgressStatus ToContract(this DomainTraining.ProgressStatus value) => Map<ContractTraining.ProgressStatus>(value);
-    public static DomainTraining.ProgressStatus ToDomain(this ContractTraining.ProgressStatus value) => Map<DomainTraining.ProgressStatus>(value);
-
+    public static ContractTraining.SessionStatus ToContract(this DomainModuleIntegration.ModuleSessionStatus value) =>
+        Map<ContractTraining.SessionStatus>(value);
     public static ContractTraining.FinalizationReason ToContract(this DomainTraining.FinalizationReason value) =>
         Map<ContractTraining.FinalizationReason>(value);
 

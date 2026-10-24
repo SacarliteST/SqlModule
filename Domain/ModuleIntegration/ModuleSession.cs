@@ -1,5 +1,7 @@
 ﻿using SQLModule.Domain.Common;
 
+using SQLModule.Domain.Training;
+
 namespace SQLModule.Domain.ModuleIntegration;
 
 /// <summary>Доверенный контекст платформенного запуска, полученный от Education.</summary>
@@ -10,6 +12,11 @@ public sealed class ModuleSession : AuditableEntity
     public string TaskRef { get; private set; }
     public string ReturnUrl { get; private set; }
     public DateTimeOffset? ExpiresAt { get; private set; }
+    public int? MaxAttempts { get; private set; }
+    public Guid? ValidationVersionId { get; private set; }
+    public int? FinalScore { get; private set; }
+    public FinalizationReason? FinalizationReason { get; private set; }
+    public DateTimeOffset? FinalizedAt { get; private set; }
     public ModuleSessionStatus Status { get; private set; }
 
     private ModuleSession(
@@ -18,13 +25,15 @@ public sealed class ModuleSession : AuditableEntity
         Guid userId,
         string taskRef,
         string returnUrl,
-        DateTimeOffset? expiresAt) : base(id)
+        DateTimeOffset? expiresAt,
+        int? maxAttempts) : base(id)
     {
         SessionKey = sessionKey;
         UserId = userId;
         TaskRef = taskRef;
         ReturnUrl = returnUrl;
         ExpiresAt = expiresAt;
+        MaxAttempts = maxAttempts;
         Status = ModuleSessionStatus.Active;
     }
 
@@ -34,10 +43,11 @@ public sealed class ModuleSession : AuditableEntity
         Guid userId,
         string taskRef,
         string returnUrl,
-        DateTimeOffset? expiresAt = null)
-        => new(sessionId, sessionKey, userId, taskRef, returnUrl, expiresAt);
+        DateTimeOffset? expiresAt = null,
+        int? maxAttempts = null)
+        => new(sessionId, sessionKey, userId, taskRef, returnUrl, expiresAt, maxAttempts);
 
-    public bool IsExpired(DateTimeOffset now) => ExpiresAt.HasValue && ExpiresAt.Value < now;
+    public bool IsExpired(DateTimeOffset now) => ExpiresAt.HasValue && ExpiresAt.Value <= now;
 
     /// <summary>Обновляет доверенный снимок активной сессии повторным push от Education.</summary>
     public void Synchronize(
@@ -45,7 +55,8 @@ public sealed class ModuleSession : AuditableEntity
         Guid userId,
         string taskRef,
         string returnUrl,
-        DateTimeOffset? expiresAt)
+        DateTimeOffset? expiresAt,
+        int? maxAttempts)
     {
         if (Status != ModuleSessionStatus.Active)
         {
@@ -57,6 +68,19 @@ public sealed class ModuleSession : AuditableEntity
         TaskRef = taskRef;
         ReturnUrl = returnUrl;
         ExpiresAt = expiresAt;
+        MaxAttempts = maxAttempts;
+    }
+
+    public void PinValidationVersion(Guid validationVersionId)
+    {
+        ValidationVersionId ??= validationVersionId;
+    }
+
+    public void SetFinalResult(int score, FinalizationReason reason, DateTimeOffset finalizedAt)
+    {
+        FinalScore ??= score;
+        FinalizationReason ??= reason;
+        FinalizedAt ??= finalizedAt;
     }
 
     public void MarkCompletionPending()

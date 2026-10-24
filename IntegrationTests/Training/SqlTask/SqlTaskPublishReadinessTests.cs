@@ -196,7 +196,7 @@ public sealed class SqlTaskPublishReadinessTests(TestApplication app) : ApiTestB
         var update = await HttpClient.PutAsJsonAsync(
             ApiRoutes.Training.SqlTasks.ForValidation(draft.TaskId),
             new TaskValidationConfigurationRequest(
-                published.Version, 90, null, [SQLModule.Contracts.Training.HintGroup.Result],
+                published.Version, 90, [SQLModule.Contracts.Training.HintGroup.Result],
                 [new ValidationCheckRequest(
                     published.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
             ClientJson.Options);
@@ -234,42 +234,6 @@ public sealed class SqlTaskPublishReadinessTests(TestApplication app) : ApiTestB
         await PublishValidationAsync(draft.TaskId);
 
         (await SqlTaskClient.GetByIdAsync(draft.TaskId))!.PublicationStatus.ShouldBe(SQLModule.Contracts.Training.PublicationStatus.Draft);
-    }
-
-    [Fact(DisplayName = "Новая версия оценки не меняет версию уже начатого прохождения")]
-    public async Task NewValidationVersion_DoesNotChangeActiveProgress()
-    {
-        var draft = await CreateDraftTaskAsync();
-        await PublishValidationAsync(draft.TaskId);
-        await SqlTaskClient.PublishAsync(draft.TaskId);
-        AsStudent(Guid.NewGuid());
-        using (var start = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.Training.Student.ForTaskProgress(draft.TaskId)))
-        {
-            start.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("D"));
-            (await HttpClient.SendAsync(start)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        }
-
-        AsTeacher();
-        var configuration = await GetValidationAsync(draft.TaskId);
-        (await HttpClient.PutAsJsonAsync(
-            ApiRoutes.Training.SqlTasks.ForValidation(draft.TaskId),
-            new TaskValidationConfigurationRequest(
-                configuration.Version, 80, null, [SQLModule.Contracts.Training.HintGroup.Result],
-                [new ValidationCheckRequest(
-                    configuration.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 100, 0)]),
-            ClientJson.Options)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        await PublishValidationAsync(draft.TaskId);
-
-        using var scope = App.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var versions = await db.TaskValidationVersions.AsNoTracking()
-            .Where(value => value.TaskId == draft.TaskId).OrderBy(value => value.VersionNumber)
-            .Select(value => value.Id).ToListAsync();
-        var progress = await db.StudentTaskProgresses.AsNoTracking().SingleAsync(value => value.TaskId == draft.TaskId);
-        versions.Count.ShouldBe(2);
-        progress.ValidationVersionId.ShouldBe(versions[0]);
-        (await db.SqlTasks.AsNoTracking().SingleAsync(value => value.Id == draft.TaskId))
-            .ActiveValidationVersionId.ShouldBe(versions[1]);
     }
 
     [Fact(DisplayName = "Учебная база опубликованного задания защищена: изменение схемы → 409 TargetDb.PublishedTaskReferenceExists")]

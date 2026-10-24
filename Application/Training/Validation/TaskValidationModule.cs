@@ -18,11 +18,6 @@ public static class TaskValidationModule
 {
     public static IServiceCollection AddTaskValidation(this IServiceCollection services)
     {
-        services.AddOptions<TaskValidationOptions>()
-            .BindConfiguration(TaskValidationOptions.SectionKey)
-            .Validate(options => options.MaxAttemptsLimit > 0, "Лимит попыток должен быть больше нуля.")
-            .ValidateOnStart();
-
         services.AddSingleton<ITaskValidationConfigurationValidator, TaskValidationConfigurationValidator>();
         services.AddScoped<ITaskValidationEvaluationService, TaskValidationEvaluationService>();
         services.AddScoped<

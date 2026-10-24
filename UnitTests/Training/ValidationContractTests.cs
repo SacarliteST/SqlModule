@@ -57,10 +57,10 @@ public sealed class ValidationContractTests
     [Fact(DisplayName = "Request DTO допускают model binding неполного тела")]
     public void ValidationRequests_AreNullableAtApiBoundary()
     {
-        var configuration = new TaskValidationConfigurationRequest(null, null, null, null, null);
+        var configuration = new TaskValidationConfigurationRequest(null, null, null, null);
         var check = new ValidationCheckRequest(null, null, null, null, null);
         var previewCheck = new ValidationCheckPreviewRequest(null, null, null, null, null, null);
-        var preview = new TaskValidationPreviewRequest(null, null, null, [previewCheck]);
+        var preview = new TaskValidationPreviewRequest(null, null, [previewCheck]);
         var publish = new PublishTaskValidationRequest(null);
 
         configuration.Version.ShouldBeNull();
@@ -83,11 +83,6 @@ public sealed class ValidationContractTests
         ApiRoutes.Training.SqlTasks.Validation.ShouldBe("api/v1/sql-tasks/{taskId}/validation");
         ApiRoutes.Training.SqlTasks.ValidationPreview.ShouldBe("api/v1/sql-tasks/{taskId}/validation/preview");
         ApiRoutes.Training.SqlTasks.ValidationPublish.ShouldBe("api/v1/sql-tasks/{taskId}/validation/publish");
-        ApiRoutes.Training.Student.TaskProgress.ShouldBe("api/v1/student/tasks/{taskId}/progress");
-        ApiRoutes.Training.Student.TaskProgressRestart.ShouldBe("api/v1/student/tasks/{taskId}/progress/restart");
-        ApiRoutes.Training.Student.TaskProgressFinalize.ShouldBe("api/v1/student/tasks/{taskId}/progress/finalize");
-        ApiRoutes.Training.Student.ForTaskProgressFinalize(taskId)
-            .ShouldBe($"api/v1/student/tasks/{taskId:D}/progress/finalize");
         ApiRoutes.ModuleIntegration.FinalizeCurrentSession
             .ShouldBe("api/v1/module-integration/sessions/current/finalize");
     }

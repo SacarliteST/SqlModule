@@ -15,6 +15,7 @@ public static class ModuleIntegrationExtensions
         var section = configuration.GetSection(ModuleIntegrationOptions.SectionKey);
         services.AddScoped<IPlatformStudentScope, PlatformStudentScope>();
         services.AddScoped<PracticeCompletionOutbox>();
+        services.AddScoped<IModuleSessionFinalizationService, ModuleSessionFinalizationService>();
         services.AddScoped<IRequestHandler<GetCurrentModuleSessionQuery, Result<CurrentModuleSessionResponse>>, GetCurrentModuleSessionHandler>();
         services.AddScoped<IRequestHandler<GetModuleTasksCatalogQuery, Result<IReadOnlyList<ModuleTaskCatalogItemResponse>>>, GetModuleTasksCatalogHandler>();
         services.AddScoped<IRequestHandler<UpsertModuleSessionCommand, Result>, UpsertModuleSessionHandler>();
@@ -80,6 +81,9 @@ public static class ModuleIntegrationExtensions
                     BatchSize: > 0
                 },
                 "Числовые настройки ModuleIntegration:Lifecycle должны быть больше нуля.")
+            .Validate(
+                options => options.MaxAttemptsPerSession > 0,
+                "ModuleIntegration:MaxAttemptsPerSession должен быть больше нуля.")
             .ValidateOnStart();
 
         if (section.GetValue<bool>(nameof(ModuleIntegrationOptions.Enabled)))

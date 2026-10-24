@@ -116,8 +116,8 @@ public sealed class SubmitAttemptHandler(
         if (task.ActiveValidationVersionId.HasValue)
         {
             return Result<SubmitAttemptResponse>.Fail(Error.Conflict(
-                "Progress.NotFound",
-                "Сначала начните прохождение задания."));
+                "Validation.VersionUnavailable",
+                "Опубликованная версия проверки задания недоступна."));
         }
 
         var sqlQuery = await db.SqlQueries.AsNoTracking()
@@ -330,6 +330,12 @@ public sealed class SubmitAttemptHandler(
         {
             return Result<SubmitAttemptResponse>.Fail(Error.Conflict(
                 "IdempotencyKeyPayloadMismatch", "Idempotency-Key уже использован с другим запросом."));
+        }
+
+        if (String.IsNullOrWhiteSpace(receipt.ResponseJson))
+        {
+            return Result<SubmitAttemptResponse>.Fail(Error.Conflict(
+                "IdempotencyRequestInProgress", "Запрос с этим Idempotency-Key ещё выполняется."));
         }
 
         var response = JsonSerializer.Deserialize<SubmitAttemptResponse>(receipt.ResponseJson, JsonOptions);

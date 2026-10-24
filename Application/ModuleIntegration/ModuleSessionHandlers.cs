@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Persistence;
-using SQLModule.Application.Training.Progress;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.ModuleIntegration;
 using SQLModule.Domain.ModuleIntegration;
@@ -44,7 +43,8 @@ public sealed class GetCurrentModuleSessionHandler(IApplicationDbContext db)
             {
                 value.TaskRef,
                 value.ReturnUrl,
-                value.ExpiresAt
+                value.ExpiresAt,
+                value.MaxAttempts
             })
             .SingleOrDefaultAsync(ct);
 
@@ -55,7 +55,10 @@ public sealed class GetCurrentModuleSessionHandler(IApplicationDbContext db)
         }
 
         ModuleIntegrationTelemetry.RecordCurrent(ModuleIntegrationTelemetryOutcomes.Found);
-        return new CurrentModuleSessionResponse(taskId, session.ReturnUrl, session.ExpiresAt);
+        var attemptsUsed = await db.Attempts.AsNoTracking().CountAsync(value =>
+            value.ModuleSessionId == query.SessionId && value.CountsTowardLimit, ct);
+        return new CurrentModuleSessionResponse(
+            taskId, session.ReturnUrl, session.ExpiresAt, session.MaxAttempts, attemptsUsed);
     }
 }
 
@@ -85,7 +88,8 @@ public sealed class GetModuleTasksCatalogHandler(IApplicationDbContext db)
 
 public sealed class UpsertModuleSessionHandler(
     IApplicationDbContext db,
-    IPlatformProgressService progressService)
+    PracticeCompletionOutbox completionOutbox,
+    TimeProvider timeProvider)
     : IRequestHandler<UpsertModuleSessionCommand, Result>
 {
     public async Task<Result> Handle(UpsertModuleSessionCommand command, CancellationToken ct)
@@ -102,14 +106,9 @@ public sealed class UpsertModuleSessionHandler(
                 request.UserId!.Value,
                 request.TaskRef!,
                 request.ReturnUrl!,
-                request.ExpiresAt);
+                request.ExpiresAt,
+                request.MaxAttempts);
             db.ModuleSessions.Add(created);
-
-            var progressResult = await progressService.EnsureCreatedAsync(created, ct);
-            if (!progressResult.IsSuccess && !IsValidationVersionPending(progressResult.Error))
-            {
-                return Result.Fail(progressResult.Error!);
-            }
 
             try
             {
@@ -141,11 +140,24 @@ public sealed class UpsertModuleSessionHandler(
             request.UserId!.Value,
             request.TaskRef!,
             request.ReturnUrl!,
-            request.ExpiresAt);
-        var existingProgressResult = await progressService.EnsureCreatedAsync(session, ct);
-        if (!existingProgressResult.IsSuccess && !IsValidationVersionPending(existingProgressResult.Error))
+            request.ExpiresAt,
+            request.MaxAttempts);
+        if (request.MaxAttempts.HasValue)
         {
-            return Result.Fail(existingProgressResult.Error!);
+            var attemptsUsed = await db.Attempts.CountAsync(value =>
+                value.ModuleSessionId == session.Id && value.CountsTowardLimit, ct);
+            if (attemptsUsed >= request.MaxAttempts.Value)
+            {
+                var bestScore = await db.Attempts
+                    .Where(value => value.ModuleSessionId == session.Id && value.CountsTowardLimit)
+                    .MaxAsync(value => (int?)value.Score, ct) ?? 0;
+                var finalizedAt = timeProvider.GetUtcNow();
+                session.SetFinalResult(bestScore, FinalizationReason.AttemptsExhausted, finalizedAt);
+                await completionOutbox.TryAddAsync(
+                    session, bestScore, attemptsUsed, FinalizationReason.AttemptsExhausted,
+                    finalizedAt, null, ct);
+                session.MarkCompletionPending();
+            }
         }
 
         await db.SaveChangesAsync(ct);
@@ -153,6 +165,4 @@ public sealed class UpsertModuleSessionHandler(
         return Result.Success();
     }
 
-    private static bool IsValidationVersionPending(Error? error) =>
-        error?.Code == "ModuleSession.TaskValidationUnavailable";
 }

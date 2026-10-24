@@ -166,7 +166,6 @@ public sealed class TaskValidationConfigurationValidatorTests
     {
         var definition = new TaskValidationDefinition(
             70,
-            null,
             [HintGroup.Result, HintGroup.RequiredTables, HintGroup.RequiredTables],
             ValidCompositeChecks());
         var capabilities = Capabilities(hints: new HashSet<HintGroup> { HintGroup.Result });
@@ -237,7 +236,7 @@ public sealed class TaskValidationConfigurationValidatorTests
         int passingScore,
         int? maxAttempts,
         IReadOnlyList<ValidationCheckDefinition> checks) =>
-        new(passingScore, maxAttempts, [HintGroup.Result], checks);
+        new(passingScore, [HintGroup.Result], checks);
 
     private IReadOnlyList<ValidationCheckDefinition> ValidCompositeChecks() =>
     [
@@ -258,8 +257,7 @@ public sealed class TaskValidationConfigurationValidatorTests
         new(
             checkKinds ?? Enum.GetValues<ValidationCheckKind>().ToHashSet(),
             constructs ?? Enum.GetValues<SqlConstruct>().ToHashSet(),
-            hints ?? Enum.GetValues<HintGroup>().ToHashSet(),
-            100);
+            hints ?? Enum.GetValues<HintGroup>().ToHashSet());
 }
 
 internal static class TaskValidationRulesResultShouldlyExtensions

@@ -10,16 +10,15 @@ public sealed class TaskValidationConfigurationValidator : ITaskValidationConfig
     {
         var violations = new List<ValidationRuleViolation>();
 
-        ValidateScoreAndLimit(definition, capabilities, violations);
+        ValidateScore(definition, violations);
         ValidateHints(definition.VisibleHintGroups, capabilities, violations);
         ValidateChecks(definition, capabilities, schema, violations);
 
         return new TaskValidationRulesResult(violations);
     }
 
-    private static void ValidateScoreAndLimit(
+    private static void ValidateScore(
         TaskValidationDefinition definition,
-        ValidationRuleCapabilities capabilities,
         ICollection<ValidationRuleViolation> violations)
     {
         if (definition.PassingScore is < 1 or > 100)
@@ -29,16 +28,6 @@ public sealed class TaskValidationConfigurationValidator : ITaskValidationConfig
                 "passingScore",
                 "Validation.PassingScoreOutOfRange",
                 "Проходной балл должен находиться в диапазоне от 1 до 100.");
-        }
-
-        if (definition.MaxAttempts is <= 0 ||
-            definition.MaxAttempts > capabilities.MaxAttemptsLimit)
-        {
-            Add(
-                violations,
-                "maxAttempts",
-                "Validation.MaxAttemptsOutOfRange",
-                $"Лимит попыток должен быть null или находиться в диапазоне от 1 до {capabilities.MaxAttemptsLimit}.");
         }
     }
 

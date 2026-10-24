@@ -79,7 +79,7 @@ public sealed class UpdateTaskValidationHandler(
 
         configuration.UpdateSettings(
             command.Definition.PassingScore,
-            command.Definition.MaxAttempts,
+            null,
             command.Definition.VisibleHintGroups);
         configuration.SynchronizeChecks(command.Definition.Checks);
         foreach (var addedCheck in configuration.Checks.Where(check => !existingCheckIds.Contains(check.Id)))

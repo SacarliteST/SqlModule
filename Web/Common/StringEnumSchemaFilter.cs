@@ -17,7 +17,7 @@ internal sealed class StringEnumSchemaFilter : ISchemaFilter
         typeof(TableRowOperation),
         typeof(FinalizationReason),
         typeof(HintGroup),
-        typeof(ProgressStatus),
+        typeof(SessionStatus),
         typeof(SqlConstruct),
         typeof(ValidationCheckKind),
         typeof(ValidationCheckStatus),

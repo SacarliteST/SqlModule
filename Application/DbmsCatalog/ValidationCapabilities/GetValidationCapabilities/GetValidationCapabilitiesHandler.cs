@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Training.Validation;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.Validation;
 using SQLModule.Application.Persistence;
@@ -17,7 +16,6 @@ public sealed record GetValidationCapabilitiesQuery(Guid DbmsId)
 public sealed class GetValidationCapabilitiesHandler(
     IApplicationDbContext db,
     ISqlSyntaxAnalyzerResolver analyzerResolver,
-    IOptions<TaskValidationOptions> options,
     ILogger<GetValidationCapabilitiesHandler> logger)
     : IRequestHandler<GetValidationCapabilitiesQuery, Result<DbmsValidationCapabilitiesResponse>>
 {
@@ -73,7 +71,6 @@ public sealed class GetValidationCapabilitiesHandler(
             [ValidationCheckKind.MainDatasetResult.ToContract(), .. AstCheckKinds.Select(value => value.ToContract())],
             supportedConstructs.Select(value => value.ToContract()).ToArray(),
             [HintGroup.Result.ToContract(), .. AstHintGroups.Select(value => value.ToContract())],
-            options.Value.MaxAttemptsLimit,
             analyzer.AnalyzerVersion);
     }
 }
