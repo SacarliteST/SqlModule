@@ -874,8 +874,7 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .IsUnique()
                         .HasFilter("\"ModuleSessionId\" IS NOT NULL");
 
-                    b.HasIndex("ProgressId", "AttemptNumber")
-                        .IsUnique();
+                    b.HasIndex("ProgressId", "AttemptNumber");
 
                     b.HasIndex("UserId", "TaskId", "AttemptNumber")
                         .IsUnique()

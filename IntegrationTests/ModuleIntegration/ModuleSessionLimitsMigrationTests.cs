@@ -71,7 +71,7 @@ public sealed class ModuleSessionLimitsMigrationTests(TestApplication app)
                 .Where(value => value.ModuleSessionId != null)
                 .Select(value => value.AttemptNumber)
                 .ToArrayAsync();
-            platformNumbers.ShouldBe([1]);
+            platformNumbers.ShouldBe([1, 1]);
         }
         finally
         {
@@ -143,7 +143,10 @@ public sealed class ModuleSessionLimitsMigrationTests(TestApplication app)
         restartedAttempt.AttachScoring(restartedProgress.Id, version.Id, 1, 10, true);
         var currentAttempt = CreateAttempt(standaloneUser, task.Id, null, now.AddMinutes(-1), "new");
         currentAttempt.AttachScoring(currentProgress.Id, version.Id, 1, 20, true);
-        db.Attempts.AddRange(platformAttempt, restartedAttempt, currentAttempt);
+        // Один progress, две сессии: в старой схеме номера идут сквозные (1, 2), после миграции — по 1 в каждой сессии.
+        var secondSessionAttempt = CreateAttempt(activeProgress.UserId, task.Id, completedSessionId, now.AddMinutes(1), "platform-2");
+        secondSessionAttempt.AttachScoring(activeProgress.Id, version.Id, 2, 50, true);
+        db.Attempts.AddRange(platformAttempt, secondSessionAttempt, restartedAttempt, currentAttempt);
         await db.SaveChangesAsync();
     }
 
