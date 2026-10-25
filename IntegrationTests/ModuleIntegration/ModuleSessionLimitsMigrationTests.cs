@@ -66,12 +66,12 @@ public sealed class ModuleSessionLimitsMigrationTests(TestApplication app)
                 .OrderBy(value => value.AttemptNumber)
                 .Select(value => value.AttemptNumber)
                 .ToArrayAsync();
-            standaloneNumbers.ShouldBe([1, 2]);
+            standaloneNumbers.ShouldBe([1, 2, 3, 4]);
             var platformNumbers = await assertionDb.Attempts.AsNoTracking()
                 .Where(value => value.ModuleSessionId != null)
                 .Select(value => value.AttemptNumber)
                 .ToArrayAsync();
-            platformNumbers.ShouldBe([1, 1]);
+            platformNumbers.ShouldBe([1]);
         }
         finally
         {
@@ -143,10 +143,14 @@ public sealed class ModuleSessionLimitsMigrationTests(TestApplication app)
         restartedAttempt.AttachScoring(restartedProgress.Id, version.Id, 1, 10, true);
         var currentAttempt = CreateAttempt(standaloneUser, task.Id, null, now.AddMinutes(-1), "new");
         currentAttempt.AttachScoring(currentProgress.Id, version.Id, 1, 20, true);
-        // Один progress, две сессии: в старой схеме номера идут сквозные (1, 2), после миграции — по 1 в каждой сессии.
-        var secondSessionAttempt = CreateAttempt(activeProgress.UserId, task.Id, completedSessionId, now.AddMinutes(1), "platform-2");
-        secondSessionAttempt.AttachScoring(activeProgress.Id, version.Id, 2, 50, true);
-        db.Attempts.AddRange(platformAttempt, secondSessionAttempt, restartedAttempt, currentAttempt);
+        // Реальный прод-сценарий: после перезапуска в новом progress несколько попыток. Старый номер — внутри progress
+        // (1, 2, 3), новый — сквозной по пользователю и заданию (2, 3, 4): одиночный UPDATE при уникальном индексе
+        // (ProgressId, AttemptNumber) на промежуточном шаге давал duplicate key.
+        var currentSecond = CreateAttempt(standaloneUser, task.Id, null, now.AddSeconds(-50), "new-2");
+        currentSecond.AttachScoring(currentProgress.Id, version.Id, 2, 21, true);
+        var currentThird = CreateAttempt(standaloneUser, task.Id, null, now.AddSeconds(-40), "new-3");
+        currentThird.AttachScoring(currentProgress.Id, version.Id, 3, 22, true);
+        db.Attempts.AddRange(platformAttempt, restartedAttempt, currentAttempt, currentSecond, currentThird);
         await db.SaveChangesAsync();
     }
 

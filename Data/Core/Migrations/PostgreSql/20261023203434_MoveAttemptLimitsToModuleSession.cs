@@ -83,8 +83,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                 name: "CK_Attempts_Phase2bScoring",
                 table: "Attempts");
 
-            // Номер попытки теперь считается внутри сессии, а один progress может охватывать несколько сессий:
-            // уникальность (ProgressId, AttemptNumber) мешает перенумерации ниже, дальше индекс только ускоряет выборки.
+            // Раньше номер считался внутри progress, теперь — сквозной по (пользователь, задание) или внутри сессии.
+            // Перенумерация ниже одним UPDATE сдвигает номера внутри progress (1,2,3 -> 2,3,4), и при уникальном
+            // индексе (ProgressId, AttemptNumber) промежуточные строки дают duplicate key. Новые попытки пишутся
+            // без ProgressId, поэтому уникальность больше не нужна — индекс остаётся только для выборок.
             migrationBuilder.DropIndex(
                 name: "IX_Attempts_ProgressId_AttemptNumber",
                 table: "Attempts");

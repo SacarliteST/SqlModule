@@ -63,7 +63,7 @@ internal sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
                .HasForeignKey(x => x.ValidationVersionId)
                .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(x => x.ModuleSessionId);
-        // Не уникальный: номер попытки считается в пределах сессии, а один progress охватывает несколько сессий.
+        // Не уникальный: номер попытки больше не считается внутри progress (legacy-колонка, новые попытки без ProgressId).
         builder.HasIndex(x => new { x.ProgressId, x.AttemptNumber });
         builder.HasIndex(x => new { x.ModuleSessionId, x.AttemptNumber })
             .IsUnique()
