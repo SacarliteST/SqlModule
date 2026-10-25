@@ -15,9 +15,6 @@ internal sealed class TaskValidationVersionConfiguration : IEntityTypeConfigurat
                 "CK_TaskValidationVersions_PassingScore",
                 "\"PassingScore\" BETWEEN 1 AND 100");
             table.HasCheckConstraint(
-                "CK_TaskValidationVersions_MaxAttempts",
-                "\"MaxAttempts\" IS NULL OR \"MaxAttempts\" > 0");
-            table.HasCheckConstraint(
                 "CK_TaskValidationVersions_HintMask",
                 "\"VisibleHintGroupsMask\" >= 0");
         });

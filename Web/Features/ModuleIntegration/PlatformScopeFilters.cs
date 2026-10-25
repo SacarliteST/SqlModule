@@ -46,7 +46,7 @@ internal sealed class StandaloneOnlyReadFilter(
     IOptions<ModuleIntegrationOptions> options)
     : StandaloneOnlyFilter(currentUser, options, PlatformSessionErrors.ScopeRestricted);
 
-/// <summary>Standalone-мутации прохождения: недоступны из платформенной сессии.</summary>
+/// <summary>Standalone-операции: недоступны из платформенной сессии.</summary>
 internal sealed class StandaloneOnlyMutationFilter(
     ICurrentUser currentUser,
     IOptions<ModuleIntegrationOptions> options)

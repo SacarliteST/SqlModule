@@ -160,7 +160,6 @@ public sealed class PublishTaskValidationHandler(
             nextVersionNumber,
             configuration.Version,
             configuration.PassingScore,
-            null,
             configuration.VisibleHintGroupsMask,
             snapshot.Value!,
             userId,

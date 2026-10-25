@@ -9,8 +9,8 @@ public static class SqlTaskErrors
     public static Error TopicNotFound(Guid id) => DomainErrors<SqlTask>.Conflict($"Тема с id '{id}' не найдена.");
     public static Error HasAttempts =>
         DomainErrors<SqlTask>.Conflict("Задание имеет попытки выполнения и не может быть удалено.");
-    public static Error HasStudentProgress =>
-        DomainErrors<SqlTask>.Conflict("У задания есть прохождения студентов, в том числе платформенные, — удалить его нельзя.");
+    public static Error HasModuleSessions =>
+        DomainErrors<SqlTask>.Conflict("Задание используется платформенными сессиями и не может быть удалено.");
     public static Error PublishedCannotBeDeleted =>
         DomainErrors<SqlTask>.Conflict("Опубликованное задание сначала нужно архивировать.");
     public static Error InUse =>

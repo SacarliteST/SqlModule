@@ -791,9 +791,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid?>("ModuleSessionId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("ProgressId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Reason")
                         .IsRequired()
                         .HasColumnType("text");
@@ -871,8 +868,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .IsUnique()
                         .HasFilter("\"ModuleSessionId\" IS NOT NULL");
 
-                    b.HasIndex("ProgressId", "AttemptNumber");
-
                     b.HasIndex("UserId", "TaskId", "AttemptNumber")
                         .IsUnique()
                         .HasFilter("\"ModuleSessionId\" IS NULL AND \"AttemptNumber\" IS NOT NULL");
@@ -941,60 +936,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                             t.HasCheckConstraint("CK_AttemptCheckResults_Order", "\"Order\" >= 0");
 
                             t.HasCheckConstraint("CK_AttemptCheckResults_Weight", "\"Weight\" BETWEEN 1 AND 100");
-                        });
-                });
-
-            modelBuilder.Entity("SQLModule.Domain.Training.AttemptReservation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("AttemptId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("AttemptNumber")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("IdempotencyKey")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("PayloadHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<Guid>("ProgressId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AttemptId")
-                        .IsUnique()
-                        .HasFilter("\"AttemptId\" IS NOT NULL");
-
-                    b.HasIndex("ProgressId", "AttemptNumber")
-                        .IsUnique();
-
-                    b.HasIndex("ProgressId", "IdempotencyKey")
-                        .IsUnique();
-
-                    b.HasIndex("State", "UpdatedAt");
-
-                    b.ToTable("AttemptReservations", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_AttemptReservations_Number", "\"AttemptNumber\" > 0");
                         });
                 });
 
@@ -1110,105 +1051,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.ToTable("SqlTasks");
                 });
 
-            modelBuilder.Entity("SQLModule.Domain.Training.StudentTaskProgress", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("AttemptsUsed")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("BestScore")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("ConcurrencyVersion")
-                        .IsConcurrencyToken()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("CreatedByName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTimeOffset?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("FinalScore")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("FinalizationReason")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<DateTimeOffset?>("FinalizedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModuleSessionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("NextAttemptNumber")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
-
-                    b.Property<Guid>("TaskId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UpdatedByName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ValidationVersionId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ModuleSessionId")
-                        .IsUnique()
-                        .HasFilter("\"ModuleSessionId\" IS NOT NULL");
-
-                    b.HasIndex("TaskId");
-
-                    b.HasIndex("ValidationVersionId");
-
-                    b.HasIndex("Status", "ExpiresAt");
-
-                    b.HasIndex("UserId", "TaskId")
-                        .IsUnique()
-                        .HasFilter("\"ModuleSessionId\" IS NULL AND \"Status\" IN ('Active', 'Finalizing', 'CompletionPending', 'CompletionFailed')");
-
-                    b.ToTable("StudentTaskProgresses", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_StudentTaskProgresses_AttemptsUsed", "\"AttemptsUsed\" >= 0");
-
-                            t.HasCheckConstraint("CK_StudentTaskProgresses_BestScore", "\"BestScore\" BETWEEN 0 AND 100");
-
-                            t.HasCheckConstraint("CK_StudentTaskProgresses_FinalScore", "\"FinalScore\" IS NULL OR \"FinalScore\" BETWEEN 0 AND 100");
-
-                            t.HasCheckConstraint("CK_StudentTaskProgresses_Finalization", "(\"FinalScore\" IS NULL AND \"FinalizationReason\" IS NULL AND \"FinalizedAt\" IS NULL) OR (\"FinalScore\" IS NOT NULL AND \"FinalizationReason\" IS NOT NULL AND \"FinalizedAt\" IS NOT NULL)");
-
-                            t.HasCheckConstraint("CK_StudentTaskProgresses_NextAttemptNumber", "\"NextAttemptNumber\" > 0");
-                        });
-                });
-
             modelBuilder.Entity("SQLModule.Domain.Training.TaskValidationConfiguration", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1224,9 +1066,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<string>("CreatedByName")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<int?>("MaxAttempts")
-                        .HasColumnType("integer");
 
                     b.Property<int>("PassingScore")
                         .HasColumnType("integer");
@@ -1260,8 +1099,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         {
                             t.HasCheckConstraint("CK_TaskValidationConfigurations_HintMask", "\"VisibleHintGroupsMask\" >= 0");
 
-                            t.HasCheckConstraint("CK_TaskValidationConfigurations_MaxAttempts", "\"MaxAttempts\" IS NULL OR \"MaxAttempts\" > 0");
-
                             t.HasCheckConstraint("CK_TaskValidationConfigurations_PassingScore", "\"PassingScore\" BETWEEN 1 AND 100");
                         });
                 });
@@ -1287,9 +1124,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<string>("ExpectedResultSnapshotJson")
                         .IsRequired()
                         .HasColumnType("jsonb");
-
-                    b.Property<int?>("MaxAttempts")
-                        .HasColumnType("integer");
 
                     b.Property<int>("PassingScore")
                         .HasColumnType("integer");
@@ -1337,8 +1171,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.ToTable("TaskValidationVersions", null, t =>
                         {
                             t.HasCheckConstraint("CK_TaskValidationVersions_HintMask", "\"VisibleHintGroupsMask\" >= 0");
-
-                            t.HasCheckConstraint("CK_TaskValidationVersions_MaxAttempts", "\"MaxAttempts\" IS NULL OR \"MaxAttempts\" > 0");
 
                             t.HasCheckConstraint("CK_TaskValidationVersions_Number", "\"VersionNumber\" > 0");
 
@@ -1574,11 +1406,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasForeignKey("ModuleSessionId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("SQLModule.Domain.Training.StudentTaskProgress", null)
-                        .WithMany()
-                        .HasForeignKey("ProgressId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("SQLModule.Domain.Training.SqlTask", null)
                         .WithMany()
                         .HasForeignKey("TaskId")
@@ -1600,22 +1427,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .IsRequired();
 
                     b.Navigation("Attempt");
-                });
-
-            modelBuilder.Entity("SQLModule.Domain.Training.AttemptReservation", b =>
-                {
-                    b.HasOne("SQLModule.Domain.Training.Attempt", null)
-                        .WithMany()
-                        .HasForeignKey("AttemptId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("SQLModule.Domain.Training.StudentTaskProgress", "Progress")
-                        .WithMany()
-                        .HasForeignKey("ProgressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Progress");
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>
@@ -1651,30 +1462,6 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("SqlQuery");
 
                     b.Navigation("Topic");
-                });
-
-            modelBuilder.Entity("SQLModule.Domain.Training.StudentTaskProgress", b =>
-                {
-                    b.HasOne("SQLModule.Domain.ModuleIntegration.ModuleSession", null)
-                        .WithMany()
-                        .HasForeignKey("ModuleSessionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("SQLModule.Domain.Training.SqlTask", "Task")
-                        .WithMany()
-                        .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SQLModule.Domain.Training.TaskValidationVersion", "ValidationVersion")
-                        .WithMany()
-                        .HasForeignKey("ValidationVersionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Task");
-
-                    b.Navigation("ValidationVersion");
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.TaskValidationConfiguration", b =>

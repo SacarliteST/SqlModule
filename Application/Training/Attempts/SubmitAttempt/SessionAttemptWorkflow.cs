@@ -31,7 +31,7 @@ public interface ISubmitAttemptWorkflow
 }
 
 /// <summary>
-/// Выполняет новую модель отправки без StudentTaskProgress: версия закрепляется в сессии,
+/// Выполняет отправку решения: версия проверки закрепляется в сессии,
 /// а лимит и номер попытки проверяются под блокировкой владельца последовательности.
 /// </summary>
 public sealed class SessionAttemptWorkflow(
@@ -209,11 +209,7 @@ public sealed class SessionAttemptWorkflow(
         }
 
         var attemptsUsed = await CountAttemptsAsync(session.Id, ct);
-        var fallbackLimit = await db.TaskValidationVersions.AsNoTracking()
-            .Where(value => value.Id == session.ValidationVersionId!.Value)
-            .Select(value => value.MaxAttempts)
-            .SingleAsync(ct);
-        var maxAttempts = session.MaxAttempts ?? fallbackLimit;
+        var maxAttempts = session.MaxAttempts;
         if (maxAttempts.HasValue && attemptsUsed >= maxAttempts.Value)
         {
             await FinalizeSessionAsync(
@@ -258,9 +254,7 @@ public sealed class SessionAttemptWorkflow(
             }
 
             attemptsUsed = await CountAttemptsAsync(session.Id, ct);
-            // Переходный шаг A: Education ещё может прислать null при resume, поэтому
-            // до шага B сохраняем эффективный лимит из старой validation version.
-            maxAttempts = session.MaxAttempts ?? runtime.Version.MaxAttempts;
+            maxAttempts = session.MaxAttempts;
             if (maxAttempts.HasValue && attemptsUsed >= maxAttempts.Value)
             {
                 await FinalizeSessionAsync(
@@ -297,7 +291,7 @@ public sealed class SessionAttemptWorkflow(
         attemptNumber++;
         attemptsUsed++;
         bestScore = Math.Max(bestScore, score);
-        attempt.AttachScoring(null, runtime.Version.Id, attemptNumber, score, true);
+        attempt.AttachScoring(runtime.Version.Id, attemptNumber, score, true);
         db.Attempts.Add(attempt);
         db.AttemptCheckResults.AddRange(checks.Select(value => AttemptCheckResult.Create(
             attempt.Id, value.Check.Id, value.Check.Kind, value.Status,

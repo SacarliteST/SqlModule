@@ -25,16 +25,12 @@ public sealed class ValidationPersistenceTests(TestApplication app)
                     'TaskValidationConfigurations',
                     'ValidationChecks',
                     'TaskValidationVersions',
-                    'StudentTaskProgresses',
-                    'AttemptReservations',
                     'AttemptCheckResults')
                 """)
             .ToListAsync();
 
         tables.ShouldBe([
             "AttemptCheckResults",
-            "AttemptReservations",
-            "StudentTaskProgresses",
             "TaskValidationConfigurations",
             "TaskValidationVersions",
             "ValidationChecks"
@@ -47,15 +43,31 @@ public sealed class ValidationPersistenceTests(TestApplication app)
                 FROM pg_constraint
                 WHERE conname IN (
                     'CK_Attempts_Phase2bScoring',
-                    'CK_AttemptCheckResults_BinaryScore',
-                    'CK_StudentTaskProgresses_Finalization')
+                    'CK_AttemptCheckResults_BinaryScore')
                 """)
             .ToListAsync();
 
         constraints.ShouldBe([
             "CK_Attempts_Phase2bScoring",
-            "CK_AttemptCheckResults_BinaryScore",
-            "CK_StudentTaskProgresses_Finalization"
+            "CK_AttemptCheckResults_BinaryScore"
         ], ignoreOrder: true);
+
+        var legacyObjects = await db.Database
+            .SqlQueryRaw<string>(
+                """
+                SELECT "table_name" AS "Value"
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                  AND "table_name" IN ('StudentTaskProgresses', 'AttemptReservations')
+                UNION ALL
+                SELECT "column_name" AS "Value"
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND (("table_name" = 'Attempts' AND "column_name" = 'ProgressId')
+                    OR ("table_name" IN ('TaskValidationConfigurations', 'TaskValidationVersions')
+                      AND "column_name" = 'MaxAttempts'))
+                """)
+            .ToListAsync();
+        legacyObjects.ShouldBeEmpty();
     }
 }

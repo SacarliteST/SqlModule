@@ -161,7 +161,7 @@ public sealed class GetStudentTaskByIdHandler(
                     var bestScore = await db.Attempts
                         .Where(value => value.ModuleSessionId == moduleSession.Id && value.CountsTowardLimit)
                         .MaxAsync(value => (int?)value.Score, ct) ?? 0;
-                    var maxAttempts = moduleSession.MaxAttempts ?? version.MaxAttempts;
+                    var maxAttempts = moduleSession.MaxAttempts;
                     int? remaining = maxAttempts.HasValue
                         ? Math.Max(0, maxAttempts.Value - attemptsUsed)
                         : null;
@@ -351,7 +351,7 @@ public sealed class GetStudentAttemptsHandler(IApplicationDbContext db)
             db.SqlTasks.Where(t => t.Id == a.TaskId).Select(t => t.Topic.TopicName).First(),
             a.SubmittedSql, a.Status.ToContract(), a.IsCorrect, a.Reason.ToContract(), a.RowCount, a.DurationMs,
             a.ErrorMessage == null ? null : "SQL-запрос не удалось выполнить.", a.StartedAt, a.FinishedAt,
-            a.AttemptNumber, a.Score, a.ProgressId, a.ValidationVersionId));
+            a.AttemptNumber, a.Score, a.ValidationVersionId));
 }
 
 public sealed class GetStudentAttemptByIdHandler(

@@ -38,14 +38,6 @@ public sealed class ValidationContractTests
             "ForbiddenTables"
         ]);
         Enum.GetNames<ValidationCheckStatus>().ShouldBe(["Passed", "Failed", "NotEvaluated"]);
-        Enum.GetNames<ProgressStatus>().ShouldBe([
-            "Active",
-            "Finalizing",
-            "CompletionPending",
-            "CompletionFailed",
-            "Completed",
-            "Expired"
-        ]);
     }
 
     [Fact(DisplayName = "HiddenDatasetResult отсутствует в validation-контракте")]

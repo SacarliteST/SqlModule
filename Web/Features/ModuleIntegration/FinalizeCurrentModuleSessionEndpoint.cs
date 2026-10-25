@@ -16,7 +16,7 @@ internal sealed class FinalizeCurrentModuleSessionEndpoint : IModuleIntegrationE
             .RequireAuthorization(Policies.Student)
             .WithName("FinalizeCurrentModuleSession")
             .WithTags("Module Integration")
-            .WithSummary("Завершить текущее платформенное прохождение")
+            .WithSummary("Завершить текущую платформенную сессию")
             .WithDescription("Фиксирует фактический BestScore и атомарно ставит один итог в outbox Education.")
             .Produces<SessionFinalizationResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)

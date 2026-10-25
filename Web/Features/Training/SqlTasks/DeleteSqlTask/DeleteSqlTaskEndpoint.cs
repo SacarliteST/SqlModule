@@ -19,8 +19,8 @@ public sealed class DeleteSqlTaskEndpoint : IEndpoint
             .WithTags("Training")
             .WithSummary("Удалить SQL-задание")
             .WithDescription(
-                "Удаляет задание, которым никто не пользовался: статус Draft или Archived, нет попыток и прохождений " +
-                "студентов (включая платформенные). Одной транзакцией удаляются задание, версии оценки, " +
+                "Удаляет задание, которым никто не пользовался: статус Draft или Archived, нет попыток и платформенных сессий. " +
+                "Одной транзакцией удаляются задание, версии оценки, " +
                 "конфигурация оценки и эталонный запрос. Те же правила видны в teacher-details " +
                 "(canDelete, deleteBlockReasons). Возвращает 204 No Content.")
             .Produces(StatusCodes.Status204NoContent)

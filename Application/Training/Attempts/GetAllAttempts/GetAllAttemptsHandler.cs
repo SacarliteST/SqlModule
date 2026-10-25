@@ -11,7 +11,7 @@ public record GetAllAttemptsQuery(
     int Offset, int Limit, Guid? TaskId, Guid? UserId, Guid? TopicId,
     Domain.Training.ExecutionStatus? Status, bool? IsCorrect,
     DateTimeOffset? DateFrom, DateTimeOffset? DateTo,
-    Guid? ProgressId, Guid? ValidationVersionId,
+    Guid? ValidationVersionId,
     int? ScoreFrom, int? ScoreTo,
     Domain.Training.FinalizationReason? FinalizationReason)
     : IRequest<Result<PageResponse<AttemptListItemResponse>>>;
@@ -59,11 +59,6 @@ public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
             q = q.Where(x => x.StartedAt <= query.DateTo.Value);
         }
 
-        if (query.ProgressId.HasValue)
-        {
-            q = q.Where(x => x.ProgressId == query.ProgressId.Value);
-        }
-
         if (query.ValidationVersionId.HasValue)
         {
             q = q.Where(x => x.ValidationVersionId == query.ValidationVersionId.Value);
@@ -84,10 +79,7 @@ public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
             q = q.Where(x =>
                 x.ModuleSessionId.HasValue && db.ModuleSessions.Any(session =>
                     session.Id == x.ModuleSessionId.Value &&
-                    session.FinalizationReason == query.FinalizationReason.Value) ||
-                x.ProgressId.HasValue && db.StudentTaskProgresses.Any(progress =>
-                    progress.Id == x.ProgressId.Value &&
-                    progress.FinalizationReason == query.FinalizationReason.Value));
+                    session.FinalizationReason == query.FinalizationReason.Value));
         }
 
         var total = await q.CountAsync(ct);
@@ -117,7 +109,6 @@ public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
                     : null,
                 x.CreatedByName ?? x.StudentName,
                 x.UpdatedByName ?? x.StudentName,
-                x.ProgressId,
                 x.ValidationVersionId,
                 x.AttemptNumber,
                 x.Score))

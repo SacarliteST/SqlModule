@@ -10,7 +10,6 @@ public static class TaskValidationDefaults
         var configuration = TaskValidationConfiguration.Create(
             taskId,
             passingScore: 100,
-            maxAttempts: null,
             [HintGroup.Result]);
         configuration.SynchronizeChecks(
         [

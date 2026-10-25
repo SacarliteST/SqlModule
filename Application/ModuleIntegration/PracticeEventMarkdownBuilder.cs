@@ -118,7 +118,7 @@ public static class PracticeEventMarkdownBuilder
 
     public static string BuildSummary(PracticeSessionSummaryReport report)
     {
-        var builder = new StringBuilder("**Итог прохождения**\n\n");
+        var builder = new StringBuilder("**Итог сессии**\n\n");
         builder.Append("Попыток: ").Append(report.TotalAttempts)
             .Append(" · Итоговая оценка: ").Append(report.FinalGrade).Append(" из 100")
             .Append(" · Причина: ").Append(ToFinalizationReason(report.Reason));
@@ -129,11 +129,11 @@ public static class PracticeEventMarkdownBuilder
 
         if (report.Reason == FinalizationReason.Expired)
         {
-            builder.Append("\n\nЛучшая попытка не определена: время прохождения истекло.");
+            builder.Append("\n\nЛучшая попытка не определена: время сессии истекло.");
         }
         else if (report.Reason == FinalizationReason.EducationClosed)
         {
-            builder.Append("\n\nЛучшая попытка не определена: прохождение закрыто платформой.");
+            builder.Append("\n\nЛучшая попытка не определена: сессия закрыта платформой.");
         }
         else if (report.BestAttempt is null)
         {
@@ -283,9 +283,8 @@ public static class PracticeEventMarkdownBuilder
         FinalizationReason.AttemptsExhausted => "исчерпаны попытки",
         FinalizationReason.Expired => "время вышло",
         FinalizationReason.Manual => "завершено вручную",
-        FinalizationReason.EducationClosed => "прохождение закрыто платформой",
-        FinalizationReason.Restarted => "прохождение перезапущено",
-        _ => "прохождение завершено"
+        FinalizationReason.EducationClosed => "сессия закрыта платформой",
+        _ => "сессия завершена"
     };
 
     private static string FormatDuration(long durationMs)

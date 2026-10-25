@@ -514,7 +514,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         summary.RootElement.GetProperty("payload").GetProperty("finalGrade").GetInt32().ShouldBe(100);
         var summaryMarkdown = summary.RootElement.GetProperty("markdown").GetString();
         summaryMarkdown.ShouldNotBeNull();
-        summaryMarkdown.ShouldContain("Итог прохождения");
+        summaryMarkdown.ShouldContain("Итог сессии");
 
         var gradeMessage = pending.Single(value => value.Kind == PendingPublishKind.Grade);
         gradeMessage.DeduplicationKey.ShouldBe($"grade:{sessionId:D}");

@@ -14,7 +14,6 @@ public sealed record ValidationCheckSnapshot(
 
 public sealed record ValidationConfigurationSnapshot(
     int PassingScore,
-    int? MaxAttempts,
     IReadOnlyList<HintGroup> VisibleHintGroups,
     IReadOnlyList<ValidationCheckSnapshot> Checks);
 
@@ -55,7 +54,7 @@ public sealed class ValidationRuntimeReader(
         {
             return Result<ValidationRuntime>.Fail(Error.Conflict(
                 "Validation.VersionNotFound",
-                "Опубликованная версия проверки прохождения недоступна."));
+                "Опубликованная версия проверки задания недоступна."));
         }
 
         try

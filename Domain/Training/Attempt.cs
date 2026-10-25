@@ -14,7 +14,6 @@ public sealed class Attempt : AuditableEntity
     public Guid TaskId { get; private set; }
     /// <summary>Платформенная сессия запуска; null для standalone-попытки.</summary>
     public Guid? ModuleSessionId { get; private set; }
-    public Guid? ProgressId { get; private set; }
     public Guid? ValidationVersionId { get; private set; }
     public int? AttemptNumber { get; private set; }
     public int? Score { get; private set; }
@@ -112,13 +111,11 @@ public sealed class Attempt : AuditableEntity
     }
 
     public void AttachScoring(
-        Guid? progressId,
         Guid validationVersionId,
         int attemptNumber,
         int score,
         bool countsTowardLimit)
     {
-        ProgressId = progressId;
         ValidationVersionId = validationVersionId;
         AttemptNumber = attemptNumber;
         Score = score;

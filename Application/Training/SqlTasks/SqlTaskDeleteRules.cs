@@ -38,10 +38,10 @@ public sealed class SqlTaskDeleteRules(IApplicationDbContext db) : ISqlTaskDelet
             blockers.Add(SqlTaskErrors.HasAttempts);
         }
 
-        // Любое прохождение, включая платформенное и без попыток: оно ссылается на задание и версию оценки.
-        if (await db.StudentTaskProgresses.AnyAsync(value => value.TaskId == taskId, ct))
+        var taskRef = taskId.ToString();
+        if (await db.ModuleSessions.AnyAsync(value => value.TaskRef == taskRef, ct))
         {
-            blockers.Add(SqlTaskErrors.HasStudentProgress);
+            blockers.Add(SqlTaskErrors.HasModuleSessions);
         }
 
         return blockers;

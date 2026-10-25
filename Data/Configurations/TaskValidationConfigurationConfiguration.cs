@@ -15,9 +15,6 @@ internal sealed class TaskValidationConfigurationConfiguration
                 "CK_TaskValidationConfigurations_PassingScore",
                 "\"PassingScore\" BETWEEN 1 AND 100");
             table.HasCheckConstraint(
-                "CK_TaskValidationConfigurations_MaxAttempts",
-                "\"MaxAttempts\" IS NULL OR \"MaxAttempts\" > 0");
-            table.HasCheckConstraint(
                 "CK_TaskValidationConfigurations_HintMask",
                 "\"VisibleHintGroupsMask\" >= 0");
         });

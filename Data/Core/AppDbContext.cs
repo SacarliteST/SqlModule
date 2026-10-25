@@ -69,12 +69,6 @@ public class AppDbContext : DbContext, IApplicationDbContext
     /// <summary>Неизменяемые опубликованные версии проверки.</summary>
     public DbSet<TaskValidationVersion> TaskValidationVersions { get; set; }
 
-    /// <summary>Прохождения SQL-заданий студентами.</summary>
-    public DbSet<StudentTaskProgress> StudentTaskProgresses { get; set; }
-
-    /// <summary>Резервации номеров попыток.</summary>
-    public DbSet<AttemptReservation> AttemptReservations { get; set; }
-
     /// <summary>Результаты отдельных критериев попыток.</summary>
     public DbSet<AttemptCheckResult> AttemptCheckResults { get; set; }
 

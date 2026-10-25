@@ -1083,7 +1083,7 @@
         "tags": [
           "Module Integration"
         ],
-        "summary": "Завершить текущее платформенное прохождение",
+        "summary": "Завершить текущую платформенную сессию",
         "description": "Фиксирует фактический BestScore и атомарно ставит один итог в outbox Education.",
         "operationId": "FinalizeCurrentModuleSession",
         "parameters": [
@@ -5148,7 +5148,7 @@
           "Training"
         ],
         "summary": "Удалить SQL-задание",
-        "description": "Удаляет задание, которым никто не пользовался: статус Draft или Archived, нет попыток и прохождений студентов (включая платформенные). Одной транзакцией удаляются задание, версии оценки, конфигурация оценки и эталонный запрос. Те же правила видны в teacher-details (canDelete, deleteBlockReasons). Возвращает 204 No Content.",
+        "description": "Удаляет задание, которым никто не пользовался: статус Draft или Archived, нет попыток и платформенных сессий. Одной транзакцией удаляются задание, версии оценки, конфигурация оценки и эталонный запрос. Те же правила видны в teacher-details (canDelete, deleteBlockReasons). Возвращает 204 No Content.",
         "operationId": "DeleteSqlTask",
         "parameters": [
           {
@@ -5196,7 +5196,7 @@
             }
           },
           "409": {
-            "description": "Задание нельзя удалить. code и статус определяет первая причина, все причины — в errors. Возможные code: SqlTask.PublishedCannotBeDeleted (сначала архивируйте), SqlTask.HasAttempts, SqlTask.HasStudentProgress, SqlTask.InUse (на задание ссылаются данные, не учтённые правилами). Задание при отказе не изменяется.",
+            "description": "Задание нельзя удалить. code и статус определяет первая причина, все причины — в errors. Возможные code: SqlTask.PublishedCannotBeDeleted (сначала архивируйте), SqlTask.HasAttempts, SqlTask.HasModuleSessions, SqlTask.InUse (на задание ссылаются данные, не учтённые правилами). Задание при отказе не изменяется.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5995,7 +5995,7 @@
           "Training"
         ],
         "summary": "Список попыток с пагинацией",
-        "description": "Возвращает 200 OK со страницей попыток, отсортированных по убыванию даты начала. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). taskId — необязательный фильтр по заданию. userId — необязательный фильтр по студенту. progressId и validationVersionId — фильтры версионированной проверки. scoreFrom/scoreTo — включительный диапазон баллов 0–100. finalizationReason — причина финализации прохождения. 422 — некорректные параметры фильтрации или пагинации.",
+        "description": "Возвращает 200 OK со страницей попыток, отсортированных по убыванию даты начала. offset — количество пропускаемых записей (>= 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). taskId — необязательный фильтр по заданию. userId — необязательный фильтр по студенту. validationVersionId — фильтр по версии проверки. scoreFrom/scoreTo — включительный диапазон баллов 0–100. finalizationReason — причина финализации платформенной сессии. 422 — некорректные параметры фильтрации или пагинации.",
         "operationId": "GetAllAttempts",
         "parameters": [
           {
@@ -6088,15 +6088,6 @@
             }
           },
           {
-            "name": "ProgressId",
-            "in": "query",
-            "description": "Необязательный фильтр по прохождению.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
             "name": "ValidationVersionId",
             "in": "query",
             "description": "Необязательный фильтр по версии проверки.",
@@ -6126,7 +6117,7 @@
           {
             "name": "FinalizationReason",
             "in": "query",
-            "description": "Причина финализации связанного прохождения.",
+            "description": "Причина финализации связанной платформенной сессии.",
             "schema": {
               "enum": [
                 "Manual",
@@ -7136,7 +7127,6 @@
           "finishedAt",
           "id",
           "isCorrect",
-          "progressId",
           "publicError",
           "reason",
           "rowCount",
@@ -7265,11 +7255,6 @@
           },
           "updatedByName": {
             "type": "string",
-            "nullable": true
-          },
-          "progressId": {
-            "type": "string",
-            "format": "uuid",
             "nullable": true
           },
           "validationVersionId": {
@@ -8692,7 +8677,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Стабильный machine-код, например `SqlTask.HasStudentProgress`."
+            "description": "Стабильный machine-код, например `SqlTask.HasModuleSessions`."
           },
           "message": {
             "type": "string",
@@ -10261,7 +10246,6 @@
           "finishedAt",
           "id",
           "isCorrect",
-          "progressId",
           "publicError",
           "reason",
           "rowCount",
@@ -10363,11 +10347,6 @@
           "score": {
             "type": "integer",
             "format": "int32",
-            "nullable": true
-          },
-          "progressId": {
-            "type": "string",
-            "format": "uuid",
             "nullable": true
           },
           "validationVersionId": {
@@ -11974,7 +11953,7 @@
           },
           "canDelete": {
             "type": "boolean",
-            "description": "Можно ли удалить задание сейчас: true только при пустом `deleteBlockReasons` —\r\nстатус Draft или Archived, нет попыток и прохождений студентов."
+            "description": "Можно ли удалить задание сейчас: true только при пустом `deleteBlockReasons` —\r\nстатус Draft или Archived, нет попыток и платформенных сессий."
           },
           "lifecycleRestriction": {
             "type": "string",

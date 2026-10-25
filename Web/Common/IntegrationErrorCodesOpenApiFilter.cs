@@ -85,7 +85,7 @@ internal sealed class IntegrationErrorCodesOpenApiFilter : IOperationFilter
                 StatusCodes.Status409Conflict,
                 "Задание нельзя удалить. code и статус определяет первая причина, все причины — в errors. " +
                 "Возможные code: SqlTask.PublishedCannotBeDeleted (сначала архивируйте), SqlTask.HasAttempts, " +
-                "SqlTask.HasStudentProgress, SqlTask.InUse (на задание ссылаются данные, не учтённые правилами). " +
+                "SqlTask.HasModuleSessions, SqlTask.InUse (на задание ссылаются данные, не учтённые правилами). " +
                 "Задание при отказе не изменяется.");
         }
         else if (endpointName == "UpsertModuleSession")

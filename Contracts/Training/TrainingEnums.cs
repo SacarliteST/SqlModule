@@ -87,7 +87,7 @@ public enum SessionStatus
     Expired
 }
 
-// Причина завершения прохождения.
+// Причина завершения платформенной сессии.
 public enum FinalizationReason
 {
     Manual,

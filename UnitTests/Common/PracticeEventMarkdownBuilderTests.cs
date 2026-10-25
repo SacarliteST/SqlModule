@@ -78,8 +78,8 @@ public sealed class PracticeEventMarkdownBuilderTests
     }
 
     [Theory(DisplayName = "Таймаут и закрытие платформой не объявляют лучшую попытку")]
-    [InlineData(FinalizationReason.Expired, "время прохождения истекло")]
-    [InlineData(FinalizationReason.EducationClosed, "прохождение закрыто платформой")]
+    [InlineData(FinalizationReason.Expired, "время сессии истекло")]
+    [InlineData(FinalizationReason.EducationClosed, "сессия закрыта платформой")]
     public void SummaryReport_DoesNotChooseExtremesForForcedClosure(
         FinalizationReason reason,
         string expected)

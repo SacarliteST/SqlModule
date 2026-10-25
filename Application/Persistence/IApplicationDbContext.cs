@@ -50,10 +50,6 @@ public interface IApplicationDbContext
 
     DbSet<TaskValidationVersion> TaskValidationVersions { get; }
 
-    DbSet<StudentTaskProgress> StudentTaskProgresses { get; }
-
-    DbSet<AttemptReservation> AttemptReservations { get; }
-
     DbSet<AttemptCheckResult> AttemptCheckResults { get; }
 
     DbSet<ModuleSession> ModuleSessions { get; }

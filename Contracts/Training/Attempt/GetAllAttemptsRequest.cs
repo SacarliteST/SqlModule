@@ -10,11 +10,10 @@
 /// <param name="IsCorrect">Необязательный фильтр по корректности результата.</param>
 /// <param name="DateFrom">Нижняя граница даты начала.</param>
 /// <param name="DateTo">Верхняя граница даты начала.</param>
-/// <param name="ProgressId">Необязательный фильтр по прохождению.</param>
 /// <param name="ValidationVersionId">Необязательный фильтр по версии проверки.</param>
 /// <param name="ScoreFrom">Минимальный балл включительно, от 0 до 100.</param>
 /// <param name="ScoreTo">Максимальный балл включительно, от 0 до 100.</param>
-/// <param name="FinalizationReason">Причина финализации связанного прохождения.</param>
+/// <param name="FinalizationReason">Причина финализации связанной платформенной сессии.</param>
 public record GetAllAttemptsRequest(
     int Offset = 0,
     int Limit = 20,
@@ -25,7 +24,6 @@ public record GetAllAttemptsRequest(
     bool? IsCorrect = null,
     DateTimeOffset? DateFrom = null,
     DateTimeOffset? DateTo = null,
-    Guid? ProgressId = null,
     Guid? ValidationVersionId = null,
     int? ScoreFrom = null,
     int? ScoreTo = null,

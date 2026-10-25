@@ -82,27 +82,15 @@ public sealed class SqlTaskDeleteTests(TestApplication app) : ApiTestBase(app)
         await db.SaveChangesAsync();
     }
 
-    private async Task SeedProgressAsync(Guid taskId, Guid? moduleSessionId = null)
+    private async Task SeedModuleSessionAsync(Guid taskId)
     {
         using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var versionId = await db.SqlTasks.AsNoTracking().Where(value => value.Id == taskId)
-            .Select(value => value.ActiveValidationVersionId).SingleAsync();
         var userId = Guid.NewGuid();
-        StudentTaskProgress progress;
-        if (moduleSessionId.HasValue)
-        {
-            db.ModuleSessions.Add(ModuleSession.Create(
-                moduleSessionId.Value, $"delete-{moduleSessionId:N}", userId, taskId.ToString(),
-                "https://platform.example/return", null));
-            progress = StudentTaskProgress.CreatePlatform(userId, taskId, versionId!.Value, moduleSessionId.Value, null);
-        }
-        else
-        {
-            progress = StudentTaskProgress.CreateStandalone(userId, taskId, versionId!.Value);
-        }
-
-        db.StudentTaskProgresses.Add(progress);
+        var moduleSessionId = Guid.NewGuid();
+        db.ModuleSessions.Add(ModuleSession.Create(
+            moduleSessionId, $"delete-{moduleSessionId:N}", userId, taskId.ToString(),
+            "https://platform.example/return", null));
         await db.SaveChangesAsync();
     }
 
@@ -158,16 +146,14 @@ public sealed class SqlTaskDeleteTests(TestApplication app) : ApiTestBase(app)
         await AssertDetailsMatchDeleteAsync(context.TaskId, "SqlTask.HasAttempts");
     }
 
-    [Theory(DisplayName = "Удаление: прохождение без попыток (standalone и платформенное) — 409 SqlTask.HasStudentProgress")]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task WithStudentProgress_IsRejected(bool platform)
+    [Fact(DisplayName = "Удаление: платформенная сессия без попыток — 409 SqlTask.HasModuleSessions")]
+    public async Task WithModuleSession_IsRejected()
     {
         var context = await CreateTaskAsync();
         await PublishValidationAsync(context.TaskId);
-        await SeedProgressAsync(context.TaskId, platform ? Guid.NewGuid() : null);
+        await SeedModuleSessionAsync(context.TaskId);
 
-        await AssertDetailsMatchDeleteAsync(context.TaskId, "SqlTask.HasStudentProgress");
+        await AssertDetailsMatchDeleteAsync(context.TaskId, "SqlTask.HasModuleSessions");
     }
 
     [Fact(DisplayName = "Удаление: все причины отказа в errors, code — первая")]
@@ -176,7 +162,7 @@ public sealed class SqlTaskDeleteTests(TestApplication app) : ApiTestBase(app)
         var context = await CreateTaskAsync();
         await PublishValidationAsync(context.TaskId);
         await SqlTaskClient.PublishAsync(context.TaskId);
-        await SeedProgressAsync(context.TaskId);
+        await SeedModuleSessionAsync(context.TaskId);
 
         using var response = await DeleteAsync(context.TaskId);
 
@@ -184,10 +170,10 @@ public sealed class SqlTaskDeleteTests(TestApplication app) : ApiTestBase(app)
         using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         body.RootElement.GetProperty("code").GetString().ShouldBe("SqlTask.PublishedCannotBeDeleted");
         body.RootElement.GetProperty("errors").EnumerateObject().Select(pair => pair.Name).ToArray()
-            .ShouldBe(["SqlTask.PublishedCannotBeDeleted", "SqlTask.HasStudentProgress"]);
+            .ShouldBe(["SqlTask.PublishedCannotBeDeleted", "SqlTask.HasModuleSessions"]);
         var details = await SqlTaskClient.GetTeacherDetailsAsync(context.TaskId);
         details!.DeleteBlockReasons.Select(reason => reason.Code).ShouldBe(
-            ["SqlTask.PublishedCannotBeDeleted", "SqlTask.HasStudentProgress"]);
+            ["SqlTask.PublishedCannotBeDeleted", "SqlTask.HasModuleSessions"]);
     }
 
     [Fact(DisplayName = "Удаление: внешний ключ вне известных причин → 409 SqlTask.InUse, не 500, транзакция откатывается")]

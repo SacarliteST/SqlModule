@@ -62,7 +62,7 @@ public sealed class AttemptScoringReadService(
             ? await db.ModuleSessions.AsNoTracking().SingleOrDefaultAsync(
                 value => value.Id == attempt.ModuleSessionId.Value, ct)
             : null;
-        var maxAttempts = session?.MaxAttempts ?? (session is null ? null : version.MaxAttempts);
+        var maxAttempts = session?.MaxAttempts;
         int? attemptsRemaining = maxAttempts.HasValue
             ? Math.Max(0, maxAttempts.Value - attemptsUsed)
             : null;

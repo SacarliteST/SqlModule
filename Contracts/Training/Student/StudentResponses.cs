@@ -66,7 +66,6 @@ public record StudentAttemptListItemResponse(
     DateTimeOffset FinishedAt,
     int? AttemptNumber = null,
     int? Score = null,
-    Guid? ProgressId = null,
     Guid? ValidationVersionId = null);
 
 public record StudentAttemptResponse(

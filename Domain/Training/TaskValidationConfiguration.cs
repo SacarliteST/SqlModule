@@ -10,7 +10,6 @@ public sealed class TaskValidationConfiguration : AuditableEntity
 
     public Guid TaskId { get; private set; }
     public int PassingScore { get; private set; }
-    public int? MaxAttempts { get; private set; }
     public long VisibleHintGroupsMask { get; private set; }
     public Guid Version { get; private set; }
 
@@ -21,12 +20,10 @@ public sealed class TaskValidationConfiguration : AuditableEntity
         Guid id,
         Guid taskId,
         int passingScore,
-        int? maxAttempts,
         long visibleHintGroupsMask) : base(id)
     {
         TaskId = taskId;
         PassingScore = passingScore;
-        MaxAttempts = maxAttempts;
         VisibleHintGroupsMask = visibleHintGroupsMask;
         Version = Guid.NewGuid();
     }
@@ -34,18 +31,15 @@ public sealed class TaskValidationConfiguration : AuditableEntity
     public static TaskValidationConfiguration Create(
         Guid taskId,
         int passingScore,
-        int? maxAttempts,
         IEnumerable<HintGroup> visibleHintGroups,
         Guid? id = null) =>
-        new(id ?? Guid.NewGuid(), taskId, passingScore, maxAttempts, ToMask(visibleHintGroups));
+        new(id ?? Guid.NewGuid(), taskId, passingScore, ToMask(visibleHintGroups));
 
     public void UpdateSettings(
         int passingScore,
-        int? maxAttempts,
         IEnumerable<HintGroup> visibleHintGroups)
     {
         PassingScore = passingScore;
-        MaxAttempts = maxAttempts;
         VisibleHintGroupsMask = ToMask(visibleHintGroups);
         Touch();
     }

@@ -91,7 +91,7 @@ public sealed class PlatformSmokeDockerTests(DockerTestApplication app)
             .Where(value => value.SessionId == sessionId)
             .OrderBy(value => value.Kind)
             .ToListAsync();
-        // Верный ответ завершает прохождение: событие попытки, оценка и итог сессии (session_summary).
+        // Верный ответ завершает сессию: событие попытки, оценка и итог сессии (session_summary).
         outbox.Count.ShouldBe(3);
         outbox.Count(value => value.Kind == PendingPublishKind.Event).ShouldBe(2);
         outbox.Count(value => value.Kind == PendingPublishKind.Grade).ShouldBe(1);

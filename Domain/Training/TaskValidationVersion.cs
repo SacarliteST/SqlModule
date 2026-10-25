@@ -9,7 +9,6 @@ public sealed class TaskValidationVersion : BaseEntity
     public int VersionNumber { get; private set; }
     public Guid ConfigurationVersion { get; private set; }
     public int PassingScore { get; private set; }
-    public int? MaxAttempts { get; private set; }
     public long VisibleHintGroupsMask { get; private set; }
     public string SchemaSnapshotJson { get; private set; }
     public string DatasetSnapshotJson { get; private set; }
@@ -29,7 +28,6 @@ public sealed class TaskValidationVersion : BaseEntity
         int versionNumber,
         Guid configurationVersion,
         int passingScore,
-        int? maxAttempts,
         long visibleHintGroupsMask,
         string schemaSnapshotJson,
         string datasetSnapshotJson,
@@ -45,7 +43,6 @@ public sealed class TaskValidationVersion : BaseEntity
         VersionNumber = versionNumber;
         ConfigurationVersion = configurationVersion;
         PassingScore = passingScore;
-        MaxAttempts = maxAttempts;
         VisibleHintGroupsMask = visibleHintGroupsMask;
         SchemaSnapshotJson = schemaSnapshotJson;
         DatasetSnapshotJson = datasetSnapshotJson;
@@ -63,7 +60,6 @@ public sealed class TaskValidationVersion : BaseEntity
         int versionNumber,
         Guid configurationVersion,
         int passingScore,
-        int? maxAttempts,
         long visibleHintGroupsMask,
         TaskValidationVersionSnapshot snapshot,
         Guid publishedById,
@@ -72,7 +68,7 @@ public sealed class TaskValidationVersion : BaseEntity
         Guid? id = null) =>
         new(
             id ?? Guid.NewGuid(), taskId, versionNumber, configurationVersion,
-            passingScore, maxAttempts, visibleHintGroupsMask,
+            passingScore, visibleHintGroupsMask,
             snapshot.SchemaJson, snapshot.DatasetJson, snapshot.ReferenceQueryJson,
             snapshot.ExpectedResultJson, snapshot.ConfigurationJson, snapshot.AnalyzerVersion,
             publishedById, publishedByName, publishedAt);

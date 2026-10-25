@@ -129,13 +129,13 @@ public sealed class SmokeDataSeeder(
         if (configuration is null)
         {
             configuration = TaskValidationConfiguration.Create(
-                TaskId, 100, null, [HintGroup.Result], ValidationConfigurationId);
+                TaskId, 100, [HintGroup.Result], ValidationConfigurationId);
             db.Add(configuration);
         }
         else
         {
             // Черновик мог остаться от ручного редактирования (например, открыли редактор проверки).
-            configuration.UpdateSettings(100, null, [HintGroup.Result]);
+            configuration.UpdateSettings(100, [HintGroup.Result]);
         }
 
         var existingCheckIds = configuration.Checks.Select(check => check.Id).ToHashSet();
@@ -170,7 +170,7 @@ public sealed class SmokeDataSeeder(
         }
 
         var version = TaskValidationVersion.Publish(
-            TaskId, 1, configuration.Version, configuration.PassingScore, configuration.MaxAttempts,
+            TaskId, 1, configuration.Version, configuration.PassingScore,
             configuration.VisibleHintGroupsMask, snapshot.Value!,
             SystemUser.Id, "Smoke seed", timeProvider.GetUtcNow());
         db.Add(version);

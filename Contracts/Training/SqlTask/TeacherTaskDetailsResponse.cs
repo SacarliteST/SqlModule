@@ -36,7 +36,7 @@ namespace SQLModule.Contracts.Training.SqlTask;
 /// <param name="CanArchive">Можно ли архивировать задание сейчас.</param>
 /// <param name="CanDelete">
 /// Можно ли удалить задание сейчас: <see langword="true"/> только при пустом <c>deleteBlockReasons</c> —
-/// статус Draft или Archived, нет попыток и прохождений студентов.
+/// статус Draft или Archived, нет попыток и платформенных сессий.
 /// </param>
 /// <param name="LifecycleRestriction">Причина запрета lifecycle-операции, если она общая.</param>
 /// <param name="CreatedByName">Отображаемое имя автора на момент создания задания.</param>
@@ -101,6 +101,6 @@ public sealed record TeacherTaskAttemptResponse(
 public sealed record PublishBlockerResponse(string Code, string Message);
 
 /// <summary>Причина, по которой задание нельзя удалить.</summary>
-/// <param name="Code">Стабильный machine-код, например <c>SqlTask.HasStudentProgress</c>.</param>
+/// <param name="Code">Стабильный machine-код, например <c>SqlTask.HasModuleSessions</c>.</param>
 /// <param name="Message">Понятное преподавателю описание.</param>
 public sealed record DeleteBlockerResponse(string Code, string Message);
