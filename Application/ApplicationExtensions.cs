@@ -26,6 +26,7 @@ using SQLModule.Application.Training.SqlTasks;
 using SQLModule.Application.Training.Topics;
 using SQLModule.Application.Training.Attempts;
 using SQLModule.Application.Training.Validation;
+using SQLModule.Application.Training.Bank;
 using SQLModule.Sandbox.Pooling;
 
 namespace SQLModule.Application;
@@ -38,6 +39,17 @@ public static class ApplicationExtensions
     {
         services.Configure<AttemptResultSnapshotsOptions>(
             configuration.GetSection(AttemptResultSnapshotsOptions.SectionKey));
+        services.AddOptions<TaskBankOptions>()
+            .Bind(configuration.GetSection(TaskBankOptions.SectionKey))
+            .Validate(options => options.HintMaxLength > 0,
+                "TaskBank:HintMaxLength должен быть больше нуля.")
+            .Validate(options => options.SolutionExplanationMaxLength > 0,
+                "TaskBank:SolutionExplanationMaxLength должен быть больше нуля.")
+            .Validate(options => options.SubmissionIntervalSeconds > 0,
+                "TaskBank:SubmissionIntervalSeconds должен быть больше нуля.")
+            .Validate(options => options.RetryAfterSeconds > 0,
+                "TaskBank:RetryAfterSeconds должен быть больше нуля.")
+            .ValidateOnStart();
         services.AddModuleIntegration(configuration);
         services.AddScoped<ISender, Sender>();
         services.AddScoped<IRequestHandler<StandaloneLoginCommand, Result<StandaloneAuthResult>>, StandaloneLoginHandler>();

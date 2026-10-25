@@ -65,5 +65,6 @@ internal sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
             .IsUnique()
             .HasFilter("\"ModuleSessionId\" IS NULL AND \"AttemptNumber\" IS NOT NULL");
         builder.HasIndex(x => x.ValidationVersionId);
+        builder.HasIndex(x => new { x.UserId, x.TaskId, x.ModuleSessionId, x.Score });
     }
 }

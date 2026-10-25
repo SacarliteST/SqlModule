@@ -44,6 +44,10 @@ public interface IApplicationDbContext
 
     DbSet<Attempt> Attempts { get; }
 
+    DbSet<BankHintAccess> BankHintAccesses { get; }
+
+    DbSet<BankSolutionAccess> BankSolutionAccesses { get; }
+
     DbSet<TaskValidationConfiguration> TaskValidationConfigurations { get; }
 
     DbSet<ValidationCheck> ValidationChecks { get; }

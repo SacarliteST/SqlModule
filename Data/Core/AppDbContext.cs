@@ -60,6 +60,12 @@ public class AppDbContext : DbContext, IApplicationDbContext
     /// <summary>Попытки выполнения заданий</summary>
     public DbSet<Attempt> Attempts { get; set; }
 
+    /// <summary>Журнал выдачи подсказок открытого банка.</summary>
+    public DbSet<BankHintAccess> BankHintAccesses { get; set; }
+
+    /// <summary>Журнал открытия разборов открытого банка.</summary>
+    public DbSet<BankSolutionAccess> BankSolutionAccesses { get; set; }
+
     /// <summary>Редактируемые конфигурации проверки заданий.</summary>
     public DbSet<TaskValidationConfiguration> TaskValidationConfigurations { get; set; }
 
@@ -96,6 +102,7 @@ public class AppDbContext : DbContext, IApplicationDbContext
     /// <inheritdoc/>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasSequence<long>("SqlTaskBankNumberSequence");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(IDataMarkeredInterface).Assembly);
         base.OnModelCreating(modelBuilder);
     }

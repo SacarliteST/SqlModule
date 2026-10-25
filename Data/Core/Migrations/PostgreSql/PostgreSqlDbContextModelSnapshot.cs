@@ -22,6 +22,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence("SqlTaskBankNumberSequence");
+
             modelBuilder.Entity("SQLModule.Domain.DbmsCatalog.DbmsDictionary", b =>
                 {
                     b.Property<Guid>("Id")
@@ -872,6 +874,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .IsUnique()
                         .HasFilter("\"ModuleSessionId\" IS NULL AND \"AttemptNumber\" IS NOT NULL");
 
+                    b.HasIndex("UserId", "TaskId", "ModuleSessionId", "Score");
+
                     b.ToTable("Attempts", null, t =>
                         {
                             t.HasCheckConstraint("CK_Attempts_AttemptNumber", "\"AttemptNumber\" IS NULL OR \"AttemptNumber\" > 0");
@@ -939,6 +943,73 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         });
                 });
 
+            modelBuilder.Entity("SQLModule.Domain.Training.BankHintAccess", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AttemptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("AuthorHintIssued")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("AutoHintGroupsMask")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttemptId");
+
+                    b.HasIndex("TaskId", "RequestedAt");
+
+                    b.HasIndex("UserId", "TaskId", "RequestedAt");
+
+                    b.ToTable("BankHintAccesses", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BankHintAccesses_AttemptNumber", "\"AttemptNumber\" > 0");
+
+                            t.HasCheckConstraint("CK_BankHintAccesses_HintMask", "\"AutoHintGroupsMask\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.BankSolutionAccess", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("OpenedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId", "OpenedAt");
+
+                    b.HasIndex("UserId", "TaskId", "OpenedAt");
+
+                    b.ToTable("BankSolutionAccesses", (string)null);
+                });
+
             modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>
                 {
                     b.Property<Guid>("Id")
@@ -997,6 +1068,15 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<Guid?>("ActiveValidationVersionId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BankHint")
+                        .HasColumnType("text");
+
+                    b.Property<long?>("BankNumber")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("BankPublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1012,6 +1092,14 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<string>("PublicationStatus")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("ShowSolution")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("SolutionExplanation")
                         .HasColumnType("text");
 
                     b.Property<Guid>("SqlQueryId")
@@ -1039,16 +1127,30 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Control");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ActiveValidationVersionId");
+
+                    b.HasIndex("BankNumber")
+                        .IsUnique();
 
                     b.HasIndex("SqlQueryId")
                         .IsUnique();
 
                     b.HasIndex("TopicId");
 
-                    b.ToTable("SqlTasks");
+                    b.HasIndex("Visibility", "PublicationStatus", "BankPublishedAt");
+
+                    b.ToTable("SqlTasks", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_SqlTasks_BankPublication", "(\"BankNumber\" IS NULL AND \"BankPublishedAt\" IS NULL) OR (\"BankNumber\" IS NOT NULL AND \"BankNumber\" > 0 AND \"BankPublishedAt\" IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.TaskValidationConfiguration", b =>
@@ -1427,6 +1529,30 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .IsRequired();
 
                     b.Navigation("Attempt");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.BankHintAccess", b =>
+                {
+                    b.HasOne("SQLModule.Domain.Training.Attempt", null)
+                        .WithMany()
+                        .HasForeignKey("AttemptId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SQLModule.Domain.Training.SqlTask", null)
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.BankSolutionAccess", b =>
+                {
+                    b.HasOne("SQLModule.Domain.Training.SqlTask", null)
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>

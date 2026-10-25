@@ -12,6 +12,12 @@ public sealed class SqlTask : AuditableEntity
     public short DifficultyLevel { get; private set; }
     public PublicationStatus PublicationStatus { get; private set; }
     public Guid? ActiveValidationVersionId { get; private set; }
+    public TaskVisibility Visibility { get; private set; }
+    public long? BankNumber { get; private set; }
+    public DateTimeOffset? BankPublishedAt { get; private set; }
+    public string? BankHint { get; private set; }
+    public bool ShowSolution { get; private set; }
+    public string? SolutionExplanation { get; private set; }
 
     public Topic Topic { get; private set; } = null!;
     public SqlQuery SqlQuery { get; private set; } = null!;
@@ -28,6 +34,8 @@ public sealed class SqlTask : AuditableEntity
         TaskText = taskText;
         DifficultyLevel = difficultyLevel;
         PublicationStatus = publicationStatus;
+        Visibility = TaskVisibility.Control;
+        ShowSolution = true;
     }
 
     public static SqlTask Create(
@@ -72,4 +80,30 @@ public sealed class SqlTask : AuditableEntity
     {
         ActiveValidationVersionId = null;
     }
+
+    public void UpdateBankContent(string? bankHint, bool showSolution, string? solutionExplanation)
+    {
+        BankHint = NormalizeOptionalText(bankHint);
+        ShowSolution = showSolution;
+        SolutionExplanation = NormalizeOptionalText(solutionExplanation);
+    }
+
+    public void OpenInBank(long bankNumber, DateTimeOffset publishedAt)
+    {
+        if (BankNumber is null)
+        {
+            BankNumber = bankNumber;
+            BankPublishedAt = publishedAt;
+        }
+
+        Visibility = TaskVisibility.Open;
+    }
+
+    public void CloseBank()
+    {
+        Visibility = TaskVisibility.Control;
+    }
+
+    private static string? NormalizeOptionalText(string? value) =>
+        String.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
