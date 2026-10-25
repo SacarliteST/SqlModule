@@ -462,7 +462,8 @@ public sealed class SessionAttemptWorkflow(
             runtime.Version.Id, attempt.AttemptNumber, attempt.Score,
             bestScore, runtime.Version.PassingScore, bestScore >= runtime.Version.PassingScore,
             attemptsUsed, remaining, canSubmit, session?.Status == ModuleSessionStatus.Active,
-            ToVisibleChecks(checks, visible), ToHints(checks, visible));
+            session is null ? [] : ToVisibleChecks(checks, visible),
+            session is null ? [] : ToHints(checks, visible));
     }
 
     private static AttemptCheckResultResponse[] ToVisibleChecks(

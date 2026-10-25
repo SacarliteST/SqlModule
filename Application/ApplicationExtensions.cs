@@ -62,6 +62,7 @@ public static class ApplicationExtensions
         services.AddScoped<IRequestHandler<GetStudentTaskTableRowsQuery, Result<TableRowsResponse>>, GetStudentTaskTableRowsHandler>();
         services.AddScoped<IRequestHandler<GetStudentAttemptsQuery, Result<PageResponse<StudentAttemptListItemResponse>>>, GetStudentAttemptsHandler>();
         services.AddScoped<IRequestHandler<GetStudentAttemptByIdQuery, Result<StudentAttemptResponse>>, GetStudentAttemptByIdHandler>();
+        services.AddScoped<IStudentTaskAccess, StudentTaskAccess>();
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddScoped<ISqlQueryValidationRunner, SqlQueryValidationRunner>();
         services.AddScoped<ISandboxPoolProfileSource, DbmsSandboxPoolProfileSource>();

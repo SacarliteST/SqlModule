@@ -115,12 +115,15 @@ public sealed class StudentEndpoints : IEndpoint
         ToStudentResult(await sender.Send<GetStudentTaskByIdQuery, Result<StudentTaskDetailsResponse>>(
             new GetStudentTaskByIdQuery(taskId, currentUser.UserId!.Value, currentUser.ModuleSessionId), ct));
 
-    private static async Task<IResult> GetStudentTaskSchema(Guid taskId, ISender sender, CancellationToken ct) =>
+    private static async Task<IResult> GetStudentTaskSchema(
+        Guid taskId, ICurrentUser currentUser, ISender sender, CancellationToken ct) =>
         ToStudentResult(await sender.Send<GetStudentTaskSchemaQuery, Result<StudentTaskSchemaResponse>>(
-            new GetStudentTaskSchemaQuery(taskId), ct));
+            new GetStudentTaskSchemaQuery(
+                taskId, currentUser.UserId!.Value, currentUser.ModuleSessionId), ct));
 
     private static async Task<IResult> GetStudentTaskTableRows(
-        Guid taskId, Guid tableId, int offset, int limit, ISender sender, CancellationToken ct)
+        Guid taskId, Guid tableId, int offset, int limit,
+        ICurrentUser currentUser, ISender sender, CancellationToken ct)
     {
         if (InvalidPage(offset, limit))
         {
@@ -128,7 +131,9 @@ public sealed class StudentEndpoints : IEndpoint
         }
 
         var result = await sender.Send<GetStudentTaskTableRowsQuery, Result<TableRowsResponse>>(
-            new GetStudentTaskTableRowsQuery(taskId, tableId, offset, limit), ct);
+            new GetStudentTaskTableRowsQuery(
+                taskId, tableId, offset, limit,
+                currentUser.UserId!.Value, currentUser.ModuleSessionId), ct);
         return result.Error == StudentErrors.NotFound ? TypedResults.NotFound() : result.ToOk();
     }
 

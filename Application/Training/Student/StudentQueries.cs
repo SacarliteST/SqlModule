@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.ModuleIntegration;
 using SQLModule.Application.Persistence;
 using SQLModule.Application.Schema.SchemaBuilder;
 using SQLModule.Application.Schema.SchemaBuilder.GetTableRows;
@@ -30,9 +31,16 @@ public record GetStudentTasksQuery(StudentTasksRequest Request) : IRequest<Resul
 public record GetStudentTaskByIdQuery(Guid TaskId, Guid UserId, Guid? ModuleSessionId)
     : IRequest<Result<StudentTaskDetailsResponse>>;
 
-public record GetStudentTaskSchemaQuery(Guid TaskId) : IRequest<Result<StudentTaskSchemaResponse>>;
+public record GetStudentTaskSchemaQuery(Guid TaskId, Guid UserId, Guid? ModuleSessionId)
+    : IRequest<Result<StudentTaskSchemaResponse>>;
 
-public record GetStudentTaskTableRowsQuery(Guid TaskId, Guid TableId, int Offset, int Limit)
+public record GetStudentTaskTableRowsQuery(
+    Guid TaskId,
+    Guid TableId,
+    int Offset,
+    int Limit,
+    Guid UserId,
+    Guid? ModuleSessionId)
     : IRequest<Result<TableRowsResponse>>;
 
 public record GetStudentAttemptsQuery(StudentAttemptsRequest Request, Guid UserId)
@@ -50,7 +58,8 @@ public sealed class GetStudentTopicsHandler(IApplicationDbContext db)
             .Select(t => new { t.Id, t.TopicName, t.ParentTopicId, t.Description })
             .ToListAsync(ct);
         var counts = await db.SqlTasks.AsNoTracking()
-            .Where(t => t.PublicationStatus == PublicationStatus.Published)
+            .Where(t => t.PublicationStatus == PublicationStatus.Published &&
+                        t.Visibility == TaskVisibility.Open)
             .GroupBy(t => t.TopicId).Select(g => new { TopicId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.TopicId, x => x.Count, ct);
 
@@ -81,7 +90,8 @@ public sealed class GetStudentTasksHandler(IApplicationDbContext db)
         GetStudentTasksQuery command, CancellationToken ct)
     {
         var request = command.Request;
-        var query = db.SqlTasks.AsNoTracking().Where(t => t.PublicationStatus == PublicationStatus.Published);
+        var query = db.SqlTasks.AsNoTracking().Where(t =>
+            t.PublicationStatus == PublicationStatus.Published && t.Visibility == TaskVisibility.Open);
         if (request.TopicId.HasValue)
         {
             query = query.Where(t => t.TopicId == request.TopicId);
@@ -110,6 +120,7 @@ public sealed class GetStudentTasksHandler(IApplicationDbContext db)
 
 public sealed class GetStudentTaskByIdHandler(
     IApplicationDbContext db,
+    IStudentTaskAccess taskAccess,
     IOptions<SandboxOptions> options,
     TimeProvider timeProvider)
     : IRequestHandler<GetStudentTaskByIdQuery, Result<StudentTaskDetailsResponse>>
@@ -117,9 +128,17 @@ public sealed class GetStudentTaskByIdHandler(
     public async Task<Result<StudentTaskDetailsResponse>> Handle(GetStudentTaskByIdQuery query, CancellationToken ct)
     {
         var taskId = query.TaskId;
+        var access = await taskAccess.EnsureAsync(
+            query.UserId, query.ModuleSessionId, taskId, PlatformScopeMode.Read, ct);
+        if (!access.IsSuccess)
+        {
+            return Result<StudentTaskDetailsResponse>.Fail(access.Error!);
+        }
+
         var o = options.Value;
         var item = await db.SqlTasks.AsNoTracking()
-            .Where(t => t.Id == taskId && t.PublicationStatus == PublicationStatus.Published)
+            .Where(t => t.Id == taskId && t.PublicationStatus == PublicationStatus.Published &&
+                        (query.ModuleSessionId.HasValue || t.Visibility == TaskVisibility.Open))
             .Select(t => new
             {
                 t.Id,
@@ -178,7 +197,7 @@ public sealed class GetStudentTaskByIdHandler(
                 validation = new StudentTaskValidationResponse(
                     version.PassingScore,
                     sessionState,
-                    StudentHints.Build(version));
+                    query.ModuleSessionId.HasValue ? StudentHints.Build(version) : StudentHints.Empty);
             }
         }
 
@@ -195,14 +214,22 @@ public sealed class GetStudentTaskByIdHandler(
     }
 }
 
-public sealed class GetStudentTaskSchemaHandler(IApplicationDbContext db)
+public sealed class GetStudentTaskSchemaHandler(IApplicationDbContext db, IStudentTaskAccess taskAccess)
     : IRequestHandler<GetStudentTaskSchemaQuery, Result<StudentTaskSchemaResponse>>
 {
     public async Task<Result<StudentTaskSchemaResponse>> Handle(GetStudentTaskSchemaQuery query, CancellationToken ct)
     {
         var taskId = query.TaskId;
+        var access = await taskAccess.EnsureAsync(
+            query.UserId, query.ModuleSessionId, taskId, PlatformScopeMode.Read, ct);
+        if (!access.IsSuccess)
+        {
+            return Result<StudentTaskSchemaResponse>.Fail(access.Error!);
+        }
+
         var target = await db.SqlTasks.AsNoTracking()
-            .Where(task => task.Id == taskId && task.PublicationStatus == PublicationStatus.Published)
+            .Where(task => task.Id == taskId && task.PublicationStatus == PublicationStatus.Published &&
+                           (query.ModuleSessionId.HasValue || task.Visibility == TaskVisibility.Open))
             .Select(task => new
             {
                 task.SqlQuery.TargetDbId,
@@ -272,14 +299,25 @@ public sealed class GetStudentTaskSchemaHandler(IApplicationDbContext db)
     }
 }
 
-public sealed class GetStudentTaskTableRowsHandler(IApplicationDbContext db, ISender sender)
+public sealed class GetStudentTaskTableRowsHandler(
+    IApplicationDbContext db,
+    ISender sender,
+    IStudentTaskAccess taskAccess)
     : IRequestHandler<GetStudentTaskTableRowsQuery, Result<TableRowsResponse>>
 {
     public async Task<Result<TableRowsResponse>> Handle(GetStudentTaskTableRowsQuery query, CancellationToken ct)
     {
         var taskId = query.TaskId;
+        var access = await taskAccess.EnsureAsync(
+            query.UserId, query.ModuleSessionId, taskId, PlatformScopeMode.Read, ct);
+        if (!access.IsSuccess)
+        {
+            return Result<TableRowsResponse>.Fail(access.Error!);
+        }
+
         var targetDbId = await db.SqlTasks.AsNoTracking()
-            .Where(task => task.Id == taskId && task.PublicationStatus == PublicationStatus.Published)
+            .Where(task => task.Id == taskId && task.PublicationStatus == PublicationStatus.Published &&
+                           (query.ModuleSessionId.HasValue || task.Visibility == TaskVisibility.Open))
             .Select(task => (Guid?)task.SqlQuery.TargetDbId)
             .SingleOrDefaultAsync(ct);
 
@@ -390,6 +428,8 @@ public sealed class GetStudentAttemptByIdHandler(
 /// <summary>Подсказки студенту, собранные из снимка версии проверки.</summary>
 internal static class StudentHints
 {
+    internal static StudentTaskHintsResponse Empty { get; } = new([], [], [], [], []);
+
     internal static StudentTaskHintsResponse Build(TaskValidationVersion version)
     {
         var groups = version.GetVisibleHintGroups();

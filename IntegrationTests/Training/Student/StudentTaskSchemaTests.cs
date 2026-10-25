@@ -38,6 +38,9 @@ public sealed class StudentTaskSchemaTests : ApiTestBase
         var task = Domain.Training.SqlTask.Create(
             topic.Id, query.Id, "Published schema", "Task", 1,
             publicationStatus: PublicationStatus.Published);
+        var bankNumber = await db.Database.SqlQueryRaw<long>(
+            "SELECT nextval('\"SqlTaskBankNumberSequence\"') AS \"Value\"").SingleAsync();
+        task.OpenInBank(bankNumber, DateTimeOffset.UtcNow);
         var draftQuery = Domain.Training.SqlQuery.Create("SELECT draft_secret", false, false, targetDb.Id);
         var draft = Domain.Training.SqlTask.Create(
             topic.Id, draftQuery.Id, "Draft schema", "Task", 1,

@@ -14,6 +14,7 @@ using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Training.Student;
 
 namespace SQLModule.Application.Training.Attempts.SubmitAttempt;
 
@@ -33,7 +34,7 @@ public sealed class SubmitAttemptHandler(
     ISandboxExecutor executor,
     IResultComparer comparer,
     ISubmitAttemptWorkflow submitWorkflow,
-    IPlatformStudentScope platformScope,
+    IStudentTaskAccess taskAccess,
     IAttemptResultSnapshotService snapshotService,
     PracticeCompletionOutbox completionOutbox,
     IOptions<SandboxOptions> sandboxOptions,
@@ -57,7 +58,7 @@ public sealed class SubmitAttemptHandler(
 
             // Владелец и задание проверяются до любых побочных эффектов; закрытие/истечение
             // сессии решает workflow версионированной проверки — только там можно отличить идемпотентный replay от нового запроса.
-            var allowed = await platformScope.EnsureTaskAllowedAsync(
+            var allowed = await taskAccess.EnsureAsync(
                 command.UserId,
                 command.ModuleSessionId.Value,
                 command.TaskId,
@@ -93,6 +94,16 @@ public sealed class SubmitAttemptHandler(
 
             db.MutationReceipts.Remove(existingReceipt);
             await db.SaveChangesAsync(ct);
+        }
+
+        if (moduleSession is null)
+        {
+            var access = await taskAccess.EnsureAsync(
+                command.UserId, null, command.TaskId, PlatformScopeMode.Write, ct);
+            if (!access.IsSuccess)
+            {
+                return Result<SubmitAttemptResponse>.Fail(access.Error!);
+            }
         }
 
         // Workflow версионированной проверки проверяет закрытие/истечение платформенной сессии до поиска задания —

@@ -85,6 +85,19 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
         return new Scenario(platform, platform.CreateClient(), userId, sessionId, taskId, otherTaskId, executor);
     }
 
+    private static async Task OpenInBankAsync(
+        WebApplicationFactory<IHostMarker> platform,
+        Guid taskId)
+    {
+        using var scope = platform.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var task = await db.SqlTasks.SingleAsync(value => value.Id == taskId);
+        var bankNumber = await db.Database.SqlQueryRaw<long>(
+            "SELECT nextval('\"SqlTaskBankNumberSequence\"') AS \"Value\"").SingleAsync();
+        task.OpenInBank(bankNumber, DateTimeOffset.UtcNow);
+        await db.SaveChangesAsync();
+    }
+
     private static HttpRequestMessage Request(
         HttpMethod method,
         string url,
@@ -442,6 +455,7 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
         using var platform = CreatePlatformApplication();
         var scenario = await SeedAsync(platform, DateTimeOffset.UtcNow.AddMinutes(10), maxAttempts: 1);
         var standaloneUser = Guid.NewGuid();
+        await OpenInBankAsync(platform, scenario.OtherTaskId);
 
         for (var index = 0; index < 3; index++)
         {
@@ -460,6 +474,58 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
         attempts.Select(value => value.AttemptNumber).ShouldBe([1, 2, 3]);
         attempts.All(value => value.ModuleSessionId == null).ShouldBeTrue();
         (await db.PendingPublishes.CountAsync(value => value.SessionId == scenario.SessionId)).ShouldBe(0);
+    }
+
+    [Fact(DisplayName = "Банк скрывает контрольное задание до запуска песочницы")]
+    public async Task StandaloneAccess_HidesControlTaskEverywhere()
+    {
+        using var platform = CreatePlatformApplication();
+        var scenario = await SeedAsync(platform, DateTimeOffset.UtcNow.AddMinutes(10));
+        var standaloneUser = Guid.NewGuid();
+
+        using var details = Request(
+            HttpMethod.Get,
+            ApiRoutes.Training.Student.ForTask(scenario.TaskId),
+            standaloneUser,
+            null);
+        using var detailsResponse = await scenario.Client.SendAsync(details);
+
+        using var catalog = Request(
+            HttpMethod.Get,
+            ApiRoutes.Training.Student.Tasks,
+            standaloneUser,
+            null);
+        using var catalogResponse = await scenario.Client.SendAsync(catalog);
+
+        using var schema = Request(
+            HttpMethod.Get,
+            ApiRoutes.Training.Student.ForTaskSchema(scenario.TaskId),
+            standaloneUser,
+            null);
+        using var schemaResponse = await scenario.Client.SendAsync(schema);
+
+        using var rows = Request(
+            HttpMethod.Get,
+            ApiRoutes.Training.Student.ForTaskTableRows(scenario.TaskId, Guid.NewGuid(), 0, 20),
+            standaloneUser,
+            null);
+        using var rowsResponse = await scenario.Client.SendAsync(rows);
+
+        using var submit = PlatformProfileAndCatalogTests.CreateSubmitRequest(
+            scenario.TaskId,
+            standaloneUser,
+            null);
+        using var submitResponse = await scenario.Client.SendAsync(submit);
+
+        detailsResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        catalogResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var catalogPage = await catalogResponse.Content.ReadFromJsonAsync<
+            PageResponse<Contracts.Training.Student.StudentTaskResponse>>();
+        catalogPage!.Items.ShouldNotContain(item => item.Id == scenario.TaskId);
+        schemaResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        rowsResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        submitResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        scenario.Executor.RunCallCount.ShouldBe(0);
     }
 
     [Fact(DisplayName = "Platform scope: null maxAttempts не ограничивает число отправок")]
@@ -693,6 +759,7 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
         using var platform = CreatePlatformApplication();
         var scenario = await SeedAsync(platform, DateTimeOffset.UtcNow.AddMinutes(10));
         var standaloneUser = Guid.NewGuid();
+        await OpenInBankAsync(platform, scenario.OtherTaskId);
 
         using var catalog = new HttpRequestMessage(HttpMethod.Get, ApiRoutes.Training.Student.Tasks);
         catalog.Headers.Add("X-Test-UserId", standaloneUser.ToString());
