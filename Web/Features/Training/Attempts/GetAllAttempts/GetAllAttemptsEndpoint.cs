@@ -47,7 +47,7 @@ public sealed class GetAllAttemptsEndpoint : IEndpoint
                 request.TopicId, request.Status?.ToDomain(), request.IsCorrect,
                 request.DateFrom, request.DateTo,
                 request.ValidationVersionId,
-                request.ScoreFrom, request.ScoreTo, request.FinalizationReason?.ToDomain()), ct);
+                request.ScoreFrom, request.ScoreTo, request.FinalizationReason?.ToDomain(), request.Origin), ct);
         return result.ToOk();
     }
 }

@@ -1,4 +1,6 @@
 
+using System.Text.Json.Serialization;
+
 namespace SQLModule.Contracts.Training.Validation;
 
 /// <summary>Таблица, раскрытая студенту как безопасная подсказка.</summary>
@@ -16,7 +18,8 @@ public sealed record StudentTaskHintsResponse(
 public sealed record StudentTaskValidationResponse(
     int PassingScore,
     StudentSessionStateResponse? Session,
-    StudentTaskHintsResponse Hints);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    StudentTaskHintsResponse? Hints);
 
 /// <summary>Состояние платформенной сессии; отсутствует в standalone-режиме.</summary>
 public sealed record StudentSessionStateResponse(

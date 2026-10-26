@@ -62,6 +62,17 @@ internal sealed class TaskBankEndpoints : IEndpoint
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .AddEndpointFilter<ValidationFilter<UpdateTaskBankContentRequest>>();
+
+        app.MapPost(ApiRoutes.Training.SqlTasks.BankBatch, UpdateBatch)
+            .RequireAuthorization(Policies.ContentAuthor)
+            .WithName("UpdateTaskBankBatch")
+            .WithTags("Training")
+            .WithSummary("Пакетно открыть или закрыть задания банка")
+            .Produces<TaskBankBatchResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
+            .AddEndpointFilter<ValidationFilter<UpdateTaskBankBatchRequest>>();
     }
 
     private static async Task<IResult> GetReadiness(Guid id, ISender sender, CancellationToken ct) =>
@@ -88,4 +99,11 @@ internal sealed class TaskBankEndpoints : IEndpoint
                 request.ShowSolution!.Value,
                 request.SolutionExplanation),
             ct)).ToOk();
+
+    private static async Task<IResult> UpdateBatch(
+        UpdateTaskBankBatchRequest request,
+        ISender sender,
+        CancellationToken ct) =>
+        (await sender.Send<UpdateTaskBankBatchCommand, Result<TaskBankBatchResponse>>(
+            new UpdateTaskBankBatchCommand(request.TaskIds!, request.Open!.Value), ct)).ToOk();
 }

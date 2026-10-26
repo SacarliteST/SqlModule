@@ -43,6 +43,7 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
             .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
             .ProducesProblem(StatusCodes.Status500InternalServerError)
             .AddEndpointFilter<ValidationFilter<SubmitAttemptRequest>>();
@@ -53,6 +54,7 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
         [FromHeader(Name = "Idempotency-Key"), Required, StringLength(128)] string? idempotencyKey,
         ISender sender,
         ICurrentUser currentUser,
+        HttpContext httpContext,
         IOptions<ModuleIntegrationOptions> integrationOptions,
         CancellationToken ct)
     {
@@ -89,6 +91,11 @@ public sealed class SubmitAttemptEndpoint : IEndpoint
                 parsedKey.ToString("D"),
                 currentUser.ModuleSessionId.HasValue,
                 currentUser.ModuleSessionId), ct);
+        if (result.Error?.Type == ErrorType.TooManyRequests)
+        {
+            httpContext.Response.Headers.RetryAfter = (result.Error.Limit ?? 3).ToString();
+        }
+
         return result.ToCreated(r => ApiRoutes.Training.Attempts.ForId(r.AttemptId));
     }
 }

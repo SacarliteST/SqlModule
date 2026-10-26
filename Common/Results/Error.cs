@@ -23,6 +23,9 @@ public enum ErrorType
     /// <summary>Внешний движок или инфраструктура временно недоступны (503).</summary>
     Unavailable,
 
+    /// <summary>Слишком много запросов (429).</summary>
+    TooManyRequests,
+
     /// <summary>Внутренняя ошибка (500).</summary>
     Failure
 }
@@ -71,6 +74,10 @@ public record Error(
 
     public static Error Unavailable(string code, string message) =>
         new(code, message, ErrorType.Unavailable);
+
+    /// <summary>Создаёт ошибку ограничения частоты запросов (429).</summary>
+    public static Error TooManyRequests(string code, string message, long retryAfterSeconds) =>
+        new(code, message, ErrorType.TooManyRequests, Limit: retryAfterSeconds);
 
     /// <summary>Создаёт внутреннюю ошибку (500).</summary>
     public static Error Failure(string code, string message) =>

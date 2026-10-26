@@ -24,4 +24,19 @@ public static class TaskBankErrors
     public static Error HintMissing { get; } = Error.Conflict(
         "TaskBank.HintMissing",
         "Добавьте авторскую подсказку или включите содержательную автоматическую подсказку.");
+
+    /// <summary>Студент ещё не отправил неуспешное тренировочное решение.</summary>
+    public static Error HintAttemptRequired { get; } = Error.Conflict(
+        "TaskBank.HintAttemptRequired",
+        "Сначала отправьте решение.");
+
+    /// <summary>Разбор отключён преподавателем.</summary>
+    public static Error SolutionDisabled { get; } = Error.Conflict(
+        "TaskBank.SolutionDisabled",
+        "Разбор решения для этого задания недоступен.");
+
+    /// <summary>Студент ещё не решил задание.</summary>
+    public static Error SolutionAttemptRequired { get; } = Error.Conflict(
+        "TaskBank.SolutionAttemptRequired",
+        "Разбор станет доступен после успешного решения задания.");
 }

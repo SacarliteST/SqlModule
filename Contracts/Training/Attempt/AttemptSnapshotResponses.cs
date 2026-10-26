@@ -38,4 +38,5 @@ public record AttemptListItemResponse(
     string? UpdatedByName = null,
     Guid? ValidationVersionId = null,
     int? AttemptNumber = null,
-    int? Score = null);
+    int? Score = null,
+    AttemptOrigin Origin = AttemptOrigin.Platform);

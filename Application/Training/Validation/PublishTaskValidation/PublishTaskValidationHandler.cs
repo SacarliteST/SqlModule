@@ -12,6 +12,7 @@ using SQLModule.Domain.Common;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.Training.Bank;
 
 namespace SQLModule.Application.Training.Validation.PublishTaskValidation;
 
@@ -66,6 +67,15 @@ public sealed class PublishTaskValidationHandler(
         if (configuration.Version != command.Version)
         {
             return Result<TaskValidationConfigurationResponse>.Fail(TaskValidationErrors.StaleVersion());
+        }
+
+        if (task.Visibility == TaskVisibility.Open &&
+            String.IsNullOrWhiteSpace(task.BankHint) &&
+            !TaskBankHintRules.HasAutomaticHint(
+                configuration.GetVisibleHintGroups(),
+                configuration.Checks.Select(check => check.Kind)))
+        {
+            return Result<TaskValidationConfigurationResponse>.Fail(TaskBankErrors.HintMissing);
         }
 
         // Активная версия «текущая» только если конфигурация не менялась И схема, данные и эталон

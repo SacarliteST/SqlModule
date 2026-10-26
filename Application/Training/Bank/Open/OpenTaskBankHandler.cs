@@ -52,6 +52,7 @@ public sealed class OpenTaskBankHandler
             var bankNumber = task.BankNumber ?? await NextBankNumberAsync(db, ct);
             task.OpenInBank(bankNumber, timeProvider.GetUtcNow());
             await db.SaveChangesAsync(ct);
+            await db.Entry(task).ReloadAsync(ct);
         }
 
         await transaction.CommitAsync(ct);

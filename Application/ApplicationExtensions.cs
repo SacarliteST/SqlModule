@@ -57,6 +57,9 @@ public static class ApplicationExtensions
         services.AddScoped<IRequestHandler<StandaloneLogoutCommand, Result>, StandaloneLogoutHandler>();
         services.AddScoped<IRequestHandler<GetStudentTopicsQuery, Result<PageResponse<StudentTopicResponse>>>, GetStudentTopicsHandler>();
         services.AddScoped<IRequestHandler<GetStudentTasksQuery, Result<PageResponse<StudentTaskResponse>>>, GetStudentTasksHandler>();
+        services.AddScoped<IRequestHandler<GetStudentTaskByBankNumberQuery, Result<StudentTaskDetailsResponse>>, GetStudentTaskByBankNumberHandler>();
+        services.AddScoped<IRequestHandler<GetBankHintQuery, Result<BankHintResponse>>, GetBankHintHandler>();
+        services.AddScoped<IRequestHandler<GetBankSolutionQuery, Result<BankSolutionResponse>>, GetBankSolutionHandler>();
         services.AddScoped<IRequestHandler<GetStudentTaskByIdQuery, Result<StudentTaskDetailsResponse>>, GetStudentTaskByIdHandler>();
         services.AddScoped<IRequestHandler<GetStudentTaskSchemaQuery, Result<StudentTaskSchemaResponse>>, GetStudentTaskSchemaHandler>();
         services.AddScoped<IRequestHandler<GetStudentTaskTableRowsQuery, Result<TableRowsResponse>>, GetStudentTaskTableRowsHandler>();

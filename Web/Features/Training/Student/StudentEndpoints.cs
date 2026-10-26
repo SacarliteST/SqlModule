@@ -40,6 +40,32 @@ public sealed class StudentEndpoints : IEndpoint
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
+        app.MapGet(ApiRoutes.Training.Student.TaskByBankNumber, GetStudentTaskByBankNumber)
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
+            .WithName(nameof(GetStudentTaskByBankNumber)).WithTags("Student")
+            .WithSummary("Получить задание открытого банка по номеру")
+            .Produces<StudentTaskDetailsResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+        app.MapGet(ApiRoutes.Training.Student.TaskHint, GetBankHint)
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
+            .WithName(nameof(GetBankHint)).WithTags("Student")
+            .WithSummary("Получить подсказку к заданию открытого банка")
+            .Produces<BankHintResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        app.MapGet(ApiRoutes.Training.Student.TaskSolution, GetBankSolution)
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
+            .WithName(nameof(GetBankSolution)).WithTags("Student")
+            .WithSummary("Получить разбор решения задания открытого банка")
+            .Produces<BankSolutionResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
         app.MapGet(ApiRoutes.Training.Student.TaskSchema, GetStudentTaskSchema)
             .RequireAuthorization(Policies.Student).AddEndpointFilter<PlatformTaskScopeFilter>()
             .WithName(nameof(GetStudentTaskSchema)).WithTags("Student")
@@ -87,7 +113,10 @@ public sealed class StudentEndpoints : IEndpoint
         result.IsSuccess ? TypedResults.Ok(result.Value) : TypedResults.NotFound();
 
     private static async Task<IResult> GetStudentTopics(
-        [AsParameters] StudentTopicsRequest request, ISender sender, CancellationToken ct)
+        [AsParameters] StudentTopicsRequest request,
+        ICurrentUser currentUser,
+        ISender sender,
+        CancellationToken ct)
     {
         if (InvalidPage(request.Offset, request.Limit))
         {
@@ -95,25 +124,65 @@ public sealed class StudentEndpoints : IEndpoint
         }
 
         return ToStudentResult(await sender.Send<GetStudentTopicsQuery, Result<PageResponse<StudentTopicResponse>>>(
-            new GetStudentTopicsQuery(request.Offset, request.Limit), ct));
+            new GetStudentTopicsQuery(request.Offset, request.Limit, currentUser.UserId!.Value), ct));
     }
 
     private static async Task<IResult> GetStudentTasks(
-        [AsParameters] StudentTasksRequest request, ISender sender, CancellationToken ct)
+        [AsParameters] StudentTasksRequest request,
+        ICurrentUser currentUser,
+        ISender sender,
+        CancellationToken ct)
     {
-        if (InvalidPage(request.Offset, request.Limit))
+        if (request.Offset < 0 || request.Limit is < 1 or > 50)
         {
             return InvalidPagination();
         }
 
+        if (request.Search?.Length > 200 || request.BankNumber is <= 0)
+        {
+            return Results.ValidationProblem(
+                new Dictionary<string, string[]>
+                {
+                    [request.Search?.Length > 200 ? "Search" : "BankNumber"] =
+                        [request.Search?.Length > 200
+                            ? "Строка поиска не должна превышать 200 символов."
+                            : "Номер задания должен быть положительным."]
+                },
+                statusCode: StatusCodes.Status422UnprocessableEntity);
+        }
+
         return ToStudentResult(await sender.Send<GetStudentTasksQuery, Result<PageResponse<StudentTaskResponse>>>(
-            new GetStudentTasksQuery(request), ct));
+            new GetStudentTasksQuery(request, currentUser.UserId!.Value), ct));
     }
 
     private static async Task<IResult> GetStudentTaskById(
         Guid taskId, ICurrentUser currentUser, ISender sender, CancellationToken ct) =>
         ToStudentResult(await sender.Send<GetStudentTaskByIdQuery, Result<StudentTaskDetailsResponse>>(
             new GetStudentTaskByIdQuery(taskId, currentUser.UserId!.Value, currentUser.ModuleSessionId), ct));
+
+    private static async Task<IResult> GetStudentTaskByBankNumber(
+        long bankNumber,
+        ICurrentUser currentUser,
+        ISender sender,
+        CancellationToken ct) =>
+        ToStudentResult(await sender.Send<GetStudentTaskByBankNumberQuery, Result<StudentTaskDetailsResponse>>(
+            new GetStudentTaskByBankNumberQuery(bankNumber, currentUser.UserId!.Value), ct));
+
+    private static async Task<IResult> GetBankHint(
+        Guid taskId,
+        ICurrentUser currentUser,
+        ISender sender,
+        CancellationToken ct) =>
+        (await sender.Send<GetBankHintQuery, Result<BankHintResponse>>(
+            new GetBankHintQuery(taskId, currentUser.UserId!.Value), ct)).ToOk();
+
+    private static async Task<IResult> GetBankSolution(
+        Guid taskId,
+        ICurrentUser currentUser,
+        ISender sender,
+        CancellationToken ct) =>
+        (await sender.Send<GetBankSolutionQuery, Result<BankSolutionResponse>>(
+            new GetBankSolutionQuery(taskId, currentUser.UserId!.Value), ct)).ToOk();
 
     private static async Task<IResult> GetStudentTaskSchema(
         Guid taskId, ICurrentUser currentUser, ISender sender, CancellationToken ct) =>

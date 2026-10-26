@@ -6,6 +6,8 @@ using SQLModule.Contracts.Training.Validation;
 using SQLModule.Application.Persistence;
 using SQLModule.Domain.Training.Validation;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.Training.Bank;
+using SQLModule.Domain.Training;
 
 namespace SQLModule.Application.Training.Validation.UpdateTaskValidation;
 
@@ -28,7 +30,13 @@ public sealed class UpdateTaskValidationHandler(
         var taskInfo = await db.SqlTasks
             .AsNoTracking()
             .Where(task => task.Id == command.TaskId)
-            .Select(task => new { task.ActiveValidationVersionId, task.SqlQuery.TargetDbId })
+            .Select(task => new
+            {
+                task.ActiveValidationVersionId,
+                task.SqlQuery.TargetDbId,
+                task.Visibility,
+                task.BankHint
+            })
             .SingleOrDefaultAsync(ct);
         if (taskInfo is null)
         {
@@ -59,6 +67,15 @@ public sealed class UpdateTaskValidationHandler(
         {
             return Result<TaskValidationConfigurationResponse>.Fail(
                 TaskValidationErrors.CheckNotFound(unknownCheckId));
+        }
+
+        if (taskInfo.Visibility == TaskVisibility.Open &&
+            String.IsNullOrWhiteSpace(taskInfo.BankHint) &&
+            !TaskBankHintRules.HasAutomaticHint(
+                command.Definition.VisibleHintGroups,
+                command.Definition.Checks.Select(check => check.Kind)))
+        {
+            return Result<TaskValidationConfigurationResponse>.Fail(TaskBankErrors.HintMissing);
         }
 
         var evaluation = await evaluationService.EvaluateAsync(

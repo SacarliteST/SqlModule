@@ -39,6 +39,7 @@ public static class ResultExtensions
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             ErrorType.PreconditionFailed => StatusCodes.Status412PreconditionFailed,
             ErrorType.Unavailable => StatusCodes.Status503ServiceUnavailable,
+            ErrorType.TooManyRequests => StatusCodes.Status429TooManyRequests,
             _ => StatusCodes.Status500InternalServerError
         };
         var title = error.Type switch
@@ -49,6 +50,7 @@ public static class ResultExtensions
             ErrorType.Conflict => "Конфликт состояния",
             ErrorType.PreconditionFailed => "Условие обновления не выполнено",
             ErrorType.Unavailable => "Сервис временно недоступен",
+            ErrorType.TooManyRequests => "Слишком много запросов",
             _ => "Внутренняя ошибка"
         };
 

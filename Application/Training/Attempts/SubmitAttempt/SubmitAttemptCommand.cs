@@ -15,6 +15,7 @@ using SQLModule.Sandbox;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.ModuleIntegration;
 using SQLModule.Application.Training.Student;
+using SQLModule.Application.Training.Bank;
 
 namespace SQLModule.Application.Training.Attempts.SubmitAttempt;
 
@@ -29,21 +30,49 @@ public record SubmitAttemptCommand(
     Guid? ModuleSessionId)
     : IRequest<Result<SubmitAttemptResponse>>;
 
-public sealed class SubmitAttemptHandler(
-    ITaskMaterializer materializer,
-    ISandboxExecutor executor,
-    IResultComparer comparer,
-    ISubmitAttemptWorkflow submitWorkflow,
-    IStudentTaskAccess taskAccess,
-    IAttemptResultSnapshotService snapshotService,
-    PracticeCompletionOutbox completionOutbox,
-    IOptions<SandboxOptions> sandboxOptions,
-    TimeProvider timeProvider,
-    IApplicationDbContext db)
+public sealed class SubmitAttemptHandler
     : IRequestHandler<SubmitAttemptCommand, Result<SubmitAttemptResponse>>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan ReceiptLifetime = TimeSpan.FromHours(24);
+    private readonly ITaskMaterializer materializer;
+    private readonly ISandboxExecutor executor;
+    private readonly IResultComparer comparer;
+    private readonly ISubmitAttemptWorkflow submitWorkflow;
+    private readonly IStudentTaskAccess taskAccess;
+    private readonly IAttemptResultSnapshotService snapshotService;
+    private readonly PracticeCompletionOutbox completionOutbox;
+    private readonly IOptions<SandboxOptions> sandboxOptions;
+    private readonly TimeProvider timeProvider;
+    private readonly IApplicationDbContext db;
+    private readonly ITrainingAttemptGate trainingAttemptGate;
+
+    /// <summary>Создаёт обработчик отправки попытки.</summary>
+    public SubmitAttemptHandler(
+        ITaskMaterializer materializer,
+        ISandboxExecutor executor,
+        IResultComparer comparer,
+        ISubmitAttemptWorkflow submitWorkflow,
+        IStudentTaskAccess taskAccess,
+        IAttemptResultSnapshotService snapshotService,
+        PracticeCompletionOutbox completionOutbox,
+        IOptions<SandboxOptions> sandboxOptions,
+        TimeProvider timeProvider,
+        IApplicationDbContext db,
+        ITrainingAttemptGate trainingAttemptGate)
+    {
+        this.materializer = materializer;
+        this.executor = executor;
+        this.comparer = comparer;
+        this.submitWorkflow = submitWorkflow;
+        this.taskAccess = taskAccess;
+        this.snapshotService = snapshotService;
+        this.completionOutbox = completionOutbox;
+        this.sandboxOptions = sandboxOptions;
+        this.timeProvider = timeProvider;
+        this.db = db;
+        this.trainingAttemptGate = trainingAttemptGate;
+    }
 
     public async Task<Result<SubmitAttemptResponse>> Handle(
         SubmitAttemptCommand command, CancellationToken ct)
@@ -94,6 +123,23 @@ public sealed class SubmitAttemptHandler(
 
             db.MutationReceipts.Remove(existingReceipt);
             await db.SaveChangesAsync(ct);
+        }
+
+        using var trainingLease = moduleSession is null
+            ? await trainingAttemptGate.TryAcquireAsync(command.UserId, ct)
+            : null;
+        if (moduleSession is null && trainingLease is null)
+        {
+            TaskBankTelemetry.RecordRateLimited();
+            return Result<SubmitAttemptResponse>.Fail(Error.TooManyRequests(
+                "TaskBank.SubmissionRateExceeded",
+                "Подождите несколько секунд перед следующей отправкой.",
+                trainingAttemptGate.RetryAfterSeconds));
+        }
+
+        if (moduleSession is null)
+        {
+            TaskBankTelemetry.RecordAttempt();
         }
 
         if (moduleSession is null)

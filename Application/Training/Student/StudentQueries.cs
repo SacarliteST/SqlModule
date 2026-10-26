@@ -24,10 +24,6 @@ public static class StudentErrors
     public static Error NotFound { get; } = new("Student.NotFound", "Ресурс не найден.", ErrorType.NotFound);
 }
 
-public record GetStudentTopicsQuery(int Offset, int Limit) : IRequest<Result<PageResponse<StudentTopicResponse>>>;
-
-public record GetStudentTasksQuery(StudentTasksRequest Request) : IRequest<Result<PageResponse<StudentTaskResponse>>>;
-
 public record GetStudentTaskByIdQuery(Guid TaskId, Guid UserId, Guid? ModuleSessionId)
     : IRequest<Result<StudentTaskDetailsResponse>>;
 
@@ -47,76 +43,6 @@ public record GetStudentAttemptsQuery(StudentAttemptsRequest Request, Guid UserI
     : IRequest<Result<PageResponse<StudentAttemptListItemResponse>>>;
 
 public record GetStudentAttemptByIdQuery(Guid AttemptId, Guid UserId) : IRequest<Result<StudentAttemptResponse>>;
-
-public sealed class GetStudentTopicsHandler(IApplicationDbContext db)
-    : IRequestHandler<GetStudentTopicsQuery, Result<PageResponse<StudentTopicResponse>>>
-{
-    public async Task<Result<PageResponse<StudentTopicResponse>>> Handle(
-        GetStudentTopicsQuery request, CancellationToken ct)
-    {
-        var topics = await db.Topics.AsNoTracking()
-            .Select(t => new { t.Id, t.TopicName, t.ParentTopicId, t.Description })
-            .ToListAsync(ct);
-        var counts = await db.SqlTasks.AsNoTracking()
-            .Where(t => t.PublicationStatus == PublicationStatus.Published &&
-                        t.Visibility == TaskVisibility.Open)
-            .GroupBy(t => t.TopicId).Select(g => new { TopicId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.TopicId, x => x.Count, ct);
-
-        var byId = topics.ToDictionary(x => x.Id);
-        var visible = counts.Keys.ToHashSet();
-        foreach (var topicId in counts.Keys)
-        {
-            var current = byId.GetValueOrDefault(topicId);
-            while (current?.ParentTopicId is Guid parentId && visible.Add(parentId))
-            {
-                current = byId.GetValueOrDefault(parentId);
-            }
-        }
-
-        var filtered = topics.Where(t => visible.Contains(t.Id))
-            .OrderBy(t => t.TopicName).ThenBy(t => t.Id).ToList();
-        var items = filtered.Skip(request.Offset).Take(request.Limit)
-            .Select(t => new StudentTopicResponse(t.Id, t.TopicName, t.ParentTopicId, t.Description,
-                counts.GetValueOrDefault(t.Id))).ToList();
-        return new PageResponse<StudentTopicResponse> { Items = items, Count = filtered.Count };
-    }
-}
-
-public sealed class GetStudentTasksHandler(IApplicationDbContext db)
-    : IRequestHandler<GetStudentTasksQuery, Result<PageResponse<StudentTaskResponse>>>
-{
-    public async Task<Result<PageResponse<StudentTaskResponse>>> Handle(
-        GetStudentTasksQuery command, CancellationToken ct)
-    {
-        var request = command.Request;
-        var query = db.SqlTasks.AsNoTracking().Where(t =>
-            t.PublicationStatus == PublicationStatus.Published && t.Visibility == TaskVisibility.Open);
-        if (request.TopicId.HasValue)
-        {
-            query = query.Where(t => t.TopicId == request.TopicId);
-        }
-
-        if (!String.IsNullOrWhiteSpace(request.Name))
-        {
-            query = query.Where(t => t.TaskName.Contains(request.Name));
-        }
-
-        if (request.DifficultyLevel.HasValue)
-        {
-            query = query.Where(t => t.DifficultyLevel == request.DifficultyLevel);
-        }
-
-        var count = await query.CountAsync(ct);
-        var items = await query.OrderBy(t => t.DifficultyLevel).ThenBy(t => t.TaskName).ThenBy(t => t.Id)
-            .Skip(request.Offset).Take(request.Limit)
-            .Select(t => new StudentTaskResponse(t.Id, t.TopicId, t.Topic.TopicName, t.TaskName,
-                t.TaskText.Length <= 200 ? t.TaskText : t.TaskText.Substring(0, 200), t.DifficultyLevel,
-                db.TargetDbs.Where(d => d.Id == t.SqlQuery.TargetDbId).Select(d => d.Dbms.DbmsName).First()))
-            .ToListAsync(ct);
-        return new PageResponse<StudentTaskResponse> { Items = items, Count = count };
-    }
-}
 
 public sealed class GetStudentTaskByIdHandler(
     IApplicationDbContext db,
@@ -147,6 +73,7 @@ public sealed class GetStudentTaskByIdHandler(
                 t.TaskName,
                 t.TaskText,
                 t.DifficultyLevel,
+                t.BankNumber,
                 t.ActiveValidationVersionId,
                 DbmsName = db.TargetDbs.Where(d => d.Id == t.SqlQuery.TargetDbId)
                     .Select(d => d.Dbms.DbmsName).First()
@@ -197,7 +124,7 @@ public sealed class GetStudentTaskByIdHandler(
                 validation = new StudentTaskValidationResponse(
                     version.PassingScore,
                     sessionState,
-                    query.ModuleSessionId.HasValue ? StudentHints.Build(version) : StudentHints.Empty);
+                    query.ModuleSessionId.HasValue ? StudentHints.Build(version) : null);
             }
         }
 
@@ -210,7 +137,8 @@ public sealed class GetStudentTaskByIdHandler(
             item.DifficultyLevel,
             item.DbmsName,
             new StudentExecutionLimitsResponse(o.DefaultQueryTimeoutSeconds, o.MaxRows, o.MaxSqlLength),
-            validation);
+            validation,
+            query.ModuleSessionId.HasValue ? null : item.BankNumber);
     }
 }
 
@@ -414,6 +342,11 @@ public sealed class GetStudentAttemptByIdHandler(
             .SingleAsync(ct);
         var snapshot = snapshotService.Read(attempt, timeProvider.GetUtcNow());
         var scoring = await scoringReadService.ReadAsync(attempt, studentSafe: true, ct);
+        if (scoring is not null && !attempt.ModuleSessionId.HasValue)
+        {
+            scoring = scoring with { Checks = [], Hints = [] };
+        }
+
         return new StudentAttemptResponse(
             attempt.Id, attempt.TaskId, task.TaskName, task.TopicId, task.TopicName,
             attempt.SubmittedSql, attempt.Status.ToContract(), attempt.IsCorrect, attempt.Reason.ToContract(),

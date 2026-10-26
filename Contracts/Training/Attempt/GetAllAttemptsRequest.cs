@@ -14,6 +14,7 @@
 /// <param name="ScoreFrom">Минимальный балл включительно, от 0 до 100.</param>
 /// <param name="ScoreTo">Максимальный балл включительно, от 0 до 100.</param>
 /// <param name="FinalizationReason">Причина финализации связанной платформенной сессии.</param>
+/// <param name="Origin">Источник попытки: тренировка или платформенная сессия.</param>
 public record GetAllAttemptsRequest(
     int Offset = 0,
     int Limit = 20,
@@ -27,4 +28,5 @@ public record GetAllAttemptsRequest(
     Guid? ValidationVersionId = null,
     int? ScoreFrom = null,
     int? ScoreTo = null,
-    SQLModule.Contracts.Training.FinalizationReason? FinalizationReason = null);
+    SQLModule.Contracts.Training.FinalizationReason? FinalizationReason = null,
+    AttemptOrigin? Origin = null);

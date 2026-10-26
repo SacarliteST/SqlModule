@@ -13,7 +13,8 @@ public record GetAllAttemptsQuery(
     DateTimeOffset? DateFrom, DateTimeOffset? DateTo,
     Guid? ValidationVersionId,
     int? ScoreFrom, int? ScoreTo,
-    Domain.Training.FinalizationReason? FinalizationReason)
+    Domain.Training.FinalizationReason? FinalizationReason,
+    AttemptOrigin? Origin)
     : IRequest<Result<PageResponse<AttemptListItemResponse>>>;
 
 public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
@@ -82,6 +83,13 @@ public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
                     session.FinalizationReason == query.FinalizationReason.Value));
         }
 
+        if (query.Origin.HasValue)
+        {
+            q = query.Origin == AttemptOrigin.Training
+                ? q.Where(attempt => attempt.ModuleSessionId == null)
+                : q.Where(attempt => attempt.ModuleSessionId != null);
+        }
+
         var total = await q.CountAsync(ct);
 
         var items = await q
@@ -111,7 +119,8 @@ public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
                 x.UpdatedByName ?? x.StudentName,
                 x.ValidationVersionId,
                 x.AttemptNumber,
-                x.Score))
+                x.Score,
+                x.ModuleSessionId == null ? AttemptOrigin.Training : AttemptOrigin.Platform))
             .ToListAsync(ct);
 
         return Result<PageResponse<AttemptListItemResponse>>.Success(new PageResponse<AttemptListItemResponse>

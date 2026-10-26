@@ -28,6 +28,7 @@ public static class SqlTasksModule
         services.AddScoped<IRequestHandler<OpenTaskBankCommand, Result<TaskBankStateResponse>>, OpenTaskBankHandler>();
         services.AddScoped<IRequestHandler<CloseTaskBankCommand, Result<TaskBankStateResponse>>, CloseTaskBankHandler>();
         services.AddScoped<IRequestHandler<UpdateTaskBankContentCommand, Result<TaskBankContentResponse>>, UpdateTaskBankContentHandler>();
+        services.AddScoped<IRequestHandler<UpdateTaskBankBatchCommand, Result<TaskBankBatchResponse>>, UpdateTaskBankBatchHandler>();
         return services;
     }
 }

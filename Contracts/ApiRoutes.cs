@@ -269,14 +269,20 @@ public static class ApiRoutes
         {
             public const string Topics = PrefixV1 + "/student/topics";
             public const string Tasks = PrefixV1 + "/student/tasks";
-            public const string TaskById = Tasks + "/{taskId}";
-            public const string TaskSchema = TaskById + "/schema";
+              public const string TaskById = Tasks + "/{taskId}";
+              public const string TaskByBankNumber = Tasks + "/by-number/{bankNumber:long}";
+              public const string TaskSchema = TaskById + "/schema";
+              public const string TaskHint = TaskById + "/hint";
+              public const string TaskSolution = TaskById + "/solution";
             public const string TaskTableRows = TaskById + "/tables/{tableId:guid}/rows";
             public const string Attempts = PrefixV1 + "/student/attempts";
             public const string AttemptById = Attempts + "/{attemptId}";
 
-            public static string ForTask(Guid taskId) => $"{Tasks}/{taskId}";
-            public static string ForTaskSchema(Guid taskId) => $"{ForTask(taskId)}/schema";
+              public static string ForTask(Guid taskId) => $"{Tasks}/{taskId}";
+              public static string ForTaskByBankNumber(long bankNumber) => $"{Tasks}/by-number/{bankNumber}";
+              public static string ForTaskSchema(Guid taskId) => $"{ForTask(taskId)}/schema";
+              public static string ForTaskHint(Guid taskId) => $"{ForTask(taskId)}/hint";
+              public static string ForTaskSolution(Guid taskId) => $"{ForTask(taskId)}/solution";
             public static string ForTaskTableRows(Guid taskId, Guid tableId, int offset, int limit) =>
                 $"{ForTask(taskId)}/tables/{tableId}/rows?offset={offset}&limit={limit}";
             public static string ForAttempt(Guid attemptId) => $"{Attempts}/{attemptId}";
@@ -344,6 +350,7 @@ public static class ApiRoutes
 
             /// <summary>Готовность и состояние задания в открытом банке.</summary>
             public const string Bank = ById + "/bank";
+            public const string BankBatch = Collection + "/bank/batch";
             public const string BankReadiness = Bank + "/readiness";
             public const string BankOpen = Bank + "/open";
             public const string BankClose = Bank + "/close";
