@@ -4,6 +4,7 @@ using SQLModule.Application.Training.Bank;
 
 namespace SQLModule.UnitTests.Training;
 
+/// <summary>Проверяет ограничение частоты тренировочных попыток.</summary>
 public sealed class TrainingAttemptGateTests
 {
     [Fact]

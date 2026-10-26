@@ -7,16 +7,12 @@ using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Application.Training.SqlTasks;
 
-public record GetAllSqlTasksQuery(
-    int Offset, int Limit, Guid? TopicId, string? Name, Guid? TargetDbId,
-    short? DifficultyLevel, Domain.Training.PublicationStatus? PublicationStatus)
-    : IRequest<Result<PageResponse<SqlTaskResponse>>>;
-
 public sealed class GetAllSqlTasksHandler
     : IRequestHandler<GetAllSqlTasksQuery, Result<PageResponse<SqlTaskResponse>>>
 {
     private readonly IApplicationDbContext db;
 
+    /// <summary>Создаёт обработчик списка SQL-заданий.</summary>
     public GetAllSqlTasksHandler(IApplicationDbContext db)
     {
         this.db = db;

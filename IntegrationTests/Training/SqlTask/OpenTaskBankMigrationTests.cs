@@ -13,6 +13,7 @@ using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.Training.SqlTask;
 
+/// <summary>Проверяет миграцию данных открытого банка заданий.</summary>
 [Collection(IntegrationTestCollection.Name)]
 public sealed class OpenTaskBankMigrationTests
 {

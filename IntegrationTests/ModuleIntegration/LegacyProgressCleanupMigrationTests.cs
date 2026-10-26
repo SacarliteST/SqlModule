@@ -13,6 +13,7 @@ using SQLModule.IntegrationTests.Infrastructure;
 
 namespace SQLModule.IntegrationTests.ModuleIntegration;
 
+/// <summary>Проверяет перенос данных при удалении устаревшей модели прохождений.</summary>
 [Collection(IntegrationTestCollection.Name)]
 public sealed class LegacyProgressCleanupMigrationTests
 {

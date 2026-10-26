@@ -74,7 +74,8 @@ public sealed class GetStudentTopicsHandler
                 topic.Description,
                 taskIds.Length,
                 taskIds.Count(validAttempts.ContainsKey),
-                taskIds.Count(id => validAttempts.GetValueOrDefault(id).Solved)));
+                taskIds.Count(id => validAttempts.GetValueOrDefault(id).Solved),
+                taskIds.Length));
         }
 
         var ordered = visible.OrderBy(topic => topic.TopicName).ThenBy(topic => topic.Id).ToArray();

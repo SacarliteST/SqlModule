@@ -3,6 +3,7 @@ using SQLModule.Domain.Training;
 
 namespace SQLModule.UnitTests.Training;
 
+/// <summary>Проверяет доменные инварианты задания открытого банка.</summary>
 public sealed class TaskBankDomainTests
 {
     private static readonly DateTimeOffset FirstPublishedAt =

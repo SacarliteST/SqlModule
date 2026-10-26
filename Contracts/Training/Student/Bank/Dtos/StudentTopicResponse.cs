@@ -8,6 +8,7 @@ namespace SQLModule.Contracts.Training.Student;
 /// <param name="OpenTasksCount">Число открытых заданий в теме и её потомках.</param>
 /// <param name="AttemptedTasksCount">Число заданий с тренировочными попытками.</param>
 /// <param name="SolvedTasksCount">Число решённых заданий.</param>
+/// <param name="PublishedTasksCount">Число опубликованных заданий, сохранённое для совместимости существующего каталога.</param>
 public sealed record StudentTopicResponse(
     Guid Id,
     string TopicName,
@@ -15,4 +16,5 @@ public sealed record StudentTopicResponse(
     string? Description,
     int OpenTasksCount,
     int AttemptedTasksCount,
-    int SolvedTasksCount);
+    int SolvedTasksCount,
+    int PublishedTasksCount);

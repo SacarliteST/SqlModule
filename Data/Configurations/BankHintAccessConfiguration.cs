@@ -4,6 +4,7 @@ using SQLModule.Domain.Training;
 
 namespace SQLModule.Data.Configurations;
 
+/// <summary>Настраивает хранение журнала выдачи подсказок открытого банка.</summary>
 internal sealed class BankHintAccessConfiguration : IEntityTypeConfiguration<BankHintAccess>
 {
     public void Configure(EntityTypeBuilder<BankHintAccess> builder)

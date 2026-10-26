@@ -4028,6 +4028,7 @@
           {
             "name": "Offset",
             "in": "query",
+            "description": "Смещение.",
             "schema": {
               "type": "integer",
               "format": "int32"
@@ -4036,6 +4037,7 @@
           {
             "name": "Limit",
             "in": "query",
+            "description": "Размер страницы.",
             "schema": {
               "type": "integer",
               "format": "int32"
@@ -4096,29 +4098,70 @@
           {
             "name": "TopicId",
             "in": "query",
+            "description": "Тема с включением всех дочерних тем.",
             "schema": {
               "type": "string",
               "format": "uuid"
             }
           },
           {
-            "name": "Name",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "DifficultyLevel",
             "in": "query",
+            "description": "Уровень сложности.",
             "schema": {
               "type": "integer",
               "format": "int32"
             }
           },
           {
+            "name": "Solved",
+            "in": "query",
+            "description": "Фильтр по личному признаку решения.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "BankNumber",
+            "in": "query",
+            "description": "Точный номер задания в банке.",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "Search",
+            "in": "query",
+            "description": "Поиск по названию и условию.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "description": "Поле сортировки.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/BankTaskSort"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Descending",
+            "in": "query",
+            "description": "Обратный порядок сортировки.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "Offset",
             "in": "query",
+            "description": "Смещение.",
             "schema": {
               "type": "integer",
               "format": "int32"
@@ -4127,6 +4170,7 @@
           {
             "name": "Limit",
             "in": "query",
+            "description": "Размер страницы, не более 50.",
             "schema": {
               "type": "integer",
               "format": "int32"
@@ -4227,6 +4271,212 @@
           },
           "404": {
             "description": "Задание не найдено или закрыто. Для платформенного токена — также чужое задание (code: PlatformSession.TaskNotFound) или недоступная сессия (code: ModuleSession.NotFound). Чтение доступно и для завершённой или истёкшей сессии.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks/by-number/{bankNumber}": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "summary": "Получить задание открытого банка по номеру",
+        "operationId": "GetStudentTaskByBankNumber",
+        "parameters": [
+          {
+            "name": "bankNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentTaskDetailsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks/{taskId}/hint": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "summary": "Получить подсказку к заданию открытого банка",
+        "operationId": "GetBankHint",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankHintResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks/{taskId}/solution": {
+      "get": {
+        "tags": [
+          "Student"
+        ],
+        "summary": "Получить разбор решения задания открытого банка",
+        "operationId": "GetBankSolution",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankSolutionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5499,6 +5749,366 @@
         }
       }
     },
+    "/api/v1/sql-tasks/{id}/bank/readiness": {
+      "get": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Проверить готовность задания к открытому банку",
+        "operationId": "GetTaskBankReadiness",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskBankReadinessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks/{id}/bank/open": {
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Открыть задание в банке",
+        "description": "Атомарно повторяет проверку готовности, при первом открытии назначает постоянный номер и дату. 409 содержит все причины отказа в errors. UsedInControl сообщает об известных контрольных запусках.",
+        "operationId": "OpenTaskInBank",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskBankStateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks/{id}/bank/close": {
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Закрыть задание в банке",
+        "operationId": "CloseTaskInBank",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskBankStateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks/{id}/bank/content": {
+      "put": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Обновить подсказку и пояснение задания банка",
+        "operationId": "UpdateTaskBankContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateTaskBankContentRequest"
+                  }
+                ],
+                "description": "Запрос на изменение авторских материалов задания открытого банка."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskBankContentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sql-tasks/bank/batch": {
+      "post": {
+        "tags": [
+          "Training"
+        ],
+        "summary": "Пакетно открыть или закрыть задания банка",
+        "operationId": "UpdateTaskBankBatch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateTaskBankBatchRequest"
+                  }
+                ],
+                "description": "Запрос пакетного открытия или закрытия заданий банка."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskBankBatchResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/teacher/tasks/{taskId}/details": {
       "get": {
         "tags": [
@@ -6133,6 +6743,18 @@
                 }
               ]
             }
+          },
+          {
+            "name": "Origin",
+            "in": "query",
+            "description": "Источник попытки: тренировка или платформенная сессия.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/AttemptOrigin"
+                }
+              ]
+            }
           }
         ],
         "responses": {
@@ -6287,6 +6909,16 @@
           },
           "409": {
             "description": "Конфликт состояния платформенной сессии или идемпотентного запроса. Возможные code: ModuleSession.Expired, ModuleSession.Closed, ModuleSession.AttemptsExhausted, IdempotencyKeyPayloadMismatch, IdempotencyRequestInProgress. Повтор с тем же Idempotency-Key после завершения сессии возвращает исходный результат.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7127,6 +7759,7 @@
           "finishedAt",
           "id",
           "isCorrect",
+          "origin",
           "publicError",
           "reason",
           "rowCount",
@@ -7271,6 +7904,14 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "origin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttemptOrigin"
+              }
+            ],
+            "description": "Источник попытки в журнале преподавателя."
           }
         },
         "additionalProperties": false,
@@ -7295,6 +7936,15 @@
         },
         "additionalProperties": false,
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "AttemptOrigin": {
+        "enum": [
+          0,
+          1
+        ],
+        "type": "integer",
+        "description": "Источник попытки в журнале преподавателя.",
+        "format": "int32"
       },
       "AttemptResponse": {
         "required": [
@@ -7797,6 +8447,93 @@
         },
         "additionalProperties": false,
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
+      },
+      "BankAutoHintResponse": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "enum": [
+              "Result",
+              "RequiredConstructs",
+              "ForbiddenConstructs",
+              "RequiredTables",
+              "ForbiddenTables"
+            ],
+            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HintGroup"
+              }
+            ],
+            "description": "Группа подсказки."
+          },
+          "message": {
+            "type": "string",
+            "description": "Текст без баллов и эталонных значений."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Безопасная автоматическая подсказка по группе критериев."
+      },
+      "BankHintResponse": {
+        "type": "object",
+        "properties": {
+          "attemptNumber": {
+            "type": "integer",
+            "description": "Номер неуспешной попытки, по которой построена подсказка.",
+            "format": "int32"
+          },
+          "autoHints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankAutoHintResponse"
+            },
+            "description": "Автоматические подсказки по непройденным критериям."
+          },
+          "authorHint": {
+            "type": "string",
+            "description": "Авторская Markdown-подсказка.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Подсказка к заданию открытого банка."
+      },
+      "BankSolutionResponse": {
+        "type": "object",
+        "properties": {
+          "sqlText": {
+            "type": "string",
+            "description": "Эталонный SQL-запрос."
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Markdown-пояснение преподавателя.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Разбор решения задания открытого банка."
+      },
+      "BankTaskSort": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "description": "Поле сортировки каталога открытого банка.",
+        "format": "int32"
+      },
+      "BankTaskStatus": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "description": "Личный статус задания в открытом банке.",
+        "format": "int32"
       },
       "BatchTableRowsRequest": {
         "type": "object",
@@ -8677,7 +9414,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Стабильный machine-код, например `SqlTask.HasModuleSessions`."
+            "description": "Стабильный machine-код."
           },
           "message": {
             "type": "string",
@@ -9333,7 +10070,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Стабильный machine-код, например `SqlTask.ValidationVersionNotPublished`."
+            "description": "Стабильный machine-код."
           },
           "message": {
             "type": "string",
@@ -10171,6 +10908,26 @@
             "type": "string",
             "description": "Отображаемое имя последнего редактора.",
             "nullable": true
+          },
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskVisibility"
+              }
+            ],
+            "description": "Назначение задания: контроль или открытый банк."
+          },
+          "bankNumber": {
+            "type": "integer",
+            "description": "Постоянный номер в банке; null до первого открытия.",
+            "format": "int64",
+            "nullable": true
+          },
+          "bankPublishedAt": {
+            "type": "string",
+            "description": "Дата первого открытия в банке.",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -10355,7 +11112,8 @@
             "nullable": true
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Элемент личной истории попыток."
       },
       "StudentAttemptListItemResponsePageResponse": {
         "type": "object",
@@ -10548,7 +11306,8 @@
             "nullable": true
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Безопасные подробности личной попытки."
       },
       "StudentExecutionLimitsResponse": {
         "required": [
@@ -10571,7 +11330,8 @@
             "format": "int32"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Публичные ограничения выполнения SQL."
       },
       "StudentHintTableResponse": {
         "required": [
@@ -10773,6 +11533,7 @@
       },
       "StudentTaskDetailsResponse": {
         "required": [
+          "bankNumber",
           "dbmsName",
           "difficultyLevel",
           "executionLimits",
@@ -10814,7 +11575,8 @@
               {
                 "$ref": "#/components/schemas/StudentExecutionLimitsResponse"
               }
-            ]
+            ],
+            "description": "Публичные ограничения выполнения SQL."
           },
           "validation": {
             "allOf": [
@@ -10824,9 +11586,15 @@
             ],
             "description": "Безопасная validation-часть student task details.",
             "nullable": true
+          },
+          "bankNumber": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Безопасные данные задания для студента."
       },
       "StudentTaskHintsResponse": {
         "required": [
@@ -10877,30 +11645,73 @@
         "properties": {
           "id": {
             "type": "string",
+            "description": "Идентификатор задания.",
             "format": "uuid"
+          },
+          "bankNumber": {
+            "type": "integer",
+            "description": "Постоянный номер задания в банке.",
+            "format": "int64"
           },
           "topicId": {
             "type": "string",
+            "description": "Идентификатор темы.",
             "format": "uuid"
           },
           "topicName": {
-            "type": "string"
+            "type": "string",
+            "description": "Название темы."
           },
           "taskName": {
-            "type": "string"
+            "type": "string",
+            "description": "Название задания."
           },
           "taskTextPreview": {
-            "type": "string"
+            "type": "string",
+            "description": "Краткий фрагмент условия."
           },
           "difficultyLevel": {
             "type": "integer",
+            "description": "Уровень сложности.",
             "format": "int32"
           },
           "dbmsName": {
-            "type": "string"
+            "type": "string",
+            "description": "Название СУБД."
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BankTaskStatus"
+              }
+            ],
+            "description": "Личный статус решения."
+          },
+          "attemptsCount": {
+            "type": "integer",
+            "description": "Число тренировочных попыток после открытия в банке.",
+            "format": "int32"
+          },
+          "bestScore": {
+            "type": "integer",
+            "description": "Лучший балл.",
+            "format": "int32",
+            "nullable": true
+          },
+          "lastAttemptAt": {
+            "type": "string",
+            "description": "Дата последней тренировочной попытки.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "bankPublishedAt": {
+            "type": "string",
+            "description": "Дата первого открытия в банке.",
+            "format": "date-time"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Карточка задания в каталоге открытого банка."
       },
       "StudentTaskResponsePageResponse": {
         "type": "object",
@@ -10974,7 +11785,8 @@
                 "$ref": "#/components/schemas/StudentTaskHintsResponse"
               }
             ],
-            "description": "Разрешённые преподавателем подсказки по validation version."
+            "description": "Разрешённые преподавателем подсказки по validation version.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -10985,26 +11797,47 @@
         "properties": {
           "id": {
             "type": "string",
+            "description": "Идентификатор темы.",
             "format": "uuid"
           },
           "topicName": {
-            "type": "string"
+            "type": "string",
+            "description": "Название темы."
           },
           "parentTopicId": {
             "type": "string",
+            "description": "Идентификатор родительской темы.",
             "format": "uuid",
             "nullable": true
           },
           "description": {
             "type": "string",
+            "description": "Описание темы.",
             "nullable": true
+          },
+          "openTasksCount": {
+            "type": "integer",
+            "description": "Число открытых заданий в теме и её потомках.",
+            "format": "int32"
+          },
+          "attemptedTasksCount": {
+            "type": "integer",
+            "description": "Число заданий с тренировочными попытками.",
+            "format": "int32"
+          },
+          "solvedTasksCount": {
+            "type": "integer",
+            "description": "Число решённых заданий.",
+            "format": "int32"
           },
           "publishedTasksCount": {
             "type": "integer",
+            "description": "Число опубликованных заданий, сохранённое для совместимости существующего каталога.",
             "format": "int32"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "Узел дерева тем открытого банка с личной статистикой."
       },
       "StudentTopicResponsePageResponse": {
         "type": "object",
@@ -11586,6 +12419,151 @@
         "additionalProperties": false,
         "description": "Согласованный снимок логической схемы учебной базы."
       },
+      "TaskBankBatchItemResponse": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "description": "Идентификатор задания.",
+            "format": "uuid"
+          },
+          "updated": {
+            "type": "boolean",
+            "description": "Изменено ли состояние задания."
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskBankStateResponse"
+              }
+            ],
+            "description": "Новое состояние при успехе.",
+            "nullable": true
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskBankBlockerResponse"
+            },
+            "description": "Причины пропуска."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Результат пакетной операции для одного задания."
+      },
+      "TaskBankBatchResponse": {
+        "type": "object",
+        "properties": {
+          "updatedCount": {
+            "type": "integer",
+            "description": "Число успешно изменённых заданий.",
+            "format": "int32"
+          },
+          "skippedCount": {
+            "type": "integer",
+            "description": "Число пропущенных заданий.",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskBankBatchItemResponse"
+            },
+            "description": "Результаты по каждому заданию."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Итог пакетного изменения видимости заданий банка."
+      },
+      "TaskBankBlockerResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Стабильный машинный код причины."
+          },
+          "message": {
+            "type": "string",
+            "description": "Понятное пользователю описание причины."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Причина, мешающая открыть задание в банке."
+      },
+      "TaskBankContentResponse": {
+        "type": "object",
+        "properties": {
+          "bankHint": {
+            "type": "string",
+            "description": "Авторская Markdown-подсказка.",
+            "nullable": true
+          },
+          "showSolution": {
+            "type": "boolean",
+            "description": "Разрешено ли показывать решение после успешной попытки."
+          },
+          "solutionExplanation": {
+            "type": "string",
+            "description": "Markdown-пояснение к эталонному решению.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Сохранённые авторские материалы задания открытого банка."
+      },
+      "TaskBankReadinessResponse": {
+        "type": "object",
+        "properties": {
+          "canOpen": {
+            "type": "boolean",
+            "description": "Можно ли открыть задание в банке."
+          },
+          "usedInControl": {
+            "type": "boolean",
+            "description": "Использовалось ли задание в платформенном контрольном сценарии."
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskBankBlockerResponse"
+            },
+            "description": "Полный список причин запрета."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Готовность задания к открытию в банке."
+      },
+      "TaskBankStateResponse": {
+        "type": "object",
+        "properties": {
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskVisibility"
+              }
+            ],
+            "description": "Назначение задания."
+          },
+          "bankNumber": {
+            "type": "integer",
+            "description": "Постоянный номер задания в банке.",
+            "format": "int64",
+            "nullable": true
+          },
+          "bankPublishedAt": {
+            "type": "string",
+            "description": "Дата первого открытия задания в банке.",
+            "format": "date-time",
+            "nullable": true
+          },
+          "usedInControl": {
+            "type": "boolean",
+            "description": "Использовалось ли задание в платформенном контрольном сценарии."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Текущее состояние задания в открытом банке."
+      },
       "TaskValidationConfigurationRequest": {
         "type": "object",
         "properties": {
@@ -11772,6 +12750,15 @@
         "additionalProperties": false,
         "description": "Предварительная проверка эталона по draft-конфигурации."
       },
+      "TaskVisibility": {
+        "enum": [
+          0,
+          1
+        ],
+        "type": "integer",
+        "description": "Определяет назначение опубликованного задания.",
+        "format": "int32"
+      },
       "TeacherTaskAttemptResponse": {
         "type": "object",
         "properties": {
@@ -11834,29 +12821,23 @@
         "properties": {
           "taskId": {
             "type": "string",
-            "description": "Идентификатор задания.",
             "format": "uuid"
           },
           "topicId": {
             "type": "string",
-            "description": "Идентификатор темы.",
             "format": "uuid"
           },
           "topicName": {
-            "type": "string",
-            "description": "Название темы."
+            "type": "string"
           },
           "taskName": {
-            "type": "string",
-            "description": "Название задания."
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "description": "Условие задания."
+            "type": "string"
           },
           "difficultyLevel": {
             "type": "integer",
-            "description": "Уровень сложности.",
             "format": "int32"
           },
           "publicationStatus": {
@@ -11870,22 +12851,18 @@
               {
                 "$ref": "#/components/schemas/PublicationStatus"
               }
-            ],
-            "description": "Статус публикации."
+            ]
           },
           "createdAt": {
             "type": "string",
-            "description": "Дата создания.",
             "format": "date-time"
           },
           "updatedAt": {
             "type": "string",
-            "description": "Дата последнего изменения.",
             "format": "date-time"
           },
           "createdById": {
             "type": "string",
-            "description": "Идентификатор автора.",
             "format": "uuid"
           },
           "sqlQuery": {
@@ -11894,7 +12871,7 @@
                 "$ref": "#/components/schemas/TeacherTaskSqlQueryResponse"
               }
             ],
-            "description": "Текущее эталонное решение."
+            "description": "Эталонный запрос в деталях задания."
           },
           "targetDb": {
             "allOf": [
@@ -11902,67 +12879,93 @@
                 "$ref": "#/components/schemas/TeacherTaskTargetDbResponse"
               }
             ],
-            "description": "Учебная база эталонного решения."
+            "description": "Учебная база в деталях задания."
           },
           "canEditTask": {
-            "type": "boolean",
-            "description": "Можно ли изменять основные поля задания: название, условие и сложность.\r\nФлаг не распространяется на тему, статус публикации и эталонное решение — для них действуют отдельные правила."
+            "type": "boolean"
           },
           "canEditReferenceQuery": {
-            "type": "boolean",
-            "description": "Можно ли сейчас изменить эталонное решение отдельной операцией."
+            "type": "boolean"
           },
           "referenceQueryEditRestriction": {
             "type": "string",
-            "description": "Понятная пользователю причина запрета изменения эталона; null, если изменение разрешено.",
             "nullable": true
           },
           "attemptsCount": {
             "type": "integer",
-            "description": "Общее количество попыток.",
             "format": "int32"
           },
           "lastAttempts": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TeacherTaskAttemptResponse"
-            },
-            "description": "Последние попытки выполнения."
+            }
           },
           "publishBlockers": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PublishBlockerResponse"
-            },
-            "description": "Все причины, мешающие публикации (или запуску уже опубликованного задания), в стабильном порядке.\r\nПустой список означает готовность. Поля каждого элемента обязательны."
+            }
           },
           "deleteBlockReasons": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DeleteBlockerResponse"
-            },
-            "description": "Все причины, мешающие удалению задания, в стабильном порядке; пустой список — удалять можно.\r\nФорма совпадает с `publishBlockers`. Поля каждого элемента обязательны."
+            }
           },
           "canPublish": {
-            "type": "boolean",
-            "description": "Можно ли опубликовать задание сейчас: true только для черновика и при пустом `publishBlockers`."
+            "type": "boolean"
           },
           "canArchive": {
-            "type": "boolean",
-            "description": "Можно ли архивировать задание сейчас."
+            "type": "boolean"
           },
           "canDelete": {
-            "type": "boolean",
-            "description": "Можно ли удалить задание сейчас: true только при пустом `deleteBlockReasons` —\r\nстатус Draft или Archived, нет попыток и платформенных сессий."
+            "type": "boolean"
           },
           "lifecycleRestriction": {
             "type": "string",
-            "description": "Причина запрета lifecycle-операции, если она общая.",
             "nullable": true
           },
           "createdByName": {
             "type": "string",
-            "description": "Отображаемое имя автора на момент создания задания.",
+            "nullable": true
+          },
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskVisibility"
+              }
+            ],
+            "description": "Определяет назначение опубликованного задания."
+          },
+          "bankNumber": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "bankPublishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "bankHint": {
+            "type": "string",
+            "nullable": true
+          },
+          "showSolution": {
+            "type": "boolean"
+          },
+          "solutionExplanation": {
+            "type": "string",
+            "nullable": true
+          },
+          "bankReadiness": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaskBankReadinessResponse"
+              }
+            ],
+            "description": "Готовность задания к открытию в банке.",
             "nullable": true
           }
         },
@@ -12385,6 +13388,49 @@
         },
         "additionalProperties": false,
         "description": "Запрос на обновление целевой БД-песочницы."
+      },
+      "UpdateTaskBankBatchRequest": {
+        "type": "object",
+        "properties": {
+          "taskIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Идентификаторы заданий.",
+            "nullable": true
+          },
+          "open": {
+            "type": "boolean",
+            "description": "true — открыть, false — закрыть.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос пакетного открытия или закрытия заданий банка."
+      },
+      "UpdateTaskBankContentRequest": {
+        "type": "object",
+        "properties": {
+          "bankHint": {
+            "type": "string",
+            "description": "Авторская Markdown-подсказка.",
+            "nullable": true
+          },
+          "showSolution": {
+            "type": "boolean",
+            "description": "Разрешено ли показывать решение после успешной попытки.",
+            "nullable": true
+          },
+          "solutionExplanation": {
+            "type": "string",
+            "description": "Markdown-пояснение к эталонному решению.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Запрос на изменение авторских материалов задания открытого банка."
       },
       "UpdateTaskReferenceQueryRequest": {
         "type": "object",

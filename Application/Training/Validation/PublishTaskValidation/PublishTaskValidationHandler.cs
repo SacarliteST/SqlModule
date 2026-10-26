@@ -16,19 +16,33 @@ using SQLModule.Application.Training.Bank;
 
 namespace SQLModule.Application.Training.Validation.PublishTaskValidation;
 
-public sealed record PublishTaskValidationCommand(Guid TaskId, Guid Version, Guid IdempotencyKey)
-    : IRequest<Result<TaskValidationConfigurationResponse>>;
-
-public sealed class PublishTaskValidationHandler(
-    IApplicationDbContext db,
-    ITaskValidationEvaluationService evaluationService,
-    ITaskValidationSnapshotFactory snapshotFactory,
-    ICurrentUser currentUser,
-    TimeProvider timeProvider,
-    ILogger<PublishTaskValidationHandler> logger)
+public sealed class PublishTaskValidationHandler
     : IRequestHandler<PublishTaskValidationCommand, Result<TaskValidationConfigurationResponse>>
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private readonly IApplicationDbContext db;
+    private readonly ITaskValidationEvaluationService evaluationService;
+    private readonly ITaskValidationSnapshotFactory snapshotFactory;
+    private readonly ICurrentUser currentUser;
+    private readonly TimeProvider timeProvider;
+    private readonly ILogger<PublishTaskValidationHandler> logger;
+
+    /// <summary>Создаёт обработчик публикации validation-версии.</summary>
+    public PublishTaskValidationHandler(
+        IApplicationDbContext db,
+        ITaskValidationEvaluationService evaluationService,
+        ITaskValidationSnapshotFactory snapshotFactory,
+        ICurrentUser currentUser,
+        TimeProvider timeProvider,
+        ILogger<PublishTaskValidationHandler> logger)
+    {
+        this.db = db;
+        this.evaluationService = evaluationService;
+        this.snapshotFactory = snapshotFactory;
+        this.currentUser = currentUser;
+        this.timeProvider = timeProvider;
+        this.logger = logger;
+    }
 
     public async Task<Result<TaskValidationConfigurationResponse>> Handle(
         PublishTaskValidationCommand command,

@@ -4,6 +4,7 @@ using SQLModule.Domain.Training;
 
 namespace SQLModule.Data.Configurations;
 
+/// <summary>Настраивает хранение журнала просмотра решений открытого банка.</summary>
 internal sealed class BankSolutionAccessConfiguration : IEntityTypeConfiguration<BankSolutionAccess>
 {
     public void Configure(EntityTypeBuilder<BankSolutionAccess> builder)

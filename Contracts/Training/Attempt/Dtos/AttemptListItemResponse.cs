@@ -1,19 +1,7 @@
-
 namespace SQLModule.Contracts.Training.Attempt;
 
-/// <summary>Сохранённый безопасный фактический результат попытки.</summary>
-public record AttemptResultSnapshotResponse(
-    AttemptResultSnapshotState ResultSnapshotState,
-    IReadOnlyList<string>? ActualColumns,
-    IReadOnlyList<IReadOnlyList<string?>>? ActualRows,
-    int? ReturnedRowCount,
-    bool IsResultTruncated,
-    int? ResultRowLimit,
-    DateTimeOffset? ResultSnapshotCreatedAt,
-    DateTimeOffset? ResultSnapshotExpiresAt);
-
 /// <summary>Элемент списка журнала попыток без тяжёлого snapshot.</summary>
-public record AttemptListItemResponse(
+public sealed record AttemptListItemResponse(
     Guid Id,
     Guid UserId,
     string StudentName,

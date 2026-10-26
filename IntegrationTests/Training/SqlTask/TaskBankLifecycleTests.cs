@@ -13,6 +13,7 @@ using SQLModule.IntegrationTests.ModuleIntegration;
 
 namespace SQLModule.IntegrationTests.Training.SqlTask;
 
+/// <summary>Проверяет жизненный цикл задания открытого банка.</summary>
 [Collection(IntegrationTestCollection.Name)]
 public sealed class TaskBankLifecycleTests : ApiTestBase
 {

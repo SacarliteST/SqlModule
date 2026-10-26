@@ -11,18 +11,24 @@ using SQLModule.Domain.Training;
 
 namespace SQLModule.Application.Training.Validation.UpdateTaskValidation;
 
-public sealed record UpdateTaskValidationCommand(
-    Guid TaskId,
-    Guid Version,
-    TaskValidationDefinition Definition)
-    : IRequest<Result<TaskValidationConfigurationResponse>>;
-
-public sealed class UpdateTaskValidationHandler(
-    IApplicationDbContext db,
-    ITaskValidationEvaluationService evaluationService,
-    ILogger<UpdateTaskValidationHandler> logger)
+public sealed class UpdateTaskValidationHandler
     : IRequestHandler<UpdateTaskValidationCommand, Result<TaskValidationConfigurationResponse>>
 {
+    private readonly IApplicationDbContext db;
+    private readonly ITaskValidationEvaluationService evaluationService;
+    private readonly ILogger<UpdateTaskValidationHandler> logger;
+
+    /// <summary>Создаёт обработчик обновления validation-конфигурации.</summary>
+    public UpdateTaskValidationHandler(
+        IApplicationDbContext db,
+        ITaskValidationEvaluationService evaluationService,
+        ILogger<UpdateTaskValidationHandler> logger)
+    {
+        this.db = db;
+        this.evaluationService = evaluationService;
+        this.logger = logger;
+    }
+
     public async Task<Result<TaskValidationConfigurationResponse>> Handle(
         UpdateTaskValidationCommand command,
         CancellationToken ct)

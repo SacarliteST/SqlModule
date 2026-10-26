@@ -14,6 +14,7 @@ using SQLModule.IntegrationTests.ModuleIntegration;
 
 namespace SQLModule.IntegrationTests.Training.Student;
 
+/// <summary>Проверяет студенческие сценарии открытого банка.</summary>
 [Collection(IntegrationTestCollection.Name)]
 public sealed class TaskBankStudentApiTests : ApiTestBase
 {

@@ -10,9 +10,6 @@ using SQLModule.Application.Training.Bank;
 
 namespace SQLModule.Application.Training.SqlTasks.GetTeacherTaskDetails;
 
-public sealed record GetTeacherTaskDetailsQuery(Guid TaskId)
-    : IRequest<Result<TeacherTaskDetailsResponse>>;
-
 public sealed class GetTeacherTaskDetailsHandler
     : IRequestHandler<GetTeacherTaskDetailsQuery, Result<TeacherTaskDetailsResponse>>
 {
@@ -23,6 +20,7 @@ public sealed class GetTeacherTaskDetailsHandler
     private readonly ITaskBankReadiness bankReadiness;
     private readonly IApplicationDbContext db;
 
+    /// <summary>Создаёт обработчик teacher details.</summary>
     public GetTeacherTaskDetailsHandler(
         IOptions<SandboxOptions> sandboxOptions,
         ISqlTaskPublishReadiness readiness,

@@ -7,19 +7,17 @@ using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Application.Training.Attempts;
 
-public record GetAllAttemptsQuery(
-    int Offset, int Limit, Guid? TaskId, Guid? UserId, Guid? TopicId,
-    Domain.Training.ExecutionStatus? Status, bool? IsCorrect,
-    DateTimeOffset? DateFrom, DateTimeOffset? DateTo,
-    Guid? ValidationVersionId,
-    int? ScoreFrom, int? ScoreTo,
-    Domain.Training.FinalizationReason? FinalizationReason,
-    AttemptOrigin? Origin)
-    : IRequest<Result<PageResponse<AttemptListItemResponse>>>;
-
-public sealed class GetAllAttemptsHandler(IApplicationDbContext db)
+public sealed class GetAllAttemptsHandler
     : IRequestHandler<GetAllAttemptsQuery, Result<PageResponse<AttemptListItemResponse>>>
 {
+    private readonly IApplicationDbContext db;
+
+    /// <summary>Создаёт обработчик журнала попыток преподавателя.</summary>
+    public GetAllAttemptsHandler(IApplicationDbContext db)
+    {
+        this.db = db;
+    }
+
     public async Task<Result<PageResponse<AttemptListItemResponse>>> Handle(
         GetAllAttemptsQuery query, CancellationToken ct)
     {
