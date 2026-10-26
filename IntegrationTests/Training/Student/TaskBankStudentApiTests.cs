@@ -61,13 +61,13 @@ public sealed class TaskBankStudentApiTests : ApiTestBase
         earlyHint.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         earlySolution.StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
-        await SeedAttemptAsync(taskId, userId, 1, 0, false, state.BankPublishedAt!.Value.AddSeconds(1));
+        await TaskBankTestData.SeedAttemptAsync(App, taskId, userId, 1, 0, false, state.BankPublishedAt!.Value.AddSeconds(1));
         using var hint = await HttpClient.PostAsync(ApiRoutes.Training.Student.ForTaskHint(taskId), null);
         hint.StatusCode.ShouldBe(HttpStatusCode.OK, await hint.Content.ReadAsStringAsync());
         var hintResponse = (await hint.Content.ReadFromJsonAsync<BankHintResponse>(ClientJson.Options))!;
         hintResponse.AttemptNumber.ShouldBe(1);
 
-        await SeedAttemptAsync(taskId, userId, 2, 100, true, state.BankPublishedAt.Value.AddSeconds(2));
+        await TaskBankTestData.SeedAttemptAsync(App, taskId, userId, 2, 100, true, state.BankPublishedAt.Value.AddSeconds(2));
         using var solution = await HttpClient.PostAsync(ApiRoutes.Training.Student.ForTaskSolution(taskId), null);
         solution.StatusCode.ShouldBe(HttpStatusCode.OK, await solution.Content.ReadAsStringAsync());
         var solutionResponse = (await solution.Content.ReadFromJsonAsync<BankSolutionResponse>(ClientJson.Options))!;
@@ -122,46 +122,5 @@ public sealed class TaskBankStudentApiTests : ApiTestBase
         using var response = await HttpClient.PostAsync(ApiRoutes.Training.SqlTasks.ForBankOpen(taskId), null);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
         return (await response.Content.ReadFromJsonAsync<TaskBankStateResponse>(ClientJson.Options))!;
-    }
-
-    private async Task SeedAttemptAsync(
-        Guid taskId,
-        Guid userId,
-        int number,
-        int score,
-        bool correct,
-        DateTimeOffset finishedAt)
-    {
-        using var scope = App.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var version = await db.TaskValidationVersions.SingleAsync(value => value.TaskId == taskId);
-        var check = await db.ValidationChecks.OrderBy(value => value.Order)
-            .FirstAsync(value => value.Configuration.TaskId == taskId);
-        var attempt = SQLModule.Domain.Training.Attempt.Record(
-            userId,
-            taskId,
-            "SELECT 1",
-            ExecutionStatus.Succeeded,
-            correct,
-            correct ? CheckReason.Ok : CheckReason.ValueMismatch,
-            1,
-            1,
-            null,
-            finishedAt.AddMilliseconds(-1),
-            finishedAt,
-            studentName: "Bank Student");
-        attempt.AttachScoring(version.Id, number, score, true);
-        db.Attempts.Add(attempt);
-        db.AttemptCheckResults.Add(AttemptCheckResult.Create(
-            attempt.Id,
-            check.Id,
-            check.Kind,
-            correct ? ValidationCheckStatus.Passed : ValidationCheckStatus.Failed,
-            check.Weight,
-            score,
-            check.Order,
-            null,
-            null));
-        await db.SaveChangesAsync();
     }
 }
