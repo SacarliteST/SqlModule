@@ -4143,6 +4143,12 @@
             "in": "query",
             "description": "Поле сортировки.",
             "schema": {
+              "enum": [
+                "BankNumber",
+                "Difficulty",
+                "PublishedAt"
+              ],
+              "type": "string",
               "allOf": [
                 {
                   "$ref": "#/components/schemas/BankTaskSort"
@@ -6749,6 +6755,11 @@
             "in": "query",
             "description": "Источник попытки: тренировка или платформенная сессия.",
             "schema": {
+              "enum": [
+                "Training",
+                "Platform"
+              ],
+              "type": "string",
               "allOf": [
                 {
                   "$ref": "#/components/schemas/AttemptOrigin"
@@ -7906,6 +7917,11 @@
             "nullable": true
           },
           "origin": {
+            "enum": [
+              "Training",
+              "Platform"
+            ],
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/AttemptOrigin"
@@ -7939,12 +7955,11 @@
       },
       "AttemptOrigin": {
         "enum": [
-          0,
-          1
+          "Training",
+          "Platform"
         ],
-        "type": "integer",
-        "description": "Источник попытки в журнале преподавателя.",
-        "format": "int32"
+        "type": "string",
+        "description": "Источник попытки в журнале преподавателя."
       },
       "AttemptResponse": {
         "required": [
@@ -8517,23 +8532,21 @@
       },
       "BankTaskSort": {
         "enum": [
-          0,
-          1,
-          2
+          "BankNumber",
+          "Difficulty",
+          "PublishedAt"
         ],
-        "type": "integer",
-        "description": "Поле сортировки каталога открытого банка.",
-        "format": "int32"
+        "type": "string",
+        "description": "Поле сортировки каталога открытого банка."
       },
       "BankTaskStatus": {
         "enum": [
-          0,
-          1,
-          2
+          "NotStarted",
+          "InProgress",
+          "Solved"
         ],
-        "type": "integer",
-        "description": "Личный статус задания в открытом банке.",
-        "format": "int32"
+        "type": "string",
+        "description": "Личный статус задания в открытом банке."
       },
       "BatchTableRowsRequest": {
         "type": "object",
@@ -10910,6 +10923,11 @@
             "nullable": true
           },
           "visibility": {
+            "enum": [
+              "Control",
+              "Open"
+            ],
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/TaskVisibility"
@@ -11680,6 +11698,12 @@
             "description": "Название СУБД."
           },
           "status": {
+            "enum": [
+              "NotStarted",
+              "InProgress",
+              "Solved"
+            ],
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/BankTaskStatus"
@@ -12537,6 +12561,11 @@
         "type": "object",
         "properties": {
           "visibility": {
+            "enum": [
+              "Control",
+              "Open"
+            ],
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/TaskVisibility"
@@ -12752,12 +12781,11 @@
       },
       "TaskVisibility": {
         "enum": [
-          0,
-          1
+          "Control",
+          "Open"
         ],
-        "type": "integer",
-        "description": "Определяет назначение опубликованного задания.",
-        "format": "int32"
+        "type": "string",
+        "description": "Определяет назначение опубликованного задания."
       },
       "TeacherTaskAttemptResponse": {
         "type": "object",
@@ -12931,6 +12959,11 @@
             "nullable": true
           },
           "visibility": {
+            "enum": [
+              "Control",
+              "Open"
+            ],
+            "type": "string",
             "allOf": [
               {
                 "$ref": "#/components/schemas/TaskVisibility"

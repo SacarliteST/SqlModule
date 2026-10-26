@@ -1,6 +1,8 @@
 ﻿using Microsoft.OpenApi;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Contracts.Training;
+using SQLModule.Contracts.Training.Attempt;
+using SQLModule.Contracts.Training.Student;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace SQLModule.Web.Common;
@@ -22,7 +24,11 @@ internal sealed class StringEnumSchemaFilter : ISchemaFilter
         typeof(ValidationCheckKind),
         typeof(ValidationCheckStatus),
         typeof(ValidationConfigurationState),
-        typeof(ValidationViolationSeverity)
+        typeof(ValidationViolationSeverity),
+        typeof(AttemptOrigin),
+        typeof(BankTaskSort),
+        typeof(BankTaskStatus),
+        typeof(TaskVisibility)
     ];
 
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
