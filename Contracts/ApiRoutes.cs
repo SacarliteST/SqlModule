@@ -342,6 +342,13 @@ public static class ApiRoutes
             /// <summary>Архивирование задания.</summary>
             public const string Archive = ById + "/archive";
 
+            /// <summary>Готовность и состояние задания в открытом банке.</summary>
+            public const string Bank = ById + "/bank";
+            public const string BankReadiness = Bank + "/readiness";
+            public const string BankOpen = Bank + "/open";
+            public const string BankClose = Bank + "/close";
+            public const string BankContent = Bank + "/content";
+
             /// <summary>Эталонное решение текущего задания.</summary>
             public const string ReferenceQuery = ById + "/reference-query";
 
@@ -362,6 +369,11 @@ public static class ApiRoutes
 
             /// <inheritdoc cref="ForArchive"/>
             public static string ForArchive(Guid id) => $"{Collection}/{id}/archive";
+
+            public static string ForBankReadiness(Guid id) => $"{Collection}/{id}/bank/readiness";
+            public static string ForBankOpen(Guid id) => $"{Collection}/{id}/bank/open";
+            public static string ForBankClose(Guid id) => $"{Collection}/{id}/bank/close";
+            public static string ForBankContent(Guid id) => $"{Collection}/{id}/bank/content";
 
             /// <inheritdoc cref="ForReferenceQuery"/>
             public static string ForReferenceQuery(Guid id) => $"{Collection}/{id}/reference-query";

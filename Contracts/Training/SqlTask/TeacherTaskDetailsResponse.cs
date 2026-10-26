@@ -40,6 +40,13 @@ namespace SQLModule.Contracts.Training.SqlTask;
 /// </param>
 /// <param name="LifecycleRestriction">Причина запрета lifecycle-операции, если она общая.</param>
 /// <param name="CreatedByName">Отображаемое имя автора на момент создания задания.</param>
+/// <param name="Visibility">Назначение задания: контроль или открытый банк.</param>
+/// <param name="BankNumber">Постоянный номер в банке.</param>
+/// <param name="BankPublishedAt">Дата первого открытия в банке.</param>
+/// <param name="BankHint">Авторская Markdown-подсказка.</param>
+/// <param name="ShowSolution">Можно ли показывать разбор после успешной тренировочной попытки.</param>
+/// <param name="SolutionExplanation">Markdown-пояснение к эталонному решению.</param>
+/// <param name="BankReadiness">Готовность задания к открытию в банке и все причины запрета.</param>
 public sealed record TeacherTaskDetailsResponse(
     Guid TaskId,
     Guid TopicId,
@@ -64,7 +71,14 @@ public sealed record TeacherTaskDetailsResponse(
     bool CanArchive = false,
     bool CanDelete = false,
     string? LifecycleRestriction = null,
-    string? CreatedByName = null);
+    string? CreatedByName = null,
+    TaskVisibility Visibility = TaskVisibility.Control,
+    long? BankNumber = null,
+    DateTimeOffset? BankPublishedAt = null,
+    string? BankHint = null,
+    bool ShowSolution = true,
+    string? SolutionExplanation = null,
+    TaskBankReadinessResponse? BankReadiness = null);
 
 /// <summary>Эталонный запрос в деталях задания.</summary>
 public sealed record TeacherTaskSqlQueryResponse(

@@ -59,6 +59,12 @@ public static class ContractEnumMapping
     public static DomainTraining.PublicationStatus ToDomain(this ContractTraining.PublicationStatus value) =>
         Map<DomainTraining.PublicationStatus>(value);
 
+    public static ContractTraining.TaskVisibility ToContract(this DomainTraining.TaskVisibility value) =>
+        Map<ContractTraining.TaskVisibility>(value);
+
+    public static DomainTraining.TaskVisibility ToDomain(this ContractTraining.TaskVisibility value) =>
+        Map<DomainTraining.TaskVisibility>(value);
+
     public static ContractTraining.ValidationViolationSeverity ToContract(this DomainValidation.ValidationViolationSeverity value) =>
         Map<ContractTraining.ValidationViolationSeverity>(value);
 

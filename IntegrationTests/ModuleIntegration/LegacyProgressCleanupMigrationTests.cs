@@ -14,8 +14,15 @@ using SQLModule.IntegrationTests.Infrastructure;
 namespace SQLModule.IntegrationTests.ModuleIntegration;
 
 [Collection(IntegrationTestCollection.Name)]
-public sealed class LegacyProgressCleanupMigrationTests(TestApplication app)
+public sealed class LegacyProgressCleanupMigrationTests
 {
+    private readonly TestApplication app;
+
+    public LegacyProgressCleanupMigrationTests(TestApplication app)
+    {
+        this.app = app;
+    }
+
     private const string PreviousMigration = "20261023203434_MoveAttemptLimitsToModuleSession";
 
     [Fact(DisplayName = "Migration удаляет legacy progress и сохраняет попытки")]

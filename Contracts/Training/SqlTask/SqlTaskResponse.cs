@@ -19,6 +19,9 @@
 /// <param name="AttemptsCount">Общее число попыток.</param>
 /// <param name="CreatedByName">Отображаемое имя автора на момент создания.</param>
 /// <param name="UpdatedByName">Отображаемое имя последнего редактора.</param>
+/// <param name="Visibility">Назначение задания: контроль или открытый банк.</param>
+/// <param name="BankNumber">Постоянный номер в банке; null до первого открытия.</param>
+/// <param name="BankPublishedAt">Дата первого открытия в банке.</param>
 public record SqlTaskResponse(
     Guid Id,
     Guid TopicId,
@@ -37,4 +40,7 @@ public record SqlTaskResponse(
     string? DbmsName = null,
     int AttemptsCount = 0,
     string? CreatedByName = null,
-    string? UpdatedByName = null);
+    string? UpdatedByName = null,
+    TaskVisibility Visibility = TaskVisibility.Control,
+    long? BankNumber = null,
+    DateTimeOffset? BankPublishedAt = null);

@@ -6,20 +6,36 @@ using SQLModule.Application.Persistence;
 using SQLModule.Sandbox;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.TaskMaterialization;
+using SQLModule.Application.Training.Bank;
 
 namespace SQLModule.Application.Training.SqlTasks.GetTeacherTaskDetails;
 
 public sealed record GetTeacherTaskDetailsQuery(Guid TaskId)
     : IRequest<Result<TeacherTaskDetailsResponse>>;
 
-public sealed class GetTeacherTaskDetailsHandler(
-    IOptions<SandboxOptions> sandboxOptions,
-    ISqlTaskPublishReadiness readiness,
-    ISqlTaskDeleteRules deleteRules,
-    IApplicationDbContext db)
+public sealed class GetTeacherTaskDetailsHandler
     : IRequestHandler<GetTeacherTaskDetailsQuery, Result<TeacherTaskDetailsResponse>>
 {
     private const int LastAttemptsLimit = 5;
+    private readonly IOptions<SandboxOptions> sandboxOptions;
+    private readonly ISqlTaskPublishReadiness readiness;
+    private readonly ISqlTaskDeleteRules deleteRules;
+    private readonly ITaskBankReadiness bankReadiness;
+    private readonly IApplicationDbContext db;
+
+    public GetTeacherTaskDetailsHandler(
+        IOptions<SandboxOptions> sandboxOptions,
+        ISqlTaskPublishReadiness readiness,
+        ISqlTaskDeleteRules deleteRules,
+        ITaskBankReadiness bankReadiness,
+        IApplicationDbContext db)
+    {
+        this.sandboxOptions = sandboxOptions;
+        this.readiness = readiness;
+        this.deleteRules = deleteRules;
+        this.bankReadiness = bankReadiness;
+        this.db = db;
+    }
 
     public async Task<Result<TeacherTaskDetailsResponse>> Handle(
         GetTeacherTaskDetailsQuery query,
@@ -82,6 +98,7 @@ public sealed class GetTeacherTaskDetailsHandler(
             .ToListAsync(ct);
         var blockers = await readiness.EvaluateAsync(query.TaskId, ct);
         var deleteBlockers = await deleteRules.EvaluateAsync(query.TaskId, ct);
+        var bankState = await bankReadiness.EvaluateAsync(query.TaskId, ct);
 
         return new TeacherTaskDetailsResponse(
             task.SqlTask.Id,
@@ -119,6 +136,13 @@ public sealed class GetTeacherTaskDetailsHandler(
                 : referenceExceedsComparisonLimit
                     ? $"Эталон превышает лимит сравнения {comparisonRowLimit} строк."
                     : null,
-            CreatedByName: task.SqlTask.CreatedByName ?? task.SqlTask.CreatedById.ToString());
+            CreatedByName: task.SqlTask.CreatedByName ?? task.SqlTask.CreatedById.ToString(),
+            Visibility: task.SqlTask.Visibility.ToContract(),
+            BankNumber: task.SqlTask.BankNumber,
+            BankPublishedAt: task.SqlTask.BankPublishedAt,
+            BankHint: task.SqlTask.BankHint,
+            ShowSolution: task.SqlTask.ShowSolution,
+            SolutionExplanation: task.SqlTask.SolutionExplanation,
+            BankReadiness: bankState);
     }
 }

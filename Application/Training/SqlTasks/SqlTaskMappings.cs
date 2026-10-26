@@ -9,7 +9,11 @@ public static class SqlTaskMappings
         e.Id, e.TopicId, e.SqlQueryId,
         e.TaskName, e.TaskText, e.DifficultyLevel, e.PublicationStatus.ToContract(),
         e.CreatedById, e.CreatedAt, e.UpdatedById, e.UpdatedAt,
-        CreatedByName: e.CreatedByName, UpdatedByName: e.UpdatedByName);
+        CreatedByName: e.CreatedByName,
+        UpdatedByName: e.UpdatedByName,
+        Visibility: e.Visibility.ToContract(),
+        BankNumber: e.BankNumber,
+        BankPublishedAt: e.BankPublishedAt);
 
     public static CreateSqlTaskCommand ToCommand(CreateSqlTaskRequest req) =>
         new(

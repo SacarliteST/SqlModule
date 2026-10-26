@@ -7,20 +7,19 @@ using SQLModule.Domain.Training;
 namespace SQLModule.Application.Training.Student;
 
 /// <summary>Единая серверная проверка доступа студента к заданию.</summary>
-public interface IStudentTaskAccess
+public sealed class StudentTaskAccess : IStudentTaskAccess
 {
-    Task<Result> EnsureAsync(
-        Guid userId,
-        Guid? moduleSessionId,
-        Guid taskId,
-        PlatformScopeMode mode,
-        CancellationToken cancellationToken);
-}
+    private readonly IApplicationDbContext db;
+    private readonly IPlatformStudentScope platformScope;
 
-public sealed class StudentTaskAccess(
-    IApplicationDbContext db,
-    IPlatformStudentScope platformScope) : IStudentTaskAccess
-{
+    /// <summary>Создаёт проверку доступа к заданию.</summary>
+    public StudentTaskAccess(IApplicationDbContext db, IPlatformStudentScope platformScope)
+    {
+        this.db = db;
+        this.platformScope = platformScope;
+    }
+
+    /// <inheritdoc />
     public async Task<Result> EnsureAsync(
         Guid userId,
         Guid? moduleSessionId,

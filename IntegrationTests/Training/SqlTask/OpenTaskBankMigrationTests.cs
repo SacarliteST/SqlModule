@@ -14,9 +14,15 @@ using SQLModule.IntegrationTests.Infrastructure;
 namespace SQLModule.IntegrationTests.Training.SqlTask;
 
 [Collection(IntegrationTestCollection.Name)]
-public sealed class OpenTaskBankMigrationTests(TestApplication app)
+public sealed class OpenTaskBankMigrationTests
 {
     private const string PreviousMigration = "20261025173157_RemoveLegacyProgress";
+    private readonly TestApplication app;
+
+    public OpenTaskBankMigrationTests(TestApplication app)
+    {
+        this.app = app;
+    }
 
     [Fact(DisplayName = "Миграция банка сохраняет задания закрытыми и создаёт инфраструктуру нумерации")]
     public async Task Migration_UsesControlDefaultsAndCreatesBankInfrastructure()

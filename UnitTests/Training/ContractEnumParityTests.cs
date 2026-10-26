@@ -22,6 +22,7 @@ public sealed class ContractEnumParityTests
         { typeof(ContractTraining.ValidationCheckStatus), typeof(DomainTraining.ValidationCheckStatus) },
         { typeof(ContractTraining.ValidationConfigurationState), typeof(DomainTraining.ValidationConfigurationState) },
         { typeof(ContractTraining.PublicationStatus), typeof(DomainTraining.PublicationStatus) },
+        { typeof(ContractTraining.TaskVisibility), typeof(DomainTraining.TaskVisibility) },
         { typeof(ContractTraining.ValidationViolationSeverity), typeof(DomainValidation.ValidationViolationSeverity) },
     };
 

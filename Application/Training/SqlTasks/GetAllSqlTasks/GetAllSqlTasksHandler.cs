@@ -12,9 +12,16 @@ public record GetAllSqlTasksQuery(
     short? DifficultyLevel, Domain.Training.PublicationStatus? PublicationStatus)
     : IRequest<Result<PageResponse<SqlTaskResponse>>>;
 
-public sealed class GetAllSqlTasksHandler(IApplicationDbContext db)
+public sealed class GetAllSqlTasksHandler
     : IRequestHandler<GetAllSqlTasksQuery, Result<PageResponse<SqlTaskResponse>>>
 {
+    private readonly IApplicationDbContext db;
+
+    public GetAllSqlTasksHandler(IApplicationDbContext db)
+    {
+        this.db = db;
+    }
+
     public async Task<Result<PageResponse<SqlTaskResponse>>> Handle(
         GetAllSqlTasksQuery query, CancellationToken ct)
     {
@@ -61,7 +68,10 @@ public sealed class GetAllSqlTasksHandler(IApplicationDbContext db)
                     .Select(target => target.Dbms.DbmsName).First(),
                 db.Attempts.Count(attempt => attempt.TaskId == x.Id),
                 x.CreatedByName,
-                x.UpdatedByName))
+                x.UpdatedByName,
+                x.Visibility.ToContract(),
+                x.BankNumber,
+                x.BankPublishedAt))
             .ToListAsync(ct);
 
         return Result<PageResponse<SqlTaskResponse>>.Success(new PageResponse<SqlTaskResponse>
