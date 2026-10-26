@@ -1,4 +1,4 @@
-using SQLModule.Domain.Training;
+﻿using SQLModule.Domain.Training;
 
 namespace SQLModule.Application.Training.Bank;
 
@@ -14,7 +14,8 @@ public static class TaskBankHintRules
         return checkKinds.Any(kind => ToHintGroup(kind) is { } group && visible.Contains(group));
     }
 
-    private static HintGroup? ToHintGroup(ValidationCheckKind kind) => kind switch
+    /// <summary>Возвращает группу подсказки для вида критерия.</summary>
+    public static HintGroup? ToHintGroup(ValidationCheckKind kind) => kind switch
     {
         ValidationCheckKind.MainDatasetResult => HintGroup.Result,
         ValidationCheckKind.RequiredConstruct => HintGroup.RequiredConstructs,
@@ -22,5 +23,16 @@ public static class TaskBankHintRules
         ValidationCheckKind.RequiredTable => HintGroup.RequiredTables,
         ValidationCheckKind.ForbiddenTable => HintGroup.ForbiddenTables,
         _ => null
+    };
+
+    /// <summary>Возвращает безопасный текст автоматической подсказки.</summary>
+    public static string MessageFor(HintGroup group) => group switch
+    {
+        HintGroup.Result => "Результат запроса пока не совпадает с ожидаемым.",
+        HintGroup.RequiredConstructs => "Проверьте наличие обязательных SQL-конструкций.",
+        HintGroup.ForbiddenConstructs => "Проверьте, не использованы ли запрещённые SQL-конструкции.",
+        HintGroup.RequiredTables => "Проверьте использование обязательных таблиц.",
+        HintGroup.ForbiddenTables => "Проверьте, не использованы ли запрещённые таблицы.",
+        _ => "Проверьте соответствующую часть решения."
     };
 }

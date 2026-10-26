@@ -1,11 +1,8 @@
+﻿using SQLModule.Application.Cqrs;
 using SQLModule.Application.Training.Attempts;
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Web.Common;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Attempts;
 
@@ -20,11 +17,12 @@ public sealed class DeleteAttemptEndpoint : IEndpoint
             .WithSummary("Удалить попытку")
             .WithDescription(
                 "Удаляет запись попытки по Id. " +
-                "Возвращает 204 No Content. " +
-                "404 — попытка не найдена.")
+                "Тренировочные попытки открытого банка не удаляются. " +
+                "Возвращает 204 No Content, 409 для тренировочной попытки, 404 если попытка не найдена.")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status404NotFound);
     }
 

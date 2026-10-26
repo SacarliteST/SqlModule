@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Persistence;
 using SQLModule.Common.Results;
@@ -28,41 +28,54 @@ public sealed class GetStudentTopicsHandler
         var topics = await db.Topics.AsNoTracking()
             .Select(topic => new { topic.Id, topic.TopicName, topic.ParentTopicId, topic.Description })
             .ToListAsync(ct);
-        var tasks = await db.SqlTasks.AsNoTracking()
+        var ownStatistics = await db.SqlTasks.AsNoTracking()
             .Where(task => task.PublicationStatus == PublicationStatus.Published &&
                            task.Visibility == TaskVisibility.Open &&
                            task.BankPublishedAt != null)
-            .Select(task => new { task.Id, task.TopicId, PublishedAt = task.BankPublishedAt!.Value })
-            .ToListAsync(ct);
-        var versions = db.TaskValidationVersions.AsNoTracking();
-        var attempts = await (
-            from attempt in db.Attempts.AsNoTracking()
-            join version in versions on attempt.ValidationVersionId equals version.Id
-            where attempt.UserId == request.UserId && attempt.ModuleSessionId == null
-            select new { attempt.TaskId, attempt.Score, attempt.FinishedAt, version.PassingScore })
+            .Select(task => new
+            {
+                task.TopicId,
+                Attempted = db.Attempts.Any(attempt =>
+                    attempt.UserId == request.UserId && attempt.TaskId == task.Id &&
+                    attempt.ModuleSessionId == null && attempt.FinishedAt >= task.BankPublishedAt),
+                Solved = (from attempt in db.Attempts
+                          join version in db.TaskValidationVersions on attempt.ValidationVersionId equals version.Id
+                          where attempt.UserId == request.UserId && attempt.TaskId == task.Id &&
+                                attempt.ModuleSessionId == null && attempt.FinishedAt >= task.BankPublishedAt &&
+                                attempt.Score >= version.PassingScore
+                          select attempt.Id).Any()
+            })
+            .GroupBy(task => task.TopicId)
+            .Select(group => new
+            {
+                TopicId = group.Key,
+                TaskCount = group.Count(),
+                AttemptedCount = group.Count(task => task.Attempted),
+                SolvedCount = group.Count(task => task.Solved)
+            })
             .ToListAsync(ct);
 
-        var tasksById = tasks.ToDictionary(task => task.Id);
-        var validAttempts = attempts
-            .Where(attempt => tasksById.TryGetValue(attempt.TaskId, out var task) &&
-                              attempt.FinishedAt >= task.PublishedAt)
-            .GroupBy(attempt => attempt.TaskId)
-            .ToDictionary(
-                group => group.Key,
-                group => (Attempted: true, Solved: group.Any(attempt => attempt.Score >= attempt.PassingScore)));
+        var statisticsByTopic = ownStatistics.ToDictionary(
+            value => value.TopicId,
+            value => (value.TaskCount, value.AttemptedCount, value.SolvedCount));
         var children = topics
             .Where(topic => topic.ParentTopicId.HasValue)
             .GroupBy(topic => topic.ParentTopicId!.Value)
             .ToDictionary(group => group.Key, group => group.Select(topic => topic.Id).ToArray());
-        var ownTasks = tasks.GroupBy(task => task.TopicId)
-            .ToDictionary(group => group.Key, group => group.Select(task => task.Id).ToArray());
 
         var visible = new List<StudentTopicResponse>();
         foreach (var topic in topics)
         {
             var subtree = DescendantsAndSelf(topic.Id, children);
-            var taskIds = subtree.SelectMany(id => ownTasks.GetValueOrDefault(id) ?? []).Distinct().ToArray();
-            if (taskIds.Length == 0)
+            var statistics = subtree
+                .Select(id => statisticsByTopic.GetValueOrDefault(id))
+                .Aggregate(
+                    (TaskCount: 0, AttemptedCount: 0, SolvedCount: 0),
+                    (total, own) => (
+                        total.TaskCount + own.TaskCount,
+                        total.AttemptedCount + own.AttemptedCount,
+                        total.SolvedCount + own.SolvedCount));
+            if (statistics.TaskCount == 0)
             {
                 continue;
             }
@@ -72,10 +85,10 @@ public sealed class GetStudentTopicsHandler
                 topic.TopicName,
                 topic.ParentTopicId,
                 topic.Description,
-                taskIds.Length,
-                taskIds.Count(validAttempts.ContainsKey),
-                taskIds.Count(id => validAttempts.GetValueOrDefault(id).Solved),
-                taskIds.Length));
+                statistics.TaskCount,
+                statistics.AttemptedCount,
+                statistics.SolvedCount,
+                statistics.TaskCount));
         }
 
         var ordered = visible.OrderBy(topic => topic.TopicName).ThenBy(topic => topic.Id).ToArray();

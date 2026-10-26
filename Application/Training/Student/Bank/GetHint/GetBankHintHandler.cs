@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Persistence;
 using SQLModule.Application.Training.Attempts;
@@ -65,13 +65,13 @@ public sealed class GetBankHintHandler : IRequestHandler<GetBankHintQuery, Resul
             .Select(value => value.Kind)
             .ToListAsync(ct);
         var issuedGroups = groups
-            .Select(AttemptScoringReadService.ToHintGroup)
+            .Select(TaskBankHintRules.ToHintGroup)
             .Where(group => group.HasValue && visible.Contains(group.Value))
             .Select(group => group!.Value)
             .Distinct()
             .ToArray();
         var autoHints = issuedGroups
-            .Select(group => new BankAutoHintResponse(group.ToContract(), MessageFor(group)))
+            .Select(group => new BankAutoHintResponse(group.ToContract(), TaskBankHintRules.MessageFor(group)))
             .ToArray();
         var authorHint = String.IsNullOrWhiteSpace(task.BankHint) ? null : task.BankHint;
         db.BankHintAccesses.Add(BankHintAccess.Create(
@@ -86,13 +86,4 @@ public sealed class GetBankHintHandler : IRequestHandler<GetBankHintQuery, Resul
         return new BankHintResponse(attempt.AttemptNumber, autoHints, authorHint);
     }
 
-    private static string MessageFor(HintGroup group) => group switch
-    {
-        HintGroup.Result => "Результат запроса пока не совпадает с ожидаемым.",
-        HintGroup.RequiredConstructs => "Проверьте наличие обязательных SQL-конструкций.",
-        HintGroup.ForbiddenConstructs => "Проверьте, не использованы ли запрещённые SQL-конструкции.",
-        HintGroup.RequiredTables => "Проверьте использование обязательных таблиц.",
-        HintGroup.ForbiddenTables => "Проверьте, не использованы ли запрещённые таблицы.",
-        _ => "Проверьте соответствующую часть решения."
-    };
 }

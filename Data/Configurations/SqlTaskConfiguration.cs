@@ -15,6 +15,9 @@ internal sealed class SqlTaskConfiguration : IEntityTypeConfiguration<SqlTask>
                 "CK_SqlTasks_BankPublication",
                 "(\"BankNumber\" IS NULL AND \"BankPublishedAt\" IS NULL) OR " +
                 "(\"BankNumber\" IS NOT NULL AND \"BankNumber\" > 0 AND \"BankPublishedAt\" IS NOT NULL)");
+            table.HasCheckConstraint(
+                "CK_SqlTasks_OpenBankState",
+                "\"Visibility\" <> 'Open' OR (\"BankNumber\" IS NOT NULL AND \"BankPublishedAt\" IS NOT NULL)");
         });
         builder.HasKey(x => x.Id);
         builder.Property(x => x.TaskName).IsRequired().HasMaxLength(300);
@@ -24,12 +27,16 @@ internal sealed class SqlTaskConfiguration : IEntityTypeConfiguration<SqlTask>
         builder.Property(x => x.Visibility)
             .HasConversion<string>()
             .HasDefaultValue(TaskVisibility.Control)
+            .IsConcurrencyToken()
             .IsRequired();
         builder.Property(x => x.BankNumber);
         builder.Property(x => x.BankPublishedAt);
-        builder.Property(x => x.BankHint);
-        builder.Property(x => x.ShowSolution).HasDefaultValue(true).IsRequired();
-        builder.Property(x => x.SolutionExplanation);
+        builder.Property(x => x.BankHint).IsConcurrencyToken();
+        builder.Property(x => x.ShowSolution)
+            .HasDefaultValue(true)
+            .IsConcurrencyToken()
+            .IsRequired();
+        builder.Property(x => x.SolutionExplanation).IsConcurrencyToken();
         builder.ConfigureAudit();
 
         builder.HasIndex(x => x.BankNumber).IsUnique();

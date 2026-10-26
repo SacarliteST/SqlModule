@@ -5,9 +5,11 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Attempt;
+using SQLModule.Data.Core;
 using SQLModule.Host;
 using SQLModule.IntegrationTests.Infrastructure;
 
@@ -37,6 +39,16 @@ public sealed class CourseSeedDockerTests(DockerTestApplication app)
                 }));
         });
         using var client = configured.CreateClient();
+        using (var scope = configured.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var task = await db.SqlTasks.FindAsync(FinalTaskId);
+            task.ShouldNotBeNull();
+            task.UpdateBankContent("Проверьте состав и порядок результата.", true, null);
+            task.OpenInBank(9_400_000_020, DateTimeOffset.UtcNow);
+            await db.SaveChangesAsync();
+        }
+
         using var request = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.Training.Attempts.Collection)
         {
             Content = JsonContent.Create(new SubmitAttemptRequest(

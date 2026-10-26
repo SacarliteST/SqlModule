@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using SQLModule.Application.ModuleIntegration;
 using SQLModule.Application.Persistence;
 using SQLModule.Application.TaskMaterialization;
+using SQLModule.Application.Training.Bank;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Contracts.Training.Validation;
@@ -470,7 +471,7 @@ public sealed class SessionAttemptWorkflow(
         IReadOnlyList<EvaluatedCheck> checks,
         HashSet<HintGroup> visible) => checks.Where(value =>
         {
-            var group = AttemptScoringReadService.ToHintGroup(value.Check.Kind);
+            var group = TaskBankHintRules.ToHintGroup(value.Check.Kind);
             return group.HasValue && visible.Contains(group.Value);
         }).Select(value => new AttemptCheckResultResponse(
             value.Check.Kind.ToContract(), value.Status.ToContract(), value.Check.Weight,
@@ -480,7 +481,7 @@ public sealed class SessionAttemptWorkflow(
         IReadOnlyList<EvaluatedCheck> checks,
         HashSet<HintGroup> visible) => checks
         .Where(value => value.Status == ValidationCheckStatus.Failed)
-        .Select(value => AttemptScoringReadService.ToHintGroup(value.Check.Kind))
+        .Select(value => TaskBankHintRules.ToHintGroup(value.Check.Kind))
         .Where(value => value.HasValue && visible.Contains(value.Value))
         .Distinct()
         .Select(value => new AttemptHintResponse(

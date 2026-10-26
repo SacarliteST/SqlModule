@@ -1,8 +1,9 @@
-using SQLModule.Application.Training.Student;
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Training.Student;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Schema.SchemaBuilder;
@@ -10,7 +11,6 @@ using SQLModule.Contracts.Training.Student;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
-using SQLModule.Application.Cqrs;
 using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Student;
@@ -48,7 +48,7 @@ public sealed class StudentEndpoints : IEndpoint
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
-        app.MapGet(ApiRoutes.Training.Student.TaskHint, GetBankHint)
+        app.MapPost(ApiRoutes.Training.Student.TaskHint, GetBankHint)
             .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
             .WithName(nameof(GetBankHint)).WithTags("Student")
             .WithSummary("Получить подсказку к заданию открытого банка")
@@ -57,7 +57,7 @@ public sealed class StudentEndpoints : IEndpoint
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
-        app.MapGet(ApiRoutes.Training.Student.TaskSolution, GetBankSolution)
+        app.MapPost(ApiRoutes.Training.Student.TaskSolution, GetBankSolution)
             .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
             .WithName(nameof(GetBankSolution)).WithTags("Student")
             .WithSummary("Получить разбор решения задания открытого банка")
@@ -170,19 +170,27 @@ public sealed class StudentEndpoints : IEndpoint
 
     private static async Task<IResult> GetBankHint(
         Guid taskId,
+        HttpContext httpContext,
         ICurrentUser currentUser,
         ISender sender,
-        CancellationToken ct) =>
-        (await sender.Send<GetBankHintQuery, Result<BankHintResponse>>(
+        CancellationToken ct)
+    {
+        httpContext.Response.Headers.CacheControl = "no-store";
+        return (await sender.Send<GetBankHintQuery, Result<BankHintResponse>>(
             new GetBankHintQuery(taskId, currentUser.UserId!.Value), ct)).ToOk();
+    }
 
     private static async Task<IResult> GetBankSolution(
         Guid taskId,
+        HttpContext httpContext,
         ICurrentUser currentUser,
         ISender sender,
-        CancellationToken ct) =>
-        (await sender.Send<GetBankSolutionQuery, Result<BankSolutionResponse>>(
+        CancellationToken ct)
+    {
+        httpContext.Response.Headers.CacheControl = "no-store";
+        return (await sender.Send<GetBankSolutionQuery, Result<BankSolutionResponse>>(
             new GetBankSolutionQuery(taskId, currentUser.UserId!.Value), ct)).ToOk();
+    }
 
     private static async Task<IResult> GetStudentTaskSchema(
         Guid taskId, ICurrentUser currentUser, ISender sender, CancellationToken ct) =>

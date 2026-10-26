@@ -1,10 +1,15 @@
-using SQLModule.Common.Results;
+﻿using SQLModule.Common.Results;
 
 namespace SQLModule.Application.Training.Bank;
 
 /// <summary>Ошибки проверки готовности задания к открытому банку.</summary>
 public static class TaskBankErrors
 {
+    /// <summary>Состояние задания параллельно изменилось.</summary>
+    public static Error ConcurrentChange { get; } = Error.Conflict(
+        "TaskBank.ConcurrentChange",
+        "Состояние задания изменилось. Обновите страницу и повторите действие.");
+
     /// <summary>Задание ещё не опубликовано.</summary>
     public static Error NotPublished { get; } = Error.Conflict(
         "TaskBank.NotPublished",

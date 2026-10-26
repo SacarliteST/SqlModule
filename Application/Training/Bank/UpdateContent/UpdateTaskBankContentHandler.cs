@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Persistence;
@@ -65,7 +65,14 @@ public sealed class UpdateTaskBankContentHandler
         }
 
         task.UpdateBankContent(command.BankHint, command.ShowSolution, command.SolutionExplanation);
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Result<TaskBankContentResponse>.Fail(TaskBankErrors.ConcurrentChange);
+        }
         return new TaskBankContentResponse(task.BankHint, task.ShowSolution, task.SolutionExplanation);
     }
 }

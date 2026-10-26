@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
+using SQLModule.Application.Seeding;
+using SQLModule.Application.Training.Bank;
 using SQLModule.Client;
 using SQLModule.Client.Attempt;
 using SQLModule.Client.AttributeParameterValue;
@@ -24,7 +26,6 @@ using SQLModule.Client.Topic;
 using SQLModule.Data.Core.Configurations;
 using SQLModule.Host;
 using SQLModule.Sandbox;
-using SQLModule.Application.Seeding;
 using SQLModule.Sandbox.DbmsProbing;
 using Testcontainers.PostgreSql;
 
@@ -136,6 +137,8 @@ public sealed class TestApplication :
         {
             services.AddSingleton<IDbmsProbe, AlwaysOkProbe>();
             services.AddSingleton<ISandboxExecutor, FakeSandboxExecutor>();
+            services.RemoveAll<ITrainingAttemptGate>();
+            services.AddSingleton<ITrainingAttemptGate, PermissiveTrainingAttemptGate>();
 
             services.AddAuthentication()
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });

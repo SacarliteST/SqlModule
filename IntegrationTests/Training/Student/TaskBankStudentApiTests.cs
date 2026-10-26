@@ -1,12 +1,14 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shouldly;
+using SQLModule.Application.Training.Bank;
 using SQLModule.Client;
 using SQLModule.Contracts;
-using SQLModule.Contracts.Training.Student;
 using SQLModule.Contracts.Training.SqlTask;
+using SQLModule.Contracts.Training.Student;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.Infrastructure;
@@ -54,19 +56,19 @@ public sealed class TaskBankStudentApiTests : ApiTestBase
         var userId = Guid.NewGuid();
         AsStudent(userId);
 
-        using var earlyHint = await HttpClient.GetAsync(ApiRoutes.Training.Student.ForTaskHint(taskId));
-        using var earlySolution = await HttpClient.GetAsync(ApiRoutes.Training.Student.ForTaskSolution(taskId));
+        using var earlyHint = await HttpClient.PostAsync(ApiRoutes.Training.Student.ForTaskHint(taskId), null);
+        using var earlySolution = await HttpClient.PostAsync(ApiRoutes.Training.Student.ForTaskSolution(taskId), null);
         earlyHint.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         earlySolution.StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
         await SeedAttemptAsync(taskId, userId, 1, 0, false, state.BankPublishedAt!.Value.AddSeconds(1));
-        using var hint = await HttpClient.GetAsync(ApiRoutes.Training.Student.ForTaskHint(taskId));
+        using var hint = await HttpClient.PostAsync(ApiRoutes.Training.Student.ForTaskHint(taskId), null);
         hint.StatusCode.ShouldBe(HttpStatusCode.OK, await hint.Content.ReadAsStringAsync());
         var hintResponse = (await hint.Content.ReadFromJsonAsync<BankHintResponse>(ClientJson.Options))!;
         hintResponse.AttemptNumber.ShouldBe(1);
 
         await SeedAttemptAsync(taskId, userId, 2, 100, true, state.BankPublishedAt.Value.AddSeconds(2));
-        using var solution = await HttpClient.GetAsync(ApiRoutes.Training.Student.ForTaskSolution(taskId));
+        using var solution = await HttpClient.PostAsync(ApiRoutes.Training.Student.ForTaskSolution(taskId), null);
         solution.StatusCode.ShouldBe(HttpStatusCode.OK, await solution.Content.ReadAsStringAsync());
         var solutionResponse = (await solution.Content.ReadFromJsonAsync<BankSolutionResponse>(ClientJson.Options))!;
         solutionResponse.SqlText.ShouldNotBeNullOrWhiteSpace();
@@ -91,12 +93,18 @@ public sealed class TaskBankStudentApiTests : ApiTestBase
                 .PendingPublishes.CountAsync();
         }
 
+        using var rateLimitedApp = App.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<ITrainingAttemptGate>();
+            services.AddSingleton<ITrainingAttemptGate, TrainingAttemptGate>();
+        }));
+        using var client = rateLimitedApp.CreateClient();
         using var firstRequest = PlatformProfileAndCatalogTests.CreateSubmitRequest(taskId, userId, null, key);
-        using var first = await HttpClient.SendAsync(firstRequest);
+        using var first = await client.SendAsync(firstRequest);
         using var replayRequest = PlatformProfileAndCatalogTests.CreateSubmitRequest(taskId, userId, null, key);
-        using var replay = await HttpClient.SendAsync(replayRequest);
+        using var replay = await client.SendAsync(replayRequest);
         using var frequentRequest = PlatformProfileAndCatalogTests.CreateSubmitRequest(taskId, userId, null);
-        using var frequent = await HttpClient.SendAsync(frequentRequest);
+        using var frequent = await client.SendAsync(frequentRequest);
 
         first.StatusCode.ShouldBe(HttpStatusCode.Created, await first.Content.ReadAsStringAsync());
         replay.StatusCode.ShouldBe(HttpStatusCode.Created, await replay.Content.ReadAsStringAsync());

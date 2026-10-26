@@ -1,5 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Persistence;
 using SQLModule.Application.Training.SqlTasks;
@@ -32,7 +31,6 @@ public sealed class OpenTaskBankHandler
     public async Task<Result<TaskBankStateResponse>> Handle(OpenTaskBankCommand command, CancellationToken ct)
     {
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        await LockTaskAsync(db, command.TaskId, ct);
         var task = await db.SqlTasks.SingleOrDefaultAsync(value => value.Id == command.TaskId, ct);
         if (task is null)
         {
@@ -51,7 +49,15 @@ public sealed class OpenTaskBankHandler
         {
             var bankNumber = task.BankNumber ?? await NextBankNumberAsync(db, ct);
             task.OpenInBank(bankNumber, timeProvider.GetUtcNow());
-            await db.SaveChangesAsync(ct);
+            try
+            {
+                await db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync(ct);
+                return Result<TaskBankStateResponse>.Fail(TaskBankErrors.ConcurrentChange);
+            }
             await db.Entry(task).ReloadAsync(ct);
         }
 
@@ -73,19 +79,4 @@ public sealed class OpenTaskBankHandler
         await db.Database.SqlQueryRaw<long>(
             "SELECT nextval('\"SqlTaskBankNumberSequence\"') AS \"Value\"").SingleAsync(ct);
 
-    private static async Task LockTaskAsync(
-        IApplicationDbContext db,
-        Guid taskId,
-        CancellationToken ct)
-    {
-        var connection = db.Database.GetDbConnection();
-        await using var command = connection.CreateCommand();
-        command.Transaction = db.Database.CurrentTransaction!.GetDbTransaction();
-        command.CommandText = "SELECT \"Id\" FROM \"SqlTasks\" WHERE \"Id\" = @taskId FOR UPDATE";
-        var parameter = command.CreateParameter();
-        parameter.ParameterName = "taskId";
-        parameter.Value = taskId;
-        command.Parameters.Add(parameter);
-        _ = await command.ExecuteScalarAsync(ct);
-    }
 }

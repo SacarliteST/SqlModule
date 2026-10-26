@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Persistence;
 using SQLModule.Application.Training.Attempts;
@@ -80,18 +80,14 @@ public sealed class TaskBankReadiness : ITaskBankReadiness
             return false;
         }
 
-        var visible = version.GetVisibleHintGroups().ToHashSet();
-        if (visible.Contains(HintGroup.Result))
-        {
-            return true;
-        }
-
         try
         {
             var configuration = JsonSerializer.Deserialize<ValidationConfigurationSnapshot>(
                 version.ValidationConfigurationSnapshotJson,
                 JsonOptions);
-            return configuration?.Checks.Any(check => ToHintGroup(check.Kind) is { } group && visible.Contains(group)) == true;
+            return configuration is not null && TaskBankHintRules.HasAutomaticHint(
+                version.GetVisibleHintGroups(),
+                configuration.Checks.Select(check => check.Kind));
         }
         catch (JsonException)
         {
@@ -105,13 +101,4 @@ public sealed class TaskBankReadiness : ITaskBankReadiness
             value => value.TaskId == taskId && value.ModuleSessionId != null,
             ct);
 
-    private static HintGroup? ToHintGroup(ValidationCheckKind kind) => kind switch
-    {
-        ValidationCheckKind.MainDatasetResult => HintGroup.Result,
-        ValidationCheckKind.RequiredConstruct => HintGroup.RequiredConstructs,
-        ValidationCheckKind.ForbiddenConstruct => HintGroup.ForbiddenConstructs,
-        ValidationCheckKind.RequiredTable => HintGroup.RequiredTables,
-        ValidationCheckKind.ForbiddenTable => HintGroup.ForbiddenTables,
-        _ => null
-    };
 }

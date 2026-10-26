@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SQLModule.Contracts.Training.Validation;
 using SQLModule.Application.Persistence;
+using SQLModule.Application.Training.Bank;
+using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Training;
 
 namespace SQLModule.Application.Training.Attempts;
@@ -45,7 +46,7 @@ public sealed class AttemptScoringReadService(
         var hints = studentSafe
             ? storedChecks
                 .Where(value => value.Status == ValidationCheckStatus.Failed)
-                .Select(value => ToHintGroup(value.Kind))
+                .Select(value => TaskBankHintRules.ToHintGroup(value.Kind))
                 .Where(value => value.HasValue && visibleGroups.Contains(value.Value))
                 .Distinct()
                 .Select(value => new AttemptHintResponse(
@@ -85,19 +86,9 @@ public sealed class AttemptScoringReadService(
             hints);
     }
 
-    public static HintGroup? ToHintGroup(ValidationCheckKind kind) => kind switch
-    {
-        ValidationCheckKind.MainDatasetResult => HintGroup.Result,
-        ValidationCheckKind.RequiredConstruct => HintGroup.RequiredConstructs,
-        ValidationCheckKind.ForbiddenConstruct => HintGroup.ForbiddenConstructs,
-        ValidationCheckKind.RequiredTable => HintGroup.RequiredTables,
-        ValidationCheckKind.ForbiddenTable => HintGroup.ForbiddenTables,
-        _ => null
-    };
-
     private static bool IsVisible(ValidationCheckKind kind, IReadOnlySet<HintGroup> visibleGroups)
     {
-        var group = ToHintGroup(kind);
+        var group = TaskBankHintRules.ToHintGroup(kind);
         return group.HasValue && visibleGroups.Contains(group.Value);
     }
 }

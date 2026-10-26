@@ -1,4 +1,3 @@
-using SQLModule.Application.ModuleIntegration;
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -11,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Shouldly;
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Seeding;
 using SQLModule.Client;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;
@@ -24,7 +25,6 @@ using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.PlatformIntegration.Abstractions;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
-using SQLModule.Application.Seeding;
 using SQLModule.Sandbox.DbmsProbing;
 using SQLModule.Web.Features.ModuleIntegration;
 using Swashbuckle.AspNetCore.Swagger;
@@ -686,6 +686,16 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         using var client = app.CreateClient();
         var userId = Guid.NewGuid();
         var taskId = await SeedRunnableTaskAsync(app);
+        using (var setupScope = app.Services.CreateScope())
+        {
+            var setupDb = setupScope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var task = await setupDb.SqlTasks.SingleAsync(value => value.Id == taskId);
+            task.UpdateBankContent("Тестовая подсказка", true, null);
+            task.OpenInBank(Math.Abs(BitConverter.ToInt64(taskId.ToByteArray()) % (Int64.MaxValue - 1)) + 1,
+                DateTimeOffset.UtcNow);
+            await setupDb.SaveChangesAsync();
+        }
+
         var executor = (FakeSandboxExecutor)app.Services.GetRequiredService<ISandboxExecutor>();
         executor.ResetRunCallCount();
         int before;

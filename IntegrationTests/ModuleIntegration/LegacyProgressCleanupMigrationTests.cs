@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Options;
@@ -101,8 +101,19 @@ public sealed class LegacyProgressCleanupMigrationTests
         var task = SqlTask.Create(
             topic.Id, query.Id, "Cleanup task", "Cleanup task", 1,
             publicationStatus: PublicationStatus.Published);
-        db.AddRange(dbms, targetDb, topic, query, task);
+        db.AddRange(dbms, targetDb, topic, query);
         await db.SaveChangesAsync();
+        var actorId = Guid.NewGuid();
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO "SqlTasks"
+                ("Id", "TopicId", "SqlQueryId", "TaskName", "TaskText", "DifficultyLevel",
+                 "PublicationStatus", "ActiveValidationVersionId", "CreatedById", "CreatedByName",
+                 "CreatedAt", "UpdatedById", "UpdatedByName", "UpdatedAt")
+            VALUES
+                ({task.Id}, {topic.Id}, {query.Id}, {"Cleanup task"}, {"Cleanup task"}, {(short)1},
+                 {"Published"}, {(Guid?)null}, {actorId}, {"migration-test"},
+                 {now}, {actorId}, {"migration-test"}, {now})
+            """);
 
         var version = TaskValidationVersion.Publish(
             task.Id,
@@ -115,8 +126,10 @@ public sealed class LegacyProgressCleanupMigrationTests
             "migration-test",
             now);
         db.TaskValidationVersions.Add(version);
-        task.ActivateValidationVersion(version.Id);
         await db.SaveChangesAsync();
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE "SqlTasks" SET "ActiveValidationVersionId" = {version.Id} WHERE "Id" = {task.Id}
+            """);
 
         var userId = Guid.NewGuid();
         var attempt = Attempt.Record(

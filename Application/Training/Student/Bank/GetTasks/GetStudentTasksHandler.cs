@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Persistence;
 using SQLModule.Common.Results;
@@ -56,50 +56,45 @@ public sealed class GetStudentTasksHandler
                 task.TaskName.ToLower().Contains(search) || task.TaskText.ToLower().Contains(search));
         }
 
-        var tasks = await query.Select(task => new
+        var tasks = query.Select(task => new CatalogItem
         {
-            task.Id,
+            Id = task.Id,
             BankNumber = task.BankNumber!.Value,
-            task.TopicId,
-            task.Topic.TopicName,
-            task.TaskName,
-            task.TaskText,
-            task.DifficultyLevel,
+            TopicId = task.TopicId,
+            TopicName = task.Topic.TopicName,
+            TaskName = task.TaskName,
+            TaskText = task.TaskText,
+            DifficultyLevel = task.DifficultyLevel,
             DbmsName = db.TargetDbs.Where(target => target.Id == task.SqlQuery.TargetDbId)
                 .Select(target => target.Dbms.DbmsName).First(),
-            BankPublishedAt = task.BankPublishedAt!.Value
-        }).ToListAsync(ct);
-        var taskById = tasks.ToDictionary(task => task.Id);
-        var taskIds = taskById.Keys.ToArray();
-        var attempts = await (
-            from attempt in db.Attempts.AsNoTracking()
-            join version in db.TaskValidationVersions.AsNoTracking()
-                on attempt.ValidationVersionId equals version.Id
-            where attempt.UserId == command.UserId &&
-                  attempt.ModuleSessionId == null &&
-                  taskIds.Contains(attempt.TaskId)
-            select new { attempt.TaskId, attempt.Score, attempt.FinishedAt, version.PassingScore })
-            .ToListAsync(ct);
-        var statistics = attempts
-            .Where(attempt => attempt.FinishedAt >= taskById[attempt.TaskId].BankPublishedAt)
-            .GroupBy(attempt => attempt.TaskId)
-            .ToDictionary(
-                group => group.Key,
-                group => new
-                {
-                    Count = group.Count(),
-                    BestScore = group.Max(attempt => attempt.Score),
-                    LastAttemptAt = group.Max(attempt => attempt.FinishedAt),
-                    Solved = group.Any(attempt => attempt.Score >= attempt.PassingScore)
-                });
-
-        var items = tasks.Select(task =>
+            BankPublishedAt = task.BankPublishedAt!.Value,
+            AttemptsCount = db.Attempts.Count(attempt =>
+                attempt.UserId == command.UserId && attempt.TaskId == task.Id &&
+                attempt.ModuleSessionId == null && attempt.FinishedAt >= task.BankPublishedAt),
+            BestScore = db.Attempts.Where(attempt =>
+                    attempt.UserId == command.UserId && attempt.TaskId == task.Id &&
+                    attempt.ModuleSessionId == null && attempt.FinishedAt >= task.BankPublishedAt)
+                .Max(attempt => (int?)attempt.Score),
+            LastAttemptAt = db.Attempts.Where(attempt =>
+                    attempt.UserId == command.UserId && attempt.TaskId == task.Id &&
+                    attempt.ModuleSessionId == null && attempt.FinishedAt >= task.BankPublishedAt)
+                .Max(attempt => (DateTimeOffset?)attempt.FinishedAt),
+            Solved = (from attempt in db.Attempts
+                      join version in db.TaskValidationVersions on attempt.ValidationVersionId equals version.Id
+                      where attempt.UserId == command.UserId && attempt.TaskId == task.Id &&
+                            attempt.ModuleSessionId == null && attempt.FinishedAt >= task.BankPublishedAt &&
+                            attempt.Score >= version.PassingScore
+                      select attempt.Id).Any()
+        });
+        if (request.Solved.HasValue)
         {
-            var hasStatistics = statistics.TryGetValue(task.Id, out var statistic);
-            var status = !hasStatistics
-                ? BankTaskStatus.NotStarted
-                : statistic!.Solved ? BankTaskStatus.Solved : BankTaskStatus.InProgress;
-            return new StudentTaskResponse(
+            tasks = tasks.Where(item => item.Solved == request.Solved.Value);
+        }
+
+        tasks = ApplySorting(tasks, request.SortBy, request.Descending);
+        var count = await tasks.CountAsync(ct);
+        var page = await tasks.Skip(request.Offset).Take(request.Limit).ToArrayAsync(ct);
+        var items = page.Select(task => new StudentTaskResponse(
                 task.Id,
                 task.BankNumber,
                 task.TopicId,
@@ -108,23 +103,15 @@ public sealed class GetStudentTasksHandler
                 task.TaskText.Length <= 200 ? task.TaskText : task.TaskText[..200],
                 task.DifficultyLevel,
                 task.DbmsName,
-                status,
-                statistic?.Count ?? 0,
-                statistic?.BestScore,
-                statistic?.LastAttemptAt,
-                task.BankPublishedAt);
-        });
-        if (request.Solved.HasValue)
-        {
-            items = items.Where(item => (item.Status == BankTaskStatus.Solved) == request.Solved.Value);
-        }
-
-        items = ApplySorting(items, request.SortBy, request.Descending);
-        var materialized = items.ToArray();
+                task.AttemptsCount == 0 ? BankTaskStatus.NotStarted : task.Solved ? BankTaskStatus.Solved : BankTaskStatus.InProgress,
+                task.AttemptsCount,
+                task.BestScore,
+                task.LastAttemptAt,
+                task.BankPublishedAt)).ToList();
         return new PageResponse<StudentTaskResponse>
         {
-            Items = materialized.Skip(request.Offset).Take(request.Limit).ToList(),
-            Count = materialized.Length
+            Items = items,
+            Count = count
         };
     }
 
@@ -155,16 +142,16 @@ public sealed class GetStudentTasksHandler
         return result;
     }
 
-    private static IEnumerable<StudentTaskResponse> ApplySorting(
-        IEnumerable<StudentTaskResponse> source,
+    private static IQueryable<CatalogItem> ApplySorting(
+        IQueryable<CatalogItem> source,
         BankTaskSort sort,
         bool descending) => (sort, descending) switch
-    {
-        (BankTaskSort.Difficulty, false) => source.OrderBy(item => item.DifficultyLevel).ThenBy(item => item.BankNumber),
-        (BankTaskSort.Difficulty, true) => source.OrderByDescending(item => item.DifficultyLevel).ThenBy(item => item.BankNumber),
-        (BankTaskSort.PublishedAt, false) => source.OrderBy(item => item.BankPublishedAt).ThenBy(item => item.BankNumber),
-        (BankTaskSort.PublishedAt, true) => source.OrderByDescending(item => item.BankPublishedAt).ThenBy(item => item.BankNumber),
-        (_, true) => source.OrderByDescending(item => item.BankNumber),
-        _ => source.OrderBy(item => item.BankNumber)
-    };
+        {
+            (BankTaskSort.Difficulty, false) => source.OrderBy(item => item.DifficultyLevel).ThenBy(item => item.BankNumber),
+            (BankTaskSort.Difficulty, true) => source.OrderByDescending(item => item.DifficultyLevel).ThenBy(item => item.BankNumber),
+            (BankTaskSort.PublishedAt, false) => source.OrderBy(item => item.BankPublishedAt).ThenBy(item => item.BankNumber),
+            (BankTaskSort.PublishedAt, true) => source.OrderByDescending(item => item.BankPublishedAt).ThenBy(item => item.BankNumber),
+            (_, true) => source.OrderByDescending(item => item.BankNumber),
+            _ => source.OrderBy(item => item.BankNumber)
+        };
 }

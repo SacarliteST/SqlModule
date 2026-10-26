@@ -1069,6 +1069,7 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasColumnType("uuid");
 
                     b.Property<string>("BankHint")
+                        .IsConcurrencyToken()
                         .HasColumnType("text");
 
                     b.Property<long?>("BankNumber")
@@ -1095,11 +1096,13 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasColumnType("text");
 
                     b.Property<bool>("ShowSolution")
+                        .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
                     b.Property<string>("SolutionExplanation")
+                        .IsConcurrencyToken()
                         .HasColumnType("text");
 
                     b.Property<Guid>("SqlQueryId")
@@ -1128,6 +1131,7 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasColumnType("character varying(200)");
 
                     b.Property<string>("Visibility")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("text")
@@ -1150,6 +1154,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.ToTable("SqlTasks", null, t =>
                         {
                             t.HasCheckConstraint("CK_SqlTasks_BankPublication", "(\"BankNumber\" IS NULL AND \"BankPublishedAt\" IS NULL) OR (\"BankNumber\" IS NOT NULL AND \"BankNumber\" > 0 AND \"BankPublishedAt\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_SqlTasks_OpenBankState", "\"Visibility\" <> 'Open' OR (\"BankNumber\" IS NOT NULL AND \"BankPublishedAt\" IS NOT NULL)");
                         });
                 });
 

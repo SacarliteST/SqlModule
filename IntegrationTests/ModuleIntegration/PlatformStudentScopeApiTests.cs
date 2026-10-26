@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application.Seeding;
+using SQLModule.Client;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;
 using SQLModule.Data.Core;
@@ -14,7 +16,6 @@ using SQLModule.Domain.Training;
 using SQLModule.Host;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
-using SQLModule.Application.Seeding;
 using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.IntegrationTests.ModuleIntegration;
@@ -520,7 +521,7 @@ public sealed class PlatformStudentScopeApiTests(TestApplication app)
         detailsResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         catalogResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         var catalogPage = await catalogResponse.Content.ReadFromJsonAsync<
-            PageResponse<Contracts.Training.Student.StudentTaskResponse>>();
+            PageResponse<Contracts.Training.Student.StudentTaskResponse>>(ClientJson.Options);
         catalogPage!.Items.ShouldNotContain(item => item.Id == scenario.TaskId);
         schemaResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         rowsResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);

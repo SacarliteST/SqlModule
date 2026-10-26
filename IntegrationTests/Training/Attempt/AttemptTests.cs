@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application.Seeding;
 using SQLModule.Client;
 using SQLModule.Client.Attempt;
 using SQLModule.Common.Results;
@@ -17,7 +18,6 @@ using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
-using SQLModule.Application.Seeding;
 using SQLModule.Sandbox.DbmsProbing;
 using DomainSqlTask = SQLModule.Domain.Training.SqlTask;
 
@@ -100,6 +100,12 @@ public sealed class AttemptTests : ApiTestBase
         var task = DomainSqlTask.Create(
             topic.Id, sqlQuery.Id, "Task_" + Guid.NewGuid(), "Text", 1,
             publicationStatus: status);
+        if (status == PublicationStatus.Published)
+        {
+            task.UpdateBankContent("Тестовая подсказка", true, null);
+            task.OpenInBank(CreateBankNumber(task.Id), DateTimeOffset.UtcNow);
+        }
+
         db.SqlTasks.Add(task);
         await db.SaveChangesAsync();
         return task.Id;
@@ -230,8 +236,8 @@ public sealed class AttemptTests : ApiTestBase
         attempt.CreatedByName.ShouldBe("Test Student");
     }
 
-    [Fact(DisplayName = "Delete → попытка больше не возвращается GetById")]
-    public async Task Delete_ExistingId_EntityRemoved()
+    [Fact(DisplayName = "Delete → тренировочная попытка сохраняется")]
+    public async Task Delete_TrainingAttempt_IsRejectedAndEntityRemains()
     {
         // Arrange
         ResetFakeExecutor();
@@ -242,11 +248,11 @@ public sealed class AttemptTests : ApiTestBase
 
         // Act
         AsAdmin();
-        await AttemptClient.DeleteAsync(submitted.AttemptId);
+        await Should.ThrowAsync<ConflictException>(() => AttemptClient.DeleteAsync(submitted.AttemptId));
 
         // Assert
         var found = await AttemptClient.GetByIdAsync(submitted.AttemptId);
-        found.ShouldBeNull();
+        found.ShouldNotBeNull();
     }
 
     [Fact(DisplayName = "GetById несуществующего → null")]
@@ -292,7 +298,7 @@ public sealed class AttemptTests : ApiTestBase
         AsStudent();
 
         using var listResponse = await HttpClient.GetAsync(
-            ApiRoutes.Training.Student.ForTasksPage(offset: 0, limit: 100));
+            ApiRoutes.Training.Student.ForTasksPage(offset: 0, limit: 50));
         listResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         var json = await listResponse.Content.ReadAsStringAsync();
         json.ShouldContain(publishedId.ToString());
@@ -403,7 +409,7 @@ public sealed class AttemptTests : ApiTestBase
         }
     }
 
-    [Fact(DisplayName = "Delete attempt → Student и Teacher получают 403, Admin удаляет")]
+    [Fact(DisplayName = "Delete attempt → Student и Teacher получают 403, standalone-попытка не удаляется Admin")]
     public async Task DeleteAttempt_IsAdminOnly()
     {
         ResetFakeExecutor();
@@ -418,7 +424,13 @@ public sealed class AttemptTests : ApiTestBase
             .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         AsAdmin();
         (await HttpClient.DeleteAsync(ApiRoutes.Training.Attempts.ForId(attempt.AttemptId)))
-            .StatusCode.ShouldBe(HttpStatusCode.NoContent);
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    private static long CreateBankNumber(Guid taskId)
+    {
+        var value = BitConverter.ToInt64(taskId.ToByteArray());
+        return Math.Abs(value % (Int64.MaxValue - 1)) + 1;
     }
 
     [Fact(DisplayName = "Submit → SQL error безопасен, превышение MaxRows помечает результат усечённым")]

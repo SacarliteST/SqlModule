@@ -1,21 +1,21 @@
 ﻿using System.Security.Cryptography;
-using SQLModule.Application.TaskMaterialization;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Persistence;
+using SQLModule.Application.TaskMaterialization;
+using SQLModule.Application.Training.Bank;
+using SQLModule.Application.Training.Student;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Attempt;
-using SQLModule.Application.Persistence;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
-using SQLModule.Application.Cqrs;
-using SQLModule.Application.ModuleIntegration;
-using SQLModule.Application.Training.Student;
-using SQLModule.Application.Training.Bank;
 
 namespace SQLModule.Application.Training.Attempts.SubmitAttempt;
 
@@ -114,6 +114,16 @@ public sealed class SubmitAttemptHandler
             await db.SaveChangesAsync(ct);
         }
 
+        if (moduleSession is null)
+        {
+            var access = await taskAccess.EnsureAsync(
+                command.UserId, null, command.TaskId, PlatformScopeMode.Write, ct);
+            if (!access.IsSuccess)
+            {
+                return Result<SubmitAttemptResponse>.Fail(access.Error!);
+            }
+        }
+
         using var trainingLease = moduleSession is null
             ? await trainingAttemptGate.TryAcquireAsync(command.UserId, ct)
             : null;
@@ -129,16 +139,6 @@ public sealed class SubmitAttemptHandler
         if (moduleSession is null)
         {
             TaskBankTelemetry.RecordAttempt();
-        }
-
-        if (moduleSession is null)
-        {
-            var access = await taskAccess.EnsureAsync(
-                command.UserId, null, command.TaskId, PlatformScopeMode.Write, ct);
-            if (!access.IsSuccess)
-            {
-                return Result<SubmitAttemptResponse>.Fail(access.Error!);
-            }
         }
 
         // Workflow версионированной проверки проверяет закрытие/истечение платформенной сессии до поиска задания —
