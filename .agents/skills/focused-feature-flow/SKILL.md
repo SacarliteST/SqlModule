@@ -17,7 +17,7 @@ description: Implement or revise a SQLModule feature with targeted inspection an
 - API/persistence change: run the relevant `IntegrationTests` class/filter after the slice is coherent.
 - Sandbox/DBMS change: run only the relevant Docker test class; do not start every DBMS or the full sandbox suite by default.
 - On failure: iterate on the failing test only.
-- Final gate: format once and build once. Run the full unit/integration suite once only for cross-cutting persistence, authorization, migrations, concurrency, sandbox infrastructure, or when explicitly requested. For an isolated change, targeted green tests are sufficient.
+- Final gate after the task is fully implemented: format once, build once, and run the complete unit and integration test suites exactly once. The full suites are acceptance checks, not iteration checks. If required Docker infrastructure is unavailable, report that explicitly instead of silently skipping tests.
 
 Do not treat `dotnet format` as a reason to rerun all logic tests. Run it at the end, inspect the diff, and separate broad mechanical changes from functional work.
 
