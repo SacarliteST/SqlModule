@@ -1,4 +1,4 @@
-
+﻿
 namespace SQLModule.Contracts.Training.Validation;
 
 /// <summary>Безопасный результат одного критерия в попытке.</summary>

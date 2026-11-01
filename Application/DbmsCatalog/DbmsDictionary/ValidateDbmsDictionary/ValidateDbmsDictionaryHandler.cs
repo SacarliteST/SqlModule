@@ -1,6 +1,6 @@
-﻿using SQLModule.Common.Results;
+﻿using SQLModule.Application.Cqrs;
+using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
-using SQLModule.Application.Cqrs;
 using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.Application.DbmsCatalog.DbmsDictionary.ValidateDbmsDictionary;

@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SQLModule.Common.Results;
-using SQLModule.Contracts.Training.SqlTask;
-using SQLModule.Application.Persistence;
-using SQLModule.Domain.Training;
-using SQLModule.Sandbox;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.SqlQueries;
 using SQLModule.Application.Training.Validation;
+using SQLModule.Common.Results;
+using SQLModule.Contracts.Training.SqlTask;
+using SQLModule.Domain.Training;
+using SQLModule.Sandbox;
 
 namespace SQLModule.Application.Training.SqlTasks;
 

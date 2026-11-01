@@ -1,18 +1,18 @@
 ﻿using System.Security.Cryptography;
-using SQLModule.Application.Training.Validation;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
+using SQLModule.Application.Training.Bank;
+using SQLModule.Application.Training.Validation;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
-using SQLModule.Application.Persistence;
 using SQLModule.Domain;
 using SQLModule.Domain.Common;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
-using SQLModule.Application.Cqrs;
-using SQLModule.Application.Training.Bank;
 
 namespace SQLModule.Application.Training.Validation.PublishTaskValidation;
 

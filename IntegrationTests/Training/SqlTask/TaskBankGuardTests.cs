@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,7 +44,7 @@ public sealed class TaskBankGuardTests : ApiTestBase
                 ClientJson.Options)).StatusCode
         };
 
-        statuses.ShouldAllBe(pair => pair.Value == HttpStatusCode.Forbidden, string.Join(", ", statuses));
+        statuses.ShouldAllBe(pair => pair.Value == HttpStatusCode.Forbidden, String.Join(", ", statuses));
         await AssertTaskStateAsync(taskId, Domain.Training.TaskVisibility.Control, null);
     }
 
@@ -108,14 +108,14 @@ public sealed class TaskBankGuardTests : ApiTestBase
         var competing = await second.SqlTasks.SingleAsync(value => value.Id == taskId);
         competing.UpdateBankContent("Конкурирующая подсказка", true, null);
         await second.SaveChangesAsync();
-        staleForOpen.OpenInBank(long.MaxValue - 1, DateTimeOffset.UtcNow);
+        staleForOpen.OpenInBank(Int64.MaxValue - 1, DateTimeOffset.UtcNow);
         await Should.ThrowAsync<DbUpdateConcurrencyException>(() => first.SaveChangesAsync());
 
         first.ChangeTracker.Clear();
         second.ChangeTracker.Clear();
         var staleForContent = await first.SqlTasks.SingleAsync(value => value.Id == taskId);
         var opener = await second.SqlTasks.SingleAsync(value => value.Id == taskId);
-        opener.OpenInBank(long.MaxValue - 2, DateTimeOffset.UtcNow);
+        opener.OpenInBank(Int64.MaxValue - 2, DateTimeOffset.UtcNow);
         await second.SaveChangesAsync();
         staleForContent.UpdateBankContent("Устаревшая правка", false, null);
         await Should.ThrowAsync<DbUpdateConcurrencyException>(() => first.SaveChangesAsync());

@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Итог пакетного изменения видимости заданий банка.</summary>
 /// <param name="UpdatedCount">Число успешно изменённых заданий.</param>

@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training;
+﻿namespace SQLModule.Contracts.Training;
 
 /// <summary>Определяет назначение опубликованного задания.</summary>
 public enum TaskVisibility

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Application.Persistence;
+using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Domain.Schema;
 
 namespace SQLModule.Application.Schema.SchemaBuilder;

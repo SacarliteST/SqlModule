@@ -1,11 +1,11 @@
 ﻿using System.Text;
 using Shouldly;
+using SQLModule.Application.ModuleIntegration;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Training;
 using ContractCheckKind = SQLModule.Contracts.Training.ValidationCheckKind;
 using ContractCheckStatus = SQLModule.Contracts.Training.ValidationCheckStatus;
 using ContractHintGroup = SQLModule.Contracts.Training.HintGroup;
-using SQLModule.Application.ModuleIntegration;
 
 namespace SQLModule.UnitTests.Common;
 

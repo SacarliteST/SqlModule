@@ -1,4 +1,4 @@
-using SQLModule.Application.Auth;
+﻿using SQLModule.Application.Auth;
 using SQLModule.Identity.Client;
 
 namespace SQLModule.Host;

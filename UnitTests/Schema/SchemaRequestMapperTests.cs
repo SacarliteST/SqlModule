@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
-using SQLModule.Application.TaskMaterialization;
 using Shouldly;
+using SQLModule.Application.TaskMaterialization;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Sandbox;

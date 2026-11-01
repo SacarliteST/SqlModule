@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Карточка задания в каталоге открытого банка.</summary>
 /// <param name="Id">Идентификатор задания.</param>

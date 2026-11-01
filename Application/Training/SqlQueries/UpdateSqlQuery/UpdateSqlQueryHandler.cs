@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SQLModule.Application.Training.SqlQueries;
-using SQLModule.Application.TaskMaterialization;
 using Microsoft.Extensions.Options;
-using SQLModule.Common.Results;
-using SQLModule.Application.Persistence;
-using SQLModule.Sandbox;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
+using SQLModule.Application.TaskMaterialization;
+using SQLModule.Application.Training.SqlQueries;
+using SQLModule.Common.Results;
+using SQLModule.Sandbox;
 
 namespace SQLModule.Application.Training.SqlQueries;
 

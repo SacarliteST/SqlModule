@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
-using SQLModule.Common.Results;
-using SQLModule.Sandbox;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.SqlTasks;
+using SQLModule.Common.Results;
+using SQLModule.Sandbox;
 
 namespace SQLModule.Application.Training.SqlQueries;
 

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using SQLModule.Application.Cqrs;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.ModuleIntegration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace SQLModule.Application.ModuleIntegration;
 

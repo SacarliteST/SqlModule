@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using SQLModule.Application.Training.SqlTasks;
-using SQLModule.Application.Training.SqlTasks.GetTeacherTaskDetails;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Training.SqlTasks;
+using SQLModule.Application.Training.SqlTasks.GetTeacherTaskDetails;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Web.Common;
 using SQLModule.Web.Common.Auth;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.SqlTasks.GetTeacherTaskDetails;
 

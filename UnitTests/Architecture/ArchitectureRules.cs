@@ -1,4 +1,4 @@
-namespace SQLModule.UnitTests.Architecture;
+﻿namespace SQLModule.UnitTests.Architecture;
 
 /// <summary>Разрешённые прямые ссылки проекта на другие проекты решения.</summary>
 /// <param name="Project">Проект, зависимости которого ограничиваются.</param>

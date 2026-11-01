@@ -1,4 +1,4 @@
-using Shouldly;
+﻿using Shouldly;
 using ContractTraining = SQLModule.Contracts.Training;
 using DomainTraining = SQLModule.Domain.Training;
 using DomainValidation = SQLModule.Domain.Training.Validation;

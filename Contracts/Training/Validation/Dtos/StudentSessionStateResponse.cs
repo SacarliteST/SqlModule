@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Validation;
+﻿namespace SQLModule.Contracts.Training.Validation;
 
 /// <summary>Состояние платформенной сессии; отсутствует в standalone-режиме.</summary>
 public sealed record StudentSessionStateResponse(

@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SQLModule.Application.Training.Validation;
 using Microsoft.Extensions.Logging;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
+using SQLModule.Application.Training.Validation;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
-using SQLModule.Application.Persistence;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Application.Training.Validation.GetTaskValidation;
 

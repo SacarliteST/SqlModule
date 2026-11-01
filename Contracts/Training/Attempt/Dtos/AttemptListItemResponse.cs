@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Attempt;
+﻿namespace SQLModule.Contracts.Training.Attempt;
 
 /// <summary>Элемент списка журнала попыток без тяжёлого snapshot.</summary>
 public sealed record AttemptListItemResponse(

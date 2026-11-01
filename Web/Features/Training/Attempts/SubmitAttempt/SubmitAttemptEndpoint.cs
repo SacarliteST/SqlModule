@@ -1,18 +1,18 @@
-using SQLModule.Application.ModuleIntegration;
-using SQLModule.Application.Training.Attempts;
-using SQLModule.Application.Training.Attempts.SubmitAttempt;
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Options;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Training.Attempts;
+using SQLModule.Application.Training.Attempts.SubmitAttempt;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
-using SQLModule.Application.Cqrs;
 using SQLModule.Web.Features.ModuleIntegration;
 
 namespace SQLModule.Web.Features.Training.Attempts.SubmitAttempt;

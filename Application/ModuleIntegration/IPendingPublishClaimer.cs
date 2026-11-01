@@ -1,4 +1,4 @@
-namespace SQLModule.Application.ModuleIntegration;
+﻿namespace SQLModule.Application.ModuleIntegration;
 
 /// <summary>
 /// Атомарно закрепляет за экземпляром пачку сообщений outbox, чтобы несколько экземпляров приложения

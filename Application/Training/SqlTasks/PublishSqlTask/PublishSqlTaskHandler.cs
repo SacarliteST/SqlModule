@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
+using SQLModule.Application.Training.SqlQueries;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.SqlTask;
-using SQLModule.Application.Persistence;
 using SQLModule.Domain.Training;
-using SQLModule.Application.Cqrs;
-using SQLModule.Application.Training.SqlQueries;
 
 namespace SQLModule.Application.Training.SqlTasks;
 

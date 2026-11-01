@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.Logging;
-using SQLModule.Common.Results;
 using SQLModule.Application.Cqrs;
+using SQLModule.Common.Results;
 
 namespace SQLModule.Application.Behaviors;
 

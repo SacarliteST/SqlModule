@@ -1,4 +1,4 @@
-using Shouldly;
+﻿using Shouldly;
 
 namespace SQLModule.UnitTests.Architecture;
 

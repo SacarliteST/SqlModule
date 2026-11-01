@@ -1,4 +1,4 @@
-namespace SQLModule.Sandbox.DbmsProbing;
+﻿namespace SQLModule.Sandbox.DbmsProbing;
 
 /// <summary>Проверяет, что Docker-конфигурация СУБД действительно запускается и принимает подключения.</summary>
 public interface IDbmsProbe

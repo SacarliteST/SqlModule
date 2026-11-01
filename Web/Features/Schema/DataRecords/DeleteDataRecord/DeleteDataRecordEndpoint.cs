@@ -1,11 +1,11 @@
-using SQLModule.Application.Schema.DataRecords;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Schema.DataRecords;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Web.Common;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Schema.DataRecords;
 

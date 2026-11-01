@@ -1,4 +1,4 @@
-namespace SQLModule.Domain.Training;
+﻿namespace SQLModule.Domain.Training;
 
 /// <summary>Назначение опубликованного задания.</summary>
 public enum TaskVisibility

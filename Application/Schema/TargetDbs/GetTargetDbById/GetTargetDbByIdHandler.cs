@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.TargetDb;
-using SQLModule.Application.Persistence;
 using SQLModule.Domain.Schema;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Application.Schema.TargetDbs;
 

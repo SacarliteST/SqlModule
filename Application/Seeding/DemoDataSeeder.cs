@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Persistence;
+using SQLModule.Application.TaskMaterialization;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;

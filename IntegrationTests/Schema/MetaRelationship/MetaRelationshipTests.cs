@@ -1,7 +1,7 @@
-using SQLModule.Application.Schema.MetaRelationships;
 ﻿using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application.Schema.MetaRelationships;
 using SQLModule.Client;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.PhysicalType;

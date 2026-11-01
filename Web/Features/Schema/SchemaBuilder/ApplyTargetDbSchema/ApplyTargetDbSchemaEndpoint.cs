@@ -1,14 +1,14 @@
-using SQLModule.Application.Schema.SchemaBuilder.ApplyTargetDbSchema;
-using SQLModule.Application.Schema.SchemaBuilder;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Schema.SchemaBuilder;
+using SQLModule.Application.Schema.SchemaBuilder.ApplyTargetDbSchema;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Web.Common;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Schema.SchemaBuilder.ApplyTargetDbSchema;
 

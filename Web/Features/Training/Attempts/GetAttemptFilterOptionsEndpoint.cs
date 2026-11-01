@@ -1,8 +1,8 @@
-using SQLModule.Application.Training.Attempts;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.Training.Attempts;
 using SQLModule.Application.Training.Attempts.GetAttemptFilterOptions;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;

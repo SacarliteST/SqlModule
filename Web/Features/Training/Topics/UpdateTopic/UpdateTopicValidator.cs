@@ -1,5 +1,5 @@
-using SQLModule.Application.Training.Topics;
 ﻿using FluentValidation;
+using SQLModule.Application.Training.Topics;
 using SQLModule.Contracts.Training.Topic;
 
 namespace SQLModule.Web.Features.Training.Topics;

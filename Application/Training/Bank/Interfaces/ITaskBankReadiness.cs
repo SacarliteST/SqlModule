@@ -1,4 +1,4 @@
-using SQLModule.Contracts.Training.SqlTask;
+﻿using SQLModule.Contracts.Training.SqlTask;
 
 namespace SQLModule.Application.Training.Bank;
 

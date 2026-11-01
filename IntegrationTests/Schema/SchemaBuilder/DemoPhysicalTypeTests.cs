@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application.Seeding;
 using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Data.Core;
 using SQLModule.Domain.DbmsCatalog;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
-using SQLModule.Application.Seeding;
 using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.IntegrationTests.Schema.SchemaBuilder;

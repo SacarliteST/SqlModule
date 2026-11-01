@@ -1,6 +1,6 @@
-﻿using SQLModule.Contracts.Training.SqlQuery;
+﻿using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.SqlQueries;
-using SQLModule.Application.TaskMaterialization;
+using SQLModule.Contracts.Training.SqlQuery;
 
 namespace SQLModule.Application.Training.SqlQueries;
 

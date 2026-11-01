@@ -1,7 +1,7 @@
-using SQLModule.Application.ModuleIntegration;
 ﻿using FluentValidation;
-using SQLModule.Contracts.ModuleIntegration;
 using Microsoft.Extensions.Options;
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Contracts.ModuleIntegration;
 
 namespace SQLModule.Web.Features.ModuleIntegration;
 

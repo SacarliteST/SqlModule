@@ -1,4 +1,4 @@
-namespace SQLModule.Sandbox.Pooling;
+﻿namespace SQLModule.Sandbox.Pooling;
 
 /// <summary>Публикует состояние пула в метрики и health-монитор.</summary>
 internal sealed class SandboxPoolStatePublisher(SandboxPoolHealthMonitor healthMonitor)

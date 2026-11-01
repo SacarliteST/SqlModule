@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Краткая попытка студента.</summary>
 public sealed record TeacherTaskAttemptResponse(

@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application.Seeding;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;
 using SQLModule.Contracts.Training.Attempt;
@@ -15,7 +16,6 @@ using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Host;
 using SQLModule.IntegrationTests.Infrastructure;
-using SQLModule.Application.Seeding;
 using SQLModule.Sandbox;
 using SQLModule.Sandbox.DbmsProbing;
 

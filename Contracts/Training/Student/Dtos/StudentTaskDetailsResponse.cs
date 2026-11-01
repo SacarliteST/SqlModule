@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Безопасные данные задания для студента.</summary>
 public sealed record StudentTaskDetailsResponse(

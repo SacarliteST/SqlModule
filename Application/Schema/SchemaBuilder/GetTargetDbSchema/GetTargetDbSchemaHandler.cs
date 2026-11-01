@@ -1,6 +1,6 @@
-﻿using SQLModule.Common.Results;
+﻿using SQLModule.Application.Cqrs;
+using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Application.Schema.SchemaBuilder.GetTargetDbSchema;
 

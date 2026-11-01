@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Фильтры личной истории попыток.</summary>
 public sealed record StudentAttemptsRequest(

@@ -5,10 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Shouldly;
+using SQLModule.Application.Seeding;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.Infrastructure;
-using SQLModule.Application.Seeding;
 using SQLModule.Sandbox;
 using SQLModule.Sandbox.DbmsProbing;
 

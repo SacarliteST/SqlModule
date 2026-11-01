@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Безопасные подробности личной попытки.</summary>
 public sealed record StudentAttemptResponse(

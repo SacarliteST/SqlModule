@@ -1,15 +1,15 @@
-using SQLModule.Application.DbmsCatalog.DbmsDictionary;
-using SQLModule.Application.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionaries;
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using System.Security.Claims;
-using SQLModule.Domain.Common;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.DbmsCatalog.DbmsDictionary;
+using SQLModule.Application.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionaries;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
+using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionaries;
 

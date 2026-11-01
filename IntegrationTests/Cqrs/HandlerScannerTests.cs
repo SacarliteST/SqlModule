@@ -1,11 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
+﻿using System.Reflection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SQLModule.Application;
+using SQLModule.Application.Cqrs;
 using SQLModule.Host;
 using SQLModule.Web;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.IntegrationTests.Cqrs;
 

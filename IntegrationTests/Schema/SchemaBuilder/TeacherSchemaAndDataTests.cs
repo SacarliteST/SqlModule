@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application.Seeding;
 using SQLModule.Client;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
@@ -13,7 +14,6 @@ using SQLModule.Domain.DbmsCatalog;
 using SQLModule.Domain.Schema;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
-using SQLModule.Application.Seeding;
 using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.IntegrationTests.Schema.SchemaBuilder;

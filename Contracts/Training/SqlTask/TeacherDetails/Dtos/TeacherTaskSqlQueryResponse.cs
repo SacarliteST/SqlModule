@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Эталонный запрос в деталях задания.</summary>
 public sealed record TeacherTaskSqlQueryResponse(

@@ -1,14 +1,14 @@
 ﻿using System.Globalization;
-using SQLModule.Application.TaskMaterialization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
+using SQLModule.Application.TaskMaterialization;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.SchemaBuilder;
-using SQLModule.Application.Persistence;
 using SQLModule.Domain.Schema;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Application.Schema.SchemaBuilder.BatchTableRows;
 

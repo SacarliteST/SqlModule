@@ -1,7 +1,7 @@
-using SQLModule.Application.ModuleIntegration;
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application.ModuleIntegration;
 using SQLModule.Data.Core;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.IntegrationTests.Infrastructure;

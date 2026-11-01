@@ -1,11 +1,11 @@
-using SQLModule.Application.ModuleIntegration;
-using SQLModule.Application.Training.Attempts;
 ﻿using System.Security.Claims;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using SQLModule.Application.ModuleIntegration;
+using SQLModule.Application.Training.Attempts;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
 using SQLModule.Web.Common.Auth;
@@ -82,7 +82,7 @@ public static class WebExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddEndpoints(configuration);
         services.AddValidatorsFromAssemblyContaining<IWebMarker>(includeInternalTypes: true);
-        
+
         return services;
     }
 

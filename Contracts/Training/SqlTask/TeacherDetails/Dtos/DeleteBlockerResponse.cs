@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Причина, по которой задание нельзя удалить.</summary>
 /// <param name="Code">Стабильный machine-код.</param>

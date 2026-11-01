@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Schema.MetaRelationship;
-using SQLModule.Application.Persistence;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Application.Schema.MetaRelationships;
 

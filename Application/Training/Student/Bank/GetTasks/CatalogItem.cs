@@ -1,4 +1,4 @@
-namespace SQLModule.Application.Training.Student;
+﻿namespace SQLModule.Application.Training.Student;
 
 /// <summary>Проекция задания открытого банка с личной статистикой студента.</summary>
 internal sealed class CatalogItem

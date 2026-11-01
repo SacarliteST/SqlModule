@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Личный статус задания в открытом банке.</summary>
 public enum BankTaskStatus

@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Поле сортировки каталога открытого банка.</summary>
 public enum BankTaskSort

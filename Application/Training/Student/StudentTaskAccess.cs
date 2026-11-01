@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.ModuleIntegration;
 using SQLModule.Application.Persistence;
 using SQLModule.Common.Results;

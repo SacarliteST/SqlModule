@@ -1,4 +1,4 @@
-namespace SQLModule.Common.Results;
+﻿namespace SQLModule.Common.Results;
 
 /// <summary>Категория ошибки, используемая для маппинга на HTTP-статус.</summary>
 public enum ErrorType

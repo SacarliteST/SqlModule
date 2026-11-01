@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using SQLModule.Common.Results;
-using SQLModule.Contracts;
-using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Training.Attempts.GetAttemptFilterOptions;
 using SQLModule.Application.Training.Attempts.SubmitAttempt;
 using SQLModule.Application.Training.Bank;
+using SQLModule.Common.Results;
+using SQLModule.Contracts;
+using SQLModule.Contracts.Training.Attempt;
 
 namespace SQLModule.Application.Training.Attempts;
 

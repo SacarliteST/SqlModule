@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Элемент личной истории попыток.</summary>
 public sealed record StudentAttemptListItemResponse(

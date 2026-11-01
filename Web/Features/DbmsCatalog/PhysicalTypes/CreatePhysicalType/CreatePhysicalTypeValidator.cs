@@ -1,5 +1,5 @@
-using SQLModule.Application.DbmsCatalog.PhysicalTypes;
 ﻿using FluentValidation;
+using SQLModule.Application.DbmsCatalog.PhysicalTypes;
 using SQLModule.Contracts.DbmsCatalog.PhysicalType;
 
 namespace SQLModule.Web.Features.DbmsCatalog.PhysicalTypes;

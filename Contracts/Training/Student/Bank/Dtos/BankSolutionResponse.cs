@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Разбор решения задания открытого банка.</summary>
 /// <param name="SqlText">Эталонный SQL-запрос.</param>

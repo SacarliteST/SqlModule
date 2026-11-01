@@ -1,4 +1,4 @@
-using SQLModule.Application;
+﻿using SQLModule.Application;
 using SQLModule.Application.Auth;
 using SQLModule.Data;
 using SQLModule.Education.Client;

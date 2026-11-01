@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Готовность задания к открытию в банке.</summary>
 /// <param name="CanOpen">Можно ли открыть задание в банке.</param>

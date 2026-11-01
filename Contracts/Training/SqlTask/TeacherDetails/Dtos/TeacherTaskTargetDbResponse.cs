@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Учебная база в деталях задания.</summary>
 public sealed record TeacherTaskTargetDbResponse(

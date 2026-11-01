@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using SQLModule.Application.Cqrs;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Schema.DataRecord;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Application.Schema.DataRecords;
 

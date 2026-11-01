@@ -1,12 +1,12 @@
-using SQLModule.Application.Training.Topics;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Training.Topics;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Web.Common;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Topics;
 

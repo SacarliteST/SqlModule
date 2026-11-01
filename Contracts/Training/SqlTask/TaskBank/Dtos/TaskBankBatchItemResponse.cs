@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Результат пакетной операции для одного задания.</summary>
 /// <param name="TaskId">Идентификатор задания.</param>

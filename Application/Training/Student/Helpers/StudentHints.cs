@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using SQLModule.Application.Schema.SchemaBuilder;
 using SQLModule.Application.Training.Attempts;
 using SQLModule.Contracts.Schema.SchemaBuilder;

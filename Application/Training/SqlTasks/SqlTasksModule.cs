@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Training.Bank;
+using SQLModule.Application.Training.SqlTasks.GetTeacherTaskDetails;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.SqlTask;
-using SQLModule.Application.Cqrs;
-using SQLModule.Application.Training.SqlTasks.GetTeacherTaskDetails;
-using SQLModule.Application.Training.Bank;
 
 namespace SQLModule.Application.Training.SqlTasks;
 

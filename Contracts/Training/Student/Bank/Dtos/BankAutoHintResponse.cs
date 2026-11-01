@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Безопасная автоматическая подсказка по группе критериев.</summary>
 /// <param name="Group">Группа подсказки.</param>

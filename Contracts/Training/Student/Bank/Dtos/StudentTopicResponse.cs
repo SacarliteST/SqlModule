@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Узел дерева тем открытого банка с личной статистикой.</summary>
 /// <param name="Id">Идентификатор темы.</param>

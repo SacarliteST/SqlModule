@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Причина, мешающая открыть задание в банке.</summary>
 /// <param name="Code">Стабильный машинный код причины.</param>

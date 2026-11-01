@@ -1,4 +1,4 @@
-namespace SQLModule.Application.Training.Bank;
+﻿namespace SQLModule.Application.Training.Bank;
 
 /// <summary>Ограничивает параллельность и частоту тренировочных отправок студента.</summary>
 public interface ITrainingAttemptGate

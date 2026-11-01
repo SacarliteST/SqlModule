@@ -1,16 +1,16 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.DbmsCatalog.ValidationCapabilities.GetValidationCapabilities;
 using SQLModule.Application.Training.Validation;
+using SQLModule.Application.Training.Validation.GetTaskValidation;
+using SQLModule.Application.Training.Validation.PreviewTaskValidation;
+using SQLModule.Application.Training.Validation.PublishTaskValidation;
+using SQLModule.Application.Training.Validation.UpdateTaskValidation;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.Validation;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Training.Validation;
 using SQLModule.SqlAnalysis;
-using SQLModule.Application.Cqrs;
-using SQLModule.Application.DbmsCatalog.ValidationCapabilities.GetValidationCapabilities;
-using SQLModule.Application.Training.Validation.GetTaskValidation;
-using SQLModule.Application.Training.Validation.PreviewTaskValidation;
-using SQLModule.Application.Training.Validation.PublishTaskValidation;
-using SQLModule.Application.Training.Validation.UpdateTaskValidation;
 
 namespace SQLModule.Application.Training.Validation;
 

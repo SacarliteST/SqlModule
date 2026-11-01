@@ -1,7 +1,7 @@
+﻿using SQLModule.Application.TaskMaterialization;
 using SQLModule.Domain.Training;
 using SQLModule.Domain.Training.Validation;
 using SQLModule.Sandbox;
-using SQLModule.Application.TaskMaterialization;
 
 namespace SQLModule.Application.Training.Attempts.SubmitAttempt;
 

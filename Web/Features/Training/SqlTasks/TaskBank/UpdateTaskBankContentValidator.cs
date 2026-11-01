@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using Microsoft.Extensions.Options;
 using SQLModule.Application.Training.Bank;
 using SQLModule.Contracts.Training.SqlTask;

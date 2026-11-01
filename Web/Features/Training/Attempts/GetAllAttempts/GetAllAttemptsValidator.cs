@@ -1,5 +1,5 @@
-using SQLModule.Application.Training.Attempts;
 ﻿using FluentValidation;
+using SQLModule.Application.Training.Attempts;
 using SQLModule.Contracts.Training.Attempt;
 
 namespace SQLModule.Web.Features.Training.Attempts;

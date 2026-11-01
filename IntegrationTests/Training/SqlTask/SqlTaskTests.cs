@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SQLModule.Application.TaskMaterialization;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application.Seeding;
+using SQLModule.Application.TaskMaterialization;
 using SQLModule.Client;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.SqlQuery;
@@ -13,7 +14,6 @@ using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.Sandbox;
-using SQLModule.Application.Seeding;
 using SQLModule.Sandbox.DbmsProbing;
 using DomainAttempt = SQLModule.Domain.Training.Attempt;
 

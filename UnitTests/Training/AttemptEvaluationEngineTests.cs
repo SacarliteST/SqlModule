@@ -1,4 +1,4 @@
-using Shouldly;
+﻿using Shouldly;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.Attempts;
 using SQLModule.Application.Training.Attempts.SubmitAttempt;

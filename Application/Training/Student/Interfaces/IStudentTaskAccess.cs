@@ -1,4 +1,4 @@
-using SQLModule.Application.ModuleIntegration;
+﻿using SQLModule.Application.ModuleIntegration;
 using SQLModule.Common.Results;
 
 namespace SQLModule.Application.Training.Student;

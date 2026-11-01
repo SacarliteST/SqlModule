@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SQLModule.Application.Training.Validation;
+using SQLModule.Application.Persistence;
 using SQLModule.Application.Training.SqlQueries;
+using SQLModule.Application.Training.Validation;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Validation;
-using SQLModule.Application.Persistence;
 using SQLModule.Domain.Training;
 using SQLModule.Domain.Training.Validation;
 using SQLModule.Sandbox;

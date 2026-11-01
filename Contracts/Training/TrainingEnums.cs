@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training;
+﻿namespace SQLModule.Contracts.Training;
 
 // Публичные перечисления контракта. Имена и значения совпадают с одноимёнными доменными перечислениями:
 // это часть wire-формата, а соответствие защищает тест паритета (UnitTests/Training/ContractEnumParityTests).

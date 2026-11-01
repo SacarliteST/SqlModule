@@ -1,4 +1,4 @@
-using System.Threading.RateLimiting;
+﻿using System.Threading.RateLimiting;
 using Microsoft.Extensions.Options;
 
 namespace SQLModule.Application.Training.Bank;

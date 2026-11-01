@@ -1,4 +1,4 @@
-namespace SQLModule.Host;
+﻿namespace SQLModule.Host;
 
 internal static class SandboxHealthExtensions
 {

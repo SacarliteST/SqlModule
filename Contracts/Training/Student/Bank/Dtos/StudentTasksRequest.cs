@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Фильтры каталога заданий открытого банка.</summary>
 /// <param name="TopicId">Тема с включением всех дочерних тем.</param>

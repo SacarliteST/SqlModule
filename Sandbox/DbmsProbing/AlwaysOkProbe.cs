@@ -1,4 +1,4 @@
-namespace SQLModule.Sandbox.DbmsProbing;
+﻿namespace SQLModule.Sandbox.DbmsProbing;
 
 /// <summary>
 /// Реализация <see cref="IDbmsProbe"/> без Docker: всегда возвращает Success.

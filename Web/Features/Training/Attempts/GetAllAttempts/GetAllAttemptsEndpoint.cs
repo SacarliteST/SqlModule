@@ -1,13 +1,13 @@
-using SQLModule.Application;
-using SQLModule.Application.Training.Attempts;
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using SQLModule.Application;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Training.Attempts;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Web.Common;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Web.Features.Training.Attempts;
 

@@ -1,6 +1,6 @@
-using SQLModule.Application.ModuleIntegration;
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using SQLModule.Application.ModuleIntegration;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Validation;

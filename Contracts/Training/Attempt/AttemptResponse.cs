@@ -1,4 +1,4 @@
-
+﻿
 namespace SQLModule.Contracts.Training.Attempt;
 
 /// <summary>Ответ с данными попытки выполнения задания.</summary>

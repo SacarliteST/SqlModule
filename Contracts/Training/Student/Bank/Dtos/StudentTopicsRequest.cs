@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Student;
+﻿namespace SQLModule.Contracts.Training.Student;
 
 /// <summary>Параметры чтения дерева тем открытого банка.</summary>
 /// <param name="Offset">Смещение.</param>

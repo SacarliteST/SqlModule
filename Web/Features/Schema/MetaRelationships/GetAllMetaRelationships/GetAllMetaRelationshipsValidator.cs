@@ -1,5 +1,5 @@
-using SQLModule.Application.Schema.MetaRelationships;
 ﻿using FluentValidation;
+using SQLModule.Application.Schema.MetaRelationships;
 using SQLModule.Contracts.Schema.MetaRelationship;
 
 namespace SQLModule.Web.Features.Schema.MetaRelationships;

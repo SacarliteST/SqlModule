@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Агрегированная read-модель деталей задания для преподавателя.</summary>
 public sealed record TeacherTaskDetailsResponse(

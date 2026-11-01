@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Attempt;
+﻿namespace SQLModule.Contracts.Training.Attempt;
 
 /// <summary>Сохранённый безопасный фактический результат попытки.</summary>
 public sealed record AttemptResultSnapshotResponse(

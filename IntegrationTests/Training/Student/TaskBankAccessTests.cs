@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -41,12 +41,12 @@ public sealed class TaskBankAccessTests : ApiTestBase
                 ApiRoutes.Training.Student.ForTaskTableRows(taskId, Guid.NewGuid(), 0, 10))).StatusCode,
             ["hint"] = (await HttpClient.PostAsync(ApiRoutes.Training.Student.ForTaskHint(taskId), null)).StatusCode,
             ["solution"] = (await HttpClient.PostAsync(ApiRoutes.Training.Student.ForTaskSolution(taskId), null)).StatusCode,
-            ["by-number"] = (await HttpClient.GetAsync(ApiRoutes.Training.Student.ForTaskByBankNumber(long.MaxValue))).StatusCode
+            ["by-number"] = (await HttpClient.GetAsync(ApiRoutes.Training.Student.ForTaskByBankNumber(Int64.MaxValue))).StatusCode
         };
         using var submitRequest = PlatformProfileAndCatalogTests.CreateSubmitRequest(taskId, userId, null);
         responses["submit"] = (await HttpClient.SendAsync(submitRequest)).StatusCode;
 
-        responses.ShouldAllBe(pair => pair.Value == HttpStatusCode.NotFound, string.Join(", ", responses));
+        responses.ShouldAllBe(pair => pair.Value == HttpStatusCode.NotFound, String.Join(", ", responses));
         var catalog = await HttpClient.GetFromJsonAsync<PageResponse<StudentTaskResponse>>(
             ApiRoutes.Training.Student.Tasks, ClientJson.Options);
         catalog!.Items.ShouldNotContain(item => item.Id == taskId);
@@ -109,7 +109,7 @@ public sealed class TaskBankAccessTests : ApiTestBase
             ["history"] = await StatusAsync(client, HttpMethod.Get, ApiRoutes.Training.Student.Attempts, userId, sessionId)
         };
 
-        statuses.ShouldAllBe(pair => pair.Value == HttpStatusCode.Forbidden, string.Join(", ", statuses));
+        statuses.ShouldAllBe(pair => pair.Value == HttpStatusCode.Forbidden, String.Join(", ", statuses));
         (await StatusAsync(client, HttpMethod.Get, ApiRoutes.Training.Student.ForTask(taskId), userId, sessionId))
             .ShouldBe(HttpStatusCode.OK);
         using var scope = platform.Services.CreateScope();

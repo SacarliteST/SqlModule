@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SQLModule.Common.Results;
 using SQLModule.Application.Persistence;
+using SQLModule.Common.Results;
 using SQLModule.Domain.ModuleIntegration;
 
 namespace SQLModule.Application.ModuleIntegration;

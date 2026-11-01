@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
-using SQLModule.Application.Persistence;
-using SQLModule.Application.Cqrs;
 
 namespace SQLModule.Application.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionaries;
 

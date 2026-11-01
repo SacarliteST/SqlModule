@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using SQLModule.Common.Results;
-using SQLModule.Contracts.Schema.SchemaBuilder;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Schema.SchemaBuilder.ApplyTargetDbSchema;
 using SQLModule.Application.Schema.SchemaBuilder.BatchTableRows;
@@ -12,6 +10,8 @@ using SQLModule.Application.Schema.SchemaBuilder.GetTargetDbSchema;
 using SQLModule.Application.Schema.SchemaBuilder.ValidateSchema;
 using SQLModule.Application.Schema.SchemaBuilder.ValidateTargetDbDdl;
 using SQLModule.Application.Schema.SchemaBuilder.ValidateTargetDbSchema;
+using SQLModule.Common.Results;
+using SQLModule.Contracts.Schema.SchemaBuilder;
 
 namespace SQLModule.Application.Schema.SchemaBuilder;
 

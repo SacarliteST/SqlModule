@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Validation;
+﻿namespace SQLModule.Contracts.Training.Validation;
 
 /// <summary>Результат ручного завершения платформенной сессии.</summary>
 public sealed record SessionFinalizationResponse(

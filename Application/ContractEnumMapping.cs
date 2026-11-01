@@ -1,6 +1,6 @@
-using ContractTraining = SQLModule.Contracts.Training;
-using DomainTraining = SQLModule.Domain.Training;
+﻿using ContractTraining = SQLModule.Contracts.Training;
 using DomainModuleIntegration = SQLModule.Domain.ModuleIntegration;
+using DomainTraining = SQLModule.Domain.Training;
 using DomainValidation = SQLModule.Domain.Training.Validation;
 
 namespace SQLModule.Application;

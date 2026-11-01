@@ -1,8 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
-using SQLModule.Common.Results;
-using SQLModule.Contracts;
-using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.DbmsCatalog.DbmsDictionary.CreateDbmsDictionary;
 using SQLModule.Application.DbmsCatalog.DbmsDictionary.DeleteDbmsDictionary;
@@ -10,6 +7,9 @@ using SQLModule.Application.DbmsCatalog.DbmsDictionary.GetAllDbmsDictionaries;
 using SQLModule.Application.DbmsCatalog.DbmsDictionary.GetDbmsDictionaryById;
 using SQLModule.Application.DbmsCatalog.DbmsDictionary.UpdateDbmsDictionary;
 using SQLModule.Application.DbmsCatalog.DbmsDictionary.ValidateDbmsDictionary;
+using SQLModule.Common.Results;
+using SQLModule.Contracts;
+using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 
 namespace SQLModule.Application.DbmsCatalog.DbmsDictionary;
 

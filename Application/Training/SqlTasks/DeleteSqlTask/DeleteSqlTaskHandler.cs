@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using SQLModule.Common.Results;
-using SQLModule.Application.Persistence;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
+using SQLModule.Common.Results;
 
 namespace SQLModule.Application.Training.SqlTasks;
 

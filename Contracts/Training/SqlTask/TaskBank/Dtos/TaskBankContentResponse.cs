@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Сохранённые авторские материалы задания открытого банка.</summary>
 /// <param name="BankHint">Авторская Markdown-подсказка.</param>

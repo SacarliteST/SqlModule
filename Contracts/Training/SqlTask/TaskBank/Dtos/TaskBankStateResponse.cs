@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Текущее состояние задания в открытом банке.</summary>
 /// <param name="Visibility">Назначение задания.</param>

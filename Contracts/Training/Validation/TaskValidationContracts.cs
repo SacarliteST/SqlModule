@@ -1,4 +1,4 @@
-
+﻿
 namespace SQLModule.Contracts.Training.Validation;
 
 /// <summary>Полная редактируемая конфигурация проверки задания.</summary>

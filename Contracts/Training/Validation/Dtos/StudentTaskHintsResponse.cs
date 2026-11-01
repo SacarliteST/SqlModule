@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.Validation;
+﻿namespace SQLModule.Contracts.Training.Validation;
 
 /// <summary>Разрешённые преподавателем подсказки по validation version.</summary>
 public sealed record StudentTaskHintsResponse(

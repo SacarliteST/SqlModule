@@ -1,11 +1,11 @@
-using SQLModule.Application.ModuleIntegration;
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using SQLModule.Application.Cqrs;
 using Microsoft.Extensions.Options;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.ModuleIntegration;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;

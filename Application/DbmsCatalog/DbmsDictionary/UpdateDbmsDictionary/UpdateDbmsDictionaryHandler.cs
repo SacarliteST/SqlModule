@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SQLModule.Application.Cqrs;
+using SQLModule.Application.Persistence;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
-using SQLModule.Application.Persistence;
-using SQLModule.Application.Cqrs;
 using SQLModule.Sandbox.DbmsProbing;
 
 namespace SQLModule.Application.DbmsCatalog.DbmsDictionary.UpdateDbmsDictionary;

@@ -1,4 +1,4 @@
-using SQLModule.Web;
+﻿using SQLModule.Web;
 
 namespace SQLModule.Host;
 

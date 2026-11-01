@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using SQLModule.Contracts;
-using SQLModule.Contracts.Auth;
 using SQLModule.Application.Auth;
 using SQLModule.Application.Cqrs;
 using SQLModule.Common.Results;
+using SQLModule.Contracts;
+using SQLModule.Contracts.Auth;
 using SQLModule.Web.Common;
 using SQLModule.Web.Features.Auth.StandaloneRefresh;
 

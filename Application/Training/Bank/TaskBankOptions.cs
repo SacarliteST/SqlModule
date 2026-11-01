@@ -1,4 +1,4 @@
-namespace SQLModule.Application.Training.Bank;
+﻿namespace SQLModule.Application.Training.Bank;
 
 /// <summary>Ограничения открытого банка заданий.</summary>
 public sealed class TaskBankOptions

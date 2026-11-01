@@ -3,9 +3,9 @@ using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Shouldly;
+using SQLModule.Host;
 using SQLModule.Sandbox;
 using SQLModule.Sandbox.Pooling;
-using SQLModule.Host;
 
 namespace SQLModule.UnitTests.Sandbox;
 

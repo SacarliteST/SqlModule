@@ -1,4 +1,4 @@
-namespace SQLModule.Contracts.Training.SqlTask;
+﻿namespace SQLModule.Contracts.Training.SqlTask;
 
 /// <summary>Запрос пакетного открытия или закрытия заданий банка.</summary>
 /// <param name="TaskIds">Идентификаторы заданий.</param>
