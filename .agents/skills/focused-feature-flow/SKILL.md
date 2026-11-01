@@ -17,8 +17,8 @@ description: Implement or revise a SQLModule feature with targeted inspection an
 - API/persistence change: run the relevant `IntegrationTests` class/filter after the slice is coherent.
 - Sandbox/DBMS change: run only the relevant Docker test class; do not start every DBMS or the full sandbox suite by default.
 - On failure: iterate on the failing test only.
-- Final gate after the task is fully implemented: format once, build once, and run the complete unit and integration test suites exactly once. The full suites are acceptance checks, not iteration checks. If required Docker infrastructure is unavailable, report that explicitly instead of silently skipping tests.
+- Final gate after the task is fully implemented: build once and run the complete unit and integration test suites exactly once. The full suites are acceptance checks, not iteration checks. If required Docker infrastructure is unavailable, report that explicitly instead of silently skipping tests.
+- After the tests, run `dotnet format SQLModule.sln --no-restore`, then perform one final `dotnet build SQLModule.sln --no-restore`. Do not rerun tests merely because formatting completed, and do not spend time reviewing the formatter-only diff.
+- Then check only `git status` to avoid staging unrelated user work, stage the task-scoped files, and create the task commit without another broad analysis pass.
 
-Do not treat `dotnet format` as a reason to rerun all logic tests. Run it at the end, inspect the diff, and separate broad mechanical changes from functional work.
-
-Do not start hosts, containers, Swagger export, migrations, client generation, commits or pushes unless required. All migrations, Swagger/OpenAPI export, Orval and client generation must use `unsandboxed-codegen` outside the sandbox. Stop only processes and containers started by the agent.
+Do not start hosts, containers, Swagger export, migrations, client generation or pushes unless required. All migrations, Swagger/OpenAPI export, Orval and client generation must use `unsandboxed-codegen` outside the sandbox. Stop only processes and containers started by the agent.
