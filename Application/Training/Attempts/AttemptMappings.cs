@@ -5,6 +5,10 @@ namespace SQLModule.Application.Training.Attempts;
 
 public static class AttemptMappings
 {
+    private const string GenericExecutionError =
+        "SQL-запрос не удалось выполнить. Проверьте синтаксис и повторите попытку.";
+    private const string SyntaxErrorPrefix = "Синтаксическая ошибка:";
+
     public static AttemptResponse ToResponse(
         Attempt e,
         AttemptResultSnapshot snapshot,
@@ -30,7 +34,12 @@ public static class AttemptMappings
     public static string? ToPublicError(Attempt attempt) => attempt.Status switch
     {
         ExecutionStatus.TimedOut => "Превышено допустимое время выполнения запроса.",
-        ExecutionStatus.Error => "SQL-запрос не удалось выполнить. Проверьте синтаксис и повторите попытку.",
+        ExecutionStatus.Error => IsSafeSyntaxError(attempt.ErrorMessage)
+            ? attempt.ErrorMessage
+            : GenericExecutionError,
         _ => null
     };
+
+    private static bool IsSafeSyntaxError(string? error) =>
+        error?.StartsWith(SyntaxErrorPrefix, StringComparison.Ordinal) == true;
 }

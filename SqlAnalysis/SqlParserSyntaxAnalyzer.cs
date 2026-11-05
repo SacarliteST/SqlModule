@@ -8,6 +8,7 @@ namespace SQLModule.SqlAnalysis;
 
 public sealed class SqlParserSyntaxAnalyzer : ISqlSyntaxAnalyzer
 {
+    private const int MaxPublicErrorLength = 500;
     private static readonly IReadOnlySet<SqlConstruct> PostgreSqlConstructs = new HashSet<SqlConstruct>(
         Enum.GetValues<SqlConstruct>());
     private static readonly IReadOnlySet<SqlConstruct> MySqlConstructs = new HashSet<SqlConstruct>(
@@ -87,7 +88,7 @@ public sealed class SqlParserSyntaxAnalyzer : ISqlSyntaxAnalyzer
             return Failure(
                 SqlSyntaxAnalysisStatus.InvalidSql,
                 "SqlAnalysis.InvalidSql",
-                "SQL-запрос содержит синтаксическую ошибку.");
+                CreatePublicSyntaxError(exception));
         }
         catch
         {
@@ -111,6 +112,19 @@ public sealed class SqlParserSyntaxAnalyzer : ISqlSyntaxAnalyzer
             false,
             errorCode,
             publicError);
+
+    private static string CreatePublicSyntaxError(Exception exception)
+    {
+        var details = exception.Message.ReplaceLineEndings(" ").Trim();
+        if (details.Length > MaxPublicErrorLength)
+        {
+            details = details[..MaxPublicErrorLength].TrimEnd() + "…";
+        }
+
+        return String.IsNullOrWhiteSpace(details)
+            ? "SQL-запрос содержит синтаксическую ошибку."
+            : $"Синтаксическая ошибка: {details}";
+    }
 
     private sealed class AnalysisVisitor : Visitor
     {

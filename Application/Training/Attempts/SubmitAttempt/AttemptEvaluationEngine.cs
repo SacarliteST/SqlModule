@@ -42,22 +42,29 @@ public sealed class AttemptEvaluationEngine(IResultComparer comparer)
         SqlSyntaxAnalysis analysis,
         AttemptEvaluationInput input)
     {
-        var main = EvaluateMain(result, input);
+        var main = EvaluateMain(result, analysis, input);
         var checks = EvaluateChecks(input, analysis, main.IsCorrect);
         return new AttemptEvaluation(main, checks, checks.Sum(value => value.AwardedScore));
     }
 
-    private MainResult EvaluateMain(QueryResultSet result, AttemptEvaluationInput input)
+    private MainResult EvaluateMain(
+        QueryResultSet result,
+        SqlSyntaxAnalysis analysis,
+        AttemptEvaluationInput input)
     {
         if (!result.Succeeded)
         {
             var timeout = result.Error?.Contains("timeout", StringComparison.OrdinalIgnoreCase) == true;
+            var publicError = analysis.Status == SqlSyntaxAnalysisStatus.InvalidSql &&
+                              !String.IsNullOrWhiteSpace(analysis.PublicError)
+                ? analysis.PublicError
+                : "SQL-запрос не удалось выполнить. Проверьте синтаксис и повторите попытку.";
             return new MainResult(
                 timeout ? ExecutionStatus.TimedOut : ExecutionStatus.Error,
                 false,
                 timeout ? CheckReason.Timeout : CheckReason.SqlError,
                 timeout ? "Превышено допустимое время выполнения запроса." :
-                    "SQL-запрос не удалось выполнить. Проверьте синтаксис и повторите попытку.");
+                    publicError);
         }
 
         if (result.IsTruncated)

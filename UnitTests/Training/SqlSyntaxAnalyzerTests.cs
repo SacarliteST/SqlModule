@@ -127,6 +127,17 @@ public sealed class SqlSyntaxAnalyzerTests
     }
 
     [Fact]
+    public void InvalidSql_ShouldReturnParserHint()
+    {
+        var result = Create(SqlAnalyzerDialect.PostgreSql).Analyze("SELEC id FROM users");
+
+        result.Status.ShouldBe(SqlSyntaxAnalysisStatus.InvalidSql);
+        result.PublicError.ShouldStartWith("Синтаксическая ошибка:");
+        result.PublicError.ShouldContain("id");
+        result.PublicError.ShouldContain("Line: 1");
+    }
+
+    [Fact]
     public void MultipleStatements_ShouldBeRejected()
     {
         var result = Create(SqlAnalyzerDialect.PostgreSql).Analyze("SELECT 1; SELECT 2");

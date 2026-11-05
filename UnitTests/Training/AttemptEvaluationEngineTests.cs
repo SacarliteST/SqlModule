@@ -28,7 +28,8 @@ public sealed class AttemptEvaluationEngineTests
     private static SqlSyntaxAnalysis Analysis(
         IEnumerable<SqlConstruct>? constructs = null,
         IEnumerable<string>? tables = null,
-        SqlSyntaxAnalysisStatus status = SqlSyntaxAnalysisStatus.Succeeded) =>
+        SqlSyntaxAnalysisStatus status = SqlSyntaxAnalysisStatus.Succeeded,
+        string? publicError = null) =>
         new(
             status,
             (constructs ?? []).ToHashSet(),
@@ -36,7 +37,7 @@ public sealed class AttemptEvaluationEngineTests
             1,
             true,
             null,
-            null);
+            publicError);
 
     private static ValidationCheckSnapshot Check(
         ValidationCheckKind kind, string? value, int weight, int order) =>
@@ -93,6 +94,21 @@ public sealed class AttemptEvaluationEngineTests
         evaluation.Main.Reason.ShouldBe(CheckReason.SqlError);
         evaluation.Main.PublicError.ShouldNotBeNull().ShouldNotContain("syntax error at or near");
         evaluation.Score.ShouldBe(0);
+    }
+
+    [Fact(DisplayName = "Синтаксическая ошибка возвращает подсказку парсера без raw-ошибки СУБД")]
+    public void Evaluate_SyntaxError_ReturnsParserHint()
+    {
+        const string parserHint = "Синтаксическая ошибка: Expected a SQL statement, found id, Line: 1, Col: 7";
+        var evaluation = engine.Evaluate(
+            Result([], succeeded: false, error: "password=secret; container=private"),
+            Analysis(status: SqlSyntaxAnalysisStatus.InvalidSql, publicError: parserHint),
+            Input(Check(ValidationCheckKind.MainDatasetResult, null, 100, 0)));
+
+        var publicError = evaluation.Main.PublicError.ShouldNotBeNull();
+        publicError.ShouldBe(parserHint);
+        publicError.ShouldNotContain("secret");
+        publicError.ShouldNotContain("container");
     }
 
     [Fact(DisplayName = "Ошибка с timeout → TimedOut/Timeout")]

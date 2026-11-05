@@ -14,6 +14,7 @@ using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Schema;
 using SQLModule.Domain.Training;
+using SQLModule.Domain.Training.Validation;
 using SQLModule.PlatformIntegration.Contracts;
 using SQLModule.Sandbox;
 
@@ -35,6 +36,7 @@ public sealed class SubmitAttemptHandler
     private readonly TimeProvider timeProvider;
     private readonly IApplicationDbContext db;
     private readonly ITrainingAttemptGate trainingAttemptGate;
+    private readonly ISqlSyntaxAnalyzerResolver analyzerResolver;
 
     /// <summary>Создаёт обработчик отправки попытки.</summary>
     public SubmitAttemptHandler(
@@ -48,7 +50,8 @@ public sealed class SubmitAttemptHandler
         IOptions<SandboxOptions> sandboxOptions,
         TimeProvider timeProvider,
         IApplicationDbContext db,
-        ITrainingAttemptGate trainingAttemptGate)
+        ITrainingAttemptGate trainingAttemptGate,
+        ISqlSyntaxAnalyzerResolver analyzerResolver)
     {
         this.materializer = materializer;
         this.executor = executor;
@@ -61,6 +64,7 @@ public sealed class SubmitAttemptHandler
         this.timeProvider = timeProvider;
         this.db = db;
         this.trainingAttemptGate = trainingAttemptGate;
+        this.analyzerResolver = analyzerResolver;
     }
 
     public async Task<Result<SubmitAttemptResponse>> Handle(
@@ -186,6 +190,9 @@ public sealed class SubmitAttemptHandler
             return Result<SubmitAttemptResponse>.Fail(mat.Error!);
         }
 
+        var syntaxAnalysis = analyzerResolver.Resolve(mat.Value!.Dbms.DbmsSystemName)
+            ?.Analyze(command.SubmittedSql);
+
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         var receipt = MutationReceipt.Create(scope, command.IdempotencyKey, payloadHash, String.Empty);
         db.MutationReceipts.Add(receipt);
@@ -254,7 +261,10 @@ public sealed class SubmitAttemptHandler
                 ? null
             : reason == CheckReason.Timeout
                 ? "Превышено допустимое время выполнения запроса."
-                : "SQL-запрос не удалось выполнить. Проверьте синтаксис и повторите попытку.";
+                : syntaxAnalysis?.Status == SqlSyntaxAnalysisStatus.InvalidSql &&
+                  !String.IsNullOrWhiteSpace(syntaxAnalysis.PublicError)
+                    ? syntaxAnalysis.PublicError
+                    : "SQL-запрос не удалось выполнить. Проверьте синтаксис и повторите попытку.";
 
         var attempt = Attempt.Record(
             command.UserId, command.TaskId, command.SubmittedSql,

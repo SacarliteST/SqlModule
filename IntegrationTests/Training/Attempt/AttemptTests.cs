@@ -169,7 +169,13 @@ public sealed class AttemptTests : ApiTestBase
         response.IsCorrect.ShouldBeFalse();
         response.Reason.ShouldBe(SQLModule.Contracts.Training.CheckReason.SqlError);
         response.PublicError.ShouldNotBeNullOrWhiteSpace();
+        response.PublicError.ShouldStartWith("Синтаксическая ошибка:");
+        response.PublicError.ShouldContain("SQL");
         response.PublicError.ShouldNotContain("syntax error");
+
+        var details = await HttpClient.GetFromJsonAsync<StudentAttemptResponse>(
+            ApiRoutes.Training.Student.ForAttempt(response.AttemptId), ClientJson.Options);
+        details!.PublicError.ShouldBe(response.PublicError);
     }
 
     [Fact(DisplayName = "Submit → несовпадающий результат IsCorrect=false с причиной")]
