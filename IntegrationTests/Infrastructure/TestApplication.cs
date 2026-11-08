@@ -129,7 +129,8 @@ public sealed class TestApplication :
         var configurationValues = new Dictionary<string, string?>
         {
             { ConfigConstants.DbConnection, postgreContainer.GetConnectionString() },
-            { "DevTools:Enabled", "true" }
+            { "DevTools:Enabled", "true" },
+            { "EducationSpd:Enabled", "true" }
         };
 
         builder.ConfigureAppConfiguration(config => config.AddInMemoryCollection(configurationValues));

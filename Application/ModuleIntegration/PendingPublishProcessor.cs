@@ -16,7 +16,8 @@ public sealed class PendingPublishProcessor(
     IEducationCompletionClient completionClient,
     IOptions<ModuleIntegrationOptions> options,
     TimeProvider timeProvider,
-    ILogger<PendingPublishProcessor> logger)
+    ILogger<PendingPublishProcessor> logger,
+    ISkillCatalogEventPublisher? skillCatalogPublisher = null)
 {
     /// <summary>Идентификатор экземпляра приложения для аренд outbox (общий на процесс).</summary>
     private static readonly string InstanceId = $"{Environment.MachineName}:{Guid.NewGuid():N}";
@@ -63,9 +64,13 @@ public sealed class PendingPublishProcessor(
                         message.Kind,
                         ModuleIntegrationTelemetryOutcomes.Sent);
                 }
-                else
+                else if (message.Kind == PendingPublishKind.Grade)
                 {
                     await ProcessGradeAsync(message, ct);
+                }
+                else
+                {
+                    await ProcessSkillCatalogAsync(message, ct);
                 }
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -115,6 +120,27 @@ public sealed class PendingPublishProcessor(
         var gradePending = await CountPendingAsync(PendingPublishKind.Grade, ct);
         ModuleIntegrationTelemetry.RecordPendingMessages(eventPending, gradePending);
         return messages.Count;
+    }
+
+    private async Task ProcessSkillCatalogAsync(PendingPublish message, CancellationToken ct)
+    {
+        if (skillCatalogPublisher is null ||
+            String.IsNullOrWhiteSpace(message.Topic) ||
+            String.IsNullOrWhiteSpace(message.MessageKey))
+        {
+            throw new InvalidOperationException(
+                "Публикатор каталога навыков или Kafka-реквизиты outbox-сообщения не настроены.");
+        }
+
+        await skillCatalogPublisher.PublishAsync(
+            message.Topic,
+            message.MessageKey,
+            message.MessageJson,
+            ct);
+        message.MarkSent(timeProvider.GetUtcNow());
+        ModuleIntegrationTelemetry.RecordPublish(
+            message.Kind,
+            ModuleIntegrationTelemetryOutcomes.Sent);
     }
 
     private async Task ProcessGradeAsync(PendingPublish message, CancellationToken ct)
@@ -194,7 +220,7 @@ public sealed class PendingPublishProcessor(
 
     private DeliveryOptions GetDeliveryOptions(PendingPublishKind kind)
     {
-        if (kind == PendingPublishKind.Event)
+        if (kind is PendingPublishKind.Event or PendingPublishKind.SkillCatalog)
         {
             var kafka = options.Value.Kafka;
             return new DeliveryOptions(

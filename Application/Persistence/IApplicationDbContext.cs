@@ -38,6 +38,8 @@ public interface IApplicationDbContext
 
     DbSet<Topic> Topics { get; }
 
+    DbSet<Skill> Skills { get; }
+
     DbSet<SqlQuery> SqlQueries { get; }
 
     DbSet<SqlTask> SqlTasks { get; }

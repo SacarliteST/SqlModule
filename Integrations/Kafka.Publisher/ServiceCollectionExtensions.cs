@@ -14,4 +14,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPracticeEventPublisher, KafkaPracticeEventPublisher>();
         return services;
     }
+
+    public static IServiceCollection AddSkillCatalogEventPublisher(
+        this IServiceCollection services,
+        IConfigurationSection section)
+    {
+        services.AddOptions<SkillCatalogKafkaPublisherOptions>().Bind(section);
+        services.AddSingleton<ISkillCatalogEventPublisher, KafkaSkillCatalogEventPublisher>();
+        return services;
+    }
 }

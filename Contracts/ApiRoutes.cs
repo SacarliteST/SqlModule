@@ -264,6 +264,17 @@ public static class ApiRoutes
     /// <summary>Маршруты контекста тренажёра.</summary>
     public static class Training
     {
+        /// <summary>Каталог навыков SQL-модуля.</summary>
+        public static class Skills
+        {
+            public const string Collection = PrefixV1 + "/skills";
+            public const string ById = Collection + "/{id:guid}";
+            public const string Restore = ById + "/restore";
+
+            public static string ForId(Guid id) => $"{Collection}/{id}";
+            public static string ForRestore(Guid id) => $"{ForId(id)}/restore";
+        }
+
         /// <summary>Безопасный публичный контур студента.</summary>
         public static class Student
         {

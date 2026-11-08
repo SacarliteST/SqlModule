@@ -35,13 +35,22 @@ internal static class CompositionExtensions
         IConfiguration configuration)
     {
         var section = configuration.GetSection(ModuleIntegrationSection);
-        if (!section.GetValue<bool>("Enabled") || !section.GetValue("Kafka:PublisherEnabled", true))
+        var moduleIntegrationEnabled = section.GetValue<bool>("Enabled");
+        var publisherEnabled = section.GetValue("Kafka:PublisherEnabled", true);
+        if (!moduleIntegrationEnabled || !publisherEnabled)
         {
             return services;
         }
 
-        return services
+        services
             .AddEducationCompletionClient(section)
             .AddPracticeEventPublisher(section.GetSection("Kafka"));
+
+        if (configuration.GetValue<bool>("EducationSpd:Enabled"))
+        {
+            services.AddSkillCatalogEventPublisher(section.GetSection("Kafka"));
+        }
+
+        return services;
     }
 }

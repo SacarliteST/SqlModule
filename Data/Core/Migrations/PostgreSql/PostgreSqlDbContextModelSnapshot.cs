@@ -347,6 +347,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .IsRequired()
                         .HasColumnType("jsonb");
 
+                    b.Property<string>("MessageKey")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<DateTimeOffset>("NextAttemptAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -355,6 +359,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
                     b.Property<Guid>("SessionId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Topic")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.HasKey("Id");
 
@@ -1008,6 +1016,66 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.HasIndex("UserId", "TaskId", "OpenedAt");
 
                     b.ToTable("BankSolutionAccesses", (string)null);
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.Skill", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("SkillId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SkillId")
+                        .IsUnique();
+
+                    b.HasIndex("IsDeleted", "Name");
+
+                    b.ToTable("Skills", (string)null);
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>

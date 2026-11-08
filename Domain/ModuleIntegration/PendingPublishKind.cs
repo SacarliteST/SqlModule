@@ -4,5 +4,6 @@
 public enum PendingPublishKind
 {
     Event,
-    Grade
+    Grade,
+    SkillCatalog
 }

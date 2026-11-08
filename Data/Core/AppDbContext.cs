@@ -51,6 +51,9 @@ public class AppDbContext : DbContext, IApplicationDbContext
     /// <summary>Темы заданий</summary>
     public DbSet<Topic> Topics { get; set; }
 
+    /// <summary>Каталог навыков SQL-модуля.</summary>
+    public DbSet<Skill> Skills { get; set; }
+
     /// <summary>Эталонные SQL-запросы</summary>
     public DbSet<SqlQuery> SqlQueries { get; set; }
 

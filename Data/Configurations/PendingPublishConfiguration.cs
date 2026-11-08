@@ -19,6 +19,8 @@ internal sealed class PendingPublishConfiguration : IEntityTypeConfiguration<Pen
         builder.Property(message => message.SessionId).IsRequired();
         builder.Property(message => message.DeduplicationKey).HasMaxLength(200).IsRequired();
         builder.Property(message => message.MessageJson).HasColumnType("jsonb").IsRequired();
+        builder.Property(message => message.Topic).HasMaxLength(300);
+        builder.Property(message => message.MessageKey).HasMaxLength(300);
         builder.Property(message => message.Attempts).HasDefaultValue(0).IsRequired();
         builder.Property(message => message.NextAttemptAt).IsRequired();
         builder.Property(message => message.CreatedAt).IsRequired();

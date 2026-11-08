@@ -9,6 +9,8 @@ public sealed class PendingPublish : BaseEntity
     public Guid SessionId { get; private set; }
     public string DeduplicationKey { get; private set; }
     public string MessageJson { get; private set; }
+    public string? Topic { get; private set; }
+    public string? MessageKey { get; private set; }
     public int Attempts { get; private set; }
     public DateTimeOffset NextAttemptAt { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -27,12 +29,16 @@ public sealed class PendingPublish : BaseEntity
         Guid sessionId,
         string deduplicationKey,
         string messageJson,
+        string? topic,
+        string? messageKey,
         DateTimeOffset createdAt) : base(id)
     {
         Kind = kind;
         SessionId = sessionId;
         DeduplicationKey = deduplicationKey;
         MessageJson = messageJson;
+        Topic = topic;
+        MessageKey = messageKey;
         Attempts = 0;
         NextAttemptAt = createdAt;
         CreatedAt = createdAt;
@@ -45,7 +51,18 @@ public sealed class PendingPublish : BaseEntity
         string deduplicationKey,
         string messageJson,
         DateTimeOffset createdAt) =>
-        new(id, kind, sessionId, deduplicationKey, messageJson, createdAt);
+        new(id, kind, sessionId, deduplicationKey, messageJson, null, null, createdAt);
+
+    public static PendingPublish CreateKafka(
+        Guid id,
+        PendingPublishKind kind,
+        Guid aggregateId,
+        string deduplicationKey,
+        string topic,
+        string messageKey,
+        string messageJson,
+        DateTimeOffset createdAt) =>
+        new(id, kind, aggregateId, deduplicationKey, messageJson, topic, messageKey, createdAt);
 
     public void MarkSent(DateTimeOffset sentAt)
     {
