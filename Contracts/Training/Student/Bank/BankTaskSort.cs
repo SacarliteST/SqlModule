@@ -10,5 +10,8 @@ public enum BankTaskSort
     Difficulty,
 
     /// <summary>Дата первого открытия в банке.</summary>
-    PublishedAt
+    PublishedAt,
+
+    /// <summary>Персональная рекомендация EducationSPD с безопасным локальным fallback.</summary>
+    Recommended
 }

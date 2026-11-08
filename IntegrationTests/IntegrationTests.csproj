@@ -19,6 +19,8 @@
         <ProjectReference Include="..\Web\Web.csproj" />
         <ProjectReference Include="..\Sandbox\Sandbox.csproj" />
         <ProjectReference Include="..\TestsCommon\TestsCommon.csproj" />
+        <ProjectReference Include="..\Integrations\EducationSpd.Client\EducationSpd.Client.csproj" />
+        <ProjectReference Include="..\..\EducationSPD\src\EducationSPD.Contracts\EducationSPD.Contracts.csproj" />
     </ItemGroup>
     <ItemGroup>
         <Using Include="Xunit" />

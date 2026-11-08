@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Persistence;
+using SQLModule.Application.SpdIntegration;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Training.Student;
@@ -13,11 +14,15 @@ public sealed class GetStudentTasksHandler
     : IRequestHandler<GetStudentTasksQuery, Result<PageResponse<StudentTaskResponse>>>
 {
     private readonly IApplicationDbContext db;
+    private readonly StudentRecommendationRanker recommendationRanker;
 
     /// <summary>Создаёт обработчик каталога заданий.</summary>
-    public GetStudentTasksHandler(IApplicationDbContext db)
+    public GetStudentTasksHandler(
+        IApplicationDbContext db,
+        StudentRecommendationRanker recommendationRanker)
     {
         this.db = db;
+        this.recommendationRanker = recommendationRanker;
     }
 
     /// <inheritdoc />
@@ -84,36 +89,71 @@ public sealed class GetStudentTasksHandler
                       where attempt.UserId == command.UserId && attempt.TaskId == task.Id &&
                             attempt.ModuleSessionId == null && attempt.FinishedAt >= task.BankPublishedAt &&
                             attempt.Score >= version.PassingScore
-                      select attempt.Id).Any()
+                      select attempt.Id).Any(),
+            ValidationSnapshotJson = db.TaskValidationVersions
+                .Where(version => version.Id == task.ActiveValidationVersionId)
+                .Select(version => version.ValidationConfigurationSnapshotJson)
+                .FirstOrDefault() ?? "{}"
         });
         if (request.Solved.HasValue)
         {
             tasks = tasks.Where(item => item.Solved == request.Solved.Value);
         }
 
-        tasks = ApplySorting(tasks, request.SortBy, request.Descending);
         var count = await tasks.CountAsync(ct);
-        var page = await tasks.Skip(request.Offset).Take(request.Limit).ToArrayAsync(ct);
-        var items = page.Select(task => new StudentTaskResponse(
-                task.Id,
-                task.BankNumber,
-                task.TopicId,
-                task.TopicName,
-                task.TaskName,
-                task.TaskText.Length <= 200 ? task.TaskText : task.TaskText[..200],
-                task.DifficultyLevel,
-                task.DbmsName,
-                task.AttemptsCount == 0 ? BankTaskStatus.NotStarted : task.Solved ? BankTaskStatus.Solved : BankTaskStatus.InProgress,
-                task.AttemptsCount,
-                task.BestScore,
-                task.LastAttemptAt,
-                task.BankPublishedAt)).ToList();
+        CatalogItem[] page;
+        if (request.SortBy == BankTaskSort.Recommended)
+        {
+            var fallback = await tasks
+                .OrderBy(item => item.BankNumber)
+                .ThenBy(item => item.Id)
+                .ToArrayAsync(ct);
+            var order = await recommendationRanker.RankAsync(
+                command.UserId,
+                fallback.Select(item => new StudentRecommendationCandidate(
+                    item.Id,
+                    item.DifficultyLevel,
+                    item.ValidationSnapshotJson)).ToArray(),
+                ct);
+            var byId = fallback.ToDictionary(item => item.Id);
+            page = order
+                .Select(taskId => byId[taskId])
+                .Skip(request.Offset)
+                .Take(request.Limit)
+                .ToArray();
+        }
+        else
+        {
+            tasks = ApplySorting(tasks, request.SortBy, request.Descending);
+            page = await tasks.Skip(request.Offset).Take(request.Limit).ToArrayAsync(ct);
+        }
+
+        var items = page.Select(ToResponse).ToList();
         return new PageResponse<StudentTaskResponse>
         {
             Items = items,
             Count = count
         };
     }
+
+    private static StudentTaskResponse ToResponse(CatalogItem task) => new(
+        task.Id,
+        task.BankNumber,
+        task.TopicId,
+        task.TopicName,
+        task.TaskName,
+        task.TaskText.Length <= 200 ? task.TaskText : task.TaskText[..200],
+        task.DifficultyLevel,
+        task.DbmsName,
+        task.AttemptsCount == 0
+            ? BankTaskStatus.NotStarted
+            : task.Solved
+                ? BankTaskStatus.Solved
+                : BankTaskStatus.InProgress,
+        task.AttemptsCount,
+        task.BestScore,
+        task.LastAttemptAt,
+        task.BankPublishedAt);
 
     private async Task<HashSet<Guid>> GetDescendantsAndSelfAsync(Guid topicId, CancellationToken ct)
     {

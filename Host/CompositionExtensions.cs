@@ -2,6 +2,7 @@
 using SQLModule.Application.Auth;
 using SQLModule.Data;
 using SQLModule.Education.Client;
+using SQLModule.EducationSpd.Client;
 using SQLModule.Identity.Client;
 using SQLModule.Kafka.Publisher;
 using SQLModule.Sandbox;
@@ -23,6 +24,7 @@ internal static class CompositionExtensions
             .AddWeb(configuration)
             .AddData(configuration)
             .AddIdentityAuthClient(configuration)
+            .AddEducationSpdRecommendationClient(configuration)
             .AddScoped<IStandaloneAuthGateway, IdentityStandaloneAuthGateway>()
             .AddSeeding(configuration)
             .AddPlatformIntegrations(configuration)

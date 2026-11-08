@@ -1,2 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\EducationSPD\src\EducationSPD.Contracts\EducationSPD.Contracts.csproj" />
+    </ItemGroup>
 </Project>

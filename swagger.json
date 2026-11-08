@@ -1078,369 +1078,6 @@
         }
       }
     },
-    "/api/v1/module-integration/sessions/current/finalize": {
-      "post": {
-        "tags": [
-          "Module Integration"
-        ],
-        "summary": "Завершить текущую платформенную сессию",
-        "description": "Фиксирует фактический BestScore и атомарно ставит один итог в outbox Education.",
-        "operationId": "FinalizeCurrentModuleSession",
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "description": "Уникальный UUID операции в формате xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.",
-            "required": true,
-            "schema": {
-              "maxLength": 36,
-              "minLength": 36,
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionFinalizationResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/module-integration/sessions/current": {
-      "get": {
-        "tags": [
-          "Module Integration"
-        ],
-        "summary": "Получить текущую платформенную сессию",
-        "description": "Берёт session_id и пользователя только из валидированного JWT. Отсутствующая, неизвестная или чужая сессия скрывается единым ответом 404.",
-        "operationId": "GetCurrentModuleSession",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CurrentModuleSessionResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/module-integration/tasks-catalog": {
-      "get": {
-        "tags": [
-          "Module Integration"
-        ],
-        "summary": "Получить каталог опубликованных SQL-заданий",
-        "description": "Сервер-сервер каталог для Education. Требует X-Service-Key и возвращает только Published-задания.",
-        "operationId": "GetModuleTasksCatalog",
-        "parameters": [
-          {
-            "name": "X-Service-Key",
-            "in": "header",
-            "description": "Секрет сервер-сервер интеграции Education и SqlModule.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ModuleTaskCatalogItemResponse"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/module-integration/sessions": {
-      "post": {
-        "tags": [
-          "Module Integration"
-        ],
-        "summary": "Создать или восстановить платформенную сессию",
-        "description": "Сервер-сервер push от Education. Повторный push синхронизирует Active-сессию; Completed-сессия отвечает 409 и не изменяется.",
-        "operationId": "UpsertModuleSession",
-        "parameters": [
-          {
-            "name": "X-Service-Key",
-            "in": "header",
-            "description": "Секрет сервер-сервер интеграции Education и SqlModule.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/UpsertModuleSessionRequest"
-                  }
-                ],
-                "description": "Доверенный контекст платформенной сессии, отправляемый Education."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Неверный X-Service-Key. code: InvalidServiceKey.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Неактивную сессию нельзя обновить. code: ModuleSession.Completed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Ошибка полей запроса: sessionId и userId должны быть UUID; sessionKey и taskRef обязательны и ограничены по длине; returnUrl обязателен и должен быть абсолютным HTTP/HTTPS URL; expiresAt, если передан, должен иметь корректный date-time формат.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/target-dbs": {
-      "post": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Создать целевую БД",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт новую БД-песочницу для указанной СУБД. Возвращает 201 Created с телом ответа. 400 — не прошла валидация входных данных. 409 — СУБД с указанным dbmsId не найдена в справочнике.",
-        "operationId": "CreateTargetDb",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/CreateTargetDbRequest"
-                  }
-                ],
-                "description": "Запрос на создание целевой БД-песочницы."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TargetDbResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "Schema"
-        ],
-        "summary": "Список целевых БД с пагинацией",
-        "description": "Возвращает 200 OK со страницей целевых БД, отсортированных по имени. offset — количество пропускаемых записей (≥ 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). 400 — невалидные параметры пагинации.",
-        "operationId": "GetAllTargetDbs",
-        "parameters": [
-          {
-            "name": "Offset",
-            "in": "query",
-            "description": "Количество пропускаемых записей. Минимум: 0. По умолчанию: 0.",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "Limit",
-            "in": "query",
-            "description": "Максимальное количество записей на странице. Диапазон: 1–100. По умолчанию: 20.",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TargetDbResponsePageResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/target-dbs/{id}": {
       "delete": {
         "tags": [
@@ -1526,44 +1163,46 @@
             }
           }
         }
-      },
-      "put": {
+      }
+    },
+    "/api/v1/target-dbs": {
+      "get": {
         "tags": [
-          "Schema",
-          "DevTools"
+          "Schema"
         ],
-        "summary": "Обновить целевую БД",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет поля существующей БД-песочницы. Возвращает 204 No Content. 400 — не прошла валидация входных данных. 404 — запись с указанным id не найдена.",
-        "operationId": "UpdateTargetDb",
+        "summary": "Список целевых БД с пагинацией",
+        "description": "Возвращает 200 OK со страницей целевых БД, отсортированных по имени. offset — количество пропускаемых записей (≥ 0, по умолчанию 0). limit — размер страницы (1–100, по умолчанию 20). 400 — невалидные параметры пагинации.",
+        "operationId": "GetAllTargetDbs",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
+            "name": "Offset",
+            "in": "query",
+            "description": "Количество пропускаемых записей. Минимум: 0. По умолчанию: 0.",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "description": "Максимальное количество записей на странице. Диапазон: 1–100. По умолчанию: 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/UpdateTargetDbRequest"
-                  }
-                ],
-                "description": "Запрос на обновление целевой БД-песочницы."
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetDbResponsePageResponse"
+                }
               }
             }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
           },
           "422": {
             "description": "Unprocessable Content",
@@ -1571,16 +1210,6 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2045,62 +1674,6 @@
       }
     },
     "/api/v1/meta-tables": {
-      "post": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Создать мета-таблицу",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт описание таблицы в схеме данных указанной целевой БД. Возвращает 201 Created с телом ответа. 400 — не прошла валидация входных данных. 409 — целевая БД с указанным targetDbId не найдена.",
-        "operationId": "CreateMetaTable",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/CreateMetaTableRequest"
-                  }
-                ],
-                "description": "Запрос на создание мета-таблицы."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MetaTableResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "Schema"
@@ -2162,51 +1735,6 @@
       }
     },
     "/api/v1/meta-tables/{id}": {
-      "delete": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Удалить мета-таблицу",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Удаляет мета-таблицу. Каскадно удаляет все колонки (MetaAttribute), строки данных (DataRecord) и ячейки (CellValue). Возвращает 204 No Content. 404 — мета-таблица не найдена. 409 — одна или несколько колонок таблицы участвуют в MetaRelationship (FK).",
-        "operationId": "DeleteMetaTable",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "Schema"
@@ -2247,135 +1775,9 @@
             }
           }
         }
-      },
-      "put": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Обновить мета-таблицу",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет название и описание мета-таблицы. Возвращает 204 No Content. 400 — не прошла валидация. 404 — мета-таблица с указанным id не найдена.",
-        "operationId": "UpdateMetaTable",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/UpdateMetaTableRequest"
-                  }
-                ],
-                "description": "Запрос на обновление мета-таблицы."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/v1/meta-relationships": {
-      "post": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Создать связь между мета-атрибутами",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт Foreign Key-связь между двумя мета-атрибутами. Возвращает 201 Created с телом ответа. 400 — не прошла валидация (пустое имя, пустые Id, Source == Target, правило > 50 симв.). 409 — SourceAttribute или TargetAttribute с указанным Id не найден.",
-        "operationId": "CreateMetaRelationship",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/CreateMetaRelationshipRequest"
-                  }
-                ],
-                "description": "Запрос на создание связи между двумя мета-атрибутами."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MetaRelationshipResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "Schema"
@@ -2437,51 +1839,6 @@
       }
     },
     "/api/v1/meta-relationships/{id}": {
-      "delete": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Удалить связь",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Удаляет FK-связь между мета-атрибутами. Сущность листовая — каскадных ограничений нет. Возвращает 204 No Content. 404 — связь не найдена.",
-        "operationId": "DeleteMetaRelationship",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "Schema"
@@ -2522,135 +1879,9 @@
             }
           }
         }
-      },
-      "put": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Обновить связь",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет название и правила поведения FK-связи. FK-колонки (SourceAttributeId, TargetAttributeId) не изменяются. Возвращает 204 No Content. 400 — не прошла валидация. 404 — связь с указанным Id не найдена.",
-        "operationId": "UpdateMetaRelationship",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/UpdateMetaRelationshipRequest"
-                  }
-                ],
-                "description": "Запрос на обновление связи между мета-атрибутами. FK-колонки не изменяются."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/v1/meta-attributes": {
-      "post": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Создать мета-атрибут (колонку)",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт мета-атрибут (колонку) в указанной мета-таблице. Возвращает 201 Created с телом ответа. 422 — не прошла валидация (пустое имя, пустые Id, SortOrder < 0). 409 — MetaTable или PhysicalType с указанным Id не найден.",
-        "operationId": "CreateMetaAttribute",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/CreateMetaAttributeRequest"
-                  }
-                ],
-                "description": "Запрос на создание мета-атрибута (колонки) таблицы."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MetaAttributeResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "Schema"
@@ -2712,51 +1943,6 @@
       }
     },
     "/api/v1/meta-attributes/{id}": {
-      "delete": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Удалить мета-атрибут",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Удаляет мета-атрибут (колонку) таблицы. Удаление каскадно сносит все ячейки (CellValue) и значения параметров (AttributeParameterValue) данной колонки. Возвращает 204 No Content. 404 — мета-атрибут с указанным Id не найден. 409 — колонка участвует в FK-связи (MetaRelationship) и не может быть удалена.",
-        "operationId": "DeleteMetaAttribute",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "Schema"
@@ -2788,76 +1974,6 @@
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Обновить мета-атрибут",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет название, признаки и порядок отображения мета-атрибута. FK-колонки (MetaTableId, PhysicalTypeId) не изменяются. Возвращает 204 No Content. 422 — не прошла валидация. 404 — мета-атрибут с указанным Id не найден.",
-        "operationId": "UpdateMetaAttribute",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/UpdateMetaAttributeRequest"
-                  }
-                ],
-                "description": "Запрос на обновление мета-атрибута (колонки) таблицы."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3412,62 +2528,6 @@
       }
     },
     "/api/v1/attribute-parameter-values": {
-      "post": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Задать значение параметра атрибута",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Создаёт значение параметра физического типа для указанной колонки. Возвращает 201 Created с телом ответа. 422 — не прошла валидация (пустые Id, пустое или слишком длинное значение). 409 — колонка или определение параметра не найдено, либо значение этого параметра для колонки уже задано.",
-        "operationId": "CreateAttributeParameterValue",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/CreateAttributeParameterValueRequest"
-                  }
-                ],
-                "description": "Запрос на создание значения параметра атрибута."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AttributeParameterValueResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "Schema"
@@ -3529,51 +2589,6 @@
       }
     },
     "/api/v1/attribute-parameter-values/{id}": {
-      "delete": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Удалить значение параметра атрибута",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Удаляет значение параметра физического типа для колонки. На сущность никто не ссылается — конфликтов не возникает. Возвращает 204 No Content. 404 — запись с указанным Id не найдена.",
-        "operationId": "DeleteAttributeParameterValue",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": [
           "Schema"
@@ -3605,76 +2620,6 @@
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Schema",
-          "DevTools"
-        ],
-        "summary": "Обновить значение параметра атрибута",
-        "description": "dev-only: правка структуры схемы в обход CreateSchema. Обновляет строковое значение параметра. FK-поля (MetaAttributeId, ParameterDefinitionId) не изменяются. Возвращает 204 No Content. 422 — не прошла валидация (пустое или слишком длинное значение). 404 — запись с указанным Id не найдена.",
-        "operationId": "UpdateAttributeParameterValue",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "allOf": [
-                  {
-                    "$ref": "#/components/schemas/UpdateAttributeParameterValueRequest"
-                  }
-                ],
-                "description": "Запрос на обновление значения параметра атрибута."
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "422": {
-            "description": "Unprocessable Content",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Учебная база используется опубликованными заданиями — изменение схемы или данных запрещено. code: TargetDb.PublishedTaskReferenceExists, идентификаторы заданий — в errors.taskIds. Сначала архивируйте эти задания.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4018,6 +2963,336 @@
         }
       }
     },
+    "/api/v1/skills": {
+      "post": {
+        "tags": [
+          "Skills"
+        ],
+        "summary": "Создать преподавательский навык",
+        "operationId": "CreateSkill",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateSkillRequest"
+                  }
+                ],
+                "description": "Создание преподавательского навыка."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Skills"
+        ],
+        "summary": "Получить каталог навыков",
+        "operationId": "GetSkills",
+        "parameters": [
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "query",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/SkillOriginResponse"
+                }
+              ]
+            }
+          },
+          {
+            "name": "IncludeDeleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillResponsePageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/skills/{id}": {
+      "delete": {
+        "tags": [
+          "Skills"
+        ],
+        "summary": "Мягко удалить навык",
+        "operationId": "DeleteSkill",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Skills"
+        ],
+        "summary": "Получить навык по идентификатору",
+        "operationId": "GetSkillById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Skills"
+        ],
+        "summary": "Изменить название и описание навыка",
+        "operationId": "UpdateSkill",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateSkillRequest"
+                  }
+                ],
+                "description": "Изменение отображаемых данных навыка."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/skills/{id}/restore": {
+      "post": {
+        "tags": [
+          "Skills"
+        ],
+        "summary": "Восстановить мягко удалённый навык",
+        "operationId": "RestoreSkill",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/student/topics": {
       "get": {
         "tags": [
@@ -4146,7 +3421,8 @@
               "enum": [
                 "BankNumber",
                 "Difficulty",
-                "PublishedAt"
+                "PublishedAt",
+                "Recommended"
               ],
               "type": "string",
               "allOf": [
@@ -4865,6 +4141,257 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/tasks/{taskId}/episodes": {
+      "post": {
+        "tags": [
+          "Student Episodes"
+        ],
+        "summary": "Начать или продолжить учебный эпизод",
+        "operationId": "StartLearningEpisode",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningEpisodeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/episodes/{episodeId}/heartbeat": {
+      "post": {
+        "tags": [
+          "Student Episodes"
+        ],
+        "summary": "Подтвердить активность текущего учебного эпизода",
+        "operationId": "HeartbeatLearningEpisode",
+        "parameters": [
+          {
+            "name": "episodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningEpisodeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student/episodes/{episodeId}/finalize": {
+      "post": {
+        "tags": [
+          "Student Episodes"
+        ],
+        "summary": "Окончательно закрыть учебный эпизод",
+        "operationId": "FinalizeLearningEpisode",
+        "parameters": [
+          {
+            "name": "episodeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "UUID операции финализации в формате D.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FinalizeLearningEpisodeRequest"
+                  }
+                ],
+                "description": "Явное решение студента окончательно закрыть текущий учебный эпизод."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningEpisodeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -8544,7 +8071,8 @@
         "enum": [
           "BankNumber",
           "Difficulty",
-          "PublishedAt"
+          "PublishedAt",
+          "Recommended"
         ],
         "type": "string",
         "description": "Поле сортировки каталога открытого банка."
@@ -8738,27 +8266,6 @@
         "additionalProperties": false,
         "description": "Значение параметра физического типа для колонки-черновика."
       },
-      "CreateAttributeParameterValueRequest": {
-        "type": "object",
-        "properties": {
-          "metaAttributeId": {
-            "type": "string",
-            "description": "Идентификатор мета-атрибута (колонки), которому принадлежит значение.",
-            "format": "uuid"
-          },
-          "parameterDefinitionId": {
-            "type": "string",
-            "description": "Идентификатор определения параметра физического типа.",
-            "format": "uuid"
-          },
-          "parameterValue": {
-            "type": "string",
-            "description": "Значение параметра (не более 500 символов)."
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на создание значения параметра атрибута."
-      },
       "CreateCellValueRequest": {
         "type": "object",
         "properties": {
@@ -8839,92 +8346,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "CreateMetaAttributeRequest": {
-        "type": "object",
-        "properties": {
-          "metaTableId": {
-            "type": "string",
-            "description": "Идентификатор мета-таблицы, которой принадлежит колонка.",
-            "format": "uuid"
-          },
-          "physicalTypeId": {
-            "type": "string",
-            "description": "Идентификатор физического типа данных колонки.",
-            "format": "uuid"
-          },
-          "attributeName": {
-            "type": "string",
-            "description": "Название колонки (не более 200 символов)."
-          },
-          "isPrimaryKey": {
-            "type": "boolean",
-            "description": "Признак первичного ключа."
-          },
-          "isRequired": {
-            "type": "boolean",
-            "description": "Признак обязательности значения."
-          },
-          "sortOrder": {
-            "type": "integer",
-            "description": "Порядок отображения колонки (≥ 0).",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на создание мета-атрибута (колонки) таблицы."
-      },
-      "CreateMetaRelationshipRequest": {
-        "type": "object",
-        "properties": {
-          "relationshipName": {
-            "type": "string",
-            "description": "Название связи (FK). Обязательно, до 200 символов."
-          },
-          "sourceAttributeId": {
-            "type": "string",
-            "description": "Id исходного мета-атрибута (сторона «многие»).",
-            "format": "uuid"
-          },
-          "targetAttributeId": {
-            "type": "string",
-            "description": "Id целевого мета-атрибута (сторона «один»). Должен отличаться от SourceAttributeId.",
-            "format": "uuid"
-          },
-          "deleteRule": {
-            "type": "string",
-            "description": "Правило при удалении (CASCADE, RESTRICT, SET NULL, SET DEFAULT, NO ACTION). До 50 символов.",
-            "nullable": true
-          },
-          "updateRule": {
-            "type": "string",
-            "description": "Правило при обновлении. До 50 символов.",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на создание связи между двумя мета-атрибутами."
-      },
-      "CreateMetaTableRequest": {
-        "type": "object",
-        "properties": {
-          "targetDbId": {
-            "type": "string",
-            "description": "Идентификатор целевой БД, которой принадлежит таблица.",
-            "format": "uuid"
-          },
-          "tableName": {
-            "type": "string",
-            "description": "Название таблицы (не пустое, максимум 200 символов)."
-          },
-          "description": {
-            "type": "string",
-            "description": "Описание таблицы (необязательно, максимум 1000 символов).",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на создание мета-таблицы."
       },
       "CreateParameterDefinitionRequest": {
         "type": "object",
@@ -9048,6 +8469,25 @@
         "additionalProperties": false,
         "description": "Ответ на успешное создание схемы."
       },
+      "CreateSkillRequest": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Создание преподавательского навыка."
+      },
       "CreateSqlQueryRequest": {
         "type": "object",
         "properties": {
@@ -9155,31 +8595,6 @@
         },
         "additionalProperties": false
       },
-      "CreateTargetDbRequest": {
-        "type": "object",
-        "properties": {
-          "dbmsId": {
-            "type": "string",
-            "description": "Идентификатор СУБД из справочника (`DbmsDictionary.Id`).",
-            "format": "uuid"
-          },
-          "dbName": {
-            "type": "string",
-            "description": "Уникальное имя создаваемой БД-песочницы."
-          },
-          "description": {
-            "type": "string",
-            "description": "Необязательное описание назначения БД.",
-            "nullable": true
-          },
-          "isReadOnly": {
-            "type": "boolean",
-            "description": "Если `true` — запросы к БД выполняются только на чтение."
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на создание целевой БД-песочницы."
-      },
       "CreateTopicRequest": {
         "type": "object",
         "properties": {
@@ -9201,39 +8616,6 @@
         },
         "additionalProperties": false,
         "description": "Запрос на создание темы тренажёра."
-      },
-      "CurrentModuleSessionResponse": {
-        "type": "object",
-        "properties": {
-          "taskId": {
-            "type": "string",
-            "description": "Идентификатор SQL-задания, доверенно полученный от Education.",
-            "format": "uuid"
-          },
-          "returnUrl": {
-            "type": "string",
-            "description": "Канонический адрес возврата в платформу."
-          },
-          "expiresAt": {
-            "type": "string",
-            "description": "Время окончания сессии или null для сессии без лимита.",
-            "format": "date-time",
-            "nullable": true
-          },
-          "maxAttempts": {
-            "type": "integer",
-            "description": "Лимит отправок или null, если он не задан.",
-            "format": "int32",
-            "nullable": true
-          },
-          "attemptsUsed": {
-            "type": "integer",
-            "description": "Количество засчитанных отправок.",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false,
-        "description": "Канонический контекст текущего платформенного запуска."
       },
       "DataRecordResponse": {
         "type": "object",
@@ -9465,6 +8847,21 @@
         ],
         "type": "string"
       },
+      "FinalizeLearningEpisodeRequest": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LearningEpisodeFinalizationMode"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Явное решение студента окончательно закрыть текущий учебный эпизод."
+      },
       "HintGroup": {
         "enum": [
           "Result",
@@ -9540,6 +8937,67 @@
           }
         },
         "additionalProperties": { }
+      },
+      "LearningEpisodeFinalizationMode": {
+        "enum": [
+          "AcceptPartialResult",
+          "Abandon"
+        ],
+        "type": "string"
+      },
+      "LearningEpisodeResponse": {
+        "type": "object",
+        "properties": {
+          "episodeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "taskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "validationVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LearningEpisodeStatusResponse"
+              }
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastHeartbeatAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finalizedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "finalAttemptId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "producesObservation": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Безопасное состояние текущего учебного эпизода."
+      },
+      "LearningEpisodeStatusResponse": {
+        "enum": [
+          "Active",
+          "Finalized"
+        ],
+        "type": "string"
       },
       "LookupValueItemResponse": {
         "required": [
@@ -9814,25 +9272,6 @@
         },
         "additionalProperties": false,
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
-      },
-      "ModuleTaskCatalogItemResponse": {
-        "type": "object",
-        "properties": {
-          "ref": {
-            "type": "string",
-            "description": "Непрозрачный идентификатор задания во внешнем модуле."
-          },
-          "name": {
-            "type": "string",
-            "description": "Название задания."
-          },
-          "description": {
-            "type": "string",
-            "description": "Краткое описание задания."
-          }
-        },
-        "additionalProperties": false,
-        "description": "Опубликованное задание, доступное для привязки в Education."
       },
       "MoveTopicRequest": {
         "type": "object",
@@ -10650,75 +10089,6 @@
         },
         "additionalProperties": false
       },
-      "SessionFinalizationResponse": {
-        "required": [
-          "bestScore",
-          "canReturnToEducation",
-          "finalizedAt",
-          "finalScore",
-          "isPassed",
-          "reason",
-          "returnUrl",
-          "status"
-        ],
-        "type": "object",
-        "properties": {
-          "status": {
-            "enum": [
-              "Active",
-              "CompletionPending",
-              "Completed",
-              "CompletionFailed",
-              "Expired"
-            ],
-            "type": "string",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SessionStatus"
-              }
-            ]
-          },
-          "bestScore": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "finalScore": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "isPassed": {
-            "type": "boolean"
-          },
-          "reason": {
-            "enum": [
-              "Manual",
-              "PerfectScore",
-              "AttemptsExhausted",
-              "Expired",
-              "EducationClosed"
-            ],
-            "type": "string",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/FinalizationReason"
-              }
-            ]
-          },
-          "finalizedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "canReturnToEducation": {
-            "type": "boolean"
-          },
-          "returnUrl": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "Результат ручного завершения платформенной сессии."
-      },
       "SessionStatus": {
         "enum": [
           "Active",
@@ -10728,6 +10098,77 @@
           "Expired"
         ],
         "type": "string"
+      },
+      "SkillOriginResponse": {
+        "enum": [
+          "System",
+          "TeacherDefined"
+        ],
+        "type": "string",
+        "description": "Источник определения навыка."
+      },
+      "SkillResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "skillId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "origin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SkillOriginResponse"
+              }
+            ],
+            "description": "Источник определения навыка."
+          },
+          "isDeleted": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "semanticChangeWarning": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Навык SQL-модуля."
+      },
+      "SkillResponsePageResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Количество элементов",
+            "format": "int32",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillResponse"
+            },
+            "description": "Список элементов"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
       },
       "SqlConstruct": {
         "enum": [
@@ -12628,6 +12069,14 @@
               "$ref": "#/components/schemas/ValidationCheckRequest"
             },
             "nullable": true
+          },
+          "skillTagIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -12640,6 +12089,8 @@
           "hasUnpublishedChanges",
           "passingScore",
           "publishedAt",
+          "skillTags",
+          "skillTagsWarning",
           "state",
           "taskId",
           "updatedAt",
@@ -12722,6 +12173,19 @@
             "description": "Дата публикации активной версии; `null`, если версии нет.",
             "format": "date-time",
             "nullable": true
+          },
+          "skillTags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationSkillResponse"
+            },
+            "description": "Дополнительные навыки-теги задания.",
+            "nullable": true
+          },
+          "skillTagsWarning": {
+            "type": "string",
+            "description": "Предупреждение о приблизительной природе навыков-тегов.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -12746,6 +12210,14 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ValidationCheckPreviewRequest"
+            },
+            "nullable": true
+          },
+          "skillTagIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
             },
             "nullable": true
           }
@@ -13149,17 +12621,6 @@
         "additionalProperties": false,
         "description": "Ответ в виде страницы с информацией о элементах и их кол-ве"
       },
-      "UpdateAttributeParameterValueRequest": {
-        "type": "object",
-        "properties": {
-          "parameterValue": {
-            "type": "string",
-            "description": "Новое значение параметра (не более 500 символов)."
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на обновление значения параметра атрибута."
-      },
       "UpdateCellValueRequest": {
         "type": "object",
         "properties": {
@@ -13226,67 +12687,6 @@
         },
         "additionalProperties": false
       },
-      "UpdateMetaAttributeRequest": {
-        "type": "object",
-        "properties": {
-          "attributeName": {
-            "type": "string",
-            "description": "Новое название колонки (не более 200 символов)."
-          },
-          "isPrimaryKey": {
-            "type": "boolean",
-            "description": "Признак первичного ключа."
-          },
-          "isRequired": {
-            "type": "boolean",
-            "description": "Признак обязательности значения."
-          },
-          "sortOrder": {
-            "type": "integer",
-            "description": "Порядок отображения колонки (≥ 0).",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на обновление мета-атрибута (колонки) таблицы."
-      },
-      "UpdateMetaRelationshipRequest": {
-        "type": "object",
-        "properties": {
-          "relationshipName": {
-            "type": "string",
-            "description": "Новое название связи. Обязательно, до 200 символов."
-          },
-          "deleteRule": {
-            "type": "string",
-            "description": "Правило при удалении. До 50 символов.",
-            "nullable": true
-          },
-          "updateRule": {
-            "type": "string",
-            "description": "Правило при обновлении. До 50 символов.",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на обновление связи между мета-атрибутами. FK-колонки не изменяются."
-      },
-      "UpdateMetaTableRequest": {
-        "type": "object",
-        "properties": {
-          "tableName": {
-            "type": "string",
-            "description": "Новое название таблицы (не пустое, максимум 200 символов)."
-          },
-          "description": {
-            "type": "string",
-            "description": "Новое описание таблицы (необязательно, максимум 1000 символов).",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на обновление мета-таблицы."
-      },
       "UpdateParameterDefinitionRequest": {
         "type": "object",
         "properties": {
@@ -13350,6 +12750,21 @@
         "additionalProperties": false,
         "description": "Запрос на обновление физического типа данных."
       },
+      "UpdateSkillRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Изменение отображаемых данных навыка."
+      },
       "UpdateSqlQueryRequest": {
         "type": "object",
         "properties": {
@@ -13411,26 +12826,6 @@
         },
         "additionalProperties": false,
         "description": "Запрос на обновление SQL-задания."
-      },
-      "UpdateTargetDbRequest": {
-        "type": "object",
-        "properties": {
-          "dbName": {
-            "type": "string",
-            "description": "Новое имя БД-песочницы."
-          },
-          "description": {
-            "type": "string",
-            "description": "Новое описание (передайте `null`, чтобы очистить).",
-            "nullable": true
-          },
-          "isReadOnly": {
-            "type": "boolean",
-            "description": "Флаг доступа только на чтение."
-          }
-        },
-        "additionalProperties": false,
-        "description": "Запрос на обновление целевой БД-песочницы."
       },
       "UpdateTaskBankBatchRequest": {
         "type": "object",
@@ -13565,52 +12960,6 @@
         },
         "additionalProperties": false,
         "description": "Запрос на обновление названия темы."
-      },
-      "UpsertModuleSessionRequest": {
-        "type": "object",
-        "properties": {
-          "sessionId": {
-            "type": "string",
-            "description": "Идентификатор сессии Education.",
-            "format": "uuid",
-            "nullable": true
-          },
-          "sessionKey": {
-            "type": "string",
-            "description": "Секрет сессии для Kafka-событий и отправки оценки.",
-            "nullable": true
-          },
-          "userId": {
-            "type": "string",
-            "description": "Идентификатор студента.",
-            "format": "uuid",
-            "nullable": true
-          },
-          "taskRef": {
-            "type": "string",
-            "description": "Непрозрачная ссылка на задание; для SQL-модуля это SqlTask.Id.",
-            "nullable": true
-          },
-          "returnUrl": {
-            "type": "string",
-            "description": "Канонический адрес возврата в платформу.",
-            "nullable": true
-          },
-          "expiresAt": {
-            "type": "string",
-            "description": "Необязательное время окончания сессии.",
-            "format": "date-time",
-            "nullable": true
-          },
-          "maxAttempts": {
-            "type": "integer",
-            "description": "Необязательный лимит отправок внутри сессии.",
-            "format": "int32",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false,
-        "description": "Доверенный контекст платформенной сессии, отправляемый Education."
       },
       "ValidateSqlQueryRequest": {
         "type": "object",
@@ -13874,6 +13223,7 @@
           "id",
           "kind",
           "order",
+          "skill",
           "value",
           "valueDisplayName",
           "weight"
@@ -13914,6 +13264,15 @@
           "order": {
             "type": "integer",
             "format": "int32"
+          },
+          "skill": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidationSkillResponse"
+              }
+            ],
+            "description": "Навык, закреплённый за правилом или добавленный как тег.",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -13933,6 +13292,31 @@
           "Published"
         ],
         "type": "string"
+      },
+      "ValidationSkillResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "skillId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "origin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SkillOriginResponse"
+              }
+            ],
+            "description": "Источник определения навыка."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Навык, закреплённый за правилом или добавленный как тег."
       },
       "ValidationViolationResponse": {
         "required": [
@@ -13998,19 +13382,19 @@
       "name": "DbmsCatalog"
     },
     {
-      "name": "Module Integration"
-    },
-    {
       "name": "Schema"
-    },
-    {
-      "name": "DevTools"
     },
     {
       "name": "Schema Data"
     },
     {
+      "name": "Skills"
+    },
+    {
       "name": "Student"
+    },
+    {
+      "name": "Student Episodes"
     },
     {
       "name": "Training"

@@ -15,6 +15,7 @@ using SQLModule.Application.Schema.MetaRelationships;
 using SQLModule.Application.Schema.MetaTables;
 using SQLModule.Application.Schema.SchemaBuilder;
 using SQLModule.Application.Schema.TargetDbs;
+using SQLModule.Application.SpdIntegration;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.Attempts;
 using SQLModule.Application.Training.Bank;
@@ -72,6 +73,7 @@ public static class ApplicationExtensions
         services.AddScoped<ISqlQueryValidationRunner, SqlQueryValidationRunner>();
         services.AddScoped<ISandboxPoolProfileSource, DbmsSandboxPoolProfileSource>();
         services.AddScoped<ITaskValidationSnapshotFactory, TaskValidationSnapshotFactory>();
+        services.AddScoped<StudentRecommendationRanker>();
         return services
             .AddTaskMaterializer()
             .AddSqlTasks()

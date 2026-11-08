@@ -41,4 +41,7 @@ internal sealed class CatalogItem
 
     /// <summary>Достигал ли студент проходного балла.</summary>
     public bool Solved { get; init; }
+
+    /// <summary>Снимок навыков активной опубликованной версии.</summary>
+    public string ValidationSnapshotJson { get; init; } = null!;
 }

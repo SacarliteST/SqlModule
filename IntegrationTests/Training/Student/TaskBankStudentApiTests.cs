@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using EducationSPD.Contracts.Recommendations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -11,6 +12,7 @@ using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Student;
 using SQLModule.Data.Core;
 using SQLModule.Domain.Training;
+using SQLModule.EducationSpd.Abstractions;
 using SQLModule.IntegrationTests.Infrastructure;
 using SQLModule.IntegrationTests.ModuleIntegration;
 
@@ -46,6 +48,56 @@ public sealed class TaskBankStudentApiTests : ApiTestBase
         var body = await byNumber.Content.ReadAsStringAsync();
         body.ShouldNotContain("sqlText", Case.Insensitive);
         body.ShouldNotContain("hints", Case.Insensitive);
+    }
+
+    [Fact(DisplayName = "Банк: персональная сортировка сохраняет порядок СППР и безопасный fallback")]
+    public async Task Catalog_RecommendedSort_PreservesSpdOrderAndFallsBack()
+    {
+        var firstTaskId = await PlatformProfileAndCatalogTests.SeedValidatedRunnableTaskAsync(App);
+        var secondTaskId = await PlatformProfileAndCatalogTests.SeedValidatedRunnableTaskAsync(App);
+        var firstState = await OpenAsync(firstTaskId);
+        var secondState = await OpenAsync(secondTaskId);
+        var userId = Guid.NewGuid();
+        var successfulClient = new StubRecommendationClient(isAvailable: true);
+
+        using (var rankedApp = App.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+               {
+                   services.RemoveAll<IEducationSpdRecommendationClient>();
+                   services.AddSingleton<IEducationSpdRecommendationClient>(successfulClient);
+               })))
+        using (var client = rankedApp.CreateClient())
+        {
+            SetStudent(client, userId);
+            var ranked = await client.GetFromJsonAsync<PageResponse<StudentTaskResponse>>(
+                $"{ApiRoutes.Training.Student.Tasks}?SortBy=Recommended&Limit=50",
+                ClientJson.Options);
+            var relevant = ranked!.Items.Where(item =>
+                item.Id == firstTaskId || item.Id == secondTaskId).ToArray();
+            relevant.Select(item => item.Id).ShouldBe([secondTaskId, firstTaskId]);
+            successfulClient.LastRequest!.StudentId.ShouldBe(userId);
+            successfulClient.LastRequest.Candidates!.All(candidate =>
+                candidate.Skills is { Count: > 0 }).ShouldBeTrue();
+        }
+
+        var unavailableClient = new StubRecommendationClient(isAvailable: false);
+        using var fallbackApp = App.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IEducationSpdRecommendationClient>();
+            services.AddSingleton<IEducationSpdRecommendationClient>(unavailableClient);
+        }));
+        using var fallbackHttpClient = fallbackApp.CreateClient();
+        SetStudent(fallbackHttpClient, userId);
+        var fallback = await fallbackHttpClient.GetFromJsonAsync<PageResponse<StudentTaskResponse>>(
+            $"{ApiRoutes.Training.Student.Tasks}?SortBy=Recommended&Limit=50",
+            ClientJson.Options);
+        var fallbackRelevant = fallback!.Items.Where(item =>
+                item.Id == firstTaskId || item.Id == secondTaskId)
+            .OrderBy(item => item.BankNumber)
+            .ToArray();
+        var actualRelevant = fallback.Items.Where(item =>
+            item.Id == firstTaskId || item.Id == secondTaskId).ToArray();
+        actualRelevant.Select(item => item.Id).ShouldBe(fallbackRelevant.Select(item => item.Id));
+        firstState.BankNumber!.Value.ShouldBeLessThan(secondState.BankNumber!.Value);
     }
 
     [Fact(DisplayName = "Банк: подсказка и разбор открываются только после нужных попыток и журналируются")]
@@ -122,5 +174,38 @@ public sealed class TaskBankStudentApiTests : ApiTestBase
         using var response = await HttpClient.PostAsync(ApiRoutes.Training.SqlTasks.ForBankOpen(taskId), null);
         response.StatusCode.ShouldBe(HttpStatusCode.OK, await response.Content.ReadAsStringAsync());
         return (await response.Content.ReadFromJsonAsync<TaskBankStateResponse>(ClientJson.Options))!;
+    }
+
+    private static void SetStudent(HttpClient client, Guid userId)
+    {
+        client.DefaultRequestHeaders.Add("X-Test-UserId", userId.ToString("D"));
+        client.DefaultRequestHeaders.Add("X-Test-Roles", "Student");
+    }
+
+    private sealed class StubRecommendationClient(bool isAvailable) : IEducationSpdRecommendationClient
+    {
+        public RankRecommendationsRequest? LastRequest { get; private set; }
+
+        public Task<RecommendationClientResult> RankAsync(
+            RankRecommendationsRequest request,
+            CancellationToken ct = default)
+        {
+            LastRequest = request;
+            if (!isAvailable)
+            {
+                return Task.FromResult(RecommendationClientResult.Unavailable("TestUnavailable"));
+            }
+
+            var candidates = request.Candidates!;
+            var items = candidates.Reverse()
+                .Select((candidate, index) => new RankedCandidateResponse(
+                    candidate.TaskId!.Value,
+                    index + 1,
+                    candidates.Count - index,
+                    []))
+                .ToArray();
+            return Task.FromResult(RecommendationClientResult.Success(
+                new RankRecommendationsResponse(1, items)));
+        }
     }
 }

@@ -24,5 +24,6 @@
         <ProjectReference Include="..\Integrations\PlatformIntegration.Contracts\PlatformIntegration.Contracts.csproj" />
         <ProjectReference Include="..\Integrations\EducationSpd.Abstractions\EducationSpd.Abstractions.csproj" />
         <ProjectReference Include="..\..\EducationSPD\src\EducationSPD.Kafka.Contracts\EducationSPD.Kafka.Contracts.csproj" />
+        <ProjectReference Include="..\..\EducationSPD\src\EducationSPD.Contracts\EducationSPD.Contracts.csproj" />
     </ItemGroup>
 </Project>
