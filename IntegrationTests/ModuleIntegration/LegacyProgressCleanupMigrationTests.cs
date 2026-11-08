@@ -136,8 +136,15 @@ public sealed class LegacyProgressCleanupMigrationTests
             userId, task.Id, "SELECT 1", ExecutionStatus.Succeeded, false,
             CheckReason.ValueMismatch, 0, 1, null, now, now);
         attempt.AttachScoring(version.Id, 1, 80, true);
+        // Тест намеренно работает со старой схемой через актуальную EF-модель. Временно
+        // добавляем новую nullable-колонку только для INSERT и удаляем её до прогона миграций.
+        await db.Database.ExecuteSqlRawAsync(
+            """ALTER TABLE "Attempts" ADD COLUMN "LearningEpisodeId" uuid NULL""");
         db.Attempts.Add(attempt);
         await db.SaveChangesAsync();
+        await db.Database.ExecuteSqlRawAsync(
+            "ALTER TABLE \"Attempts\" DROP COLUMN \"LearningEpisodeId\""
+        );
 
         var progressId = Guid.NewGuid();
         await db.Database.ExecuteSqlInterpolatedAsync($"""

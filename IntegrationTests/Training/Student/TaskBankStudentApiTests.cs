@@ -165,7 +165,9 @@ public sealed class TaskBankStudentApiTests : ApiTestBase
         using var verificationScope = App.Services.CreateScope();
         var db = verificationScope.ServiceProvider.GetRequiredService<AppDbContext>();
         (await db.Attempts.CountAsync(value => value.UserId == userId && value.TaskId == taskId)).ShouldBe(1);
-        (await db.PendingPublishes.CountAsync()).ShouldBe(outboxBefore);
+        // Первая успешная попытка финализирует учебный эпизод; replay и отклонённый
+        // запрос не должны создавать дополнительные события.
+        (await db.PendingPublishes.CountAsync()).ShouldBe(outboxBefore + 1);
     }
 
     private async Task<TaskBankStateResponse> OpenAsync(Guid taskId)

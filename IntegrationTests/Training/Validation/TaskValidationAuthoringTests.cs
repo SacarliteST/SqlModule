@@ -312,7 +312,8 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         var message = KafkaContractJson.Deserialize<LearningEpisodeFinalized>(outbox.MessageJson);
         message.EventId.ShouldBe(outbox.Id);
         message.EpisodeId.ShouldBe(episode.Id);
-        message.FinalizedAt.ShouldBe(episode.FinalizedAt!.Value);
+        message.FinalizedAt.ToUnixTimeMilliseconds().ShouldBe(
+            episode.FinalizedAt!.Value.ToUnixTimeMilliseconds());
         message.SkillResults.ShouldHaveSingleItem().Outcome.ShouldBe(SkillOutcome.Failed);
     }
 
