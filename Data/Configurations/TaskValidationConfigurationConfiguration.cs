@@ -36,5 +36,7 @@ internal sealed class TaskValidationConfigurationConfiguration
             .OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(configuration => configuration.Checks)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(configuration => configuration.SkillTags)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

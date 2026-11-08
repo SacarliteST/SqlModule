@@ -75,6 +75,9 @@ public class AppDbContext : DbContext, IApplicationDbContext
     /// <summary>Критерии редактируемых конфигураций.</summary>
     public DbSet<ValidationCheck> ValidationChecks { get; set; }
 
+    /// <summary>Навыки-теги черновиков проверки.</summary>
+    public DbSet<TaskValidationSkillTag> TaskValidationSkillTags { get; set; }
+
     /// <summary>Неизменяемые опубликованные версии проверки.</summary>
     public DbSet<TaskValidationVersion> TaskValidationVersions { get; set; }
 

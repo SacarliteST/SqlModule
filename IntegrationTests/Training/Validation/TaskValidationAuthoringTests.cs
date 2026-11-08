@@ -7,6 +7,7 @@ using SQLModule.Client;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Contracts.Schema.TargetDb;
+using SQLModule.Contracts.Training.Skill;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Contracts.Training.Validation;
@@ -35,7 +36,43 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         var check = response.Checks.ShouldHaveSingleItem();
         check.Kind.ShouldBe(SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult);
         check.Weight.ShouldBe(100);
+        check.Skill.ShouldNotBeNull();
+        check.Skill.SkillId.ShouldBe("validation.maindatasetresult.main-dataset-result");
+        check.Skill.Origin.ShouldBe(SkillOriginResponse.System);
+        response.SkillTags.ShouldBeEmpty();
         response.CreatedAt.ShouldBeGreaterThan(DateTimeOffset.UnixEpoch);
+    }
+
+    [Fact(DisplayName = "Validation authoring: преподаватель назначает только навыки-теги")]
+    public async Task Put_AssignsTeacherTagAndRejectsDeletedTag()
+    {
+        var taskId = await CreateTaskAsync("SELECT DISTINCT 1");
+        var initial = await GetConfigurationAsync(taskId);
+        var tag = await CreateSkillAsync();
+        var request = ValidDistinctConfiguration(initial, [tag.Id]);
+
+        using var updateResponse = await HttpClient.PutAsJsonAsync(
+            ApiRoutes.Training.SqlTasks.ForValidation(taskId),
+            request,
+            ClientJson.Options);
+        var updated = await updateResponse.Content.ReadFromJsonAsync<TaskValidationConfigurationResponse>(
+            ClientJson.Options);
+
+        updateResponse.StatusCode.ShouldBe(HttpStatusCode.OK, await updateResponse.Content.ReadAsStringAsync());
+        updated.ShouldNotBeNull();
+        updated.SkillTags.ShouldHaveSingleItem().Id.ShouldBe(tag.Id);
+        updated.SkillTagsWarning.ShouldNotBeNullOrWhiteSpace();
+        updated.Checks.ShouldAllBe(check => check.Skill != null);
+
+        using var deleteResponse = await HttpClient.DeleteAsync(ApiRoutes.Training.Skills.ForId(tag.Id));
+        deleteResponse.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        using var rejectedResponse = await HttpClient.PutAsJsonAsync(
+            ApiRoutes.Training.SqlTasks.ForValidation(taskId),
+            ValidDistinctConfiguration(updated, [tag.Id]),
+            ClientJson.Options);
+
+        rejectedResponse.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await rejectedResponse.Content.ReadAsStringAsync()).ShouldContain("Validation.SkillUnavailable");
     }
 
     [Fact(DisplayName = "Validation authoring: PUT сохраняет полный draft и stale version возвращает 409")]
@@ -141,9 +178,10 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
     {
         var taskId = await CreateTaskAsync("SELECT DISTINCT 1");
         var initial = await GetConfigurationAsync(taskId);
+        var tag = await CreateSkillAsync();
         var update = await HttpClient.PutAsJsonAsync(
             ApiRoutes.Training.SqlTasks.ForValidation(taskId),
-            ValidDistinctConfiguration(initial),
+            ValidDistinctConfiguration(initial, [tag.Id]),
             ClientJson.Options);
         update.StatusCode.ShouldBe(HttpStatusCode.OK, await update.Content.ReadAsStringAsync());
         var draft = (await update.Content.ReadFromJsonAsync<TaskValidationConfigurationResponse>(
@@ -194,6 +232,12 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
             HttpStatusCode.OK,
             await nextDraftResponse.Content.ReadAsStringAsync());
 
+        using var renameResponse = await HttpClient.PutAsJsonAsync(
+            ApiRoutes.Training.Skills.ForId(tag.Id),
+            new UpdateSkillRequest("Переименованный навык"),
+            ClientJson.Options);
+        renameResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+
         using var scope = App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var versions = await db.TaskValidationVersions.AsNoTracking()
@@ -205,6 +249,10 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         version.ReferenceQuerySnapshotJson.ShouldContain("SELECT DISTINCT 1");
         version.ExpectedResultSnapshotJson.ShouldNotBeNullOrWhiteSpace();
         version.ValidationConfigurationSnapshotJson.ShouldContain("Distinct");
+        version.ValidationConfigurationSnapshotJson.ShouldContain(
+            "validation.requiredconstruct.distinct");
+        version.ValidationConfigurationSnapshotJson.ShouldContain("Проектирование запроса");
+        version.ValidationConfigurationSnapshotJson.ShouldNotContain("Переименованный навык");
     }
 
     private async Task<TaskValidationConfigurationResponse> GetConfigurationAsync(Guid taskId) =>
@@ -213,7 +261,8 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
             ClientJson.Options))!;
 
     private static TaskValidationConfigurationRequest ValidDistinctConfiguration(
-        TaskValidationConfigurationResponse current) =>
+        TaskValidationConfigurationResponse current,
+        IReadOnlyList<Guid>? skillTagIds = null) =>
         new(
             current.Version,
             71,
@@ -223,7 +272,18 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
                     current.Checks[0].Id, SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult, null, 70, 0),
                 new ValidationCheckRequest(
                     null, SQLModule.Contracts.Training.ValidationCheckKind.RequiredConstruct, "Distinct", 30, 1)
-            ]);
+            ],
+            skillTagIds);
+
+    private async Task<SkillResponse> CreateSkillAsync()
+    {
+        using var response = await HttpClient.PostAsJsonAsync(
+            ApiRoutes.Training.Skills.Collection,
+            new CreateSkillRequest($"validation-tag-{Guid.NewGuid():N}", "Проектирование запроса"),
+            ClientJson.Options);
+        response.StatusCode.ShouldBe(HttpStatusCode.Created, await response.Content.ReadAsStringAsync());
+        return (await response.Content.ReadFromJsonAsync<SkillResponse>(ClientJson.Options))!;
+    }
 
     private async Task<Guid> CreateTaskAsync(string referenceSql)
     {

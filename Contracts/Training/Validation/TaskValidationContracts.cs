@@ -1,4 +1,6 @@
 ﻿
+using SQLModule.Contracts.Training.Skill;
+
 namespace SQLModule.Contracts.Training.Validation;
 
 /// <summary>Полная редактируемая конфигурация проверки задания.</summary>
@@ -6,7 +8,8 @@ public sealed record TaskValidationConfigurationRequest(
     string? Version,
     int? PassingScore,
     IReadOnlyList<HintGroup>? VisibleHintGroups,
-    IReadOnlyList<ValidationCheckRequest>? Checks);
+    IReadOnlyList<ValidationCheckRequest>? Checks,
+    IReadOnlyList<Guid>? SkillTagIds = null);
 
 /// <summary>Критерий в запросе сохранения конфигурации.</summary>
 public sealed record ValidationCheckRequest(
@@ -32,7 +35,15 @@ public sealed record ValidationCheckResponse(
     string? Value,
     string? ValueDisplayName,
     int Weight,
-    int Order);
+    int Order,
+    ValidationSkillResponse? Skill = null);
+
+/// <summary>Навык, закреплённый за правилом или добавленный как тег.</summary>
+public sealed record ValidationSkillResponse(
+    Guid Id,
+    string SkillId,
+    string Name,
+    SkillOriginResponse Origin);
 
 /// <summary>Текущая конфигурация проверки и активная опубликованная версия.</summary>
 /// <param name="TaskId">Идентификатор задания.</param>
@@ -53,6 +64,8 @@ public sealed record ValidationCheckResponse(
 /// <param name="CreatedAt">Дата создания конфигурации.</param>
 /// <param name="UpdatedAt">Дата последнего изменения черновика.</param>
 /// <param name="PublishedAt">Дата публикации активной версии; <c>null</c>, если версии нет.</param>
+/// <param name="SkillTags">Дополнительные навыки-теги задания.</param>
+/// <param name="SkillTagsWarning">Предупреждение о приблизительной природе навыков-тегов.</param>
 public sealed record TaskValidationConfigurationResponse(
     Guid TaskId,
     string Version,
@@ -65,13 +78,16 @@ public sealed record TaskValidationConfigurationResponse(
     IReadOnlyList<ValidationCheckResponse> Checks,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    DateTimeOffset? PublishedAt);
+    DateTimeOffset? PublishedAt,
+    IReadOnlyList<ValidationSkillResponse>? SkillTags = null,
+    string? SkillTagsWarning = null);
 
 /// <summary>Draft-конфигурация для проверки эталона без публикации версии.</summary>
 public sealed record TaskValidationPreviewRequest(
     int? PassingScore,
     IReadOnlyList<HintGroup>? VisibleHintGroups,
-    IReadOnlyList<ValidationCheckPreviewRequest>? Checks);
+    IReadOnlyList<ValidationCheckPreviewRequest>? Checks,
+    IReadOnlyList<Guid>? SkillTagIds = null);
 
 /// <summary>Результат одного критерия при preview.</summary>
 public sealed record ValidationCheckPreviewResponse(

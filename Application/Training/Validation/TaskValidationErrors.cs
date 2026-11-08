@@ -34,4 +34,32 @@ public static class TaskValidationErrors
         Error.Unavailable(
             "TaskValidation.InfrastructureUnavailable",
             "Сервис проверки SQL временно недоступен. Повторите попытку позже.");
+
+    public static Error SkillUnavailable(Guid skillId) =>
+        new Error(
+            "Validation.SkillUnavailable",
+            $"Навык-тег '{skillId}' не найден или удалён.",
+            ErrorType.Validation,
+            "skillTagIds");
+
+    public static Error RuleSkillUnavailable(string skillId) =>
+        new Error(
+            "Validation.RuleSkillUnavailable",
+            $"Системный навык '{skillId}' удалён и не может быть закреплён за правилом.",
+            ErrorType.Validation,
+            "checks");
+
+    public static Error DuplicateSkillTag() =>
+        new Error(
+            "Validation.DuplicateSkillTag",
+            "Навык-тег указан повторно.",
+            ErrorType.Validation,
+            "skillTagIds");
+
+    public static Error DuplicateSkill(string skillId, string path) =>
+        new Error(
+            "Validation.DuplicateSkill",
+            $"Навык '{skillId}' встречается в задании более одного раза.",
+            ErrorType.Validation,
+            path);
 }

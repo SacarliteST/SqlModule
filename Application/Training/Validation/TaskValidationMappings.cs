@@ -20,7 +20,8 @@ public static class TaskValidationMappings
                     check.Value,
                     check.Weight,
                     check.Order))
-                .ToArray());
+                .ToArray(),
+            configuration.SkillTags.Select(tag => tag.SkillId).ToArray());
 
     public static TaskValidationDefinition ToDefinition(TaskValidationConfigurationRequest request) =>
         new(
@@ -34,7 +35,8 @@ public static class TaskValidationMappings
                     check.Weight!.Value,
                     check.Order!.Value))
                 .OrderBy(check => check.Order)
-                .ToArray());
+                .ToArray(),
+            request.SkillTagIds ?? []);
 
     public static TaskValidationDefinition ToDefinition(TaskValidationPreviewRequest request) =>
         new(
@@ -48,7 +50,8 @@ public static class TaskValidationMappings
                     check.Weight!.Value,
                     check.Order!.Value))
                 .OrderBy(check => check.Order)
-                .ToArray());
+                .ToArray(),
+            request.SkillTagIds ?? []);
 
     public static IReadOnlyList<ValidationPreviewIdentity> ToIdentities(
         TaskValidationPreviewRequest request) =>
@@ -66,8 +69,12 @@ public static class TaskValidationMappings
     public static TaskValidationConfigurationResponse ToResponse(
         TaskValidationConfiguration configuration,
         TaskValidationVersion? activeVersion,
-        IReadOnlyDictionary<Guid, string> tableNames)
+        IReadOnlyDictionary<Guid, string> tableNames,
+        IReadOnlyCollection<Skill>? assignedSkills = null)
     {
+        var skillsByExternalId = (assignedSkills ?? [])
+            .ToDictionary(skill => skill.SkillId, StringComparer.Ordinal);
+        var skillsById = (assignedSkills ?? []).ToDictionary(skill => skill.Id);
         // Отсутствие опубликованной версии выражается только validationVersionId == null,
         // а hasUnpublishedChanges означает изменения черновика относительно активной версии.
         var hasUnpublishedChanges = activeVersion is not null &&
@@ -91,12 +98,34 @@ public static class TaskValidationMappings
                     check.Value,
                     GetValueDisplayName(check, tableNames),
                     check.Weight,
-                    check.Order))
+                    check.Order,
+                    ToRuleSkill(check, skillsByExternalId)))
                 .ToArray(),
             configuration.CreatedAt,
             configuration.UpdatedAt,
-            activeVersion?.PublishedAt);
+            activeVersion?.PublishedAt,
+            configuration.SkillTags
+                .Where(tag => skillsById.ContainsKey(tag.SkillId))
+                .Select(tag => ToSkillResponse(skillsById[tag.SkillId]))
+                .ToArray(),
+            "Навыки-теги являются приблизительной оценкой и подтверждаются только полным выполнением задания.");
     }
+
+    private static ValidationSkillResponse? ToRuleSkill(
+        ValidationCheck check,
+        IReadOnlyDictionary<string, Skill> skills)
+    {
+        var definition = new ValidationCheckDefinition(
+            check.Id, check.Kind, check.Value, check.Weight, check.Order);
+        var externalId = ValidationSkillResolver.Resolve(definition).SkillId;
+        return skills.TryGetValue(externalId, out var skill) ? ToSkillResponse(skill) : null;
+    }
+
+    private static ValidationSkillResponse ToSkillResponse(Skill skill) => new(
+        skill.Id,
+        skill.SkillId,
+        skill.Name,
+        (SQLModule.Contracts.Training.Skill.SkillOriginResponse)skill.Origin);
 
     public static Error ToError(TaskValidationPreviewResponse response)
     {

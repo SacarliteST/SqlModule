@@ -12,13 +12,21 @@ public sealed record PreviewTaskValidationCommand(
     IReadOnlyList<ValidationPreviewIdentity> Identities)
     : IRequest<Result<TaskValidationPreviewResponse>>;
 
-public sealed class PreviewTaskValidationHandler(ITaskValidationEvaluationService evaluationService)
+public sealed class PreviewTaskValidationHandler(
+    ITaskValidationEvaluationService evaluationService,
+    ValidationSkillResolver skillResolver)
     : IRequestHandler<PreviewTaskValidationCommand, Result<TaskValidationPreviewResponse>>
 {
     public async Task<Result<TaskValidationPreviewResponse>> Handle(
         PreviewTaskValidationCommand command,
         CancellationToken ct)
     {
+        var skills = await skillResolver.EnsureAsync(command.Definition, ct);
+        if (!skills.IsSuccess)
+        {
+            return Result<TaskValidationPreviewResponse>.Fail(skills.Error!);
+        }
+
         var evaluation = await evaluationService.EvaluateAsync(
             command.TaskId,
             command.Definition,

@@ -54,6 +54,8 @@ public interface IApplicationDbContext
 
     DbSet<ValidationCheck> ValidationChecks { get; }
 
+    DbSet<TaskValidationSkillTag> TaskValidationSkillTags { get; }
+
     DbSet<TaskValidationVersion> TaskValidationVersions { get; }
 
     DbSet<AttemptCheckResult> AttemptCheckResults { get; }

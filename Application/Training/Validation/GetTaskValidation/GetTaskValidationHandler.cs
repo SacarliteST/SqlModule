@@ -13,6 +13,7 @@ public sealed record GetTaskValidationQuery(Guid TaskId)
 
 public sealed class GetTaskValidationHandler(
     IApplicationDbContext db,
+    ValidationSkillResolver skillResolver,
     ILogger<GetTaskValidationHandler> logger)
     : IRequestHandler<GetTaskValidationQuery, Result<TaskValidationConfigurationResponse>>
 {
@@ -34,16 +35,24 @@ public sealed class GetTaskValidationHandler(
         var configuration = await db.TaskValidationConfigurations
             .AsNoTracking()
             .Include(value => value.Checks)
+            .Include(value => value.SkillTags)
             .SingleOrDefaultAsync(value => value.TaskId == query.TaskId, ct);
         if (configuration is null)
         {
             configuration = TaskValidationDefaults.Create(query.TaskId);
             db.TaskValidationConfigurations.Add(configuration);
-            await db.SaveChangesAsync(ct);
             logger.LogInformation(
                 "Для SQL-задания {TaskId} создана конфигурация проверки по умолчанию",
                 query.TaskId);
         }
+
+        var assignedSkills = await skillResolver.EnsureAsync(
+            TaskValidationMappings.ToDefinition(configuration), ct);
+        if (!assignedSkills.IsSuccess)
+        {
+            return Result<TaskValidationConfigurationResponse>.Fail(assignedSkills.Error!);
+        }
+        await db.SaveChangesAsync(ct);
 
         var activeVersion = taskInfo.ActiveValidationVersionId.HasValue
             ? await db.TaskValidationVersions.AsNoTracking().SingleAsync(
@@ -55,6 +64,7 @@ public sealed class GetTaskValidationHandler(
             .Where(table => table.TargetDbId == taskInfo.TargetDbId)
             .ToDictionaryAsync(table => table.Id, table => table.TableName, ct);
 
-        return TaskValidationMappings.ToResponse(configuration, activeVersion, tableNames);
+        return TaskValidationMappings.ToResponse(
+            configuration, activeVersion, tableNames, assignedSkills.Value!);
     }
 }

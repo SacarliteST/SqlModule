@@ -7,6 +7,7 @@ namespace SQLModule.Domain.Training;
 public sealed class TaskValidationConfiguration : AuditableEntity
 {
     private readonly List<ValidationCheck> checks = [];
+    private readonly List<TaskValidationSkillTag> skillTags = [];
 
     public Guid TaskId { get; private set; }
     public int PassingScore { get; private set; }
@@ -15,6 +16,7 @@ public sealed class TaskValidationConfiguration : AuditableEntity
 
     public SqlTask Task { get; private set; } = null!;
     public IReadOnlyCollection<ValidationCheck> Checks => checks.AsReadOnly();
+    public IReadOnlyCollection<TaskValidationSkillTag> SkillTags => skillTags.AsReadOnly();
 
     private TaskValidationConfiguration(
         Guid id,
@@ -72,6 +74,16 @@ public sealed class TaskValidationConfiguration : AuditableEntity
             {
                 existing.Update(definition.Kind, definition.Value, definition.Weight, definition.Order);
             }
+        }
+    }
+
+    public void SynchronizeSkillTags(IReadOnlyCollection<Guid> skillIds)
+    {
+        var requested = skillIds.ToHashSet();
+        skillTags.RemoveAll(tag => !requested.Contains(tag.SkillId));
+        foreach (var skillId in requested.Where(skillId => skillTags.All(tag => tag.SkillId != skillId)))
+        {
+            skillTags.Add(TaskValidationSkillTag.Create(Id, skillId));
         }
     }
 

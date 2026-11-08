@@ -4,6 +4,7 @@ using SQLModule.Application.Persistence;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Common.Results;
 using SQLModule.Domain.Training;
+using SQLModule.Domain.Training.Validation;
 using SQLModule.Sandbox;
 
 namespace SQLModule.Application.Training.Validation;
@@ -23,7 +24,9 @@ public interface ITaskValidationSnapshotFactory
     Task<Result<LiveTaskSnapshot>> CreateLiveAsync(Guid taskId, CancellationToken ct);
 }
 
-public sealed class TaskValidationSnapshotFactory(IApplicationDbContext db) : ITaskValidationSnapshotFactory
+public sealed class TaskValidationSnapshotFactory(
+    IApplicationDbContext db,
+    ValidationSkillResolver skillResolver) : ITaskValidationSnapshotFactory
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -34,24 +37,46 @@ public sealed class TaskValidationSnapshotFactory(IApplicationDbContext db) : IT
         string analyzerVersion,
         CancellationToken ct)
     {
+        var assignedSkills = await skillResolver.EnsureAsync(
+            TaskValidationMappings.ToDefinition(configuration), ct);
+        if (!assignedSkills.IsSuccess)
+        {
+            return Result<TaskValidationVersionSnapshot>.Fail(assignedSkills.Error!);
+        }
+
         var live = await CreateLiveAsync(taskId, ct);
         if (!live.IsSuccess)
         {
             return Result<TaskValidationVersionSnapshot>.Fail(live.Error!);
         }
 
+        var checkDefinitions = configuration.Checks
+            .OrderBy(check => check.Order)
+            .Select(check => new
+            {
+                Check = check,
+                Skill = ValidationSkillResolver.Resolve(new ValidationCheckDefinition(
+                    check.Id, check.Kind, check.Value, check.Weight, check.Order))
+            })
+            .ToArray();
+        var skills = assignedSkills.Value!;
+        var skillsByExternalId = skills.ToDictionary(skill => skill.SkillId, StringComparer.Ordinal);
+        var skillsById = skills.ToDictionary(skill => skill.Id);
+
         var configurationSnapshot = new
         {
             configuration.PassingScore,
             VisibleHintGroups = configuration.GetVisibleHintGroups(),
-            Checks = configuration.Checks.OrderBy(check => check.Order).Select(check => new
+            Checks = checkDefinitions.Select(item => new
             {
-                check.Id,
-                check.Kind,
-                check.Value,
-                check.Weight,
-                check.Order
-            })
+                item.Check.Id,
+                item.Check.Kind,
+                item.Check.Value,
+                item.Check.Weight,
+                item.Check.Order,
+                Skill = ToSnapshot(skillsByExternalId[item.Skill.SkillId])
+            }),
+            SkillTags = configuration.SkillTags.Select(tag => ToSnapshot(skillsById[tag.SkillId]))
         };
 
         return new TaskValidationVersionSnapshot(
@@ -62,6 +87,15 @@ public sealed class TaskValidationSnapshotFactory(IApplicationDbContext db) : IT
             JsonSerializer.Serialize(configurationSnapshot, JsonOptions),
             analyzerVersion);
     }
+
+    private static object ToSnapshot(Skill skill) => new
+    {
+        skill.Id,
+        skill.SkillId,
+        skill.Name,
+        skill.Description,
+        skill.Origin
+    };
 
     public async Task<Result<LiveTaskSnapshot>> CreateLiveAsync(Guid taskId, CancellationToken ct)
     {

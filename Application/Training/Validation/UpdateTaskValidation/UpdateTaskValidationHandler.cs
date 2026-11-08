@@ -16,16 +16,19 @@ public sealed class UpdateTaskValidationHandler
 {
     private readonly IApplicationDbContext db;
     private readonly ITaskValidationEvaluationService evaluationService;
+    private readonly ValidationSkillResolver skillResolver;
     private readonly ILogger<UpdateTaskValidationHandler> logger;
 
     /// <summary>Создаёт обработчик обновления validation-конфигурации.</summary>
     public UpdateTaskValidationHandler(
         IApplicationDbContext db,
         ITaskValidationEvaluationService evaluationService,
+        ValidationSkillResolver skillResolver,
         ILogger<UpdateTaskValidationHandler> logger)
     {
         this.db = db;
         this.evaluationService = evaluationService;
+        this.skillResolver = skillResolver;
         this.logger = logger;
     }
 
@@ -52,6 +55,7 @@ public sealed class UpdateTaskValidationHandler
 
         var configuration = await db.TaskValidationConfigurations
             .Include(value => value.Checks)
+            .Include(value => value.SkillTags)
             .SingleOrDefaultAsync(value => value.TaskId == command.TaskId, ct);
         if (configuration is null)
         {
@@ -84,6 +88,12 @@ public sealed class UpdateTaskValidationHandler
             return Result<TaskValidationConfigurationResponse>.Fail(TaskBankErrors.HintMissing);
         }
 
+        var assignedSkills = await skillResolver.EnsureAsync(command.Definition, ct);
+        if (!assignedSkills.IsSuccess)
+        {
+            return Result<TaskValidationConfigurationResponse>.Fail(assignedSkills.Error!);
+        }
+
         var evaluation = await evaluationService.EvaluateAsync(
             command.TaskId,
             command.Definition,
@@ -104,9 +114,15 @@ public sealed class UpdateTaskValidationHandler
             command.Definition.PassingScore,
             command.Definition.VisibleHintGroups);
         configuration.SynchronizeChecks(command.Definition.Checks);
+        var existingTagIds = configuration.SkillTags.Select(tag => tag.Id).ToHashSet();
+        configuration.SynchronizeSkillTags(command.Definition.EffectiveSkillTagIds);
         foreach (var addedCheck in configuration.Checks.Where(check => !existingCheckIds.Contains(check.Id)))
         {
             db.ValidationChecks.Add(addedCheck);
+        }
+        foreach (var addedTag in configuration.SkillTags.Where(tag => !existingTagIds.Contains(tag.Id)))
+        {
+            db.TaskValidationSkillTags.Add(addedTag);
         }
 
         try
@@ -135,6 +151,7 @@ public sealed class UpdateTaskValidationHandler
             "Конфигурация проверки SQL-задания {TaskId} обновлена, версия {Version}",
             command.TaskId,
             configuration.Version);
-        return TaskValidationMappings.ToResponse(configuration, activeVersion, tableNames);
+        return TaskValidationMappings.ToResponse(
+            configuration, activeVersion, tableNames, assignedSkills.Value!);
     }
 }

@@ -24,6 +24,7 @@ public sealed class PublishTaskValidationHandler
     private readonly ITaskValidationEvaluationService evaluationService;
     private readonly ITaskValidationSnapshotFactory snapshotFactory;
     private readonly ICurrentUser currentUser;
+    private readonly ValidationSkillResolver skillResolver;
     private readonly TimeProvider timeProvider;
     private readonly ILogger<PublishTaskValidationHandler> logger;
 
@@ -32,6 +33,7 @@ public sealed class PublishTaskValidationHandler
         IApplicationDbContext db,
         ITaskValidationEvaluationService evaluationService,
         ITaskValidationSnapshotFactory snapshotFactory,
+        ValidationSkillResolver skillResolver,
         ICurrentUser currentUser,
         TimeProvider timeProvider,
         ILogger<PublishTaskValidationHandler> logger)
@@ -39,6 +41,7 @@ public sealed class PublishTaskValidationHandler
         this.db = db;
         this.evaluationService = evaluationService;
         this.snapshotFactory = snapshotFactory;
+        this.skillResolver = skillResolver;
         this.currentUser = currentUser;
         this.timeProvider = timeProvider;
         this.logger = logger;
@@ -62,6 +65,8 @@ public sealed class PublishTaskValidationHandler
         var task = await db.SqlTasks
             .Include(value => value.ValidationConfiguration)
                 .ThenInclude(configuration => configuration!.Checks)
+            .Include(value => value.ValidationConfiguration)
+                .ThenInclude(configuration => configuration!.SkillTags)
             .Include(value => value.ActiveValidationVersion)
             .Include(value => value.SqlQuery)
             .SingleOrDefaultAsync(value => value.Id == command.TaskId, ct);
@@ -129,6 +134,11 @@ public sealed class PublishTaskValidationHandler
         }
 
         var definition = TaskValidationMappings.ToDefinition(configuration);
+        var assignedSkills = await skillResolver.EnsureAsync(definition, ct);
+        if (!assignedSkills.IsSuccess)
+        {
+            return Result<TaskValidationConfigurationResponse>.Fail(assignedSkills.Error!);
+        }
         var evaluation = await evaluationService.EvaluateAsync(
             command.TaskId,
             definition,
@@ -239,7 +249,13 @@ public sealed class PublishTaskValidationHandler
             .AsNoTracking()
             .Where(table => table.TargetDbId == task.SqlQuery.TargetDbId)
             .ToDictionaryAsync(table => table.Id, table => table.TableName, ct);
-        return TaskValidationMappings.ToResponse(configuration, version, tableNames);
+        var assignedSkills = await skillResolver.EnsureAsync(
+            TaskValidationMappings.ToDefinition(configuration), ct);
+        return TaskValidationMappings.ToResponse(
+            configuration,
+            version,
+            tableNames,
+            assignedSkills.IsSuccess ? assignedSkills.Value! : []);
     }
 
     private static string Hash(Guid taskId, Guid version) => Convert.ToHexString(

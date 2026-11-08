@@ -1279,6 +1279,28 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         });
                 });
 
+            modelBuilder.Entity("SQLModule.Domain.Training.TaskValidationSkillTag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConfigurationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SkillId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SkillId");
+
+                    b.HasIndex("ConfigurationId", "SkillId")
+                        .IsUnique();
+
+                    b.ToTable("TaskValidationSkillTags", (string)null);
+                });
+
             modelBuilder.Entity("SQLModule.Domain.Training.TaskValidationVersion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1675,6 +1697,25 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Navigation("Task");
                 });
 
+            modelBuilder.Entity("SQLModule.Domain.Training.TaskValidationSkillTag", b =>
+                {
+                    b.HasOne("SQLModule.Domain.Training.TaskValidationConfiguration", "Configuration")
+                        .WithMany("SkillTags")
+                        .HasForeignKey("ConfigurationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SQLModule.Domain.Training.Skill", "Skill")
+                        .WithMany()
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Configuration");
+
+                    b.Navigation("Skill");
+                });
+
             modelBuilder.Entity("SQLModule.Domain.Training.TaskValidationVersion", b =>
                 {
                     b.HasOne("SQLModule.Domain.Training.SqlTask", "Task")
@@ -1757,6 +1798,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
             modelBuilder.Entity("SQLModule.Domain.Training.TaskValidationConfiguration", b =>
                 {
                     b.Navigation("Checks");
+
+                    b.Navigation("SkillTags");
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.Topic", b =>

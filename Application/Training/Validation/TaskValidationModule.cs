@@ -18,6 +18,7 @@ public static class TaskValidationModule
 {
     public static IServiceCollection AddTaskValidation(this IServiceCollection services)
     {
+        services.AddScoped<ValidationSkillResolver>();
         services.AddSingleton<ITaskValidationConfigurationValidator, TaskValidationConfigurationValidator>();
         services.AddScoped<ITaskValidationEvaluationService, TaskValidationEvaluationService>();
         services.AddScoped<

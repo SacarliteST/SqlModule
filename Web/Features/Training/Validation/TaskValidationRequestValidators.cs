@@ -23,6 +23,12 @@ internal sealed class TaskValidationConfigurationRequestValidator
         RuleForEach(request => request.Checks!)
             .SetValidator(new ValidationCheckRequestValidator())
             .When(request => request.Checks is not null);
+        RuleForEach(request => request.SkillTagIds!)
+            .NotEqual(Guid.Empty)
+            .When(request => request.SkillTagIds is not null);
+        RuleFor(request => request.SkillTagIds)
+            .Must(ids => ids is null || ids.Count == ids.Distinct().Count())
+            .WithMessage("Навыки-теги не должны повторяться.");
     }
 
     private static bool BeGuid(string? value) => Guid.TryParseExact(value, "D", out _);
@@ -42,6 +48,12 @@ internal sealed class TaskValidationPreviewRequestValidator : AbstractValidator<
         RuleForEach(request => request.Checks!)
             .SetValidator(new ValidationCheckPreviewRequestValidator())
             .When(request => request.Checks is not null);
+        RuleForEach(request => request.SkillTagIds!)
+            .NotEqual(Guid.Empty)
+            .When(request => request.SkillTagIds is not null);
+        RuleFor(request => request.SkillTagIds)
+            .Must(ids => ids is null || ids.Count == ids.Distinct().Count())
+            .WithMessage("Навыки-теги не должны повторяться.");
     }
 }
 

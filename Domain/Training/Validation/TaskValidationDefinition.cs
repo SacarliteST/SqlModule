@@ -4,7 +4,11 @@
 public sealed record TaskValidationDefinition(
     int PassingScore,
     IReadOnlyList<HintGroup> VisibleHintGroups,
-    IReadOnlyList<ValidationCheckDefinition> Checks);
+    IReadOnlyList<ValidationCheckDefinition> Checks,
+    IReadOnlyList<Guid>? SkillTagIds = null)
+{
+    public IReadOnlyList<Guid> EffectiveSkillTagIds => SkillTagIds ?? [];
+}
 
 /// <summary>Нормализованный критерий draft-конфигурации.</summary>
 public sealed record ValidationCheckDefinition(
