@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using EducationSPD.Kafka.Contracts;
+using EducationSPD.Kafka.Contracts.V1;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
@@ -14,6 +16,7 @@ using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Topic;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Data.Core;
+using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
 using SQLModule.IntegrationTests.Infrastructure;
 
@@ -300,6 +303,17 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         result.SkillId.ShouldBe(tag.Id);
         result.Source.ShouldBe(LearningEpisodeSkillSource.TaskTag);
         result.Outcome.ShouldBe(LearningEpisodeSkillOutcome.Failed);
+        var outbox = await db.PendingPublishes.AsNoTracking()
+            .SingleAsync(value =>
+                value.Kind == PendingPublishKind.LearningEpisode &&
+                value.SessionId == episode.Id);
+        outbox.Topic.ShouldBe("learning.episode-finalized");
+        outbox.MessageKey.ShouldBe($"sql:{episode.StudentId:D}");
+        var message = KafkaContractJson.Deserialize<LearningEpisodeFinalized>(outbox.MessageJson);
+        message.EventId.ShouldBe(outbox.Id);
+        message.EpisodeId.ShouldBe(episode.Id);
+        message.FinalizedAt.ShouldBe(episode.FinalizedAt!.Value);
+        message.SkillResults.ShouldHaveSingleItem().Outcome.ShouldBe(SkillOutcome.Failed);
     }
 
     [Fact(DisplayName = "Learning episode: отсутствие heartbeat больше трёх минут финализируется один раз")]
@@ -331,6 +345,44 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         episode.FinalizationReason.ShouldBe(LearningEpisodeFinalizationReason.HeartbeatTimeout);
         (await db.LearningEpisodeSkillResults.CountAsync(value => value.EpisodeId == episode.Id))
             .ShouldBe(1);
+        (await db.PendingPublishes.CountAsync(value =>
+            value.Kind == PendingPublishKind.LearningEpisode &&
+            value.SessionId == episode.Id)).ShouldBe(1);
+    }
+
+    [Fact(DisplayName = "Learning episode: отказ без попытки и тегов не создаёт непроверяемое событие")]
+    public async Task Episode_AbandonWithoutAttemptOrTags_DoesNotCreateOutboxEvent()
+    {
+        var taskId = await CreateTaskAsync("SELECT 1");
+        var current = await GetConfigurationAsync(taskId);
+        using var publishRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            ApiRoutes.Training.SqlTasks.ForValidationPublish(taskId))
+        {
+            Content = JsonContent.Create(
+                new PublishTaskValidationRequest(current.Version),
+                options: ClientJson.Options)
+        };
+        publishRequest.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("D"));
+        using var publishResponse = await HttpClient.SendAsync(publishRequest);
+        publishResponse.StatusCode.ShouldBe(HttpStatusCode.OK, await publishResponse.Content.ReadAsStringAsync());
+        await SqlTaskClient.PublishAsync(taskId);
+        AsStudent();
+        using var startResponse = await HttpClient.PostAsync(
+            ApiRoutes.Training.Student.ForTaskEpisodes(taskId), null);
+        var started = (await startResponse.Content.ReadFromJsonAsync<LearningEpisodeResponse>(
+            ClientJson.Options))!;
+        using var finalizeRequest = CreateFinalizeEpisodeRequest(
+            started.EpisodeId,
+            Guid.NewGuid().ToString("D"));
+        using var finalizeResponse = await HttpClient.SendAsync(finalizeRequest);
+        finalizeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        (await db.PendingPublishes.CountAsync(value =>
+            value.Kind == PendingPublishKind.LearningEpisode &&
+            value.SessionId == started.EpisodeId)).ShouldBe(0);
     }
 
     private async Task<TaskValidationConfigurationResponse> GetConfigurationAsync(Guid taskId) =>

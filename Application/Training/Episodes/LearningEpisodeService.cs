@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using SQLModule.Application.Persistence;
+using SQLModule.Application.SpdIntegration;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Episode;
 using SQLModule.Domain.Common;
@@ -51,7 +52,8 @@ public static class LearningEpisodeErrors
 public sealed class LearningEpisodeService(
     IApplicationDbContext db,
     TimeProvider timeProvider,
-    ILogger<LearningEpisodeService> logger) : ILearningEpisodeService
+    ILogger<LearningEpisodeService> logger,
+    LearningEpisodeOutbox? outbox = null) : ILearningEpisodeService
 {
     public static readonly TimeSpan HeartbeatGracePeriod = TimeSpan.FromMinutes(3);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -360,6 +362,7 @@ public sealed class LearningEpisodeService(
             episode, finalAttempt, reason, ct);
         episode.Finalize(reason, finalizedAt, finalAttempt?.Id, skillResults);
         db.LearningEpisodeSkillResults.AddRange(skillResults);
+        outbox?.Add(episode, skillResults);
         if (skillResults.Count == 0 && CreatesPedagogicalObservation(reason))
         {
             logger.LogWarning(

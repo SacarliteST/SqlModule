@@ -48,7 +48,7 @@ internal static class CompositionExtensions
 
         if (configuration.GetValue<bool>("EducationSpd:Enabled"))
         {
-            services.AddSkillCatalogEventPublisher(section.GetSection("Kafka"));
+            services.AddEducationSpdEventPublisher(section.GetSection("Kafka"));
         }
 
         return services;

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SQLModule.Application.SpdIntegration;
 
 namespace SQLModule.Application.Training.Episodes;
 
@@ -17,6 +18,7 @@ public static class LearningEpisodesModule
                 "LearningEpisodes:BatchSize должен быть больше нуля.")
             .ValidateOnStart();
         services.AddScoped<LearningEpisodeService>();
+        services.AddScoped<LearningEpisodeOutbox>();
         services.AddScoped<ILearningEpisodeService>(provider =>
             provider.GetRequiredService<LearningEpisodeService>());
         services.AddScoped<LearningEpisodeTimeoutProcessor>();

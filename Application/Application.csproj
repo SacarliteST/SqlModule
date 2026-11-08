@@ -22,5 +22,7 @@
         <ProjectReference Include="..\SqlAnalysis\SqlAnalysis.csproj" />
         <ProjectReference Include="..\Integrations\PlatformIntegration.Abstractions\PlatformIntegration.Abstractions.csproj" />
         <ProjectReference Include="..\Integrations\PlatformIntegration.Contracts\PlatformIntegration.Contracts.csproj" />
+        <ProjectReference Include="..\Integrations\EducationSpd.Abstractions\EducationSpd.Abstractions.csproj" />
+        <ProjectReference Include="..\..\EducationSPD\src\EducationSPD.Kafka.Contracts\EducationSPD.Kafka.Contracts.csproj" />
     </ItemGroup>
 </Project>

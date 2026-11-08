@@ -1,8 +1,11 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using EducationSPD.Kafka.Contracts;
+using EducationSPD.Kafka.Contracts.V1;
 using Microsoft.Extensions.Options;
 using SQLModule.Application.Persistence;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
+using ContractSkillOrigin = EducationSPD.Kafka.Contracts.V1.SkillOrigin;
 
 namespace SQLModule.Application.SpdIntegration;
 
@@ -21,19 +24,19 @@ public sealed class SkillCatalogOutbox(
 
         var occurredAt = timeProvider.GetUtcNow();
         var eventId = Guid.NewGuid();
-        var message = new
-        {
-            schemaVersion = 1,
+        var message = new SkillCatalogChanged(
+            1,
             eventId,
-            moduleKey = options.Value.ModuleKey,
-            skillId = skill.SkillId,
-            name = skill.Name,
-            description = skill.Description,
-            origin = skill.Origin.ToString(),
-            isDeleted = skill.IsDeleted,
-            occurredAt
-        };
-        var json = JsonSerializer.Serialize(message, JsonSerializerOptions.Web);
+            options.Value.ModuleKey,
+            skill.SkillId,
+            skill.Name,
+            skill.Description,
+            skill.Origin == SQLModule.Domain.Training.SkillOrigin.System
+                ? ContractSkillOrigin.System
+                : ContractSkillOrigin.TeacherDefined,
+            skill.IsDeleted,
+            occurredAt);
+        var activity = Activity.Current;
         db.PendingPublishes.Add(PendingPublish.CreateKafka(
             eventId,
             PendingPublishKind.SkillCatalog,
@@ -41,7 +44,9 @@ public sealed class SkillCatalogOutbox(
             $"skill:{skill.Id:D}:{eventId:D}",
             options.Value.Kafka.SkillCatalogTopic,
             $"{options.Value.ModuleKey}:{skill.SkillId}",
-            json,
-            occurredAt));
+            KafkaContractJson.Serialize(message),
+            occurredAt,
+            activity?.Id,
+            activity?.TraceStateString));
     }
 }

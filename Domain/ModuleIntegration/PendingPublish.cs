@@ -11,6 +11,9 @@ public sealed class PendingPublish : BaseEntity
     public string MessageJson { get; private set; }
     public string? Topic { get; private set; }
     public string? MessageKey { get; private set; }
+    public string? TraceParent { get; private set; }
+    public string? TraceState { get; private set; }
+    public string? LastErrorCode { get; private set; }
     public int Attempts { get; private set; }
     public DateTimeOffset NextAttemptAt { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -31,6 +34,8 @@ public sealed class PendingPublish : BaseEntity
         string messageJson,
         string? topic,
         string? messageKey,
+        string? traceParent,
+        string? traceState,
         DateTimeOffset createdAt) : base(id)
     {
         Kind = kind;
@@ -39,6 +44,8 @@ public sealed class PendingPublish : BaseEntity
         MessageJson = messageJson;
         Topic = topic;
         MessageKey = messageKey;
+        TraceParent = traceParent;
+        TraceState = traceState;
         Attempts = 0;
         NextAttemptAt = createdAt;
         CreatedAt = createdAt;
@@ -51,7 +58,7 @@ public sealed class PendingPublish : BaseEntity
         string deduplicationKey,
         string messageJson,
         DateTimeOffset createdAt) =>
-        new(id, kind, sessionId, deduplicationKey, messageJson, null, null, createdAt);
+        new(id, kind, sessionId, deduplicationKey, messageJson, null, null, null, null, createdAt);
 
     public static PendingPublish CreateKafka(
         Guid id,
@@ -61,8 +68,10 @@ public sealed class PendingPublish : BaseEntity
         string topic,
         string messageKey,
         string messageJson,
-        DateTimeOffset createdAt) =>
-        new(id, kind, aggregateId, deduplicationKey, messageJson, topic, messageKey, createdAt);
+        DateTimeOffset createdAt,
+        string? traceParent = null,
+        string? traceState = null) =>
+        new(id, kind, aggregateId, deduplicationKey, messageJson, topic, messageKey, traceParent, traceState, createdAt);
 
     public void MarkSent(DateTimeOffset sentAt)
     {
@@ -87,10 +96,12 @@ public sealed class PendingPublish : BaseEntity
     public void RegisterFailure(
         DateTimeOffset failedAt,
         DateTimeOffset nextAttemptAt,
-        bool moveToDeadLetter)
+        bool moveToDeadLetter,
+        string errorCode = "Unknown")
     {
         Attempts++;
         NextAttemptAt = nextAttemptAt;
+        LastErrorCode = errorCode;
         ReleaseLock();
         if (moveToDeadLetter)
         {

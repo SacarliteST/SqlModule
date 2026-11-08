@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
+using EducationSPD.Kafka.Contracts;
+using EducationSPD.Kafka.Contracts.V1;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
@@ -74,8 +75,9 @@ public sealed class SkillCatalogTests : ApiTestBase
         events.ShouldAllBe(message => message.Topic == "learning.skill-catalog");
         events.ShouldAllBe(message => message.MessageKey == $"sql:{skillId}");
         events.Select(message => message.Id).Distinct().Count().ShouldBe(4);
-        using var payload = JsonDocument.Parse(events.Last().MessageJson);
-        payload.RootElement.GetProperty("isDeleted").GetBoolean().ShouldBeFalse();
+        var payload = KafkaContractJson.Deserialize<SkillCatalogChanged>(events.Last().MessageJson);
+        payload.EventId.ShouldBe(events.Last().Id);
+        payload.IsDeleted.ShouldBeFalse();
     }
 
     [Fact(DisplayName = "Student не имеет доступа к каталогу навыков")]

@@ -336,6 +336,10 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
+                    b.Property<string>("LastErrorCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("LockedBy")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -363,6 +367,14 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<string>("Topic")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
+
+                    b.Property<string>("TraceParent")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("TraceState")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.HasKey("Id");
 

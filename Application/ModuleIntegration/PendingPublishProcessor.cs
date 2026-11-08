@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SQLModule.Application.Persistence;
 using SQLModule.Domain.ModuleIntegration;
+using SQLModule.EducationSpd.Abstractions;
 using SQLModule.PlatformIntegration.Abstractions;
 using SQLModule.PlatformIntegration.Contracts;
 
@@ -17,7 +18,7 @@ public sealed class PendingPublishProcessor(
     IOptions<ModuleIntegrationOptions> options,
     TimeProvider timeProvider,
     ILogger<PendingPublishProcessor> logger,
-    ISkillCatalogEventPublisher? skillCatalogPublisher = null)
+    IEducationSpdEventPublisher? educationSpdPublisher = null)
 {
     /// <summary>Идентификатор экземпляра приложения для аренд outbox (общий на процесс).</summary>
     private static readonly string InstanceId = $"{Environment.MachineName}:{Guid.NewGuid():N}";
@@ -68,9 +69,13 @@ public sealed class PendingPublishProcessor(
                 {
                     await ProcessGradeAsync(message, ct);
                 }
+                else if (message.Kind is PendingPublishKind.SkillCatalog or PendingPublishKind.LearningEpisode)
+                {
+                    await ProcessEducationSpdEventAsync(message, ct);
+                }
                 else
                 {
-                    await ProcessSkillCatalogAsync(message, ct);
+                    throw new InvalidOperationException($"Неизвестный тип outbox-сообщения: {message.Kind}.");
                 }
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -89,7 +94,8 @@ public sealed class PendingPublishProcessor(
                 message.RegisterFailure(
                     failedAt,
                     failedAt.AddSeconds(delaySeconds),
-                    moveToDeadLetter);
+                    moveToDeadLetter,
+                    exception.GetType().Name);
                 if (moveToDeadLetter && message.Kind == PendingPublishKind.Grade)
                 {
                     await MarkCompletionFailedAsync(message.SessionId, ct);
@@ -122,20 +128,22 @@ public sealed class PendingPublishProcessor(
         return messages.Count;
     }
 
-    private async Task ProcessSkillCatalogAsync(PendingPublish message, CancellationToken ct)
+    private async Task ProcessEducationSpdEventAsync(PendingPublish message, CancellationToken ct)
     {
-        if (skillCatalogPublisher is null ||
+        if (educationSpdPublisher is null ||
             String.IsNullOrWhiteSpace(message.Topic) ||
             String.IsNullOrWhiteSpace(message.MessageKey))
         {
             throw new InvalidOperationException(
-                "Публикатор каталога навыков или Kafka-реквизиты outbox-сообщения не настроены.");
+                "Публикатор EducationSPD или Kafka-реквизиты outbox-сообщения не настроены.");
         }
 
-        await skillCatalogPublisher.PublishAsync(
+        await educationSpdPublisher.PublishAsync(
             message.Topic,
             message.MessageKey,
             message.MessageJson,
+            message.TraceParent,
+            message.TraceState,
             ct);
         message.MarkSent(timeProvider.GetUtcNow());
         ModuleIntegrationTelemetry.RecordPublish(
@@ -220,7 +228,7 @@ public sealed class PendingPublishProcessor(
 
     private DeliveryOptions GetDeliveryOptions(PendingPublishKind kind)
     {
-        if (kind is PendingPublishKind.Event or PendingPublishKind.SkillCatalog)
+        if (kind is PendingPublishKind.Event or PendingPublishKind.SkillCatalog or PendingPublishKind.LearningEpisode)
         {
             var kafka = options.Value.Kafka;
             return new DeliveryOptions(

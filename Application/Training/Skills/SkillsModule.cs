@@ -22,6 +22,9 @@ public static class SkillsModule
             .Validate(
                 options => !options.Enabled || !String.IsNullOrWhiteSpace(options.Kafka.SkillCatalogTopic),
                 "EducationSpd:Kafka:SkillCatalogTopic обязателен при включённой интеграции.")
+            .Validate(
+                options => !options.Enabled || !String.IsNullOrWhiteSpace(options.Kafka.EpisodeFinalizedTopic),
+                "EducationSpd:Kafka:EpisodeFinalizedTopic обязателен при включённой интеграции.")
             .ValidateOnStart();
         services.AddScoped<SkillCatalogOutbox>();
         services.AddScoped<IRequestHandler<CreateSkillCommand, Result<SkillResponse>>, CreateSkillHandler>();

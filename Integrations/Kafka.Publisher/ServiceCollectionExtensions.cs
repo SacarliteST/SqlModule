@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SQLModule.EducationSpd.Abstractions;
 using SQLModule.PlatformIntegration.Abstractions;
 
 namespace SQLModule.Kafka.Publisher;
@@ -15,12 +16,12 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddSkillCatalogEventPublisher(
+    public static IServiceCollection AddEducationSpdEventPublisher(
         this IServiceCollection services,
         IConfigurationSection section)
     {
         services.AddOptions<SkillCatalogKafkaPublisherOptions>().Bind(section);
-        services.AddSingleton<ISkillCatalogEventPublisher, KafkaSkillCatalogEventPublisher>();
+        services.AddSingleton<IEducationSpdEventPublisher, KafkaEducationSpdEventPublisher>();
         return services;
     }
 }

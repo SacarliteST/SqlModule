@@ -6,6 +6,7 @@
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="..\EducationSpd.Abstractions\EducationSpd.Abstractions.csproj" />
         <ProjectReference Include="..\PlatformIntegration.Abstractions\PlatformIntegration.Abstractions.csproj" />
         <ProjectReference Include="..\PlatformIntegration.Contracts\PlatformIntegration.Contracts.csproj" />
     </ItemGroup>
