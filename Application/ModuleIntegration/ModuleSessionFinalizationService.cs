@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using SQLModule.Application.Persistence;
+using SQLModule.Application.Training.Episodes;
 using SQLModule.Common.Results;
+using SQLModule.Contracts.Training.Episode;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Schema;
@@ -19,12 +21,14 @@ public interface IModuleSessionFinalizationService
         Guid userId,
         Guid sessionId,
         Guid idempotencyKey,
+        LearningEpisodeFinalizationMode? episodeMode,
         CancellationToken ct);
 }
 
 public sealed class ModuleSessionFinalizationService(
     IApplicationDbContext db,
     PracticeCompletionOutbox completionOutbox,
+    LearningEpisodeService episodeService,
     TimeProvider timeProvider,
     ILogger<ModuleSessionFinalizationService> logger) : IModuleSessionFinalizationService
 {
@@ -34,11 +38,12 @@ public sealed class ModuleSessionFinalizationService(
         Guid userId,
         Guid sessionId,
         Guid idempotencyKey,
+        LearningEpisodeFinalizationMode? episodeMode,
         CancellationToken ct)
     {
         var scope = $"session:{sessionId:D}:finalize";
         var key = idempotencyKey.ToString("D");
-        var hash = Hash(sessionId);
+        var hash = Hash(sessionId, episodeMode);
         var existing = await db.MutationReceipts.AsNoTracking()
             .SingleOrDefaultAsync(value => value.Scope == scope && value.IdempotencyKey == key, ct);
         if (existing is not null)
@@ -104,6 +109,41 @@ public sealed class ModuleSessionFinalizationService(
             ? FinalizationReason.Expired
             : FinalizationReason.Manual;
         session.SetFinalResult(bestScore, reason, finalizedAt);
+        if (versionId.HasValue && Guid.TryParse(session.TaskRef, out var episodeTaskId))
+        {
+            var episodeResult = await episodeService.GetOrStartForAttemptAsync(
+                userId,
+                episodeTaskId,
+                versionId.Value,
+                session.Id,
+                finalizedAt,
+                ct);
+            if (episodeResult.IsSuccess)
+            {
+                var episodeReason = episodeMode switch
+                {
+                    LearningEpisodeFinalizationMode.Abandon => LearningEpisodeFinalizationReason.Abandoned,
+                    LearningEpisodeFinalizationMode.AcceptPartialResult =>
+                        LearningEpisodeFinalizationReason.AcceptedPartialResult,
+                    _ => attemptsUsed > 0
+                        ? LearningEpisodeFinalizationReason.AcceptedPartialResult
+                        : LearningEpisodeFinalizationReason.Abandoned
+                };
+                var episodeFinalization = await episodeService.FinalizeEntityAsync(
+                    episodeResult.Value!, episodeReason, finalizedAt, ct);
+                if (!episodeFinalization.IsSuccess)
+                {
+                    await transaction.RollbackAsync(ct);
+                    return Result<SessionFinalizationResponse>.Fail(episodeFinalization.Error!);
+                }
+            }
+            else if (episodeResult.Error != LearningEpisodeErrors.Finalized &&
+                     episodeResult.Error != LearningEpisodeErrors.HeartbeatExpired)
+            {
+                await transaction.RollbackAsync(ct);
+                return Result<SessionFinalizationResponse>.Fail(episodeResult.Error!);
+            }
+        }
         await completionOutbox.TryAddAsync(
             session, bestScore, attemptsUsed, reason, finalizedAt, null, ct);
         if (reason == FinalizationReason.Expired)
@@ -170,8 +210,8 @@ public sealed class ModuleSessionFinalizationService(
         _ = await command.ExecuteScalarAsync(ct);
     }
 
-    private static string Hash(Guid sessionId) => Convert.ToHexString(
-        SHA256.HashData(Encoding.UTF8.GetBytes(sessionId.ToString("D"))));
+    private static string Hash(Guid sessionId, LearningEpisodeFinalizationMode? mode) => Convert.ToHexString(
+        SHA256.HashData(Encoding.UTF8.GetBytes($"{sessionId:D}\n{mode?.ToString() ?? "default"}")));
 
     private static Result<SessionFinalizationResponse> Replay(MutationReceipt receipt, string hash)
     {

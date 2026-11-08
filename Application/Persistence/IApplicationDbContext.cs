@@ -46,6 +46,10 @@ public interface IApplicationDbContext
 
     DbSet<Attempt> Attempts { get; }
 
+    DbSet<LearningEpisode> LearningEpisodes { get; }
+
+    DbSet<LearningEpisodeSkillResult> LearningEpisodeSkillResults { get; }
+
     DbSet<BankHintAccess> BankHintAccesses { get; }
 
     DbSet<BankSolutionAccess> BankSolutionAccesses { get; }

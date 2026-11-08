@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Persistence;
+using SQLModule.Application.Training.Episodes;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.ModuleIntegration;
 using SQLModule.Domain.ModuleIntegration;
@@ -89,6 +90,7 @@ public sealed class GetModuleTasksCatalogHandler(IApplicationDbContext db)
 public sealed class UpsertModuleSessionHandler(
     IApplicationDbContext db,
     PracticeCompletionOutbox completionOutbox,
+    LearningEpisodeService episodeService,
     TimeProvider timeProvider)
     : IRequestHandler<UpsertModuleSessionCommand, Result>
 {
@@ -153,6 +155,21 @@ public sealed class UpsertModuleSessionHandler(
                     .MaxAsync(value => (int?)value.Score, ct) ?? 0;
                 var finalizedAt = timeProvider.GetUtcNow();
                 session.SetFinalResult(bestScore, FinalizationReason.AttemptsExhausted, finalizedAt);
+                var episode = await db.LearningEpisodes.SingleOrDefaultAsync(value =>
+                    value.ModuleSessionId == session.Id &&
+                    value.Status == LearningEpisodeStatus.Active, ct);
+                if (episode is not null)
+                {
+                    var finalized = await episodeService.FinalizeEntityAsync(
+                        episode,
+                        LearningEpisodeFinalizationReason.AttemptsExhausted,
+                        finalizedAt,
+                        ct);
+                    if (!finalized.IsSuccess)
+                    {
+                        return Result.Fail(finalized.Error!);
+                    }
+                }
                 await completionOutbox.TryAddAsync(
                     session, bestScore, attemptsUsed, FinalizationReason.AttemptsExhausted,
                     finalizedAt, null, ct);

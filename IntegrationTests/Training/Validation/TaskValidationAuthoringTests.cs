@@ -3,10 +3,12 @@ using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using SQLModule.Application.Training.Episodes;
 using SQLModule.Client;
 using SQLModule.Contracts;
 using SQLModule.Contracts.DbmsCatalog.DbmsDictionary;
 using SQLModule.Contracts.Schema.TargetDb;
+using SQLModule.Contracts.Training.Episode;
 using SQLModule.Contracts.Training.Skill;
 using SQLModule.Contracts.Training.SqlTask;
 using SQLModule.Contracts.Training.Topic;
@@ -255,6 +257,82 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
         version.ValidationConfigurationSnapshotJson.ShouldNotContain("Переименованный навык");
     }
 
+    [Fact(DisplayName = "Learning episode: повторный старт возобновляет эпизод, отказ финализирует его один раз")]
+    public async Task Episode_StartResumeAndAbandon_IsIdempotent()
+    {
+        var taskId = await CreateTaskAsync("SELECT 1");
+        var tag = await CreateSkillAsync();
+        await PublishWithTagAsync(taskId, tag.Id);
+        AsStudent();
+
+        using var startResponse = await HttpClient.PostAsync(
+            ApiRoutes.Training.Student.ForTaskEpisodes(taskId), null);
+        var started = await startResponse.Content.ReadFromJsonAsync<LearningEpisodeResponse>(ClientJson.Options);
+        using var resumeResponse = await HttpClient.PostAsync(
+            ApiRoutes.Training.Student.ForTaskEpisodes(taskId), null);
+        var resumed = await resumeResponse.Content.ReadFromJsonAsync<LearningEpisodeResponse>(ClientJson.Options);
+
+        startResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        resumeResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        started.ShouldNotBeNull();
+        resumed!.EpisodeId.ShouldBe(started.EpisodeId);
+
+        var key = Guid.NewGuid().ToString("D");
+        using var firstFinalize = CreateFinalizeEpisodeRequest(started.EpisodeId, key);
+        using var firstResponse = await HttpClient.SendAsync(firstFinalize);
+        using var repeatedFinalize = CreateFinalizeEpisodeRequest(started.EpisodeId, key);
+        using var repeatedResponse = await HttpClient.SendAsync(repeatedFinalize);
+
+        firstResponse.StatusCode.ShouldBe(HttpStatusCode.OK, await firstResponse.Content.ReadAsStringAsync());
+        repeatedResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var finalized = await firstResponse.Content.ReadFromJsonAsync<LearningEpisodeResponse>(ClientJson.Options);
+        finalized!.Status.ShouldBe(LearningEpisodeStatusResponse.Finalized);
+        finalized.ProducesObservation.ShouldBeTrue();
+
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var episode = await db.LearningEpisodes.AsNoTracking()
+            .SingleAsync(value => value.Id == started.EpisodeId);
+        episode.FinalizationReason.ShouldBe(LearningEpisodeFinalizationReason.Abandoned);
+        episode.FinalAttemptId.ShouldBeNull();
+        var result = await db.LearningEpisodeSkillResults.AsNoTracking()
+            .SingleAsync(value => value.EpisodeId == episode.Id);
+        result.SkillId.ShouldBe(tag.Id);
+        result.Source.ShouldBe(LearningEpisodeSkillSource.TaskTag);
+        result.Outcome.ShouldBe(LearningEpisodeSkillOutcome.Failed);
+    }
+
+    [Fact(DisplayName = "Learning episode: отсутствие heartbeat больше трёх минут финализируется один раз")]
+    public async Task Episode_HeartbeatTimeout_FinalizesOnce()
+    {
+        var taskId = await CreateTaskAsync("SELECT 1");
+        var tag = await CreateSkillAsync();
+        await PublishWithTagAsync(taskId, tag.Id);
+        AsStudent();
+        using var startResponse = await HttpClient.PostAsync(
+            ApiRoutes.Training.Student.ForTaskEpisodes(taskId), null);
+        var started = (await startResponse.Content.ReadFromJsonAsync<LearningEpisodeResponse>(
+            ClientJson.Options))!;
+
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.LearningEpisodes.Where(value => value.Id == started.EpisodeId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(
+                value => value.LastHeartbeatAt,
+                DateTimeOffset.UtcNow.Subtract(TimeSpan.FromMinutes(4))));
+        var processor = scope.ServiceProvider.GetRequiredService<LearningEpisodeTimeoutProcessor>();
+
+        (await processor.ProcessAsync(CancellationToken.None)).ShouldBe(1);
+        (await processor.ProcessAsync(CancellationToken.None)).ShouldBe(0);
+
+        var episode = await db.LearningEpisodes.AsNoTracking()
+            .SingleAsync(value => value.Id == started.EpisodeId);
+        episode.Status.ShouldBe(LearningEpisodeStatus.Finalized);
+        episode.FinalizationReason.ShouldBe(LearningEpisodeFinalizationReason.HeartbeatTimeout);
+        (await db.LearningEpisodeSkillResults.CountAsync(value => value.EpisodeId == episode.Id))
+            .ShouldBe(1);
+    }
+
     private async Task<TaskValidationConfigurationResponse> GetConfigurationAsync(Guid taskId) =>
         (await HttpClient.GetFromJsonAsync<TaskValidationConfigurationResponse>(
             ApiRoutes.Training.SqlTasks.ForValidation(taskId),
@@ -283,6 +361,55 @@ public sealed class TaskValidationAuthoringTests(TestApplication app) : ApiTestB
             ClientJson.Options);
         response.StatusCode.ShouldBe(HttpStatusCode.Created, await response.Content.ReadAsStringAsync());
         return (await response.Content.ReadFromJsonAsync<SkillResponse>(ClientJson.Options))!;
+    }
+
+    private async Task PublishWithTagAsync(Guid taskId, Guid tagId)
+    {
+        var current = await GetConfigurationAsync(taskId);
+        using var updateResponse = await HttpClient.PutAsJsonAsync(
+            ApiRoutes.Training.SqlTasks.ForValidation(taskId),
+            new TaskValidationConfigurationRequest(
+                current.Version,
+                100,
+                [SQLModule.Contracts.Training.HintGroup.Result],
+                [new ValidationCheckRequest(
+                    current.Checks[0].Id,
+                    SQLModule.Contracts.Training.ValidationCheckKind.MainDatasetResult,
+                    null,
+                    100,
+                    0)],
+                [tagId]),
+            ClientJson.Options);
+        var updated = (await updateResponse.Content.ReadFromJsonAsync<TaskValidationConfigurationResponse>(
+            ClientJson.Options))!;
+        updateResponse.StatusCode.ShouldBe(HttpStatusCode.OK, await updateResponse.Content.ReadAsStringAsync());
+
+        using var publishRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            ApiRoutes.Training.SqlTasks.ForValidationPublish(taskId))
+        {
+            Content = JsonContent.Create(
+                new PublishTaskValidationRequest(updated.Version),
+                options: ClientJson.Options)
+        };
+        publishRequest.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("D"));
+        using var publishResponse = await HttpClient.SendAsync(publishRequest);
+        publishResponse.StatusCode.ShouldBe(HttpStatusCode.OK, await publishResponse.Content.ReadAsStringAsync());
+        await SqlTaskClient.PublishAsync(taskId);
+    }
+
+    private static HttpRequestMessage CreateFinalizeEpisodeRequest(Guid episodeId, string idempotencyKey)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            ApiRoutes.Training.Student.ForEpisodeFinalize(episodeId))
+        {
+            Content = JsonContent.Create(
+                new FinalizeLearningEpisodeRequest(LearningEpisodeFinalizationMode.Abandon),
+                options: ClientJson.Options)
+        };
+        request.Headers.Add("Idempotency-Key", idempotencyKey);
+        return request;
     }
 
     private async Task<Guid> CreateTaskAsync(string referenceSql)

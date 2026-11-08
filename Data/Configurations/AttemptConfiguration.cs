@@ -30,6 +30,7 @@ internal sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
         builder.Property(x => x.StudentEmail).HasMaxLength(320);
         builder.Property(x => x.TaskId).IsRequired();
         builder.Property(x => x.ModuleSessionId);
+        builder.Property(x => x.LearningEpisodeId);
         builder.Property(x => x.ValidationVersionId);
         builder.Property(x => x.AttemptNumber);
         builder.Property(x => x.Score);
@@ -53,11 +54,16 @@ internal sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
                .WithMany()
                .HasForeignKey(x => x.ModuleSessionId)
                .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<LearningEpisode>()
+               .WithMany()
+               .HasForeignKey(x => x.LearningEpisodeId)
+               .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<TaskValidationVersion>()
                .WithMany()
                .HasForeignKey(x => x.ValidationVersionId)
                .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(x => x.ModuleSessionId);
+        builder.HasIndex(x => x.LearningEpisodeId);
         builder.HasIndex(x => new { x.ModuleSessionId, x.AttemptNumber })
             .IsUnique()
             .HasFilter("\"ModuleSessionId\" IS NOT NULL");

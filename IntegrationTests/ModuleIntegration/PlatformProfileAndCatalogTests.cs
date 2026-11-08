@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Shouldly;
 using SQLModule.Application.ModuleIntegration;
 using SQLModule.Application.Seeding;
+using SQLModule.Application.Training.Episodes;
 using SQLModule.Client;
 using SQLModule.Contracts;
 using SQLModule.Contracts.ModuleIntegration;
@@ -872,6 +873,10 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
                 }
             }),
             new PracticeCompletionOutbox(db),
+            new LearningEpisodeService(
+                db,
+                TimeProvider.System,
+                NullLogger<LearningEpisodeService>.Instance),
             TimeProvider.System,
             NullLogger<ModuleSessionCleanupProcessor>.Instance);
 

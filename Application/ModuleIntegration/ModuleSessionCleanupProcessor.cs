@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SQLModule.Application.Persistence;
+using SQLModule.Application.Training.Episodes;
 using SQLModule.Domain.ModuleIntegration;
 using SQLModule.Domain.Training;
 
@@ -12,6 +13,7 @@ public sealed class ModuleSessionCleanupProcessor(
     IApplicationDbContext db,
     IOptions<ModuleIntegrationOptions> options,
     PracticeCompletionOutbox completionOutbox,
+    LearningEpisodeService episodeService,
     TimeProvider timeProvider,
     ILogger<ModuleSessionCleanupProcessor> logger)
 {
@@ -38,6 +40,22 @@ public sealed class ModuleSessionCleanupProcessor(
                 .Where(value => value.ModuleSessionId == session.Id && value.CountsTowardLimit)
                 .MaxAsync(value => (int?)value.Score, ct) ?? 0;
             session.SetFinalResult(bestScore, FinalizationReason.Expired, now);
+            var episode = await db.LearningEpisodes.SingleOrDefaultAsync(
+                value => value.ModuleSessionId == session.Id &&
+                         value.Status == LearningEpisodeStatus.Active,
+                ct);
+            if (episode is not null)
+            {
+                var finalized = await episodeService.FinalizeEntityAsync(
+                    episode,
+                    LearningEpisodeFinalizationReason.LearningTimeExpired,
+                    now,
+                    ct);
+                if (!finalized.IsSuccess)
+                {
+                    throw new InvalidOperationException(finalized.Error!.Message);
+                }
+            }
             await completionOutbox.TryAddAsync(
                 session, bestScore, attemptsUsed, FinalizationReason.Expired, now, null, ct);
             session.MarkExpired(now);

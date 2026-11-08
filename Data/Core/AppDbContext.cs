@@ -63,6 +63,12 @@ public class AppDbContext : DbContext, IApplicationDbContext
     /// <summary>Попытки выполнения заданий</summary>
     public DbSet<Attempt> Attempts { get; set; }
 
+    /// <summary>Учебные эпизоды студентов.</summary>
+    public DbSet<LearningEpisode> LearningEpisodes { get; set; }
+
+    /// <summary>Окончательные бинарные результаты навыков эпизодов.</summary>
+    public DbSet<LearningEpisodeSkillResult> LearningEpisodeSkillResults { get; set; }
+
     /// <summary>Журнал выдачи подсказок открытого банка.</summary>
     public DbSet<BankHintAccess> BankHintAccesses { get; set; }
 

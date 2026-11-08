@@ -286,6 +286,10 @@ public static class ApiRoutes
             public const string TaskHint = TaskById + "/hint";
             public const string TaskSolution = TaskById + "/solution";
             public const string TaskTableRows = TaskById + "/tables/{tableId:guid}/rows";
+            public const string TaskEpisodes = TaskById + "/episodes";
+            public const string Episodes = PrefixV1 + "/student/episodes";
+            public const string EpisodeHeartbeat = Episodes + "/{episodeId:guid}/heartbeat";
+            public const string EpisodeFinalize = Episodes + "/{episodeId:guid}/finalize";
             public const string Attempts = PrefixV1 + "/student/attempts";
             public const string AttemptById = Attempts + "/{attemptId}";
 
@@ -296,6 +300,9 @@ public static class ApiRoutes
             public static string ForTaskSolution(Guid taskId) => $"{ForTask(taskId)}/solution";
             public static string ForTaskTableRows(Guid taskId, Guid tableId, int offset, int limit) =>
                 $"{ForTask(taskId)}/tables/{tableId}/rows?offset={offset}&limit={limit}";
+            public static string ForTaskEpisodes(Guid taskId) => $"{ForTask(taskId)}/episodes";
+            public static string ForEpisodeHeartbeat(Guid episodeId) => $"{Episodes}/{episodeId}/heartbeat";
+            public static string ForEpisodeFinalize(Guid episodeId) => $"{Episodes}/{episodeId}/finalize";
             public static string ForAttempt(Guid attemptId) => $"{Attempts}/{attemptId}";
             public static string ForTasksPage(int offset, int limit) =>
                 $"{Tasks}?offset={offset}&limit={limit}";

@@ -9,6 +9,7 @@ using SQLModule.Application.ModuleIntegration;
 using SQLModule.Application.Persistence;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.Bank;
+using SQLModule.Application.Training.Episodes;
 using SQLModule.Common.Results;
 using SQLModule.Contracts.Training.Attempt;
 using SQLModule.Contracts.Training.Validation;
@@ -42,6 +43,7 @@ public sealed class SessionAttemptWorkflow(
     ISandboxExecutor executor,
     AttemptEvaluationEngine evaluationEngine,
     IAttemptResultSnapshotService snapshotService,
+    LearningEpisodeService episodeService,
     PracticeCompletionOutbox completionOutbox,
     IOptions<SandboxOptions> sandboxOptions,
     TimeProvider timeProvider,
@@ -88,6 +90,8 @@ public sealed class SessionAttemptWorkflow(
         if (analyzer is null || analyzer.AnalyzerVersion != runtime.Version.AnalyzerVersion)
         {
             await RemoveReceiptAsync(receipt, ct);
+            await episodeService.FinalizeInfrastructureFailureAsync(
+                command.UserId, command.TaskId, moduleSession?.Id, ct);
             return Handled(Result<SubmitAttemptResponse>.Fail(AnalyzerUnavailable));
         }
 
@@ -100,12 +104,16 @@ public sealed class SessionAttemptWorkflow(
         {
             logger.LogError(exception, "Анализатор SQL аварийно завершил проверку задания {TaskId}", command.TaskId);
             await RemoveReceiptAsync(receipt, ct);
+            await episodeService.FinalizeInfrastructureFailureAsync(
+                command.UserId, command.TaskId, moduleSession?.Id, ct);
             return Handled(Result<SubmitAttemptResponse>.Fail(AnalyzerUnavailable));
         }
 
         if (analysis.Status == SqlSyntaxAnalysisStatus.InfrastructureFailure)
         {
             await RemoveReceiptAsync(receipt, ct);
+            await episodeService.FinalizeInfrastructureFailureAsync(
+                command.UserId, command.TaskId, moduleSession?.Id, ct);
             return Handled(Result<SubmitAttemptResponse>.Fail(AnalyzerUnavailable));
         }
 
@@ -130,12 +138,16 @@ public sealed class SessionAttemptWorkflow(
         {
             logger.LogError(exception, "Песочница аварийно завершила попытку задания {TaskId}", command.TaskId);
             await RemoveReceiptAsync(receipt, CancellationToken.None);
+            await episodeService.FinalizeInfrastructureFailureAsync(
+                command.UserId, command.TaskId, moduleSession?.Id, CancellationToken.None);
             return Handled(Result<SubmitAttemptResponse>.Fail(SandboxUnavailable));
         }
 
         if (!run.IsSuccess)
         {
             await RemoveReceiptAsync(receipt, ct);
+            await episodeService.FinalizeInfrastructureFailureAsync(
+                command.UserId, command.TaskId, moduleSession?.Id, ct);
             return Handled(Result<SubmitAttemptResponse>.Fail(SandboxUnavailable));
         }
 
@@ -293,11 +305,31 @@ public sealed class SessionAttemptWorkflow(
         attemptsUsed++;
         bestScore = Math.Max(bestScore, score);
         attempt.AttachScoring(runtime.Version.Id, attemptNumber, score, true);
+        var episodeResult = await episodeService.GetOrStartForAttemptAsync(
+            command.UserId,
+            command.TaskId,
+            runtime.Version.Id,
+            session?.Id,
+            finishedAt,
+            ct);
+        if (!episodeResult.IsSuccess)
+        {
+            db.MutationReceipts.Remove(receipt);
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+            return Result<SubmitAttemptResponse>.Fail(episodeResult.Error!);
+        }
+
+        var episode = episodeResult.Value!;
+        attempt.AttachToEpisode(episode.Id);
         db.Attempts.Add(attempt);
         db.AttemptCheckResults.AddRange(checks.Select(value => AttemptCheckResult.Create(
             attempt.Id, value.Check.Id, value.Check.Kind, value.Status,
             value.Check.Weight, value.AwardedScore, value.Check.Order, value.Message, null)));
 
+        LearningEpisodeFinalizationReason? episodeReason = score == 100
+            ? LearningEpisodeFinalizationReason.PerfectScore
+            : null;
         if (session is not null)
         {
             AddPracticeEvent(session, attempt, runtime.Version, checks, maxAttempts, finishedAt);
@@ -309,6 +341,9 @@ public sealed class SessionAttemptWorkflow(
             if (reason.HasValue)
             {
                 await FinalizeSessionAsync(session, attemptsUsed, reason.Value, finishedAt, attempt, ct, bestScore);
+                episodeReason ??= reason == FinalizationReason.AttemptsExhausted
+                    ? LearningEpisodeFinalizationReason.AttemptsExhausted
+                    : null;
             }
         }
 
@@ -316,6 +351,18 @@ public sealed class SessionAttemptWorkflow(
             attempt, runtime, checks, snapshot, bestScore, attemptsUsed, maxAttempts, session, finishedAt);
         receipt.Complete(JsonSerializer.Serialize(response, JsonOptions));
         await db.SaveChangesAsync(ct);
+        if (episodeReason.HasValue)
+        {
+            var finalized = await episodeService.FinalizeAfterAttemptAsync(
+                episode, episodeReason.Value, attempt, finishedAt, ct);
+            if (!finalized.IsSuccess)
+            {
+                await transaction.RollbackAsync(ct);
+                return Result<SubmitAttemptResponse>.Fail(finalized.Error!);
+            }
+
+            await db.SaveChangesAsync(ct);
+        }
         await transaction.CommitAsync(ct);
         logger.LogInformation(
             "Попытка {AttemptId} задания {TaskId} оценена в {Score} баллов",
@@ -369,6 +416,24 @@ public sealed class SessionAttemptWorkflow(
 
         var bestScore = knownBestScore ?? await BestScoreAsync(session.Id, ct);
         session.SetFinalResult(bestScore, reason, finalizedAt);
+        if (currentAttempt is null && reason is FinalizationReason.AttemptsExhausted or FinalizationReason.Expired)
+        {
+            var episode = await db.LearningEpisodes.SingleOrDefaultAsync(value =>
+                value.ModuleSessionId == session.Id &&
+                value.Status == LearningEpisodeStatus.Active, ct);
+            if (episode is not null)
+            {
+                var episodeReason = reason == FinalizationReason.AttemptsExhausted
+                    ? LearningEpisodeFinalizationReason.AttemptsExhausted
+                    : LearningEpisodeFinalizationReason.LearningTimeExpired;
+                var finalized = await episodeService.FinalizeEntityAsync(
+                    episode, episodeReason, finalizedAt, ct);
+                if (!finalized.IsSuccess)
+                {
+                    throw new InvalidOperationException(finalized.Error!.Message);
+                }
+            }
+        }
         await completionOutbox.TryAddAsync(
             session, bestScore, attemptsUsed, reason, finalizedAt, currentAttempt, ct);
         if (reason != FinalizationReason.Expired && session.Status == ModuleSessionStatus.Active)

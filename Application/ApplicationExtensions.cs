@@ -18,6 +18,7 @@ using SQLModule.Application.Schema.TargetDbs;
 using SQLModule.Application.TaskMaterialization;
 using SQLModule.Application.Training.Attempts;
 using SQLModule.Application.Training.Bank;
+using SQLModule.Application.Training.Episodes;
 using SQLModule.Application.Training.Skills;
 using SQLModule.Application.Training.SqlQueries;
 using SQLModule.Application.Training.SqlTasks;
@@ -86,6 +87,7 @@ public static class ApplicationExtensions
             .AddAttributeParameterValues()
             .AddTopics()
             .AddSkills(configuration)
+            .AddLearningEpisodes(configuration)
             .AddSqlQueries()
             .AddTaskValidation()
             .AddSchemaBuilder()

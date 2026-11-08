@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SQLModule.Application.Cqrs;
+using SQLModule.Application.Training.Episodes;
 using SQLModule.Application.Training.Student;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
 using SQLModule.Contracts.Schema.SchemaBuilder;
+using SQLModule.Contracts.Training.Episode;
 using SQLModule.Contracts.Training.Student;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Common;
@@ -102,6 +104,34 @@ public sealed class StudentEndpoints : IEndpoint
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
+        app.MapPost(ApiRoutes.Training.Student.TaskEpisodes, StartLearningEpisode)
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<PlatformTaskScopeFilter>()
+            .WithName(nameof(StartLearningEpisode)).WithTags("Student Episodes")
+            .WithSummary("Начать или продолжить учебный эпизод")
+            .Produces<LearningEpisodeResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        app.MapPost(ApiRoutes.Training.Student.EpisodeHeartbeat, HeartbeatLearningEpisode)
+            .RequireAuthorization(Policies.Student)
+            .WithName(nameof(HeartbeatLearningEpisode)).WithTags("Student Episodes")
+            .WithSummary("Подтвердить активность текущего учебного эпизода")
+            .Produces<LearningEpisodeResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        app.MapPost(ApiRoutes.Training.Student.EpisodeFinalize, FinalizeLearningEpisode)
+            .RequireAuthorization(Policies.Student).AddEndpointFilter<StandaloneOnlyReadFilter>()
+            .WithName(nameof(FinalizeLearningEpisode)).WithTags("Student Episodes")
+            .WithSummary("Окончательно закрыть учебный эпизод")
+            .Produces<LearningEpisodeResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
     }
 
     private static bool InvalidPage(int offset, int limit) => offset < 0 || limit is < 1 or > 100;
@@ -231,4 +261,56 @@ public sealed class StudentEndpoints : IEndpoint
         Guid attemptId, ICurrentUser currentUser, ISender sender, CancellationToken ct) =>
         ToStudentResult(await sender.Send<GetStudentAttemptByIdQuery, Result<StudentAttemptResponse>>(
             new GetStudentAttemptByIdQuery(attemptId, currentUser.UserId!.Value), ct));
+
+    private static async Task<IResult> StartLearningEpisode(
+        Guid taskId,
+        ICurrentUser currentUser,
+        ILearningEpisodeService service,
+        CancellationToken ct) =>
+        (await service.StartAsync(
+            currentUser.UserId!.Value,
+            taskId,
+            currentUser.ModuleSessionId,
+            ct)).ToOk();
+
+    private static async Task<IResult> HeartbeatLearningEpisode(
+        Guid episodeId,
+        ICurrentUser currentUser,
+        ILearningEpisodeService service,
+        CancellationToken ct) =>
+        (await service.HeartbeatAsync(currentUser.UserId!.Value, episodeId, ct)).ToOk();
+
+    private static async Task<IResult> FinalizeLearningEpisode(
+        Guid episodeId,
+        FinalizeLearningEpisodeRequest request,
+        HttpContext httpContext,
+        ICurrentUser currentUser,
+        ILearningEpisodeService service,
+        CancellationToken ct)
+    {
+        if (!request.Mode.HasValue)
+        {
+            return Results.ValidationProblem(
+                new Dictionary<string, string[]> { ["Mode"] = ["Укажите способ завершения эпизода."] },
+                statusCode: StatusCodes.Status422UnprocessableEntity);
+        }
+
+        var idempotencyKey = httpContext.Request.Headers["Idempotency-Key"].ToString();
+        if (!Guid.TryParseExact(idempotencyKey, "D", out var key))
+        {
+            return Results.ValidationProblem(
+                new Dictionary<string, string[]>
+                {
+                    ["Idempotency-Key"] = ["Укажите UUID в формате D."]
+                },
+                statusCode: StatusCodes.Status422UnprocessableEntity);
+        }
+
+        return (await service.FinalizeAsync(
+            currentUser.UserId!.Value,
+            episodeId,
+            request.Mode.Value,
+            key,
+            ct)).ToOk();
+    }
 }

@@ -14,6 +14,8 @@ public sealed class Attempt : AuditableEntity
     public Guid TaskId { get; private set; }
     /// <summary>Платформенная сессия запуска; null для standalone-попытки.</summary>
     public Guid? ModuleSessionId { get; private set; }
+    /// <summary>Учебный эпизод, в рамках которого зафиксирована попытка.</summary>
+    public Guid? LearningEpisodeId { get; private set; }
     public Guid? ValidationVersionId { get; private set; }
     public int? AttemptNumber { get; private set; }
     public int? Score { get; private set; }
@@ -121,4 +123,6 @@ public sealed class Attempt : AuditableEntity
         Score = score;
         CountsTowardLimit = countsTowardLimit;
     }
+
+    public void AttachToEpisode(Guid episodeId) => LearningEpisodeId = episodeId;
 }

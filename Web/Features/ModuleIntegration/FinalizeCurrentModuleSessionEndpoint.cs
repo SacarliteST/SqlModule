@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SQLModule.Application.ModuleIntegration;
 using SQLModule.Common.Results;
 using SQLModule.Contracts;
+using SQLModule.Contracts.Training.Episode;
 using SQLModule.Contracts.Training.Validation;
 using SQLModule.Domain.Common;
 using SQLModule.Web.Common;
@@ -27,6 +28,7 @@ internal sealed class FinalizeCurrentModuleSessionEndpoint : IModuleIntegrationE
 
     private static async Task<IResult> Handle(
         [FromHeader(Name = "Idempotency-Key"), Required] string? idempotencyKey,
+        FinalizeLearningEpisodeRequest? request,
         ICurrentUser currentUser,
         IModuleSessionFinalizationService service,
         CancellationToken ct)
@@ -47,6 +49,6 @@ internal sealed class FinalizeCurrentModuleSessionEndpoint : IModuleIntegrationE
                 "ModuleSession.NotFound");
         }
 
-        return (await service.FinalizeAsync(userId, sessionId, key, ct)).ToOk();
+        return (await service.FinalizeAsync(userId, sessionId, key, request?.Mode, ct)).ToOk();
     }
 }

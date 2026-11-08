@@ -798,6 +798,9 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.Property<bool>("IsResultTruncated")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid?>("LearningEpisodeId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("ModuleSessionId")
                         .HasColumnType("uuid");
 
@@ -867,6 +870,8 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LearningEpisodeId");
 
                     b.HasIndex("ModuleSessionId");
 
@@ -1016,6 +1021,109 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                     b.HasIndex("UserId", "TaskId", "OpenedAt");
 
                     b.ToTable("BankSolutionAccesses", (string)null);
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.LearningEpisode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("FinalAttemptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FinalizationReason")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset?>("FinalizedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastHeartbeatAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModuleSessionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("ProducesObservation")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ValidationVersionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FinalAttemptId");
+
+                    b.HasIndex("ModuleSessionId")
+                        .IsUnique()
+                        .HasFilter("\"ModuleSessionId\" IS NOT NULL");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("ValidationVersionId");
+
+                    b.HasIndex("Status", "LastHeartbeatAt");
+
+                    b.HasIndex("StudentId", "TaskId")
+                        .IsUnique()
+                        .HasFilter("\"ModuleSessionId\" IS NULL AND \"Status\" = 'Active'");
+
+                    b.ToTable("LearningEpisodes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_LearningEpisodes_Finalization", "(\"Status\" = 'Active' AND \"FinalizedAt\" IS NULL AND \"FinalizationReason\" IS NULL) OR (\"Status\" = 'Finalized' AND \"FinalizedAt\" IS NOT NULL AND \"FinalizationReason\" IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.LearningEpisodeSkillResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EpisodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("SkillExternalId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("SkillId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SkillId");
+
+                    b.HasIndex("EpisodeId", "SkillId")
+                        .IsUnique();
+
+                    b.ToTable("LearningEpisodeSkillResults", (string)null);
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.Skill", b =>
@@ -1599,6 +1707,11 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
 
             modelBuilder.Entity("SQLModule.Domain.Training.Attempt", b =>
                 {
+                    b.HasOne("SQLModule.Domain.Training.LearningEpisode", null)
+                        .WithMany()
+                        .HasForeignKey("LearningEpisodeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("SQLModule.Domain.ModuleIntegration.ModuleSession", null)
                         .WithMany()
                         .HasForeignKey("ModuleSessionId")
@@ -1649,6 +1762,50 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.LearningEpisode", b =>
+                {
+                    b.HasOne("SQLModule.Domain.Training.Attempt", null)
+                        .WithMany()
+                        .HasForeignKey("FinalAttemptId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SQLModule.Domain.ModuleIntegration.ModuleSession", null)
+                        .WithMany()
+                        .HasForeignKey("ModuleSessionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SQLModule.Domain.Training.SqlTask", null)
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SQLModule.Domain.Training.TaskValidationVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ValidationVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.LearningEpisodeSkillResult", b =>
+                {
+                    b.HasOne("SQLModule.Domain.Training.LearningEpisode", "Episode")
+                        .WithMany("SkillResults")
+                        .HasForeignKey("EpisodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SQLModule.Domain.Training.Skill", "Skill")
+                        .WithMany()
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Episode");
+
+                    b.Navigation("Skill");
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>
@@ -1783,6 +1940,11 @@ namespace SQLModule.Data.Core.Migrations.PostgreSql
             modelBuilder.Entity("SQLModule.Domain.Schema.TargetDb", b =>
                 {
                     b.Navigation("MetaTables");
+                });
+
+            modelBuilder.Entity("SQLModule.Domain.Training.LearningEpisode", b =>
+                {
+                    b.Navigation("SkillResults");
                 });
 
             modelBuilder.Entity("SQLModule.Domain.Training.SqlQuery", b =>
