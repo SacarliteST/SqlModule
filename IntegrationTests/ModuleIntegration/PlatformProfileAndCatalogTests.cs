@@ -170,6 +170,9 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         var published = catalog.Single(item => item.Ref == taskIds.Published.ToString());
         published.Name.ShouldBe($"A Published {marker}");
         published.Description.ShouldBe(publishedText[..200]);
+        published.DifficultyLevel.ShouldBe((short)1);
+        published.TopicId.ShouldNotBe(Guid.Empty);
+        published.TopicName.ShouldBe($"Catalog {marker}");
         catalog.ShouldNotContain(item => item.Ref == taskIds.Draft.ToString());
         catalog.ShouldNotContain(item => item.Ref == taskIds.Archived.ToString());
     }

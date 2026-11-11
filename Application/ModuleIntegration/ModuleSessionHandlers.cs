@@ -80,7 +80,10 @@ public sealed class GetModuleTasksCatalogHandler(IApplicationDbContext db)
                 task.TaskName,
                 task.TaskText.Length <= DescriptionMaxLength
                     ? task.TaskText
-                    : task.TaskText.Substring(0, DescriptionMaxLength)))
+                    : task.TaskText.Substring(0, DescriptionMaxLength),
+                task.DifficultyLevel,
+                task.TopicId,
+                task.Topic.TopicName))
             .ToListAsync(ct);
 
         return Result<IReadOnlyList<ModuleTaskCatalogItemResponse>>.Success(items);
