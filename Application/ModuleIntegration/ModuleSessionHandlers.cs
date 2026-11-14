@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SQLModule.Application.Cqrs;
 using SQLModule.Application.Persistence;
 using SQLModule.Application.Training.Episodes;
@@ -13,7 +13,7 @@ namespace SQLModule.Application.ModuleIntegration;
 public record GetCurrentModuleSessionQuery(Guid UserId, Guid SessionId)
     : IRequest<Result<CurrentModuleSessionResponse>>;
 
-/// <summary>Каталог опубликованных заданий для Education.</summary>
+/// <summary>Каталог опубликованных контрольных заданий (не из открытого банка) для Education.</summary>
 public record GetModuleTasksCatalogQuery : IRequest<Result<IReadOnlyList<ModuleTaskCatalogItemResponse>>>;
 
 /// <summary>Создание или синхронизация платформенной сессии по push от Education.</summary>
@@ -72,7 +72,9 @@ public sealed class GetModuleTasksCatalogHandler(IApplicationDbContext db)
         GetModuleTasksCatalogQuery query, CancellationToken ct)
     {
         var items = await db.SqlTasks.AsNoTracking()
-            .Where(task => task.PublicationStatus == PublicationStatus.Published)
+            .Where(task =>
+                task.PublicationStatus == PublicationStatus.Published &&
+                task.Visibility == TaskVisibility.Control)
             .OrderBy(task => task.TaskName)
             .ThenBy(task => task.Id)
             .Select(task => new ModuleTaskCatalogItemResponse(

@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
@@ -143,7 +143,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
             .Description!.ShouldContain("returnUrl");
     }
 
-    [Fact(DisplayName = "Каталог требует service key и возвращает только Published-задания")]
+    [Fact(DisplayName = "Каталог требует service key и возвращает только Published-задания с видимостью Control")]
     public async Task TasksCatalog_ReturnsOnlyPublishedTasks()
     {
         var marker = Guid.NewGuid().ToString("N");
@@ -175,6 +175,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         published.TopicName.ShouldBe($"Catalog {marker}");
         catalog.ShouldNotContain(item => item.Ref == taskIds.Draft.ToString());
         catalog.ShouldNotContain(item => item.Ref == taskIds.Archived.ToString());
+        catalog.ShouldNotContain(item => item.Ref == taskIds.OpenBank.ToString());
     }
 
     [Fact(DisplayName = "Smoke-seed создаёт стабильное задание, не дублируется и не меняет пользовательские данные")]
@@ -1705,7 +1706,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         }
     }
 
-    private async Task<(Guid Published, Guid Draft, Guid Archived)> SeedTasksAsync(
+    private async Task<(Guid Published, Guid Draft, Guid Archived, Guid OpenBank)> SeedTasksAsync(
         string marker,
         string publishedText)
     {
@@ -1720,6 +1721,7 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         var publishedQuery = SqlQuery.Create("SELECT 1", false, false, targetDb.Id);
         var draftQuery = SqlQuery.Create("SELECT 1", false, false, targetDb.Id);
         var archivedQuery = SqlQuery.Create("SELECT 1", false, false, targetDb.Id);
+        var openBankQuery = SqlQuery.Create("SELECT 1", false, false, targetDb.Id);
         var published = SqlTask.Create(
             topic.Id, publishedQuery.Id, $"A Published {marker}", publishedText, 1,
             publicationStatus: PublicationStatus.Published);
@@ -1728,8 +1730,14 @@ public sealed class PlatformProfileAndCatalogTests(TestApplication app)
         var archived = SqlTask.Create(
             topic.Id, archivedQuery.Id, $"C Archived {marker}", "archived", 1,
             publicationStatus: PublicationStatus.Archived);
-        db.AddRange(dbms, targetDb, topic, publishedQuery, draftQuery, archivedQuery, published, draft, archived);
+        var openBank = SqlTask.Create(
+            topic.Id, openBankQuery.Id, $"D OpenBank {marker}", "open bank", 1,
+            publicationStatus: PublicationStatus.Published);
+        openBank.OpenInBank(Random.Shared.NextInt64(1_000_000_000, 9_000_000_000), DateTimeOffset.UtcNow);
+        db.AddRange(dbms, targetDb, topic,
+            publishedQuery, draftQuery, archivedQuery, openBankQuery,
+            published, draft, archived, openBank);
         await db.SaveChangesAsync();
-        return (published.Id, draft.Id, archived.Id);
+        return (published.Id, draft.Id, archived.Id, openBank.Id);
     }
 }
